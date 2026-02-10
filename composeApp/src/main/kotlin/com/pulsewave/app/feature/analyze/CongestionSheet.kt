@@ -1,0 +1,187 @@
+package com.pulsewave.app.feature.analyze
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.pulsewave.app.core.designsystem.PulseWaveAlpha
+import com.pulsewave.app.core.designsystem.PulseWaveShapes
+
+@Composable
+fun CongestionInsightSheet(
+    scores: List<ChannelScore>,
+    modifier: Modifier = Modifier
+) {
+    if (scores.isEmpty()) return
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        // Header
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                "Traffic Report",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            
+            val avgScore = scores.map { it.score }.average()
+            val overallRating = when {
+                avgScore < 1000 -> TrafficRating.LOW
+                avgScore < 3000 -> TrafficRating.MEDIUM
+                avgScore < 6000 -> TrafficRating.HIGH
+                else -> TrafficRating.SEVERE
+            }
+            
+            Surface(
+                color = Color(overallRating.colorHex).copy(alpha = PulseWaveAlpha.light),
+                shape = PulseWaveShapes.small
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(Color(overallRating.colorHex))
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        overallRating.label,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(overallRating.colorHex)
+                    )
+                }
+            }
+        }
+        
+        Spacer(Modifier.height(24.dp))
+        
+        // Best Channel Recommendation
+        val bestChannel = scores.find { it.recommendation }
+        if (bestChannel != null) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                shape = PulseWaveShapes.medium,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                   modifier = Modifier.padding(16.dp),
+                   verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.CheckCircle, 
+                        null, 
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            "Best Channel: ${bestChannel.channelNumber}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            "Lowest congestion for your network",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = PulseWaveAlpha.strong)
+                        )
+                    }
+                }
+            }
+        }
+        
+        Spacer(Modifier.height(24.dp))
+        
+        // Chart
+        Text(
+            "Channel Congestion",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(Modifier.height(16.dp))
+        
+        // Horizontal Bar Chart (Scrollable Row of Vertical Bars)
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 4.dp),
+            modifier = Modifier.fillMaxWidth().height(140.dp)
+        ) {
+            items(scores) { item ->
+                CongestionBar(item)
+            }
+        }
+        
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
+@Composable
+fun CongestionBar(item: ChannelScore) {
+    val rating = item.rating
+    val color = Color(rating.colorHex)
+    
+    // Normalize height: Max score typically ~10000? 
+    // Let's cap at 6000 for visual full height
+    val normalizedHeight = (item.score / 6000.0).coerceIn(0.1, 1.0).toFloat()
+    
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Bottom,
+        modifier = Modifier.fillMaxHeight().width(32.dp)
+    ) {
+        // Show percentage relative to "Severe" (6000)
+        val percentage = (item.score / 6000.0 * 100).coerceIn(0.0, 100.0).toInt()
+        Text(
+            "$percentage%",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+             modifier = Modifier.padding(bottom = 4.dp),
+             maxLines = 1
+        )
+        
+        // Bar
+        Box(
+            modifier = Modifier
+                .width(12.dp)
+                .fillMaxHeight(normalizedHeight)
+                .clip(PulseWaveShapes.extraSmall)
+                .background(color)
+        )
+        
+        Spacer(Modifier.height(8.dp))
+        
+        Text(
+            "${item.channelNumber}",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
