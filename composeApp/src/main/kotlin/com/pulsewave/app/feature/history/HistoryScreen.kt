@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import com.pulsewave.app.core.designsystem.PulseWaveShapes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -46,26 +47,29 @@ fun HistoryScreen(
     val tabs = listOf("WiFi", "LAN", "Tools")
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     
-    val wifiHistory by dao.getRecentWifiScans()
-        .map { scans -> 
+    val wifiHistory by remember(dao) {
+        dao.getRecentWifiScans().map { scans -> 
             scans.map { 
                 HistoryItem(it.id, "WiFi", it.ssid.ifBlank { "Hidden" }, "${it.bssid} • ${it.rssi}dBm", formatDate(it.timestamp))
             } 
-        }.collectAsState(initial = emptyList())
+        }
+    }.collectAsState(initial = emptyList())
         
-    val lanHistory by dao.getAllLanDevices()
-        .map { devices ->
+    val lanHistory by remember(dao) {
+        dao.getAllLanDevices().map { devices ->
             devices.map {
                 HistoryItem(it.ipAddress.hashCode().toLong(), "LAN", it.hostname ?: it.ipAddress, it.macAddress ?: "Unknown MAC", formatDate(it.lastSeen))
             }
-        }.collectAsState(initial = emptyList())
+        }
+    }.collectAsState(initial = emptyList())
         
-    val toolHistory by dao.getToolHistory()
-        .map { results ->
+    val toolHistory by remember(dao) {
+        dao.getToolHistory().map { results ->
             results.map {
                 HistoryItem(it.id, "Tools", "${it.toolType} ${it.target}", if(it.isSuccess) "Success" else "Failed", formatDate(it.timestamp))
             }
-        }.collectAsState(initial = emptyList())
+        }
+    }.collectAsState(initial = emptyList())
 
     val combinedHistory = remember(selectedTab, wifiHistory, lanHistory, toolHistory) {
         val all = when (selectedTab) {
@@ -204,7 +208,7 @@ fun HistoryCard(item: HistoryItem, modifier: Modifier = Modifier) {
                     Icon(
                         when (item.type) {
                             "WiFi" -> Icons.Default.Search
-                            "LAN" -> Icons.Default.List
+                            "LAN" -> Icons.AutoMirrored.Filled.List
                             "Speed" -> Icons.Default.PlayArrow
                             else -> Icons.Default.Build
                         },

@@ -36,6 +36,7 @@ import com.pulsewave.app.feature.overview.OverviewScreen
 import com.pulsewave.app.feature.settings.SettingsScreen
 import com.pulsewave.app.feature.settings.PowerToolsScreen
 import com.pulsewave.app.feature.speedtest.SpeedTestScreen
+import com.pulsewave.app.feature.survey.SurveyScreen
 import com.pulsewave.app.feature.tools.ToolsScreen
 import org.koin.compose.koinInject
 
@@ -277,7 +278,8 @@ fun MainAppContent(
                     onNavigateToWifi = { navController.navigate("wifi") },
                     onNavigateToLan = { navController.navigate("lan") },
                     onNavigateToSpeedTest = { navController.navigate("speedtest") },
-                    onNavigateToHistory = { navController.navigate("history") }
+                    onNavigateToHistory = { navController.navigate("history") },
+                    onNavigateToSurvey = { navController.navigate("survey") }
                 )
             }
             
@@ -318,6 +320,10 @@ fun MainAppContent(
                 HistoryScreen(
                     onBack = { navController.popBackStack() }
                 )
+            }
+            
+            composable("survey") {
+                SurveyScreen()
             }
             
             composable("tools") {

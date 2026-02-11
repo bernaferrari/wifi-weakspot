@@ -27,21 +27,27 @@ data class ChannelScore(
 
 object CongestionAnalyzer {
     
-    // 2.4GHz Channel Centers
+    // 2.4GHz Channel Centers (channels 1-14)
     private val channels24 = (1..14).associateWith { ch ->
         if (ch == 14) 2484 else 2412 + (ch - 1) * 5
     }
 
-    // 5GHz (Common U-NII-1 and U-NII-2A)
+    // 5GHz (U-NII bands: 1, 2A, 2C, 3)
     private val channels5 = listOf(36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165).associateWith { ch ->
         5180 + (ch - 36) * 5
+    }
+
+    // 6GHz (WiFi 6E - 1200 MHz spectrum, channels 1-233 in steps of 4)
+    // Center frequencies from 5940 MHz (ch 1) to 7105 MHz (ch 233)
+    private val channels6 = (1..233 step 4).associate { ch ->
+        ch to (5940 + (ch - 1) * 5)
     }
 
     fun analyze(networks: List<WifiNetwork>, band: FrequencyBand): List<ChannelScore> {
         val targetChannels = when (band) {
             FrequencyBand.BAND_2_4 -> channels24
             FrequencyBand.BAND_5 -> channels5
-            FrequencyBand.BAND_6 -> emptyMap() // 6GHz TODO
+            FrequencyBand.BAND_6 -> channels6
         }
 
         if (targetChannels.isEmpty()) return emptyList()

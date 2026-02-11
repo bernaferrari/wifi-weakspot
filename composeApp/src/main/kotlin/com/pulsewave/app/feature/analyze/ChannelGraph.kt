@@ -201,7 +201,7 @@ fun ChannelGraph(
                     val endCh = 233
                     for (ch in startCh..endCh step 32) {
                         val freq = 5950 + 5 * ch
-                            channelMarkers.add(ch to freq)
+                        channelMarkers.add(ch to freq)
                     }
                 }
 

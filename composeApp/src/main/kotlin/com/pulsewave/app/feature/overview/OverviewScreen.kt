@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
@@ -40,7 +41,8 @@ fun OverviewScreen(
     onNavigateToWifi: () -> Unit = {},
     onNavigateToLan: () -> Unit = {},
     onNavigateToSpeedTest: () -> Unit = {},
-    onNavigateToHistory: () -> Unit = {}
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToSurvey: () -> Unit = {}
 ) {
     val viewModel: OverviewViewModel = org.koin.compose.viewmodel.koinViewModel()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -134,6 +136,15 @@ fun OverviewScreen(
                             onClick = onNavigateToHistory
                         )
                     }
+                    // Survey - full width feature card
+                    ExpressiveActionCard(
+                        title = "Site Survey",
+                        subtitle = "Map WiFi coverage",
+                        icon = Icons.Outlined.Map,
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
+                        onClick = onNavigateToSurvey
+                    )
                 }
             }
 

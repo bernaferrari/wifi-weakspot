@@ -1,5 +1,6 @@
 package com.pulsewave.app.core.data
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
 
+@SuppressLint("MissingPermission")
 class AndroidNetworkStatusRepository(
     private val context: Context
 ) : NetworkStatusRepository {

@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -1097,7 +1098,7 @@ fun WifiAnalyzerContent(
                                     },
                                     modifier = Modifier.size(40.dp)
                                 ) {
-                                    Icon(Icons.Outlined.HelpOutline, "Help", Modifier.size(20.dp))
+                                    Icon(Icons.AutoMirrored.Outlined.HelpOutline, "Help", Modifier.size(20.dp))
                                 }
                             }
                         }
@@ -1378,7 +1379,7 @@ private fun ChartSection(
             AssistChip(
                 onClick = onShowLegend,
                 label = { Text("Help") },
-                leadingIcon = { Icon(Icons.Outlined.HelpOutline, null, Modifier.size(16.dp)) }
+                leadingIcon = { Icon(Icons.AutoMirrored.Outlined.HelpOutline, null, Modifier.size(16.dp)) }
             )
         }
         

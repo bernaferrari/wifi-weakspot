@@ -1,6 +1,7 @@
 package com.pulsewave.app.core.wifi
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+@SuppressLint("MissingPermission")
 class AndroidWifiScanner(
     private val context: Context
 ) : WifiScanner {
