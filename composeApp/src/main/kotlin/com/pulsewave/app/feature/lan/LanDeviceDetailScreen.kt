@@ -1,17 +1,18 @@
 package com.pulsewave.app.feature.lan
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
-import com.pulsewave.app.core.model.lan.LanDevice
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import java.text.DateFormat
+import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,181 +24,73 @@ fun LanDeviceDetailScreen(
     modifier: Modifier = Modifier,
     viewModel: LanDeviceDetailViewModel = org.koin.compose.viewmodel.koinViewModel()
 ) {
-    LaunchedEffect(ip) {
-        viewModel.loadDevice(ip)
-    }
-    
-    val deviceState by viewModel.device.collectAsState()
-    val device = deviceState ?: LanDevice(
-        ipAddress = ip,
-        macAddress = null,
-        hostname = null,
-        vendor = null,
-        lastSeen = System.currentTimeMillis(),
-        isOnline = true,
-        isTrusted = false,
-        customName = null,
-        openPorts = emptyList()
-    )
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(device.hostname ?: device.ipAddress) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                }
-            )
+    val device by viewModel.device.collectAsState()
+    val scanTime by viewModel.portScanTime.collectAsState()
+    val error by viewModel.error.collectAsState()
+    var showRename by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf("") }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(ip) { viewModel.loadDevice(ip) }
+    DisposableEffect(lifecycle, ip) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.loadDevice(ip)
         }
-    ) { padding ->
-        Column(
-            modifier = modifier.padding(padding).fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Status Card
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = if (device.isOnline) 
-                        MaterialTheme.colorScheme.primaryContainer 
-                    else 
-                        MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(24.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            if (device.isOnline) "Online" else "Offline",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(device.ipAddress, style = MaterialTheme.typography.bodyLarge)
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+    Scaffold(topBar = {
+        TopAppBar(title = { Text(device?.displayName ?: ip) }, navigationIcon = {
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+        })
+    }) { padding ->
+        LazyColumn(modifier.padding(padding).fillMaxSize(), contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            val current = device
+            if (current == null) {
+                item { CircularProgressIndicator() }
+            } else {
+                item {
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(current.displayName, style = MaterialTheme.typography.headlineSmall)
+                            Text(if (current.lastSeen == 0L) "Device not in scan history" else if (current.isOnline)
+                                "Replied to last scan" else "Cached neighbor · reachability unconfirmed")
+                            Text("IP: ${current.ipAddress}")
+                            Text("MAC: ${current.macAddress ?: "Unavailable"}")
+                            current.vendor?.let { Text("Vendor: $it") }
+                            if (current.lastSeen > 0L) Text("Last discovered: ${DateFormat.getDateTimeInstance().format(Date(current.lastSeen))}")
+                        }
                     }
-                    Icon(
-                        if (device.isOnline) Icons.Default.CheckCircle else Icons.Default.Close,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = if (device.isOnline) 
-                            MaterialTheme.colorScheme.primary 
-                        else 
-                            MaterialTheme.colorScheme.error
-                    )
                 }
-            }
-
-            // Device Info
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Device Information", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(12.dp))
-                    InfoRow("IP Address", device.ipAddress)
-                    InfoRow("Hostname", device.hostname ?: "Unknown")
-                    InfoRow("Vendor", device.vendor ?: "Unknown")
-                    InfoRow("MAC Address", device.macAddress ?: "Unknown")
-                    InfoRow("Last Seen", "Just now")
+                item {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { onPing(ip) }, modifier = Modifier.weight(1f)) { Text("Ping") }
+                        FilledTonalButton(onClick = { onPortScan(ip) }, modifier = Modifier.weight(1f)) { Text("Scan ports") }
+                    }
                 }
-            }
-
-            // Actions
-            Text("Actions", style = MaterialTheme.typography.titleMedium)
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ActionCard(
-                    icon = Icons.Default.Search,
-                    title = "Ping",
-                    onClick = { onPing(device.ipAddress) },
-                    modifier = Modifier.weight(1f)
-                )
-                ActionCard(
-                    icon = Icons.Default.Lock,
-                    title = "Port Scan",
-                    onClick = { onPortScan(device.ipAddress) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ActionCard(
-                    icon = Icons.Default.Share,
-                    title = "Wake on LAN",
-                    onClick = {},
-                    modifier = Modifier.weight(1f)
-                )
-                ActionCard(
-                    icon = Icons.Default.Edit,
-                    title = "Rename",
-                    onClick = {},
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            // Open Ports (if any)
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Open Ports", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AssistChip(onClick = {}, label = { Text("22 (SSH)") })
-                        AssistChip(onClick = {}, label = { Text("80 (HTTP)") })
-                        AssistChip(onClick = {}, label = { Text("443 (HTTPS)") })
+                item {
+                    OutlinedButton(onClick = { name = current.customName.orEmpty(); showRename = true }, enabled = current.lastSeen > 0L) { Text("Rename device") }
+                    error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                }
+                item {
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Last common-port scan", style = MaterialTheme.typography.titleMedium)
+                            if (scanTime == null) Text("Not scanned. Run a port scan to check common TCP services.")
+                            else {
+                                Text(DateFormat.getDateTimeInstance().format(Date(scanTime!!)))
+                                Text(if (current.openPorts.isEmpty()) "No open ports found among the common ports tested."
+                                    else "Open TCP ports: ${current.openPorts.joinToString()}")
+                                Text("A failed connection can mean a closed, filtered, or unreachable port.", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
                     }
                 }
             }
         }
     }
-}
-
-@Composable
-fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
-fun ActionCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        onClick = onClick,
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(icon, contentDescription = null)
-            Spacer(Modifier.height(4.dp))
-            Text(title, style = MaterialTheme.typography.labelMedium)
-        }
-    }
+    if (showRename) AlertDialog(onDismissRequest = { showRename = false }, title = { Text("Rename device") },
+        text = { OutlinedTextField(value = name, onValueChange = { name = it.take(80) }, label = { Text("Device name") }, supportingText = { Text("Leave blank to use the discovered name.") }, singleLine = true) },
+        confirmButton = { TextButton(onClick = { viewModel.rename(name); showRename = false }) { Text("Save") } },
+        dismissButton = { TextButton(onClick = { showRename = false }) { Text("Cancel") } })
 }

@@ -13,7 +13,7 @@ import com.pulsewave.app.core.database.entities.*
         SurveyProjectEntity::class,
         SurveyPointEntity::class
     ],
-    version = 1
+    version = 2
 )
 abstract class PulseWaveDatabase : RoomDatabase() {
     abstract fun dao(): PulseWaveDao

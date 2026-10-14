@@ -1,623 +1,275 @@
 package com.pulsewave.app.feature.analyze
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import com.pulsewave.app.core.designsystem.PulseWaveAlpha
-import com.pulsewave.app.core.designsystem.PulseWaveShapes
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.pulsewave.app.core.designsystem.graphSeriesColors
+import com.pulsewave.app.core.designsystem.signalColors
+import com.pulsewave.app.core.wifi.SignalQuality
 import com.pulsewave.app.core.wifi.WifiNetwork
+import com.pulsewave.app.core.wifi.frequencyToChannel
+import com.pulsewave.app.core.wifi.occupiedFrequencySegments
 import kotlin.math.abs
-import kotlin.math.exp
+import kotlin.math.pow
 
-// Vibrant, distinct colors for different networks
-private val networkColors = listOf(
-    Color(0xFF4CAF50), // Green
-    Color(0xFF2196F3), // Blue
-    Color(0xFFF44336), // Red
-    Color(0xFFFF9800), // Orange
-    Color(0xFF9C27B0), // Purple
-    Color(0xFF00BCD4), // Cyan
-    Color(0xFFE91E63), // Pink
-    Color(0xFF3F51B5), // Indigo
-    Color(0xFFFFEB3B), // Yellow
-    Color(0xFF795548), // Brown
-)
+/** Plot range shared by both charts, matching the signal-quality scale. */
+internal const val ChartTopDbm = -25
+internal const val ChartBottomDbm = -95
 
+internal fun dbmToFraction(rssi: Float): Float =
+    ((rssi - ChartBottomDbm) / (ChartTopDbm - ChartBottomDbm)).coerceIn(0f, 1f)
+
+/**
+ * The same network gets the same color in the chart, its timeline, and the list. Colors are
+ * handed out in a stable order within what's on screen, so neighbors never share one.
+ */
+@Composable
+fun rememberNetworkColors(networks: List<WifiNetwork>, connectedBssid: String?): (String) -> Color {
+    val palette = graphSeriesColors()
+    val primary = MaterialTheme.colorScheme.primary
+    val ids = networks.map { it.bssid.lowercase() }.sorted()
+    return remember(palette, primary, connectedBssid, ids) {
+        val others = ids.filterNot { connectedBssid != null && it.equals(connectedBssid, ignoreCase = true) }
+        val assigned = others.withIndex().associate { (i, id) -> id to palette[i % palette.size] }
+        val lookup: (String) -> Color = { bssid ->
+            if (connectedBssid != null && bssid.equals(connectedBssid, ignoreCase = true)) primary
+            else assigned[bssid.lowercase()] ?: palette[(bssid.lowercase().hashCode() and Int.MAX_VALUE) % palette.size]
+        }
+        lookup
+    }
+}
+
+/**
+ * Each network is a hill exactly as wide as the spectrum it occupies and as tall as its
+ * signal. Names sit on the peaks; overlapping hills mean networks sharing airtime.
+ */
 @Composable
 fun ChannelGraph(
     networks: List<WifiNetwork>,
     selectedBand: FrequencyBand = FrequencyBand.BAND_2_4,
     selectedNetwork: WifiNetwork? = null,
-    showHeatmap: Boolean = false,
-    modifier: Modifier = Modifier.fillMaxSize(),
+    connectedBssid: String? = null,
+    modifier: Modifier = Modifier,
     onNetworkSelected: ((WifiNetwork?) -> Unit)? = null
 ) {
-    var touchPosition by remember { mutableStateOf<Offset?>(null) }
-    var isDragging by remember { mutableStateOf(false) }
-    
-    // Alive/Breathing Animation
-    val infiniteTransition = rememberInfiniteTransition(label = "breathing")
-    val breathScale by infiniteTransition.animateFloat(
-        initialValue = 0.98f,
-        targetValue = 1.02f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "breathScale"
-    )
-    
     val textMeasurer = rememberTextMeasurer()
-    val outlineColor = MaterialTheme.colorScheme.outlineVariant
-    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val surfaceColor = MaterialTheme.colorScheme.surface
-    
-    // Network color mapping for consistency (Stable Colors)
-    val networkColorMap = remember(networks) {
-        networks.associate { network -> 
-            // Deterministic color based on BSSID hash
-            val colorIndex = kotlin.math.abs(network.bssid.hashCode()) % networkColors.size
-            network.bssid to networkColors[colorIndex]
-        }
+    val colorFor = rememberNetworkColors(networks, connectedBssid)
+    val scheme = MaterialTheme.colorScheme
+    val zones = SignalQuality.entries.associateWith { signalColors(it).container }
+    val labelStyle = MaterialTheme.typography.labelSmall
+    val peakStyle = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+
+    // Hills rise once whenever the band or the set of networks changes; no idle looping.
+    val grow = remember { Animatable(0f) }
+    val growSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
+    LaunchedEffect(selectedBand, networks.size) {
+        grow.snapTo(0f)
+        grow.animateTo(1f, growSpec)
     }
 
-    Column(modifier = modifier) {
-        // Chart with crosshair
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            Canvas(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(networks) {
-                        detectTapGestures(
-                            onTap = { offset -> touchPosition = offset },
-                            onLongPress = { offset -> touchPosition = offset },
-                            onPress = { offset ->
-                                touchPosition = offset
-                                tryAwaitRelease()
-                                touchPosition = null
-                            }
-                        )
-                    }
-                    .pointerInput(networks) {
-                        detectDragGestures(
-                            onDragStart = { offset -> touchPosition = offset },
-                            onDrag = { change, _ -> touchPosition = change.position },
-                            onDragEnd = { touchPosition = null },
-                            onDragCancel = { touchPosition = null }
-                        )
-                    }
-            ) {
-                val leftPadding = 50.dp.toPx()
-                val bottomPadding = 40.dp.toPx()
-                val topPadding = 15.dp.toPx()
-                val rightPadding = 15.dp.toPx()
-                val graphWidth = size.width - leftPadding - rightPadding
-                val graphHeight = size.height - bottomPadding - topPadding
-                
-                // Draw Y-axis grid lines (dBm levels)
-                val yLevels = listOf(-30, -40, -50, -60, -70, -80, -90)
-                yLevels.forEach { dBm ->
-                    val yNorm = (dBm + 100f) / 80f
-                    val y = topPadding + graphHeight * (1 - yNorm)
-                    
-                    drawLine(
-                        color = outlineColor.copy(alpha = 0.3f),
-                        start = Offset(leftPadding, y),
-                        end = Offset(size.width - rightPadding, y),
-                        strokeWidth = 1.dp.toPx()
-                    )
-                    
-                    val label = "$dBm"
-                    val labelResult = textMeasurer.measure(
-                        label,
-                        TextStyle(fontSize = 10.sp, color = onSurfaceColor.copy(alpha = 0.6f))
-                    )
-                    drawText(
-                        textLayoutResult = labelResult,
-                        topLeft = Offset(16.dp.toPx(), y - labelResult.size.height / 2)
-                    )
+    val busiest = remember(networks) {
+        networks.groupBy { frequencyToChannel(it.frequency) }.maxByOrNull { it.value.size }
+    }
+    Canvas(
+        modifier
+            .semantics {
+                contentDescription = buildString {
+                    append("Channel graph, ${networks.size} networks.")
+                    busiest?.let { append(" Busiest channel ${it.key} with ${it.value.size}.") }
                 }
-                
-                // Draw X-axis
-                drawLine(
-                    color = outlineColor,
-                    start = Offset(leftPadding, size.height - bottomPadding),
-                    end = Offset(size.width - rightPadding, size.height - bottomPadding),
-                    strokeWidth = 2.dp.toPx()
-                )
-                
-                // Draw Y-axis
-                drawLine(
-                    color = outlineColor,
-                    start = Offset(leftPadding, topPadding),
-                    end = Offset(leftPadding, size.height - bottomPadding),
-                    strokeWidth = 2.dp.toPx()
-                )
-                
-                // X-axis channel labels
-                // For 2.4GHz: Show Channels 1-14
-                // For 5GHz/6GHz: Show spacing every few channels to avoid clutter
-                
-                val channelMarkers = mutableListOf<Pair<Int, Int>>() // Channel Number, Frequency
-                
-                if (selectedBand == FrequencyBand.BAND_2_4) {
-                     // 1-14
-                     listOf(
-                        1 to 2412, 2 to 2417, 3 to 2422, 4 to 2427, 5 to 2432,
-                        6 to 2437, 7 to 2442, 8 to 2447, 9 to 2452, 10 to 2457,
-                        11 to 2462, 12 to 2467, 13 to 2472, 14 to 2484
-                    ).forEach { channelMarkers.add(it) }
-                } else if (selectedBand == FrequencyBand.BAND_5) {
-                    // 5GHz channels (every 4th or 8th to save space)
-                    // Common channels: 36, 40, 44, 48, 52... 165
-                    val startCh = 36
-                    val endCh = 165
-                    val valid5G = listOf(36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 149, 153, 157, 161, 165)
-                    
-                    valid5G.forEachIndexed { i, ch ->
-                        // Show every 3rd label or if it's a key channel
-                        if (i % 3 == 0 || ch == 36 || ch == 149) {
-                            val freq = 5000 + ch * 5
-                            if (freq in 5150..5925) {
-                                channelMarkers.add(ch to freq)
-                            }
-                        }
-                    }
-                } else if (selectedBand == FrequencyBand.BAND_6) {
-                    // 6GHz channels (start at 1, go up to 233)
-                    // Freq = 5950 + 5 * channel_index
-                    // Showing labels every 32 channels roughly
-                    val startCh = 1
-                    val endCh = 233
-                    for (ch in startCh..endCh step 32) {
-                        val freq = 5950 + 5 * ch
-                        channelMarkers.add(ch to freq)
-                    }
+            }
+            .pointerInput(networks, selectedBand) {
+                detectTapGestures { tap ->
+                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this)
+                    onNetworkSelected?.invoke(networkAt(tap, networks, selectedBand, plot))
                 }
+            }
+    ) {
+        val plot = plotRect(size.width, size.height, this)
+        drawZones(plot, zones)
+        drawDbmAxis(plot, textMeasurer, labelStyle.copy(color = scheme.onSurfaceVariant))
+        drawChannelAxis(plot, selectedBand, textMeasurer, labelStyle, scheme.onSurfaceVariant, scheme.onSurface, scheme.outlineVariant)
 
-                channelMarkers.forEach { (ch, freq) ->
-                    val x = leftPadding + mapFreqToNormX(freq.toFloat(), selectedBand) * graphWidth
-                    
-                    // Vertical grid line for each channel
-                    drawLine(
-                        color = outlineColor.copy(alpha = 0.15f),
-                        start = Offset(x, topPadding),
-                        end = Offset(x, size.height - bottomPadding),
-                        strokeWidth = 1.dp.toPx()
-                    )
-                    
-                    // Channel label
-                    val label = "$ch"
-                    val labelResult = textMeasurer.measure(
-                        label,
-                        TextStyle(fontSize = 9.sp, color = onSurfaceColor.copy(alpha = 0.7f))
-                    )
-                    drawText(
-                        textLayoutResult = labelResult,
-                        topLeft = Offset(x - labelResult.size.width / 2, size.height - bottomPadding + 6.dp.toPx())
-                    )
-                }
-                
-                // "Channel" label
-                val chLabel = if (selectedBand == FrequencyBand.BAND_6) "Channel (6GHz)" else "Channel"
-                val chLabelResult = textMeasurer.measure(
-                    chLabel,
-                    TextStyle(fontSize = 11.sp, color = onSurfaceColor.copy(alpha = 0.5f), fontWeight = FontWeight.Medium)
-                )
-                
-                val legendY = size.height - 10.dp.toPx()
-                
-                drawText(
-                    textLayoutResult = chLabelResult,
-                    topLeft = Offset(
-                        leftPadding + graphWidth / 2 - chLabelResult.size.width / 2,
-                        legendY - chLabelResult.size.height
-                    )
-                )
-                
-                // Calculate congestion for each channel marker (Heatmap logic)
-                if (showHeatmap) {
-                    val channelCongestion = channelMarkers.map { (ch, freq) ->
-                        // Find networks within range of this channel (overlap)
-                        val impacting = networks.filter { abs(it.frequency - freq) <= 10 }
-                        // Heuristic: sum of signal strengths
-                        val congestion = impacting.sumOf { (it.rssi + 100).coerceAtLeast(0) }
-                        ch to (freq to congestion)
-                    }
-    
-                    // Draw Heatmap Bar at the bottom of the axis
-                    val barHeight = 4.dp.toPx()
-                    channelCongestion.forEach { (_, data) ->
-                        val (freq, score) = data
-                        val x = leftPadding + mapFreqToNormX(freq.toFloat(), selectedBand) * graphWidth
-                        
-                        val color = when {
-                            score < 40 -> Color(0xFF4CAF50).copy(alpha = 0.4f) // Healthy
-                            score < 120 -> Color(0xFFFFC107).copy(alpha = 0.4f) // Busy
-                            else -> Color(0xFFF44336).copy(alpha = 0.4f) // Congested
-                        }
-                        
-                        // Box width based on band spacing
-                        val boxWidth = if (selectedBand == FrequencyBand.BAND_2_4) {
-                            (graphWidth / 14) * 0.8f
-                        } else {
-                            (graphWidth / (channelMarkers.size.coerceAtLeast(1))) * 0.6f
-                        }
-    
-                        drawRect(
-                            color = color,
-                            topLeft = Offset(x - boxWidth / 2, size.height - bottomPadding - barHeight),
-                            size = androidx.compose.ui.geometry.Size(boxWidth, barHeight)
-                        )
-                    }
-                }
-                
-                // Draw networks (sorted by RSSI so stronger are on top)
-                // Draw networks (sorted by RSSI so stronger are on top)
-                val sortedNetworks = networks.sortedBy { it.rssi }
-                sortedNetworks.forEach { network ->
-                    val color = networkColorMap[network.bssid] ?: networkColors[0]
-                    val isSelected = selectedNetwork == network
-                    
-                    // Ghosting Logic: If a network is selected, fade out others to 0.1f.
-                    val alpha = if (selectedNetwork == null) 1f 
-                               else if (isSelected) 1f 
-                               else 0.1f
-                    
-                    drawNetworkCurve(
-                        network = network,
-                        color = color.copy(alpha = alpha),
-                        graphLeft = leftPadding,
-                        graphTop = topPadding,
-                        graphWidth = graphWidth,
-                        graphHeight = graphHeight,
-                        band = selectedBand,
-                        isSelected = isSelected,
-                        breathScale = breathScale
-                    )
-                }
-                
-                // Draw crosshair if touching
-                touchPosition?.let { pos ->
-                    if (pos.x >= leftPadding && pos.x <= size.width - rightPadding &&
-                        pos.y >= topPadding && pos.y <= size.height - bottomPadding) {
-                        
-                        // Vertical line
-                        drawLine(
-                            color = primaryColor,
-                            start = Offset(pos.x, topPadding),
-                            end = Offset(pos.x, size.height - bottomPadding),
-                            strokeWidth = 1.5.dp.toPx(),
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
-                        )
-                        
-                        // Horizontal line
-                        drawLine(
-                            color = primaryColor,
-                            start = Offset(leftPadding, pos.y),
-                            end = Offset(size.width - rightPadding, pos.y),
-                            strokeWidth = 1.5.dp.toPx(),
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
-                        )
-                        
-                        // Center dot
-                        drawCircle(color = primaryColor, radius = 6.dp.toPx(), center = pos)
-                        drawCircle(color = surfaceColor, radius = 4.dp.toPx(), center = pos)
-                        
-                        // Calculate values at touch
-                        val normX = (pos.x - leftPadding) / graphWidth
-                        val touchFreq = mapNormXToFreq(normX, selectedBand)
-                        val touchDbm = -100 + 80 * (1 - (pos.y - topPadding) / graphHeight)
-                        val channel = frequencyToChannel(touchFreq.toInt())
-                        
-                        // Tooltip
-                        val tooltipText = "Ch $channel • ${touchDbm.toInt()} dBm"
-                        val tooltipResult = textMeasurer.measure(
-                            tooltipText,
-                            TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold, color = surfaceColor)
-                        )
-                        
-                        val tooltipX = (pos.x - tooltipResult.size.width / 2).coerceIn(
-                            leftPadding, size.width - rightPadding - tooltipResult.size.width
-                        )
-                        val tooltipY = (pos.y - tooltipResult.size.height - 20.dp.toPx()).coerceAtLeast(topPadding)
-                        
-                        drawRoundRect(
-                            color = primaryColor,
-                            topLeft = Offset(tooltipX - 10.dp.toPx(), tooltipY - 6.dp.toPx()),
-                            size = androidx.compose.ui.geometry.Size(
-                                tooltipResult.size.width + 20.dp.toPx(),
-                                tooltipResult.size.height + 12.dp.toPx()
-                            ),
-                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(8.dp.toPx())
-                        )
-                        
-                        drawText(textLayoutResult = tooltipResult, topLeft = Offset(tooltipX, tooltipY))
-                        
-                        // Auto-select closest network
-                        val closestNetwork = findNetworkAtFrequency(networks, touchFreq)
-                        if (closestNetwork != null && closestNetwork != selectedNetwork) {
-                            onNetworkSelected?.invoke(closestNetwork)
-                        }
-                    }
-                }
-            }
-            
-            // Selected network info overlay
-            selectedNetwork?.let { network ->
-                val color = networkColorMap[network.bssid] ?: networkColors[0]
-                Surface(
-                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
-                    shape = PulseWaveShapes.small,
-                    color = color.copy(alpha = PulseWaveAlpha.emphasized + 0.08f)
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text(
-                            network.ssid.ifEmpty { "Hidden Network" },
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Text(
-                            "${network.rssi} dBm • Ch ${frequencyToChannel(network.frequency)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                    }
-                }
-            }
+        val dimOthers = selectedNetwork != null
+        // Weakest first so strong networks sit on top.
+        networks.sortedBy { it.rssi }.forEach { network ->
+            val isYou = connectedBssid != null && network.bssid.equals(connectedBssid, true)
+            val emphasized = network.bssid == selectedNetwork?.bssid || isYou
+            val alpha = if (dimOthers && network.bssid != selectedNetwork?.bssid) 0.25f else 1f
+            drawHills(network, colorFor(network.bssid).copy(alpha = alpha), plot, selectedBand, grow.value, emphasized)
         }
-        
-        // Legend - scrollable, full names
-        if (networks.isNotEmpty()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                networks.forEach { network ->
-                    val color = networkColorMap[network.bssid] ?: networkColors[0]
-                    val isSelected = selectedNetwork == network
-                    
-                    Surface(
-                        onClick = { 
-                            onNetworkSelected?.invoke(if (isSelected) null else network)
-                        },
-                        shape = PulseWaveShapes.extraSmall,
-                        color = if (isSelected) color.copy(alpha = PulseWaveAlpha.light) else Color.Transparent
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .background(color, PulseWaveShapes.extraSmall)
-                            )
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                network.ssid.ifEmpty { "Hidden" },
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
-                    }
-                }
-            }
+
+        // Labels: selected and connected first, then strongest, skipping any that would collide.
+        val placed = mutableListOf<Rect>()
+        val labelOrder = networks.sortedWith(
+            compareByDescending<WifiNetwork> { it.bssid == selectedNetwork?.bssid }
+                .thenByDescending { connectedBssid != null && it.bssid.equals(connectedBssid, true) }
+                .thenByDescending { it.rssi }
+        )
+        labelOrder.forEach { network ->
+            val isYou = connectedBssid != null && network.bssid.equals(connectedBssid, true)
+            if (dimOthers && network.bssid != selectedNetwork?.bssid && !isYou) return@forEach
+            val name = network.ssid.ifEmpty { "Hidden" }.let { if (it.length > 16) it.take(15) + "…" else it } +
+                if (isYou) " (you)" else ""
+            val layout = textMeasurer.measure(name, peakStyle.copy(color = colorFor(network.bssid)), maxLines = 1, overflow = TextOverflow.Clip)
+            val segment = occupiedFrequencySegments(network).first()
+            val x = plot.left + mapFreqToNormX(segment.centerMhz.toFloat(), selectedBand) * plot.width
+            val peakY = plot.bottom - plot.height * dbmToFraction(network.rssi.toFloat()) * grow.value
+            var rect = Rect(
+                Offset(
+                    (x - layout.size.width / 2f).coerceIn(plot.left, (plot.right - layout.size.width).coerceAtLeast(plot.left)),
+                    peakY - layout.size.height - 4.dp.toPx()
+                ),
+                Size(layout.size.width.toFloat(), layout.size.height.toFloat())
+            )
+            // Nudge up once if the spot is taken; otherwise the list below still names it.
+            if (placed.any { it.overlaps(rect) }) rect = rect.translate(0f, -rect.height - 2.dp.toPx())
+            if (placed.any { it.overlaps(rect) } || rect.top < 0f) return@forEach
+            placed += rect
+            drawRoundRect(
+                scheme.surfaceContainerLow.copy(alpha = 0.85f),
+                topLeft = rect.topLeft - Offset(4.dp.toPx(), 1.dp.toPx()),
+                size = Size(rect.width + 8.dp.toPx(), rect.height + 2.dp.toPx()),
+                cornerRadius = CornerRadius(6.dp.toPx())
+            )
+            drawText(layout, topLeft = rect.topLeft)
         }
     }
 }
 
-private fun frequencyToChannel(frequency: Int): Int {
-    return when {
-        frequency in 2400..2500 -> ((frequency - 2412) / 5) + 1
-        frequency in 5150..5350 -> ((frequency - 5180) / 5) + 36
-        frequency in 5470..5730 -> ((frequency - 5500) / 5) + 100
-        frequency in 5735..5900 -> ((frequency - 5745) / 5) + 149
-        frequency in 5925..7125 -> ((frequency - 5950) / 5) + 1
-        else -> 0
+private fun plotRect(width: Float, height: Float, density: Density): Rect = with(density) {
+    Rect(left = 40.dp.toPx(), top = 28.dp.toPx(), right = width - 12.dp.toPx(), bottom = height - 28.dp.toPx())
+}
+
+/** Faint bands for each signal level, so "weak" is visible without reading numbers. */
+internal fun DrawScope.drawZones(plot: Rect, zones: Map<SignalQuality, Color>) {
+    var upper = ChartTopDbm.toFloat()
+    SignalQuality.entries.forEach { quality ->
+        val lower = if (quality == SignalQuality.DeadZone) ChartBottomDbm.toFloat() else quality.minRssi.toFloat()
+        val top = plot.bottom - plot.height * dbmToFraction(upper)
+        val bottom = plot.bottom - plot.height * dbmToFraction(lower)
+        if (bottom > top) drawRect(zones.getValue(quality).copy(alpha = 0.35f), Offset(plot.left, top), Size(plot.width, bottom - top))
+        upper = lower
     }
 }
 
-private fun findNetworkAtFrequency(networks: List<WifiNetwork>, freq: Float): WifiNetwork? {
-    return networks.minByOrNull { network ->
-        val channelWidth = if (network.channelWidth > 0) network.channelWidth else 20
-        val distance = abs(network.frequency - freq)
-        if (distance <= channelWidth) distance else Float.MAX_VALUE
+internal fun DrawScope.drawDbmAxis(plot: Rect, measurer: TextMeasurer, style: TextStyle) {
+    listOf(-30, -50, -70, -90).forEach { dbm ->
+        val y = plot.bottom - plot.height * dbmToFraction(dbm.toFloat())
+        val layout = measurer.measure("$dbm", style)
+        drawText(layout, topLeft = Offset(plot.left - layout.size.width - 8.dp.toPx(), y - layout.size.height / 2f))
+    }
+    val unit = measurer.measure("dBm", style)
+    drawText(unit, topLeft = Offset(plot.left - unit.size.width - 8.dp.toPx(), plot.top - unit.size.height - 6.dp.toPx()))
+}
+
+private fun DrawScope.drawChannelAxis(
+    plot: Rect,
+    band: FrequencyBand,
+    measurer: TextMeasurer,
+    style: TextStyle,
+    quiet: Color,
+    strong: Color,
+    grid: Color
+) {
+    drawLine(grid, Offset(plot.left, plot.bottom), Offset(plot.right, plot.bottom), strokeWidth = 1.dp.toPx())
+    channelMarkers(band).forEach { (channel, freq) ->
+        val x = plot.left + mapFreqToNormX(freq.toFloat(), band) * plot.width
+        // 1, 6 and 11 are the only 2.4 GHz channels that don't overlap each other.
+        val key = band == FrequencyBand.BAND_2_4 && channel in setOf(1, 6, 11)
+        val layout = measurer.measure(
+            "$channel",
+            style.copy(color = if (key) strong else quiet, fontWeight = if (key) FontWeight.Bold else FontWeight.Normal)
+        )
+        drawText(layout, topLeft = Offset(x - layout.size.width / 2f, plot.bottom + 6.dp.toPx()))
     }
 }
 
-private fun DrawScope.drawNetworkCurve(
+private fun channelMarkers(band: FrequencyBand): List<Pair<Int, Int>> = when (band) {
+    FrequencyBand.BAND_2_4 -> (1..13).map { it to 2407 + it * 5 }
+    FrequencyBand.BAND_5 -> listOf(36, 52, 64, 100, 116, 132, 149, 165).map { it to 5000 + it * 5 }
+    FrequencyBand.BAND_6 -> listOf(1, 33, 65, 97, 129, 161, 193, 225).map { it to 5950 + it * 5 }
+}
+
+/** A flat-topped dome spanning exactly the occupied segment(s), like a channel's spectral mask. */
+private fun DrawScope.drawHills(
     network: WifiNetwork,
     color: Color,
-    graphLeft: Float,
-    graphTop: Float,
-    graphWidth: Float,
-    graphHeight: Float,
+    plot: Rect,
     band: FrequencyBand,
-    isSelected: Boolean,
-    breathScale: Float
+    grow: Float,
+    emphasized: Boolean
 ) {
-    val centerFreq = network.frequency.toFloat()
-    // NARROWER curves - half the channel width for tighter parabolas
-    val curveWidth = if (network.channelWidth > 0) network.channelWidth.toFloat() / 2f else 10f
-    val sigma = curveWidth / 2.5f
-
-    val path = Path()
-    val startFreq = centerFreq - curveWidth * 1.5f
-    val endFreq = centerFreq + curveWidth * 1.5f
-    val steps = 40
-    
-    var firstPoint = true
-    var maxX = Float.MIN_VALUE
-    
-    for (i in 0..steps) {
-        val currentFreq = startFreq + (endFreq - startFreq) * (i.toFloat() / steps)
-        
-        val xRel = currentFreq - centerFreq
-        val yNormal = exp(-(xRel * xRel) / (2 * sigma * sigma))
-        
-        val normX = mapFreqToNormX(currentFreq, band)
-        // Clip points outside valid range
-        if (normX < 0f || normX > 1f) continue
-        
-        val xPx = graphLeft + normX * graphWidth
-        
-        val rssi = network.rssi.coerceIn(-100, -20)
-        // Breathing Amplitude: Multiply base amplitude by breathScale
-        val amplitude = ((rssi + 100) / 80f) * breathScale
-        val yPx = graphTop + graphHeight * (1 - amplitude * yNormal)
-        
-        maxX = maxOf(maxX, xPx)
-        
-        if (firstPoint) {
-            path.moveTo(xPx, graphTop + graphHeight)
-            path.lineTo(xPx, yPx)
-            firstPoint = false
-        } else {
-            path.lineTo(xPx, yPx)
-        }
-    }
-    
-    path.lineTo(maxX, graphTop + graphHeight)
-    path.close()
-    
-    // Fill with Gradient
-    val fillAlpha = if (isSelected) 0.6f else 0.3f
-    val brush = Brush.verticalGradient(
-        colors = listOf(
-            color.copy(alpha = fillAlpha),
-            color.copy(alpha = 0.05f) // Fade to transparent-ish
-        ),
-        startY = graphTop,
-        endY = graphTop + graphHeight
-    )
-    drawPath(path, brush)
-    
-    // Stroke
-    val strokePath = Path()
-    firstPoint = true
-    for (i in 0..steps) {
-        val currentFreq = startFreq + (endFreq - startFreq) * (i.toFloat() / steps)
-        
-        val normX = mapFreqToNormX(currentFreq, band)
-        if (normX < 0f || normX > 1f) continue
-        
-        val xRel = currentFreq - centerFreq
-        val yNormal = exp(-(xRel * xRel) / (2 * sigma * sigma))
-        val xPx = graphLeft + normX * graphWidth
-        val rssi = network.rssi.coerceIn(-100, -20)
-        // Breathing Amplitude
-        val amplitude = ((rssi + 100) / 80f) * breathScale
-        val yPx = graphTop + graphHeight * (1 - amplitude * yNormal)
-        
-        if (firstPoint) {
-            strokePath.moveTo(xPx, yPx)
-            firstPoint = false
-        } else {
-            strokePath.lineTo(xPx, yPx)
-        }
-    }
-    
-    drawPath(
-        strokePath, 
-        color, 
-        style = Stroke(width = if (isSelected) 4.dp.toPx() else 2.5.dp.toPx())
-    )
-}
-
-// Smart frequency mapping that eliminates gaps
-// 2.4GHz: Uses actual channel frequencies (2412-2484) with minimal padding
-// 5GHz: Compresses the DFS gap (5350-5470) to reduce visual jump
-private fun mapFreqToNormX(freq: Float, band: FrequencyBand): Float {
-    return when (band) {
-        FrequencyBand.BAND_2_4 -> {
-            // "Uniform Spacing" Logic:
-            // Physically, Ch 13 is 2472MHz and Ch 14 is 2484MHz (12MHz gap).
-            // Visually, we want them to look like 5MHz apart (standard spacing).
-            // We map frequencies > 2472 to be shifted left by 7MHz (12 - 5).
-            
-            // Defines the visual range. 
-            // Start: 2407 (Ch 1 - 5MHz)
-            // End: 2484 (Ch 14) - 7 = 2477 + 5MHz padding = 2482.
-            val startF = 2407f
-            val endF = 2482f
-            
-            val visualFreq = if (freq > 2472f) freq - 7f else freq
-            (visualFreq - startF) / (endF - startF)
-        }
-        FrequencyBand.BAND_5 -> {
-            // 5GHz has a gap from 5350 (ch64) to 5470 (ch100)
-            // We compress this gap to make the chart more readable
-            when {
-                freq <= 5350f -> {
-                    // UNII-1 & UNII-2A: 5150-5350 → 0.0 to 0.4
-                    (freq - 5150f) / (5350f - 5150f) * 0.4f
-                }
-                freq >= 5470f -> {
-                    // UNII-2C & UNII-3: 5470-5850 → 0.45 to 1.0
-                    0.45f + ((freq - 5470f) / (5850f - 5470f) * 0.55f)
-                }
-                else -> {
-                    // In the gap, interpolate
-                    0.4f + ((freq - 5350f) / (5470f - 5350f) * 0.05f)
-                }
+    val peak = plot.height * dbmToFraction(network.rssi.toFloat()) * grow
+    occupiedFrequencySegments(network).forEach { segment ->
+        val left = plot.left + mapFreqToNormX(segment.lowerMhz.toFloat(), band).coerceIn(0f, 1f) * plot.width
+        val right = plot.left + mapFreqToNormX(segment.upperMhz.toFloat(), band).coerceIn(0f, 1f) * plot.width
+        if (right - left < 1f) return@forEach
+        val outline = Path().apply {
+            moveTo(left, plot.bottom)
+            val steps = 32
+            for (i in 0..steps) {
+                val t = i / steps.toFloat()
+                val shape = 1f - abs(2 * t - 1).toDouble().pow(3.0).toFloat()
+                lineTo(left + (right - left) * t, plot.bottom - peak * shape)
             }
+            lineTo(right, plot.bottom)
         }
-        FrequencyBand.BAND_6 -> (freq - 5925f) / (7125f - 5925f)
+        drawPath(outline, color.copy(alpha = color.alpha * if (emphasized) 0.32f else 0.16f))
+        drawPath(outline, color, style = Stroke(width = (if (emphasized) 3.5f else 2f).dp.toPx(), cap = StrokeCap.Round))
     }
 }
 
-private fun mapNormXToFreq(normX: Float, band: FrequencyBand): Float {
-    return when (band) {
-        FrequencyBand.BAND_2_4 -> {
-            val startF = 2407f
-            val endF = 2482f
-            val visualFreq = startF + normX * (endF - startF)
-            
-            // Inverse the shift: if visualFreq > 2472, add 7 back
-            if (visualFreq > 2472f) visualFreq + 7f else visualFreq
+/** The tallest hill under the finger wins; tapping empty space clears the selection. */
+private fun networkAt(tap: Offset, networks: List<WifiNetwork>, band: FrequencyBand, plot: Rect): WifiNetwork? {
+    if (!plot.inflate(24f).contains(tap)) return null
+    return networks.filter { network ->
+        occupiedFrequencySegments(network).any { segment ->
+            val left = plot.left + mapFreqToNormX(segment.lowerMhz.toFloat(), band) * plot.width
+            val right = plot.left + mapFreqToNormX(segment.upperMhz.toFloat(), band) * plot.width
+            tap.x in left..right
         }
-        FrequencyBand.BAND_5 -> {
-            when {
-                normX <= 0.4f -> 5150f + (normX / 0.4f) * (5350f - 5150f)
-                normX >= 0.45f -> 5470f + ((normX - 0.45f) / 0.55f) * (5850f - 5470f)
-                else -> 5350f + ((normX - 0.4f) / 0.05f) * (5470f - 5350f)
-            }
-        }
-        FrequencyBand.BAND_6 -> 5925f + normX * (7125f - 5925f)
+    }.filter { tap.y >= plot.bottom - plot.height * dbmToFraction(it.rssi.toFloat()) - 48f }
+        .maxByOrNull { it.rssi }
+}
+
+// 2.4 GHz uses uniform spacing so channel 14 doesn't leave a gap.
+// 5 GHz compresses the 5350-5470 MHz gap where no channels exist.
+internal fun mapFreqToNormX(freq: Float, band: FrequencyBand): Float = when (band) {
+    FrequencyBand.BAND_2_4 -> {
+        // Channel 14 (Japan only) is folded next to 13 instead of widening the axis.
+        val visual = if (freq > 2472f) freq - 7f else freq
+        (visual - 2400f) / (2484f - 2400f)
     }
+    FrequencyBand.BAND_5 -> when {
+        freq <= 5350f -> (freq - 5150f) / (5350f - 5150f) * 0.4f
+        freq >= 5470f -> 0.45f + (freq - 5470f) / (5850f - 5470f) * 0.55f
+        else -> 0.4f + (freq - 5350f) / (5470f - 5350f) * 0.05f
+    }
+    FrequencyBand.BAND_6 -> (freq - 5925f) / (7125f - 5925f)
 }

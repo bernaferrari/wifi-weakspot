@@ -3,6 +3,7 @@ package com.pulsewave.app.feature.tools
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pulsewave.app.core.tools.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,16 +23,30 @@ class ToolsViewModel(
     private var activeJob: Job? = null
 
     fun startTool(toolType: ToolType, target: String) {
-        if (target.isBlank()) return
-        
-        activeJob?.cancel()
-        _uiState.value = ToolsUiState.Running(toolType, target)
+        val normalized = target.trim()
+        if (normalized.isBlank()) return
+        if (normalized.startsWith("-") || normalized.any { it.isWhitespace() } || normalized.contains("://") || normalized.contains("/")) {
+            _uiState.value = ToolsUiState.Error("Enter a hostname or IP address without a URL path or spaces.")
+            return
+        }
+
+        val previous = activeJob
+        previous?.cancel()
+        if (previous != null) portScanner.cancel()
+        _uiState.value = ToolsUiState.Running(toolType, normalized)
 
         activeJob = viewModelScope.launch {
-            when (toolType) {
-                ToolType.PING -> runPing(target)
-                ToolType.DNS -> runDns(target)
-                ToolType.PORT_SCAN -> runPortScan(target)
+            try {
+                previous?.join()
+                when (toolType) {
+                    ToolType.PING -> runPing(normalized)
+                    ToolType.DNS -> runDns(normalized)
+                    ToolType.PORT_SCAN -> runPortScan(normalized)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _uiState.value = ToolsUiState.Error(e.message ?: "The diagnostic could not complete.")
             }
         }
     }
@@ -50,7 +65,7 @@ class ToolsViewModel(
             }
         }
         collectorJob.join() // Wait for flow to complete
-        
+
         // Save to DB
         dao.insertToolResult(
             com.pulsewave.app.core.database.entities.ToolResultEntity(
@@ -70,8 +85,7 @@ class ToolsViewModel(
         } else {
             listOf("Error: ${result.error}")
         }
-        _uiState.value = ToolsUiState.DnsResult(query, lines)
-        
+
         // Save to DB
         dao.insertToolResult(
             com.pulsewave.app.core.database.entities.ToolResultEntity(
@@ -82,23 +96,24 @@ class ToolsViewModel(
                 isSuccess = result.isSuccess
             )
         )
+        _uiState.value = ToolsUiState.DnsResult(query, lines)
     }
 
     private suspend fun runPortScan(host: String) {
         val result = portScanner.scanCommonPorts(host)
-        val pairs = result.ports.map { it.port to (it.service ?: "unknown") }
-        _uiState.value = ToolsUiState.PortScanResult(host, pairs)
-        
+        val pairs = result.ports.filter { it.status == com.pulsewave.app.core.model.tools.PortStatus.OPEN }.map { it.port to (it.service ?: "unknown") }
+
         // Save to DB
         dao.insertToolResult(
             com.pulsewave.app.core.database.entities.ToolResultEntity(
                 timestamp = System.currentTimeMillis(),
                 toolType = "PORT_SCAN",
                 target = host,
-                resultJson = pairs.joinToString(",") { "${it.first}:${it.second}" },
+                resultJson = encodePortScan(pairs),
                 isSuccess = true
             )
         )
+        _uiState.value = ToolsUiState.PortScanResult(host, pairs)
     }
 
     fun stopTool() {
@@ -109,6 +124,7 @@ class ToolsViewModel(
 
     fun reset() {
         activeJob?.cancel()
+        portScanner.cancel()
         _uiState.value = ToolsUiState.Home
     }
 }

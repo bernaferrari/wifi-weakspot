@@ -32,12 +32,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.pulsewave.app.core.designsystem.PulseWaveAlpha
+import com.pulsewave.app.core.designsystem.LocalReduceMotion
+import com.pulsewave.app.core.designsystem.animateAccessibleFloat
 import com.pulsewave.app.core.designsystem.PulseWaveShapes
 import com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback
 import androidx.compose.material3.CircularWavyProgressIndicator
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Devices
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Speed
+import com.pulsewave.app.core.designsystem.component.ShapeIcon
 
 data class Tool(
     val id: String,
@@ -56,35 +64,51 @@ sealed interface ToolsUiState {
     data class PingResult(val target: String, val results: List<String>) : ToolsUiState
     data class DnsResult(val query: String, val records: List<String>) : ToolsUiState
     data class PortScanResult(val host: String, val ports: List<Pair<Int, String>>) : ToolsUiState
+    data class Error(val message: String) : ToolsUiState
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ToolsScreen(
     modifier: Modifier = Modifier,
-    viewModel: ToolsViewModel = koinViewModel()
+    viewModel: ToolsViewModel = koinViewModel(),
+    initialTarget: String = "",
+    initialTool: ToolType? = null,
+    onOpenSpeedTest: () -> Unit = {},
+    onOpenDevices: () -> Unit = {},
+    onOpenHistory: () -> Unit = {},
+    /** Set when opened from a device; hides the hub and shows a back arrow. */
+    onBack: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val haptics = rememberPulseWaveHapticFeedback()
+    val reduceMotion = LocalReduceMotion.current
 
     BackHandler(enabled = uiState !is ToolsUiState.Home) {
         viewModel.reset()
     }
 
-    var inputText by remember { mutableStateOf("") }
+    var inputText by remember(initialTarget) { mutableStateOf(initialTarget) }
+    LaunchedEffect(initialTarget, initialTool) {
+        if (initialTarget.isNotBlank()) viewModel.reset()
+    }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     val tools = listOf(
         Tool("ping", "Ping", Icons.Outlined.Speed, "Check latency"),
-        Tool("dns", "DNS", Icons.Outlined.Dns, "Lookup records"),
+        Tool("dns", "DNS", Icons.Outlined.Dns, "IPv4 addresses"),
         Tool("portscan", "Ports", Icons.Outlined.Security, "Scan open ports"),
     )
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
-                title = { Text("Tools") },
+            MediumFlexibleTopAppBar(
+                title = { Text(if (onBack != null) "Diagnose" else "Tools") },
+                subtitle = { Text(if (onBack != null) "Ping and check ports" else "Test speed, find devices, diagnose") },
+                navigationIcon = {
+                    if (onBack != null) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                },
                 scrollBehavior = scrollBehavior
             )
         }
@@ -94,6 +118,7 @@ fun ToolsScreen(
             modifier = Modifier.padding(padding).fillMaxSize(),
             transitionSpec = {
                 when {
+                    reduceMotion -> fadeIn(snap()) togetherWith fadeOut(snap())
                     // Home -> Running: slide up
                     initialState is ToolsUiState.Home && targetState is ToolsUiState.Running -> {
                         (slideInVertically { it / 4 } + fadeIn(tween(300))) togetherWith
@@ -121,7 +146,12 @@ fun ToolsScreen(
                     ToolsHomeContent(
                         tools = tools,
                         inputText = inputText,
+                        initialTool = initialTool,
                         onInputChange = { inputText = it },
+                        showHub = onBack == null,
+                        onOpenSpeedTest = onOpenSpeedTest,
+                        onOpenDevices = onOpenDevices,
+                        onOpenHistory = onOpenHistory,
                         onToolSelect = { tool ->
                             val type = when (tool.id) {
                                 "ping" -> ToolType.PING
@@ -140,9 +170,9 @@ fun ToolsScreen(
                     RunningToolContent(
                         tool = state.tool,
                         target = state.target,
-                        onCancel = { 
+                        onCancel = {
                             haptics.light()
-                            viewModel.stopTool() 
+                            viewModel.stopTool()
                         }
                     )
                 }
@@ -151,9 +181,9 @@ fun ToolsScreen(
                         title = "Ping",
                         target = state.target,
                         results = state.results,
-                        onBack = { 
+                        onBack = {
                             haptics.light()
-                            viewModel.reset() 
+                            viewModel.reset()
                         }
                     )
                 }
@@ -162,19 +192,26 @@ fun ToolsScreen(
                         title = "DNS",
                         target = state.query,
                         results = state.records,
-                        onBack = { 
+                        onBack = {
                             haptics.light()
-                            viewModel.reset() 
+                            viewModel.reset()
                         }
                     )
+                }
+                is ToolsUiState.Error -> {
+                    Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text("Diagnostic failed", style = MaterialTheme.typography.headlineSmall)
+                        Text(state.message, color = MaterialTheme.colorScheme.error)
+                        Button(onClick = { viewModel.reset() }) { Text("Try again") }
+                    }
                 }
                 is ToolsUiState.PortScanResult -> {
                     PortScanResultContent(
                         host = state.host,
                         ports = state.ports,
-                        onBack = { 
+                        onBack = {
                             haptics.light()
-                            viewModel.reset() 
+                            viewModel.reset()
                         }
                     )
                 }
@@ -183,25 +220,58 @@ fun ToolsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ToolsHomeContent(
     tools: List<Tool>,
     inputText: String,
     onInputChange: (String) -> Unit,
     onToolSelect: (Tool) -> Unit,
+    initialTool: ToolType? = null,
+    onOpenSpeedTest: () -> Unit = {},
+    onOpenDevices: () -> Unit = {},
+    onOpenHistory: () -> Unit = {},
+    showHub: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val inputFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
     val hasInput = inputText.isNotBlank()
     val haptics = rememberPulseWaveHapticFeedback()
-    
+
     Column(
-        modifier = modifier.padding(16.dp),
+        modifier = modifier
+            .verticalScroll(androidx.compose.foundation.rememberScrollState())
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        val scheme = MaterialTheme.colorScheme
+        val hubItems = listOf(
+            HubItem("Wi-Fi speed", "Phone to router: speed and response time", Icons.Rounded.Speed, MaterialShapes.Sunny, scheme.primaryContainer, scheme.onPrimaryContainer, onOpenSpeedTest),
+            HubItem("Devices", "Everything connected to your network", Icons.Rounded.Devices, MaterialShapes.Clover8Leaf, scheme.tertiaryContainer, scheme.onTertiaryContainer, onOpenDevices),
+            HubItem("History", "Past speed tests, scans, and tools", Icons.Rounded.History, MaterialShapes.Puffy, scheme.secondaryContainer, scheme.onSecondaryContainer, onOpenHistory)
+        )
+        if (showHub) Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+            hubItems.forEachIndexed { index, item ->
+                SegmentedListItem(
+                    onClick = { haptics.click(); item.onClick() },
+                    shapes = ListItemDefaults.segmentedShapes(index = index, count = hubItems.size),
+                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    leadingContent = { ShapeIcon(item.icon, item.shape, item.container, item.content) },
+                    supportingContent = { Text(item.subtitle) },
+                    trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) }
+                ) { Text(item.title, style = MaterialTheme.typography.titleMedium) }
+            }
+        }
+
+        if (showHub) Text(
+            "Diagnose a host",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(start = 4.dp, top = 8.dp)
+        )
         OutlinedTextField(
             value = inputText,
             onValueChange = onInputChange,
+            label = { Text("Hostname or IP address") },
             placeholder = { Text("google.com or 8.8.8.8") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -214,9 +284,9 @@ fun ToolsHomeContent(
             ),
             leadingIcon = {
                 Icon(
-                    Icons.Default.Language, 
+                    Icons.Default.Language,
                     contentDescription = null,
-                    tint = if (hasInput) MaterialTheme.colorScheme.primary 
+                    tint = if (hasInput) MaterialTheme.colorScheme.primary
                            else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
@@ -235,14 +305,14 @@ fun ToolsHomeContent(
         ) {
             listOf("1.1.1.1", "8.8.8.8", "google.com").forEach { target ->
                 AssistChip(
-                    onClick = { 
+                    onClick = {
                         haptics.light()
-                        onInputChange(target) 
+                        onInputChange(target)
                     },
                     label = { Text(target, style = MaterialTheme.typography.labelMedium) },
                     colors = AssistChipDefaults.assistChipColors(
-                        containerColor = if (inputText == target) 
-                            MaterialTheme.colorScheme.primaryContainer 
+                        containerColor = if (inputText == target)
+                            MaterialTheme.colorScheme.primaryContainer
                         else MaterialTheme.colorScheme.surfaceContainerHigh
                     ),
                     border = null
@@ -250,6 +320,15 @@ fun ToolsHomeContent(
             }
         }
 
+        initialTool?.let { type ->
+            val toolId = when (type) { ToolType.PING -> "ping"; ToolType.DNS -> "dns"; ToolType.PORT_SCAN -> "portscan" }
+            tools.find { it.id == toolId }?.let { requested ->
+                FilledTonalButton(onClick = { onToolSelect(requested) }, enabled = hasInput, modifier = Modifier.fillMaxWidth()) {
+                    Text("Run ${requested.name} on $inputText")
+                }
+            }
+        }
+        Text("DNS uses the system resolver for IPv4 addresses. Ports checks common TCP services.", style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(8.dp))
 
         Row(
@@ -265,30 +344,28 @@ fun ToolsHomeContent(
                 )
             }
         }
-        
+
         if (!hasInput) {
-            Spacer(Modifier.weight(1f))
-            Column(
+            Text(
+                "Enter a website or IP address, then pick a check.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    Icons.Outlined.TouchApp,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.outlineVariant
-                )
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    "Enter a target above",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(Modifier.weight(1f))
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
+
+private data class HubItem(
+    val title: String,
+    val subtitle: String,
+    val icon: ImageVector,
+    val shape: androidx.graphics.shapes.RoundedPolygon,
+    val container: androidx.compose.ui.graphics.Color,
+    val content: androidx.compose.ui.graphics.Color,
+    val onClick: () -> Unit
+)
 
 @Composable
 fun ToolButton(
@@ -299,18 +376,18 @@ fun ToolButton(
 ) {
     val scale by animateFloatAsState(
         targetValue = if (enabled) 1f else 0.95f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
         label = "scale"
     )
-    
+
     Card(
         onClick = onClick,
         enabled = enabled,
         shape = PulseWaveShapes.extraLarge,
         colors = CardDefaults.cardColors(
-            containerColor = if (enabled) 
+            containerColor = if (enabled)
                 MaterialTheme.colorScheme.primaryContainer
-            else 
+            else
                 MaterialTheme.colorScheme.surfaceContainerLow,
             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
@@ -327,9 +404,9 @@ fun ToolButton(
                 tool.icon,
                 contentDescription = null,
                 modifier = Modifier.size(28.dp),
-                tint = if (enabled) 
+                tint = if (enabled)
                     MaterialTheme.colorScheme.onPrimaryContainer
-                else 
+                else
                     MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = PulseWaveAlpha.medium)
             )
             Spacer(Modifier.height(8.dp))
@@ -337,9 +414,9 @@ fun ToolButton(
                 tool.name,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = if (enabled) 
+                color = if (enabled)
                     MaterialTheme.colorScheme.onPrimaryContainer
-                else 
+                else
                     MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = PulseWaveAlpha.medium)
             )
         }
@@ -355,7 +432,7 @@ fun RunningToolContent(
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "running")
-    val pulse by infiniteTransition.animateFloat(
+    val pulse by infiniteTransition.animateAccessibleFloat(
         initialValue = 0.9f,
         targetValue = 1.1f,
         animationSpec = infiniteRepeatable(
@@ -381,25 +458,25 @@ fun RunningToolContent(
                 )
             }
         }
-        
+
         Spacer(Modifier.height(32.dp))
-        
+
         Text(
             tool.name,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
-        
+
         Spacer(Modifier.height(8.dp))
-        
+
         Text(
             target,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary
         )
-        
+
         Spacer(Modifier.height(48.dp))
-        
+
         TextButton(
             onClick = onCancel,
             colors = ButtonDefaults.textButtonColors(
@@ -454,23 +531,18 @@ fun ResultContent(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 itemsIndexed(results) { index, line ->
-                    val alpha = remember { Animatable(0f) }
-                    LaunchedEffect(Unit) {
-                        kotlinx.coroutines.delay(index * 30L)
-                        alpha.animateTo(1f, tween(200))
-                    }
                     Text(
                         line,
                         style = MaterialTheme.typography.bodySmall,
                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        modifier = Modifier.graphicsLayer { this.alpha = alpha.value }
+                        modifier = Modifier
                     )
                 }
             }
         }
 
         Spacer(Modifier.height(16.dp))
-        
+
         Button(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -528,26 +600,16 @@ fun PortScanResultContent(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.weight(1f)
         ) {
+            if (ports.isEmpty()) {
+                item { Text("No open common TCP ports found. Ports may be closed, filtered, or the target may be unreachable.") }
+            }
             itemsIndexed(ports) { index, (port, service) ->
-                val alpha = remember { Animatable(0f) }
-                val offset = remember { Animatable(20f) }
-                LaunchedEffect(Unit) {
-                    kotlinx.coroutines.delay(index * 50L)
-                    coroutineScope {
-                        launch { alpha.animateTo(1f, tween(200)) }
-                    }
-                    offset.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
-                }
-                
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                     ),
                     shape = PulseWaveShapes.medium,
-                    modifier = Modifier.graphicsLayer {
-                        this.alpha = alpha.value
-                        translationY = offset.value
-                    }
+                    modifier = Modifier
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -577,7 +639,7 @@ fun PortScanResultContent(
                                     style = MaterialTheme.typography.titleMedium
                                 )
                                 Text(
-                                    service,
+                                    "Typical service: $service",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -589,7 +651,7 @@ fun PortScanResultContent(
         }
 
         Spacer(Modifier.height(16.dp))
-        
+
         Button(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth().height(52.dp),

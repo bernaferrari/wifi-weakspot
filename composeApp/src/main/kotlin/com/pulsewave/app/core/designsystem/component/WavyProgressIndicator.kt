@@ -1,5 +1,6 @@
 package com.pulsewave.app.core.designsystem.component
 
+import com.pulsewave.app.core.designsystem.animateAccessibleFloat
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.height
@@ -27,7 +28,7 @@ fun LinearWavyProgressIndicator(
     progress: () -> Float // 0.0 to 1.0
 ) {
     val infiniteTransition = rememberInfiniteTransition()
-    val phase by infiniteTransition.animateFloat(
+    val phase by infiniteTransition.animateAccessibleFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
@@ -41,7 +42,7 @@ fun LinearWavyProgressIndicator(
         val midHeight = size.height / 2
         val waveLen = wavelength.toPx()
         val amp = amplitude.toPx()
-        
+
         // Draw Track
         val progressVal = progress().coerceIn(0f, 1f)
         val activeWidth = width * progressVal
@@ -66,7 +67,7 @@ fun LinearWavyProgressIndicator(
             color = trackColor,
             style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
         )
-        
+
         // Draw Progress
         if (progressVal > 0) {
              drawPath(

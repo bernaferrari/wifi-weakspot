@@ -6,6 +6,13 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.pulsewave.app.core.tools.decodePortScan
 import androidx.compose.foundation.shape.CircleShape
 import kotlinx.coroutines.launch
 import com.pulsewave.app.core.designsystem.PulseWaveShapes
@@ -33,7 +40,9 @@ data class HistoryItem(
     val type: String,
     val title: String,
     val subtitle: String,
-    val timestamp: String
+    val timestamp: String,
+    val timestampMillis: Long,
+    val details: String = ""
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,49 +52,72 @@ fun HistoryScreen(
     dao: PulseWaveDao = org.koin.compose.koinInject(),
     onBack: (() -> Unit)? = null
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("WiFi", "LAN", "Tools")
+    var selectedTab by rememberSaveable { mutableStateOf(0) }
+    var selectedItem by remember { mutableStateOf<HistoryItem?>(null) }
+    val tabs = listOf("Wi-Fi", "LAN", "Tools", "Speed")
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     
     val wifiHistory by remember(dao) {
         dao.getRecentWifiScans().map { scans -> 
             scans.map { 
-                HistoryItem(it.id, "WiFi", it.ssid.ifBlank { "Hidden" }, "${it.bssid} • ${it.rssi}dBm", formatDate(it.timestamp))
+                HistoryItem(it.id, "WiFi", it.ssid.ifBlank { "Hidden" }, "${it.bssid} · ${it.rssi} dBm", formatDate(it.timestamp), it.timestamp, "Network: ${it.ssid.ifBlank { "Hidden" }}\nAccess point: ${it.bssid}\nObserved: ${formatDate(it.timestamp)}\nSignal: ${it.rssi} dBm\nFrequency: ${it.frequency} MHz\nWidth: ${it.channelWidth} MHz\nSecurity: ${it.security}")
             } 
         }
-    }.collectAsState(initial = emptyList())
+    }.collectAsStateWithLifecycle(initialValue = emptyList())
         
     val lanHistory by remember(dao) {
         dao.getAllLanDevices().map { devices ->
             devices.map {
-                HistoryItem(it.ipAddress.hashCode().toLong(), "LAN", it.hostname ?: it.ipAddress, it.macAddress ?: "Unknown MAC", formatDate(it.lastSeen))
+                HistoryItem(it.ipAddress.hashCode().toLong(), "LAN", it.customName ?: it.hostname ?: it.ipAddress, it.ipAddress, formatDate(it.lastSeen), it.lastSeen, "Address: ${it.ipAddress}\nName: ${it.customName ?: it.hostname ?: "Unknown"}\nMAC: ${it.macAddress ?: "Unavailable"}\nVendor: ${it.vendor ?: "Unknown"}\nObserved: ${formatDate(it.lastSeen)}\nReachability at last scan: ${if (it.isOnline) "Replied" else "Unconfirmed"}")
             }
         }
-    }.collectAsState(initial = emptyList())
+    }.collectAsStateWithLifecycle(initialValue = emptyList())
         
     val toolHistory by remember(dao) {
         dao.getToolHistory().map { results ->
             results.map {
-                HistoryItem(it.id, "Tools", "${it.toolType} ${it.target}", if(it.isSuccess) "Success" else "Failed", formatDate(it.timestamp))
+                HistoryItem(it.id, "Tools", "${it.toolType} ${it.target}", if(it.isSuccess) "Completed · Tap to inspect" else "Failed · Tap to inspect", formatDate(it.timestamp), it.timestamp, if (it.toolType == "PORT_SCAN") decodePortScan(it.resultJson).joinToString("\n") { port -> "TCP ${port.first}: ${port.second}" }.ifEmpty { "No open ports found among the tested common TCP ports." } else it.resultJson)
             }
         }
-    }.collectAsState(initial = emptyList())
+    }.collectAsStateWithLifecycle(initialValue = emptyList())
 
-    val combinedHistory = remember(selectedTab, wifiHistory, lanHistory, toolHistory) {
+    val speedHistory by remember(dao) {
+        dao.getSpeedTestHistory().map { results ->
+            results.map {
+                val upload = if (it.uploadMbps < 0f) "Not measured" else "%.1f Mbps".format(it.uploadMbps)
+                val prefix = com.pulsewave.app.feature.linktest.LinkTestViewModel.ROUTER_PREFIX
+                if (it.serverName.startsWith(prefix)) {
+                    val router = it.serverName.removePrefix(prefix)
+                    val response = if (it.pingMs < 0f) "No reply" else "%.1f ms".format(it.pingMs)
+                    HistoryItem(it.id, "Speed",
+                        if (it.uploadMbps < 0f) "Wi-Fi test · $response" else "%.0f Mbps to router".format(it.uploadMbps),
+                        "Router $router · $response", formatDate(it.timestamp), it.timestamp,
+                        "Wi-Fi speed test (phone to router)\nRouter: $router\nObserved: ${formatDate(it.timestamp)}\nUpload to router: $upload\nResponse time: $response\nSteadiness: %.1f ms".format(it.jitterMs))
+                } else {
+                    val download = "%.1f".format(it.downloadMbps)
+                    HistoryItem(it.id, "Speed", "${download} Mbps download", it.serverName, formatDate(it.timestamp), it.timestamp,
+                        "Server: ${it.serverName}\nObserved: ${formatDate(it.timestamp)}\nDownload: $download Mbps\nUpload: $upload\nHTTP latency: %.1f ms\nHTTP latency variation: %.1f ms".format(it.pingMs, it.jitterMs))
+                }
+            }
+        }
+    }.collectAsStateWithLifecycle(initialValue = emptyList())
+
+    val combinedHistory = remember(selectedTab, wifiHistory, lanHistory, toolHistory, speedHistory) {
         val all = when (selectedTab) {
             0 -> wifiHistory
             1 -> lanHistory
             2 -> toolHistory
+            3 -> speedHistory
             else -> emptyList()
         }
-        all.sortedByDescending { it.timestamp }
+        all.sortedByDescending { it.timestampMillis }
     }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
-                title = { Text("History & Logs") },
+            LargeFlexibleTopAppBar(
+                title = { Text("History") },
                 scrollBehavior = scrollBehavior,
                 navigationIcon = {
                     if (onBack != null) {
@@ -94,7 +126,7 @@ fun HistoryScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = MaterialTheme.colorScheme.background
                 )
@@ -135,34 +167,27 @@ fun HistoryScreen(
                     }
                 } else {
                     itemsIndexed(combinedHistory, key = { _, item -> "${item.type}-${item.id}" }) { index, item ->
-                        // Staggered animation
-                        val animatedAlpha = remember { Animatable(0f) }
-                        val animatedOffset = remember { Animatable(30f) }
-                        
-                        LaunchedEffect(item.id) {
-                            kotlinx.coroutines.delay(index * 40L)
-                            launch {
-                                animatedAlpha.animateTo(1f, animationSpec = tween(250))
-                            }
-                            launch {
-                                animatedOffset.animateTo(0f, animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessMediumLow
-                                ))
-                            }
-                        }
-                        
-                        HistoryCard(
-                            item = item,
-                            modifier = Modifier.graphicsLayer {
-                                alpha = animatedAlpha.value
-                                translationY = animatedOffset.value
-                            }
-                        )
+                        HistoryCard(item = item, onClick = { selectedItem = item })
                     }
                 }
             }
         }
+    }
+    selectedItem?.let { item ->
+        AlertDialog(
+            onDismissRequest = { selectedItem = null },
+            title = { Text(item.title) },
+            text = {
+                SelectionContainer {
+                    Column(Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(item.timestamp, style = MaterialTheme.typography.labelLarge)
+                        Text(item.details.ifEmpty { item.subtitle }, style = MaterialTheme.typography.bodyMedium)
+                        Text("This is a saved observation. Run a new test to check the current connection.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { selectedItem = null }) { Text("Done") } }
+        )
     }
 }
 
@@ -170,14 +195,15 @@ fun HistoryScreen(
 fun AnimatedEmptyHistoryState() {
     com.pulsewave.app.core.designsystem.component.EmptyStateWithIllustration(
         illustration = { com.pulsewave.app.core.designsystem.component.HistoryIllustration() },
-        title = "No history recorded",
-        subtitle = "Scans and tool results will appear here"
+        title = "Nothing saved yet",
+        subtitle = "Scans, speed tests and tool results are saved here automatically."
     )
 }
 
 @Composable
-fun HistoryCard(item: HistoryItem, modifier: Modifier = Modifier) {
+fun HistoryCard(item: HistoryItem, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     Card(
+        onClick = onClick,
         shape = PulseWaveShapes.extraLarge,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -221,12 +247,14 @@ fun HistoryCard(item: HistoryItem, modifier: Modifier = Modifier) {
             Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    item.title, 
+                    item.title,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    item.subtitle, 
+                    item.subtitle,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

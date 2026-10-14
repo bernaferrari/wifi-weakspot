@@ -10,14 +10,13 @@ import com.pulsewave.app.core.export.AndroidExportManager
 import com.pulsewave.app.core.export.ExportManager
 import com.pulsewave.app.core.lan.AndroidLanScanner
 import com.pulsewave.app.core.lan.LanScanner
+import com.pulsewave.app.core.monitoring.BackgroundMonitorManager
 import com.pulsewave.app.core.permissions.AndroidPermissionGate
 import com.pulsewave.app.core.permissions.PermissionGate
 import com.pulsewave.app.core.sensors.AndroidOrientationProvider
 import com.pulsewave.app.core.sensors.AndroidStepCounter
 import com.pulsewave.app.core.sensors.OrientationProvider
 import com.pulsewave.app.core.sensors.StepCounter
-import com.pulsewave.app.core.speedtest.AndroidSpeedTestClient
-import com.pulsewave.app.core.speedtest.SpeedTestClient
 import com.pulsewave.app.core.tools.AndroidDnsClient
 import com.pulsewave.app.core.tools.AndroidPingClient
 import com.pulsewave.app.core.tools.AndroidPortScanner
@@ -29,10 +28,14 @@ import com.pulsewave.app.core.wifi.AndroidWifiScanner
 import com.pulsewave.app.core.wifi.ScanThrottleManager
 import com.pulsewave.app.core.wifi.WifiScanner
 import com.pulsewave.app.feature.analyze.AnalyzeViewModel
+import com.pulsewave.app.feature.walk.WalkViewModel
+import com.pulsewave.app.feature.linktest.LinkTestViewModel
+import com.pulsewave.app.core.router.AndroidRouterProbe
+import com.pulsewave.app.core.router.RouterProbe
+import com.pulsewave.app.core.rooms.RoomCheckRepository
 import com.pulsewave.app.feature.lan.LanDeviceDetailViewModel
 import com.pulsewave.app.feature.lan.LanViewModel
 import com.pulsewave.app.feature.overview.OverviewViewModel
-import com.pulsewave.app.feature.speedtest.SpeedTestViewModel
 import com.pulsewave.app.feature.survey.SurveyViewModel
 import com.pulsewave.app.feature.tools.ToolsViewModel
 import android.app.Application
@@ -47,14 +50,16 @@ val appModule = module {
     factoryOf(::AnalyzeViewModel)
     factoryOf(::ToolsViewModel)
     factoryOf(::LanViewModel)
-    factoryOf(::SpeedTestViewModel)
+    factoryOf(::LinkTestViewModel)
     factoryOf(::SurveyViewModel)
     factoryOf(::OverviewViewModel)
     factoryOf(::LanDeviceDetailViewModel)
+    factoryOf(::WalkViewModel)
 
     // DataStore & Settings
     single { createDataStore(androidContext()) }
     single { SettingsRepository(get()) }
+    single { RoomCheckRepository(get()) }
 
     // Database
     single<PulseWaveDatabase> {
@@ -65,15 +70,16 @@ val appModule = module {
     single { get<PulseWaveDatabase>().dao() }
 
     // WiFi
-    single { AndroidWifiScanner(androidContext()) } bind WifiScanner::class
-    single { AndroidScanThrottleManager(androidContext()) } bind ScanThrottleManager::class
+    single<com.pulsewave.app.core.root.RootAccess> { com.pulsewave.app.core.root.AndroidRootAccess(androidContext()) }
+    single { AndroidWifiScanner(androidContext(), get()) } bind WifiScanner::class
+    single { AndroidScanThrottleManager(androidContext(), get()) } bind ScanThrottleManager::class
 
     // Network Tools
     factory { AndroidPingClient() } bind PingClient::class
     factory { AndroidDnsClient() } bind DnsClient::class
     factory { AndroidPortScanner() } bind PortScanner::class
-    factory { AndroidLanScanner() } bind LanScanner::class
-    factory { AndroidSpeedTestClient() } bind SpeedTestClient::class
+    factory { AndroidLanScanner(androidContext()) } bind LanScanner::class
+    factory { AndroidRouterProbe(androidContext()) } bind RouterProbe::class
 
     // Platform Services
     single { AndroidPermissionGate(androidContext()) } bind PermissionGate::class
@@ -81,6 +87,9 @@ val appModule = module {
     single<NetworkStatusRepository> { AndroidNetworkStatusRepository(androidContext()) }
     single<StepCounter> { AndroidStepCounter(androidContext()) }
     single<OrientationProvider> { AndroidOrientationProvider(androidContext()) }
+
+    // Background Monitoring
+    single { BackgroundMonitorManager(androidContext()) }
 }
 
 fun initKoin(application: Application) {

@@ -9,16 +9,30 @@ on:
 jobs:
   test:
     name: Build
-    runs-on: macOS-latest
-    # Only run build in template repo
-    if: github.event.repository.name == 'KMP-App-Template' && github.repository_owner == 'Kotlin'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-      - name: Set up JDK 21
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: 21
-      - name: Android debug build
-        run: ./gradlew assembleDebug --stacktrace
+          java-version: 17
+          cache: gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-37.2'
+      - name: Tests, lint, and Android debug build
+        run: |
+          python3 scripts/check_bidi.py
+          ./gradlew :composeApp:testDebugUnitTest :androidApp:lintDebug :androidApp:assembleDebug --stacktrace
+      - name: Upload verification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-verification
+          path: |
+            composeApp/build/reports/tests/
+            androidApp/build/reports/lint-results-debug.*

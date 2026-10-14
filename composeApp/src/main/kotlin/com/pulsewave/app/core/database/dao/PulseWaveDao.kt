@@ -10,6 +10,19 @@ interface PulseWaveDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWifiScan(result: WifiScanResultEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertWifiScans(results: List<WifiScanResultEntity>)
+
+    @Query(
+        """
+        DELETE FROM wifi_scan_results
+        WHERE id NOT IN (
+            SELECT id FROM wifi_scan_results ORDER BY timestamp DESC LIMIT :keep
+        )
+        """
+    )
+    suspend fun trimWifiScans(keep: Int)
+
     @Query("SELECT * FROM wifi_scan_results ORDER BY timestamp DESC LIMIT 100")
     fun getRecentWifiScans(): Flow<List<WifiScanResultEntity>>
 
@@ -22,6 +35,12 @@ interface PulseWaveDao {
 
     @Query("SELECT * FROM lan_devices WHERE ipAddress = :ip")
     suspend fun getLanDevice(ip: String): LanDeviceEntity?
+
+    @Query("UPDATE lan_devices SET customName = :name WHERE ipAddress = :ip")
+    suspend fun renameLanDevice(ip: String, name: String?)
+
+    @Query("SELECT * FROM tool_results WHERE target = :host AND toolType = 'PORT_SCAN' AND isSuccess = 1 ORDER BY timestamp DESC LIMIT 1")
+    suspend fun getLatestPortScan(host: String): ToolResultEntity?
 
     // Tool Results
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -44,6 +63,21 @@ interface PulseWaveDao {
     @Query("SELECT * FROM survey_projects ORDER BY updatedAt DESC")
     fun getAllProjects(): Flow<List<SurveyProjectEntity>>
 
+    @Update
+    suspend fun updateSurveyProject(project: SurveyProjectEntity)
+
+    @Query("UPDATE survey_projects SET updatedAt = :timestamp WHERE id = :projectId")
+    suspend fun markSurveyProjectUsed(projectId: Long, timestamp: Long)
+
+    @Transaction
+    suspend fun replaceSurveyTarget(project: SurveyProjectEntity) {
+        deletePointsForProject(project.id)
+        updateSurveyProject(project)
+    }
+
+    @Query("DELETE FROM survey_points WHERE id = :pointId")
+    suspend fun deleteSurveyPoint(pointId: Long)
+
     @Insert
     suspend fun insertSurveyPoint(point: SurveyPointEntity)
 
@@ -52,6 +86,9 @@ interface PulseWaveDao {
 
     @Query("SELECT * FROM survey_points")
     fun getAllPoints(): Flow<List<SurveyPointEntity>>
+
+    @Query("DELETE FROM survey_points WHERE projectId = :projectId")
+    suspend fun deletePointsForProject(projectId: Long)
 
     @Delete
     suspend fun deleteProject(project: SurveyProjectEntity)

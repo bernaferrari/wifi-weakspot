@@ -8,10 +8,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 
 sealed interface LanUiState {
     data object Idle : LanUiState
     data object Scanning : LanUiState
+    data object Cancelled : LanUiState
     data class Success(val devices: List<LanDevice>) : LanUiState
     data class Error(val message: String) : LanUiState
 }
@@ -24,15 +27,21 @@ class LanViewModel(
     private val _uiState = MutableStateFlow<LanUiState>(LanUiState.Idle)
     val uiState: StateFlow<LanUiState> = _uiState.asStateFlow()
 
+    private var scanJob: Job? = null
+
     fun startScan() {
-        viewModelScope.launch {
+        if (scanJob?.isCompleted == false) return
+        scanJob = viewModelScope.launch {
             _uiState.value = LanUiState.Scanning
             try {
                 val result = lanScanner.scanSubnet()
-                _uiState.value = LanUiState.Success(result.devices)
-                
+
                 // Save to DB
-                result.devices.forEach { device ->
+                val devices = result.devices.map { device ->
+                    val saved = dao.getLanDevice(device.ipAddress)
+                    device.copy(customName = saved?.customName, isTrusted = saved?.isTrusted ?: false, hostname = device.hostname ?: saved?.hostname)
+                }
+                devices.forEach { device ->
                     dao.insertLanDevice(
                         com.pulsewave.app.core.database.entities.LanDeviceEntity(
                             ipAddress = device.ipAddress,
@@ -46,6 +55,9 @@ class LanViewModel(
                         )
                     )
                 }
+                _uiState.value = LanUiState.Success(devices)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _uiState.value = LanUiState.Error(e.message ?: "Scan failed")
             }
@@ -53,9 +65,10 @@ class LanViewModel(
     }
 
     fun stopScan() {
+        scanJob?.cancel()
         lanScanner.cancel()
         if (_uiState.value is LanUiState.Scanning) {
-            _uiState.value = LanUiState.Idle
+            _uiState.value = LanUiState.Cancelled
         }
     }
 }

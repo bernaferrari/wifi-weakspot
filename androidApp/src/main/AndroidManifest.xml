@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Core permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -7,20 +8,27 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 
-    <!-- Android 13+ Wi-Fi scanning -->
-    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
 
     <!-- Location permissions - required for SSID access on all Android versions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- Granted only when installed as a privileged system app; such scans are never throttled. -->
+    <uses-permission
+        android:name="android.permission.NETWORK_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
+
     <!-- Notifications (API 33+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Step detector for site-survey walks (API 29+) -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
 
     <!-- Foreground service support for Survey/Tracker -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <!-- Hardware features (optional) -->
     <uses-feature android:name="android.hardware.wifi" android:required="false" />
@@ -36,8 +44,9 @@
         android:label="PulseWave"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:enableOnBackInvokedCallback="true"
         android:usesCleartextTraffic="false"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@style/Theme.PulseWave">
 
         <activity
             android:name=".MainActivity"
@@ -51,9 +60,15 @@
 
         <!-- Foreground session service for Survey/Tracker -->
         <service
-            android:name=".services.ForegroundSessionService"
+            android:name="com.pulsewave.app.services.ForegroundSessionService"
             android:exported="false"
             android:foregroundServiceType="dataSync|connectedDevice" />
+
+        <!-- Background monitoring service -->
+        <service
+            android:name="com.pulsewave.app.core.monitoring.BackgroundMonitorService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <!-- FileProvider for exports -->
         <provider

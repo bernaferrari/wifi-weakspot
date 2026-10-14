@@ -11,7 +11,13 @@ data class SurveyProjectEntity(
     val description: String?,
     val imagePath: String?, // Local path to floorplan
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val targetSsid: String? = null,
+    val targetBssid: String? = null,
+    @androidx.room.ColumnInfo(defaultValue = "10.0") val widthMeters: Float = 10f,
+    @androidx.room.ColumnInfo(defaultValue = "10.0") val heightMeters: Float = 10f,
+    @androidx.room.ColumnInfo(defaultValue = "0.7") val stepLengthMeters: Float = 0.7f,
+    @androidx.room.ColumnInfo(defaultValue = "0.0") val mapTopBearingDegrees: Float = 0f
 )
 
 @Entity(

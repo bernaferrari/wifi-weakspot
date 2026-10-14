@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 fun Modifier.shimmerEffect(): Modifier = composed {
     var size by remember { mutableStateOf(IntSize.Zero) }
     val transition = rememberInfiniteTransition(label = "shimmer")
-    val startOffsetX by transition.animateFloat(
+    val startOffsetX by transition.animateAccessibleFloat(
         initialValue = -2 * size.width.toFloat(),
         targetValue = 2 * size.width.toFloat(),
         animationSpec = infiniteRepeatable(
@@ -27,7 +27,7 @@ fun Modifier.shimmerEffect(): Modifier = composed {
         ),
         label = "shimmerOffset"
     )
-    
+
     // Theme-aware shimmer colors
     val shimmerBase = MaterialTheme.colorScheme.surfaceVariant
     val shimmerHighlight = MaterialTheme.colorScheme.surface

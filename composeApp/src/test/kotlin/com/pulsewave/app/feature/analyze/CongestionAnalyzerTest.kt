@@ -15,15 +15,22 @@ class CongestionAnalyzerTest {
     private fun createNetwork(
         ssid: String = "TestNet",
         frequency: Int,
-        rssi: Int
+        rssi: Int,
+        channelWidth: Int = 20,
+        centerFreq0: Int = 0,
+        centerFreq1: Int = 0,
+        is80Plus80: Boolean = false
     ): WifiNetwork = WifiNetwork(
         ssid = ssid,
         bssid = "AA:BB:CC:DD:EE:FF",
         rssi = rssi,
         frequency = frequency,
-        channelWidth = 20,
+        channelWidth = channelWidth,
         security = "WPA2",
         capabilities = "",
+        centerFreq0 = centerFreq0,
+        centerFreq1 = centerFreq1,
+        is80Plus80 = is80Plus80,
         timestamp = System.currentTimeMillis()
     )
 
@@ -59,7 +66,9 @@ class CongestionAnalyzerTest {
         // Should return channels 1-233 in steps of 4 = 59 channels
         assertEquals(59, scores.size)
         assertEquals(1, scores.first().channelNumber)
+        assertEquals(5955, scores.first().centerFreq)
         assertEquals(233, scores.last().channelNumber)
+        assertEquals(7115, scores.last().centerFreq)
     }
 
     @Test
@@ -179,7 +188,7 @@ class CongestionAnalyzerTest {
             createNetwork("Net2", 5200, -50), // Channel 40
         )
         
-        val scores = CongestionAnalyzer.analyze(networks, FrequencyBand.BAND_5)
+        val scores = CongestionAnalyzer.analyze(networks, FrequencyBand.BAND_5, setOf(36, 40, 44, 48))
         
         val recommended = scores.filter { it.recommendation }
         assertEquals(1, recommended.size)
@@ -194,5 +203,73 @@ class CongestionAnalyzerTest {
         
         assertTrue(recommendedChannel.score <= channel36Score!!.score)
         assertTrue(recommendedChannel.score <= channel40Score!!.score)
+    }
+
+    @Test
+    fun wideNetwork_reachesNearbyChannelButNotTheFarSideOfTheBand() {
+        val wide = createNetwork(frequency = 5180, centerFreq0 = 5210, rssi = -40, channelWidth = 80)
+        val scores = CongestionAnalyzer.analyze(listOf(wide), FrequencyBand.BAND_5)
+        val channel36 = scores.find { it.channelNumber == 36 }
+        val channel165 = scores.find { it.channelNumber == 165 }
+        assertNotNull(channel36)
+        assertNotNull(channel165)
+        assertTrue(channel36!!.score > 0.0)
+        assertEquals(0.0, channel165!!.score, 0.0)
+    }
+
+    @Test
+    fun narrowNetwork_doesNotScoreAChannelThirtyMegahertzAway() {
+        val narrow = createNetwork(frequency = 5210, rssi = -40, channelWidth = 20)
+        val scores = CongestionAnalyzer.analyze(listOf(narrow), FrequencyBand.BAND_5)
+        val channel36 = scores.find { it.channelNumber == 36 }
+        assertNotNull(channel36)
+        assertEquals(0.0, channel36!!.score, 0.0)
+    }
+
+    @Test
+    fun sixGigahertzNetwork_scoresChannelOne() {
+        val network = createNetwork(frequency = 5955, rssi = -40, channelWidth = 20)
+        val scores = CongestionAnalyzer.analyze(listOf(network), FrequencyBand.BAND_6)
+        val channel1 = scores.find { it.channelNumber == 1 }
+        assertNotNull(channel1)
+        assertEquals(5955, channel1!!.centerFreq)
+        assertTrue(channel1.score > 0.0)
+    }
+
+    @Test
+    fun primary36With80MHzCenter_scoresAllFourOccupiedChannels() {
+        val network = createNetwork(frequency = 5180, centerFreq0 = 5210, channelWidth = 80, rssi = -40)
+        val scores = CongestionAnalyzer.analyze(listOf(network), FrequencyBand.BAND_5)
+        listOf(36, 40, 44, 48).forEach { channel ->
+            assertTrue("Occupied channel $channel", scores.single { it.channelNumber == channel }.score > 0)
+        }
+        assertEquals(0.0, scores.single { it.channelNumber == 52 }.score, 0.0)
+    }
+
+    @Test
+    fun split80Plus80_scoresBothSegmentsAndLeavesGapEmpty() {
+        val network = createNetwork(frequency = 5180, centerFreq0 = 5210, centerFreq1 = 5775,
+            channelWidth = 80, is80Plus80 = true, rssi = -40)
+        val scores = CongestionAnalyzer.analyze(listOf(network), FrequencyBand.BAND_5)
+        listOf(36, 40, 44, 48, 149, 153, 157, 161).forEach { channel ->
+            assertTrue(scores.single { it.channelNumber == channel }.score > 0)
+        }
+        assertEquals(0.0, scores.single { it.channelNumber == 100 }.score, 0.0)
+    }
+
+    @Test
+    fun noObservationsAndUnknownRouterSupport_doNotInventRecommendations() {
+        assertTrue(CongestionAnalyzer.analyze(emptyList(), FrequencyBand.BAND_2_4).none { it.recommendation })
+        assertTrue(CongestionAnalyzer.analyze(listOf(createNetwork(frequency = 5180, rssi = -40)),
+            FrequencyBand.BAND_5).none { it.recommendation })
+        assertTrue(CongestionAnalyzer.analyze(listOf(createNetwork(frequency = 5955, rssi = -40)),
+            FrequencyBand.BAND_6).none { it.recommendation })
+    }
+
+    @Test
+    fun knownRouterSupport_neverRecommendsOtherChannels() {
+        val scores = CongestionAnalyzer.analyze(listOf(createNetwork(frequency = 5180, rssi = -40)),
+            FrequencyBand.BAND_5, setOf(36, 40))
+        assertEquals(40, scores.single { it.recommendation }.channelNumber)
     }
 }

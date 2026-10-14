@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
 
 package com.pulsewave.app.feature.lan
 
@@ -29,6 +29,8 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pulsewave.app.core.designsystem.PulseWaveAlpha
+import com.pulsewave.app.core.designsystem.LocalReduceMotion
+import com.pulsewave.app.core.designsystem.animateAccessibleFloat
 import com.pulsewave.app.core.designsystem.PulseWaveShapes
 import com.pulsewave.app.core.designsystem.component.LinearWavyProgressIndicator
 import com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback
@@ -48,11 +50,11 @@ fun LanScreen(
     val uiState by viewModel.uiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val haptics = rememberPulseWaveHapticFeedback()
-    
+
     LaunchedEffect(Unit) {
         viewModel.startScan()
     }
-    
+
     val devices = when (val state = uiState) {
         is LanUiState.Success -> state.devices
         else -> emptyList()
@@ -60,7 +62,7 @@ fun LanScreen(
     val isScanning = uiState is LanUiState.Scanning
 
     val infiniteTransition = rememberInfiniteTransition(label = "Rotation")
-    val rotation by infiniteTransition.animateFloat(
+    val rotation by infiniteTransition.animateAccessibleFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
@@ -69,8 +71,8 @@ fun LanScreen(
         ),
         label = "Rotation"
     )
-    
-    val pulseScale by infiniteTransition.animateFloat(
+
+    val pulseScale by infiniteTransition.animateAccessibleFloat(
         initialValue = 1f,
         targetValue = 1.05f,
         animationSpec = infiniteRepeatable(
@@ -83,8 +85,9 @@ fun LanScreen(
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
-                title = { Text("LAN Scanner") },
+            LargeFlexibleTopAppBar(
+                title = { Text("Devices") },
+                subtitle = { Text("Everything connected to your Wi-Fi") },
                 scrollBehavior = scrollBehavior,
                 navigationIcon = {
                     if (onBack != null) {
@@ -98,14 +101,14 @@ fun LanScreen(
                 },
                 actions = {
                     IconButton(
-                        onClick = { 
+                        onClick = {
                             haptics.click()
-                            if (isScanning) viewModel.stopScan() else viewModel.startScan() 
+                            if (isScanning) viewModel.stopScan() else viewModel.startScan()
                         }
                     ) {
                         Icon(
-                            Icons.Default.Refresh, 
-                            contentDescription = "Scan",
+                            Icons.Default.Refresh,
+                            contentDescription = if (isScanning) "Cancel scan" else "Scan",
                             modifier = if (isScanning) Modifier.rotate(rotation) else Modifier
                         )
                     }
@@ -114,7 +117,8 @@ fun LanScreen(
         }
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = isScanning,
+            // The header card shows progress; the pull indicator would overlap it.
+            isRefreshing = false,
             onRefresh = {
                 haptics.click()
                 viewModel.startScan()
@@ -162,19 +166,24 @@ fun LanScreen(
                             ) {
                                 Column {
                                     Text(
-                                        "Current Subnet",
+                                        "Your network",
                                         style = MaterialTheme.typography.labelMedium,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = PulseWaveAlpha.strong)
                                     )
                                     Text(
-                                        "Auto-Detected",
+                                        when {
+                                            isScanning -> "Looking for devices…"
+                                            devices.isEmpty() -> "No devices yet"
+                                            devices.size == 1 -> "1 device"
+                                            else -> "${devices.size} devices"
+                                        },
                                         style = MaterialTheme.typography.titleLarge,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
-                                
-                                Surface(
+
+                                if (devices.isNotEmpty()) Surface(
                                     shape = CircleShape,
                                     color = MaterialTheme.colorScheme.surface.copy(alpha = PulseWaveAlpha.light),
                                     modifier = Modifier.scale(if (isScanning) pulseScale else 1f)
@@ -188,9 +197,9 @@ fun LanScreen(
                                     )
                                 }
                             }
-                            
+
                             Spacer(Modifier.height(20.dp))
-                            
+
                             if (isScanning) {
                                 LinearWavyProgressIndicator(
                                     progress = { 1f },
@@ -198,30 +207,22 @@ fun LanScreen(
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Spacer(Modifier.height(8.dp))
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(12.dp),
-                                        strokeWidth = 2.dp,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(
-                                        "Scanning network...",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                }
+                                Text(
+                                    "Checking every address on your network",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
                             } else {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
-                                        Icons.Default.TouchApp, 
-                                        null, 
+                                        Icons.Default.TouchApp,
+                                        null,
                                         modifier = Modifier.size(16.dp),
                                         tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = PulseWaveAlpha.strong)
                                     )
                                     Spacer(Modifier.width(6.dp))
                                     Text(
-                                        "Tap refresh to scan again",
+                                        "Pull down or tap refresh to look again",
                                         style = MaterialTheme.typography.labelMedium,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = PulseWaveAlpha.strong)
                                     )
@@ -232,43 +233,34 @@ fun LanScreen(
                 }
             }
 
-            if (devices.isEmpty() && !isScanning) {
+            if (uiState is LanUiState.Error) {
+                item {
+                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                        Column(Modifier.padding(20.dp)) {
+                            Text("Couldn't look for devices", style = MaterialTheme.typography.titleMedium)
+                            Text((uiState as LanUiState.Error).message)
+                            TextButton(onClick = { viewModel.startScan() }) { Text("Retry") }
+                        }
+                    }
+                }
+            } else if (devices.isEmpty() && !isScanning) {
                 item {
                     com.pulsewave.app.core.designsystem.component.EmptyStateWithIllustration(
                         illustration = { com.pulsewave.app.core.designsystem.component.LanDeviceIllustration() },
-                        title = "No devices found",
-                        subtitle = "Tap refresh icon to scan your network"
+                        title = if (uiState is LanUiState.Cancelled) "Scan cancelled" else "No devices discovered",
+                        subtitle = "Discovery checks ping and three common TCP ports. Devices that block all probes may not appear."
                     )
                 }
             }
 
             itemsIndexed(devices, key = { _, device -> device.ipAddress }) { index, device ->
-                val animatedAlpha = remember { Animatable(0f) }
-                val animatedOffset = remember { Animatable(50f) }
-                
-                LaunchedEffect(device.ipAddress) {
-                    kotlinx.coroutines.delay(index * 50L)
-                    launch {
-                        animatedAlpha.animateTo(1f, animationSpec = tween(300))
-                    }
-                    launch {
-                        animatedOffset.animateTo(0f, animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        ))
-                    }
-                }
-                
                 DeviceCard(
                     device = device,
-                    onClick = { 
+                    onClick = {
                         haptics.click()
-                        onDeviceClick(device.ipAddress) 
+                        onDeviceClick(device.ipAddress)
                     },
-                    modifier = Modifier.graphicsLayer {
-                        alpha = animatedAlpha.value
-                        translationY = animatedOffset.value
-                    }
+                    modifier = Modifier
                 )
             }
         }
@@ -282,13 +274,10 @@ fun DeviceCard(device: LanDevice, onClick: () -> Unit, modifier: Modifier = Modi
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessHigh
-        ),
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
         label = "pressScale"
     )
-    
+
     Card(
         onClick = onClick,
         interactionSource = interactionSource,
@@ -304,9 +293,9 @@ fun DeviceCard(device: LanDevice, onClick: () -> Unit, modifier: Modifier = Modi
         ) {
             Surface(
                 shape = PulseWaveShapes.medium,
-                color = if (device.isOnline) 
-                    MaterialTheme.colorScheme.primaryContainer 
-                else 
+                color = if (device.isOnline)
+                    MaterialTheme.colorScheme.primaryContainer
+                else
                     MaterialTheme.colorScheme.errorContainer,
                 modifier = Modifier.size(56.dp)
             ) {
@@ -314,9 +303,9 @@ fun DeviceCard(device: LanDevice, onClick: () -> Unit, modifier: Modifier = Modi
                     Icon(
                         if (device.isOnline) Icons.Default.Smartphone else Icons.Default.Close,
                         contentDescription = null,
-                        tint = if (device.isOnline) 
-                            MaterialTheme.colorScheme.onPrimaryContainer 
-                        else 
+                        tint = if (device.isOnline)
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        else
                             MaterialTheme.colorScheme.onErrorContainer,
                         modifier = Modifier.size(28.dp)
                     )
@@ -334,6 +323,7 @@ fun DeviceCard(device: LanDevice, onClick: () -> Unit, modifier: Modifier = Modi
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Text(if (device.isOnline) "Replied to this scan" else "Cached neighbor · reachability unconfirmed", style = MaterialTheme.typography.labelSmall)
                 device.macAddress?.let {
                     Text(
                         it,
@@ -343,7 +333,7 @@ fun DeviceCard(device: LanDevice, onClick: () -> Unit, modifier: Modifier = Modi
                 }
             }
             Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight, 
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )

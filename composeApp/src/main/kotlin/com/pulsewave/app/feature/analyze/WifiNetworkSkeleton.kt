@@ -38,9 +38,9 @@ fun WifiNetworkSkeleton() {
                     )
                 }
             }
-            
+
             Spacer(Modifier.width(16.dp))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 ShimmerPlaceholder(
                     visible = true,
@@ -52,7 +52,7 @@ fun WifiNetworkSkeleton() {
                     modifier = Modifier.width(100.dp).height(14.dp)
                 )
             }
-            
+
             ShimmerPlaceholder(
                 visible = true,
                 modifier = Modifier.size(40.dp, 24.dp),

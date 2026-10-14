@@ -1,18 +1,14 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package com.pulsewave.app.feature.onboarding
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,273 +20,126 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
+import androidx.compose.material.icons.rounded.Radar
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.Wifi
+import androidx.compose.material.icons.rounded.WifiFind
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.graphics.shapes.RoundedPolygon
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pulsewave.app.core.designsystem.LocalReduceMotion
 import com.pulsewave.app.core.designsystem.PulseWaveShapes
-import com.pulsewave.app.core.designsystem.component.LanDeviceIllustration
-import com.pulsewave.app.core.designsystem.component.PrivacyIllustration
-import com.pulsewave.app.core.designsystem.component.SurveyIllustration
-import com.pulsewave.app.core.designsystem.component.WifiNetworkIllustration
+import com.pulsewave.app.core.designsystem.component.ShapeIcon
+import com.pulsewave.app.core.designsystem.component.SignalMorphBlob
 import com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback
+import com.pulsewave.app.core.designsystem.signalColors
+import com.pulsewave.app.core.permissions.PermissionGate
+import com.pulsewave.app.core.wifi.SignalQuality
+import kotlinx.coroutines.delay
+import org.koin.compose.koinInject
 
+private enum class Step { Welcome, Permission }
+
+/**
+ * First run: what the app does and the one permission it needs. If access is already
+ * granted, it's a single welcome page. Faster scans are offered later, when they matter.
+ */
 @Composable
 fun OnboardingScreen(
-    modifier: Modifier = Modifier,
-    onComplete: () -> Unit = {}
+    onFinish: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    var currentPage by remember { mutableStateOf(0) }
+    val permissionGate: PermissionGate = koinInject()
+    val permissions by permissionGate.state.collectAsStateWithLifecycle()
     val haptics = rememberPulseWaveHapticFeedback()
-    val pages = listOf(
-        OnboardingPage(
-            illustration = { mod -> WifiNetworkIllustration(mod, size = 180.dp) },
-            title = "Analyze Your WiFi",
-            description = "See nearby networks, pick clearer channels, and understand interference at a glance."
-        ),
-        OnboardingPage(
-            illustration = { mod -> LanDeviceIllustration(mod, size = 180.dp) },
-            title = "Network Diagnostics",
-            description = "Ping, traceroute, DNS lookup, port scans, and speed tests in one focused toolkit."
-        ),
-        OnboardingPage(
-            illustration = { mod -> SurveyIllustration(mod, size = 180.dp) },
-            title = "Site Surveys",
-            description = "Walk your space and build heatmaps to pinpoint dead zones and weak coverage."
-        ),
-        OnboardingPage(
-            illustration = { mod -> PrivacyIllustration(mod, size = 180.dp) },
-            title = "Privacy First",
-            description = "Everything stays on device. No accounts, no tracking, and no hidden uploads."
-        )
-    )
 
-    val colorScheme = MaterialTheme.colorScheme
-    val background = Brush.verticalGradient(
-        0f to colorScheme.surface,
-        0.5f to colorScheme.surfaceContainerLow,
-        1f to colorScheme.surfaceContainerHigh
-    )
+    // Fixed at launch so granting permission doesn't shift the pages underneath the person.
+    val steps = remember {
+        buildList {
+            add(Step.Welcome)
+            if (!permissions.canScanWifi) add(Step.Permission)
+        }
+    }
+    var index by rememberSaveable { mutableIntStateOf(0) }
+    val step = steps[index.coerceIn(steps.indices)]
+    fun next() {
+        haptics.click()
+        if (index >= steps.lastIndex) onFinish() else index++
+    }
+    val requestPermission = com.pulsewave.app.core.permissions.rememberScanPermissionRequest { next() }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(background)
-    ) {
-        OnboardingBackdrop(
-            modifier = Modifier.fillMaxSize(),
-            primary = colorScheme.primary,
-            secondary = colorScheme.secondary,
-            tertiary = colorScheme.tertiary
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(Modifier.height(8.dp))
-
+    Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+        Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 24.dp, vertical = 16.dp)) {
+            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+                StepDots(count = steps.size, current = index, modifier = Modifier.weight(1f))
+                if (step != Step.Welcome) TextButton(onClick = { onFinish() }) { Text("Skip") }
+            }
+            val fade = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
             AnimatedContent(
-                targetState = currentPage,
+                targetState = step,
                 transitionSpec = {
-                    (fadeIn(animationSpec = tween(300)) +
-                        slideInHorizontally { if (targetState > initialState) it / 6 else -it / 6 } +
-                        scaleIn(initialScale = 0.98f, animationSpec = spring(stiffness = Spring.StiffnessLow)))
-                        .togetherWith(
-                            fadeOut(animationSpec = tween(200)) +
-                                slideOutHorizontally { if (targetState > initialState) -it / 8 else it / 8 } +
-                                scaleOut(targetScale = 1.02f, animationSpec = tween(200))
-                        )
+                    val forward = targetState.ordinal > initialState.ordinal
+                    (slideInHorizontally { if (forward) it / 4 else -it / 4 } + fadeIn(fade)) togetherWith
+                        (slideOutHorizontally { if (forward) -it / 4 else it / 4 } + fadeOut(fade))
                 },
-                label = "onboarding_page"
-            ) { pageIndex ->
-                val page = pages[pageIndex]
-
+                modifier = Modifier.weight(1f),
+                label = "onboardingStep"
+            ) { current ->
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.Start
+                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    ElevatedCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 260.dp),
-                        shape = PulseWaveShapes.extraLarge,
-                        colors = CardDefaults.elevatedCardColors(
-                            containerColor = colorScheme.surfaceContainerHigh
-                        ),
-                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .matchParentSize()
-                                    .clip(PulseWaveShapes.extraLarge)
-                                    .background(
-                                        Brush.radialGradient(
-                                            colors = listOf(
-                                                colorScheme.primary.copy(alpha = 0.18f),
-                                                Color.Transparent
-                                            )
-                                        )
-                                    )
-                            )
-
-                            AssistChip(
-                                onClick = {},
-                                enabled = false,
-                                label = { Text("Step ${pageIndex + 1} of ${pages.size}") },
-                                colors = AssistChipDefaults.assistChipColors(
-                                    disabledContainerColor = colorScheme.surfaceContainerLow,
-                                    disabledLabelColor = colorScheme.onSurfaceVariant
-                                ),
-                                modifier = Modifier.align(Alignment.TopStart)
-                            )
-
-                            page.illustration(
-                                Modifier
-                                    .align(Alignment.Center)
-                                    .scale(1.05f)
-                            )
-                        }
+                    when (current) {
+                        Step.Welcome -> WelcomePage()
+                        Step.Permission -> MessagePage(
+                            icon = Icons.Rounded.WifiFind,
+                            shape = MaterialShapes.Cookie9Sided,
+                            title = "See the Wi-Fi around you",
+                            body = "To list nearby networks, Android asks for location access. PulseWave never saves where you are, and nothing leaves your phone.",
+                            footnote = "You can use the signal meter and Wi-Fi speed test without it."
+                        )
                     }
-
-                    Spacer(Modifier.height(28.dp))
-
-                    Text(
-                        text = "PulseWave",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = colorScheme.primary
-                    )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Text(
-                        page.title,
-                        style = MaterialTheme.typography.displaySmall,
-                        color = colorScheme.onSurface
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Text(
-                        page.description,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = colorScheme.onSurfaceVariant
-                    )
                 }
             }
-
-            Spacer(Modifier.weight(1f))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                pages.forEachIndexed { index, _ ->
-                    val isSelected = index == currentPage
-                    val width by animateDpAsState(
-                        targetValue = if (isSelected) 36.dp else 12.dp,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
-                        ),
-                        label = "dotWidth"
-                    )
-                    Surface(
-                        modifier = Modifier
-                            .height(10.dp)
-                            .width(width),
-                        shape = PulseWaveShapes.extraSmall,
-                        color = if (isSelected) colorScheme.primary else colorScheme.surfaceVariant
-                    ) {}
-                }
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (currentPage > 0) {
-                    TextButton(
-                        onClick = {
-                            haptics.light()
-                            currentPage--
-                        }
-                    ) {
-                        Text("Back")
-                    }
-                } else {
-                    Spacer(Modifier.width(1.dp))
-                }
-
-                if (currentPage < pages.size - 1) {
-                    Button(
-                        onClick = {
-                            haptics.click()
-                            currentPage++
-                        },
-                        shape = PulseWaveShapes.extraLarge,
-                        modifier = Modifier
-                            .height(56.dp)
-                            .widthIn(min = 160.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.primary
-                        )
-                    ) {
-                        Text("Continue")
-                    }
-                } else {
-                    Button(
-                        onClick = {
-                            haptics.success()
-                            onComplete()
-                        },
-                        modifier = Modifier
-                            .height(56.dp)
-                            .fillMaxWidth(),
-                        shape = PulseWaveShapes.extraLarge,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.primary
-                        )
-                    ) {
-                        Icon(Icons.Default.Check, null, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text("Get Started", style = MaterialTheme.typography.titleMedium)
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                when (step) {
+                    Step.Welcome -> PrimaryButton("Get started") { next() }
+                    Step.Permission -> {
+                        PrimaryButton("Allow access", onClick = requestPermission)
+                        TextButton(onClick = { next() }) { Text("Not now") }
                     }
                 }
             }
@@ -299,63 +148,108 @@ fun OnboardingScreen(
 }
 
 @Composable
-private fun OnboardingBackdrop(
-    modifier: Modifier = Modifier,
-    primary: Color,
-    secondary: Color,
-    tertiary: Color
-) {
-    Canvas(modifier = modifier) {
-        val width = size.width
-        val height = size.height
+private fun PrimaryButton(text: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        shapes = ButtonDefaults.shapes(),
+        modifier = Modifier.fillMaxWidth().heightIn(min = ButtonDefaults.MediumContainerHeight)
+    ) { Text(text, style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight)) }
+}
 
-        val topBlob = Path().apply {
-            moveTo(width * 0.1f, 0f)
-            quadraticTo(width * 0.45f, height * 0.12f, width * 0.75f, height * 0.02f)
-            quadraticTo(width * 0.98f, 0f, width, height * 0.18f)
-            lineTo(width, 0f)
-            close()
+@Composable
+private fun StepDots(count: Int, current: Int, modifier: Modifier = Modifier) {
+    if (count <= 1) {
+        Spacer(modifier)
+        return
+    }
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        repeat(count) { i ->
+            val width by animateDpAsState(if (i == current) 28.dp else 8.dp, MaterialTheme.motionScheme.fastSpatialSpec(), label = "dot")
+            Box(
+                Modifier.size(width = width, height = 8.dp).background(
+                    if (i <= current) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
+                    PulseWaveShapes.full
+                )
+            )
         }
-        drawPath(topBlob, color = primary.copy(alpha = 0.08f), style = Fill)
-
-        val midBlob = Path().apply {
-            moveTo(0f, height * 0.55f)
-            quadraticTo(width * 0.2f, height * 0.46f, width * 0.45f, height * 0.58f)
-            quadraticTo(width * 0.7f, height * 0.72f, width, height * 0.62f)
-            lineTo(width, height)
-            lineTo(0f, height)
-            close()
-        }
-        drawPath(midBlob, color = secondary.copy(alpha = 0.07f), style = Fill)
-
-        drawCircle(
-            color = tertiary.copy(alpha = 0.1f),
-            radius = width * 0.28f,
-            center = androidx.compose.ui.geometry.Offset(width * 0.85f, height * 0.2f)
-        )
-
-        drawCircle(
-            color = primary.copy(alpha = 0.08f),
-            radius = width * 0.22f,
-            center = androidx.compose.ui.geometry.Offset(width * 0.15f, height * 0.75f)
-        )
-
-        drawCircle(
-            color = secondary.copy(alpha = 0.06f),
-            radius = width * 0.18f,
-            center = androidx.compose.ui.geometry.Offset(width * 0.85f, height * 0.82f)
-        )
-
-        drawCircle(
-            color = tertiary.copy(alpha = 0.08f),
-            radius = width * 0.16f,
-            center = androidx.compose.ui.geometry.Offset(width * 0.4f, height * 0.28f)
-        )
     }
 }
 
-data class OnboardingPage(
-    val illustration: @Composable (Modifier) -> Unit,
-    val title: String,
-    val description: String
-)
+/** The shape cycles from dead zone to excellent: the same language the whole app uses. */
+@Composable
+private fun WelcomePage() {
+    val reduceMotion = LocalReduceMotion.current
+    var quality by remember { mutableStateOf(if (reduceMotion) SignalQuality.Excellent else SignalQuality.DeadZone) }
+    LaunchedEffect(reduceMotion) {
+        if (reduceMotion) return@LaunchedEffect
+        val cycle = SignalQuality.entries.reversed()
+        var i = 0
+        while (true) {
+            quality = cycle[i % cycle.size]
+            delay(if (quality == SignalQuality.Excellent) 2_400 else 1_100)
+            i++
+        }
+    }
+    val colors = signalColors(quality)
+    SignalMorphBlob(quality = quality, color = colors.container, size = 200.dp) {
+        Icon(Icons.Rounded.Wifi, null, Modifier.size(80.dp), tint = colors.onContainer)
+    }
+    Spacer(Modifier.height(28.dp))
+    Text(
+        "Find bad Wi-Fi\nat home",
+        style = MaterialTheme.typography.displaySmall,
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.semantics { heading() }
+    )
+    Spacer(Modifier.height(12.dp))
+    Text(
+        "PulseWave shows how strong your Wi-Fi is, where it drops, and what to do about it.",
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center
+    )
+    Spacer(Modifier.height(28.dp))
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
+        val scheme = MaterialTheme.colorScheme
+        FeatureRow(Icons.AutoMirrored.Rounded.DirectionsWalk, MaterialShapes.SoftBurst, scheme.tertiaryContainer, scheme.onTertiaryContainer,
+            "Walk your home", "Watch the signal drop as you move.")
+        FeatureRow(Icons.Rounded.Speed, MaterialShapes.Sunny, scheme.primaryContainer, scheme.onPrimaryContainer,
+            "Test your Wi-Fi", "Phone-to-router speed, no internet needed.")
+        FeatureRow(Icons.Rounded.Radar, MaterialShapes.Cookie7Sided, scheme.secondaryContainer, scheme.onSecondaryContainer,
+            "See every network", "Pick a clearer channel for your router.")
+        FeatureRow(Icons.Rounded.Shield, MaterialShapes.Puffy, scheme.surfaceContainerHighest, scheme.onSurface,
+            "Private", "No account, no tracking, nothing uploaded.")
+    }
+}
+
+@Composable
+private fun FeatureRow(
+    icon: ImageVector,
+    shape: RoundedPolygon,
+    container: androidx.compose.ui.graphics.Color,
+    content: androidx.compose.ui.graphics.Color,
+    title: String,
+    body: String
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        ShapeIcon(icon, shape, container, content, size = 48.dp)
+        Spacer(Modifier.width(16.dp))
+        Column {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun MessagePage(icon: ImageVector, shape: RoundedPolygon, title: String, body: String, footnote: String) {
+    val scheme = MaterialTheme.colorScheme
+    ShapeIcon(icon, shape, scheme.primaryContainer, scheme.onPrimaryContainer, size = 168.dp, iconSize = 72.dp)
+    Spacer(Modifier.height(32.dp))
+    Text(title, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.semantics { heading() })
+    Spacer(Modifier.height(12.dp))
+    Text(body, style = MaterialTheme.typography.bodyLarge, color = scheme.onSurfaceVariant, textAlign = TextAlign.Center)
+    Spacer(Modifier.height(16.dp))
+    Text(footnote, style = MaterialTheme.typography.bodyMedium, color = scheme.primary, textAlign = TextAlign.Center)
+}

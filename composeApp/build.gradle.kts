@@ -9,7 +9,11 @@ plugins {
 
 android {
     namespace = "com.pulsewave.app.library"
-    compileSdk = 36
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 2
+        }
+    }
 
     defaultConfig {
         minSdk = 24
@@ -23,6 +27,7 @@ android {
     buildFeatures {
         compose = true
     }
+
 }
 
 room {
@@ -32,11 +37,12 @@ room {
 dependencies {
     implementation(compose.runtime)
     implementation(compose.foundation)
-    implementation(compose.material3)
+    implementation(libs.compose.material3)
+    implementation(libs.androidx.material3)
     implementation(compose.ui)
     implementation(compose.components.resources)
     implementation(compose.components.uiToolingPreview)
-    implementation(compose.materialIconsExtended)
+    implementation(libs.material.icons.extended)
 
     implementation(libs.navigation.compose)
     implementation(libs.lifecycle.runtime.compose)
@@ -58,15 +64,17 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.datastore.preferences.core)
     implementation(libs.kotlinx.datetime)
-    implementation(libs.materialfile.kolor)
+    implementation(libs.materialKolor.material3)
 
     ksp(libs.androidx.room.compiler)
     
     debugImplementation(compose.uiTooling)
     
     // Testing
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
-    testImplementation("app.cash.turbine:turbine:1.1.0")
-    testImplementation("io.mockk:mockk:1.13.10")
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.mockk)
+    // Host-native SQLite for testing the actual Room migration, including data preservation.
+    testImplementation("androidx.sqlite:sqlite-bundled-jvm:2.8.0-alpha01")
 }

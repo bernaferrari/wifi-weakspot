@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package com.pulsewave.app.core.designsystem.component
 
+import com.pulsewave.app.core.designsystem.animateAccessibleFloat
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -44,9 +47,9 @@ fun ScanRadarIndicator(
     size: Dp = 200.dp
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "radar")
-    
+
     // Radar sweep animation (only when exhausted/waiting)
-    val sweepAngle by infiniteTransition.animateFloat(
+    val sweepAngle by infiniteTransition.animateAccessibleFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
@@ -55,9 +58,9 @@ fun ScanRadarIndicator(
         ),
         label = "sweep"
     )
-    
+
     // Pulse animation for ready state
-    val pulseScale by infiniteTransition.animateFloat(
+    val pulseScale by infiniteTransition.animateAccessibleFloat(
         initialValue = 1f,
         targetValue = 1.1f,
         animationSpec = infiniteRepeatable(
@@ -66,13 +69,13 @@ fun ScanRadarIndicator(
         ),
         label = "pulse"
     )
-    
+
     val primaryColor = MaterialTheme.colorScheme.primary
     val tertiaryColor = MaterialTheme.colorScheme.tertiary
     val errorColor = MaterialTheme.colorScheme.error
     val surfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
-    
+
     val stateColor = when (throttleState) {
         is ThrottleState.Ready -> primaryColor
         is ThrottleState.LowQuota -> tertiaryColor
@@ -80,18 +83,18 @@ fun ScanRadarIndicator(
         is ThrottleState.Unlimited -> MaterialTheme.colorScheme.secondary
         is ThrottleState.Unknown -> surfaceColor
     }
-    
+
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-    
+
     val clickScale by animateFloatAsState(
         targetValue = if (isPressed) 0.95f else 1f,
         animationSpec = spring(dampingRatio = 0.4f, stiffness = 400f),
         label = "clickScale"
     )
-    
+
     val isClickable = throttleState !is ThrottleState.Unknown
-    
+
     Card(
         modifier = modifier
             .size(size)
@@ -118,7 +121,7 @@ fun ScanRadarIndicator(
             ) {
                 val center = Offset(this.size.width / 2, this.size.height / 2)
                 val maxRadius = minOf(this.size.width, this.size.height) / 2
-                
+
                 // Draw concentric rings
                 for (i in 1..3) {
                     val radius = maxRadius * (i / 3f)
@@ -129,7 +132,7 @@ fun ScanRadarIndicator(
                         style = Stroke(width = 1.dp.toPx())
                     )
                 }
-                
+
                 // Draw crosshairs
                 val crossColor = stateColor.copy(alpha = 0.2f)
                 drawLine(
@@ -144,7 +147,7 @@ fun ScanRadarIndicator(
                     end = Offset(this.size.width, center.y),
                     strokeWidth = 1.dp.toPx()
                 )
-                
+
                 // Draw quota pips (4 dots around the edge)
                 val pipRadius = 6.dp.toPx()
                 val pipDistance = maxRadius - 8.dp.toPx()
@@ -155,7 +158,7 @@ fun ScanRadarIndicator(
                     is ThrottleState.Unlimited -> 4
                     is ThrottleState.Unknown -> 0
                 }
-                
+
                 for (i in 0 until 4) {
                     val angle = (i * 90f - 90f) * (PI / 180f)
                     val pipCenter = Offset(
@@ -169,7 +172,7 @@ fun ScanRadarIndicator(
                         center = pipCenter
                     )
                 }
-                
+
                 // Radar sweep (when exhausted)
                 if (throttleState is ThrottleState.Exhausted) {
                     rotate(sweepAngle, pivot = center) {
@@ -187,7 +190,7 @@ fun ScanRadarIndicator(
                             radius = maxRadius - 16.dp.toPx(),
                             center = center
                         )
-                        
+
                         // Draw sweep line
                         drawLine(
                             color = errorColor,
@@ -198,7 +201,7 @@ fun ScanRadarIndicator(
                         )
                     }
                 }
-                
+
                 // Pulse ring (when ready)
                 if (throttleState is ThrottleState.Ready || throttleState is ThrottleState.LowQuota) {
                     val pulseRadius = maxRadius * 0.6f * pulseScale
@@ -209,7 +212,7 @@ fun ScanRadarIndicator(
                     )
                 }
             }
-            
+
             // Center content
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -273,16 +276,13 @@ fun ScanRadarIndicator(
                         )
                     }
                     is ThrottleState.Unknown -> {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
-                        )
+                        LoadingIndicator(modifier = Modifier.size(40.dp))
                     }
                 }
             }
-            
+
             // "Tap to scan" hint (only when ready)
-            if (throttleState is ThrottleState.Ready || 
+            if (throttleState is ThrottleState.Ready ||
                 throttleState is ThrottleState.LowQuota ||
                 throttleState is ThrottleState.Unlimited) {
                 Text(
@@ -314,7 +314,7 @@ fun ScanThrottleStatusBar(
         is ThrottleState.Unlimited -> MaterialTheme.colorScheme.secondary
         is ThrottleState.Unknown -> MaterialTheme.colorScheme.outline
     }
-    
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -342,14 +342,14 @@ fun ScanThrottleStatusBar(
                     is ThrottleState.Unlimited -> "Developer Mode: Unlimited"
                     is ThrottleState.Unknown -> "Checking..."
                 }
-                
+
                 Text(
                     statusText,
                     style = MaterialTheme.typography.titleSmall,
                     color = stateColor,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 if (throttleState is ThrottleState.Ready || throttleState is ThrottleState.LowQuota) {
                     // Quota dots
                     Row(
@@ -367,7 +367,7 @@ fun ScanThrottleStatusBar(
                                     .size(8.dp)
                                     .clip(CircleShape)
                                     .background(
-                                        if (i < remaining) stateColor 
+                                        if (i < remaining) stateColor
                                         else stateColor.copy(alpha = 0.2f)
                                     )
                             )
@@ -375,7 +375,7 @@ fun ScanThrottleStatusBar(
                     }
                 }
             }
-            
+
             // Scan button
             if (throttleState !is ThrottleState.Exhausted && throttleState !is ThrottleState.Unknown) {
                 FilledTonalButton(

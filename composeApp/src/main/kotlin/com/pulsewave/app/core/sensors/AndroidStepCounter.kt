@@ -23,10 +23,14 @@ class AndroidStepCounter(private val context: Context) : StepCounter, SensorEven
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
     override val steps = _steps.asSharedFlow()
+    override val isAvailable: Boolean get() = stepDetector != null
 
     override fun startListening() {
-        stepDetector?.let { sensor ->
+        val sensor = stepDetector ?: return
+        try {
             sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
+        } catch (_: SecurityException) {
+            // TYPE_STEP_DETECTOR requires ACTIVITY_RECOGNITION on API 29+.
         }
     }
 

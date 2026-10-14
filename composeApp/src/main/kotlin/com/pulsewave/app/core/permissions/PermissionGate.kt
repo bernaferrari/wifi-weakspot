@@ -16,10 +16,9 @@ data class PermissionState(
     val notifications: PermissionStatus,
     val nearbyDevices: PermissionStatus
 ) {
+    /** Scan results are location sensitive; Nearby Devices is for connection APIs. */
     val canScanWifi: Boolean
-        get() = wifiScan == PermissionStatus.GRANTED || 
-                location == PermissionStatus.GRANTED ||
-                nearbyDevices == PermissionStatus.GRANTED
+        get() = wifiScan == PermissionStatus.GRANTED || location == PermissionStatus.GRANTED
 }
 
 interface PermissionGate {

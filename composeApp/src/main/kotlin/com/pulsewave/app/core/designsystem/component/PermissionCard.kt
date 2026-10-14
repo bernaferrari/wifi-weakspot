@@ -1,5 +1,6 @@
 package com.pulsewave.app.core.designsystem.component
 
+import com.pulsewave.app.core.designsystem.animateAccessibleFloat
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -38,7 +39,7 @@ fun PermissionRequiredCard(
     reduceMotion: Boolean = false
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "permission")
-    val pulseScale by infiniteTransition.animateFloat(
+    val pulseScale by infiniteTransition.animateAccessibleFloat(
         initialValue = 0.95f,
         targetValue = 1.05f,
         animationSpec = infiniteRepeatable(
@@ -186,7 +187,7 @@ fun FullScreenPermissionRequest(
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "bg")
-    val gradientOffset by infiniteTransition.animateFloat(
+    val gradientOffset by infiniteTransition.animateAccessibleFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(

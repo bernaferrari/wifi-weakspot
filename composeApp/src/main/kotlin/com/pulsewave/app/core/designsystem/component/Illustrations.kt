@@ -1,5 +1,6 @@
 package com.pulsewave.app.core.designsystem.component
 
+import com.pulsewave.app.core.designsystem.animateAccessibleFloat
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
@@ -39,38 +40,38 @@ fun WifiNetworkIllustration(
     size: Dp = 140.dp
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "wifi_illustration")
-    
+
     // Animated arc opacity (staggered)
-    val arc1Alpha by infiniteTransition.animateFloat(
+    val arc1Alpha by infiniteTransition.animateAccessibleFloat(
         initialValue = 0.2f, targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ), label = "arc1"
     )
-    val arc2Alpha by infiniteTransition.animateFloat(
+    val arc2Alpha by infiniteTransition.animateAccessibleFloat(
         initialValue = 0.2f, targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing, delayMillis = 200),
             repeatMode = RepeatMode.Reverse
         ), label = "arc2"
     )
-    val arc3Alpha by infiniteTransition.animateFloat(
+    val arc3Alpha by infiniteTransition.animateAccessibleFloat(
         initialValue = 0.2f, targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing, delayMillis = 400),
             repeatMode = RepeatMode.Reverse
         ), label = "arc3"
     )
-    
+
     val primary = MaterialTheme.colorScheme.primary
     val tertiary = MaterialTheme.colorScheme.tertiary
-    
+
     Canvas(modifier = modifier.size(size)) {
         val centerX = this.size.width / 2
         val centerY = this.size.height * 0.7f
         val baseRadius = this.size.width * 0.15f
-        
+
         // Draw WiFi arcs
         listOf(
             Triple(baseRadius, arc1Alpha, 3.dp),
@@ -87,14 +88,14 @@ fun WifiNetworkIllustration(
                 style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
             )
         }
-        
+
         // Center dot
         drawCircle(
             color = primary,
             radius = 8.dp.toPx(),
             center = Offset(centerX, centerY)
         )
-        
+
         // Decorative floating dots
         val dots = listOf(
             Offset(this.size.width * 0.2f, this.size.height * 0.3f) to tertiary,
@@ -117,25 +118,25 @@ fun LanDeviceIllustration(
     size: Dp = 140.dp
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "lan_illustration")
-    
-    val pulse by infiniteTransition.animateFloat(
+
+    val pulse by infiniteTransition.animateAccessibleFloat(
         initialValue = 0f, targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(2000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ), label = "pulse"
     )
-    
+
     val primary = MaterialTheme.colorScheme.primary
     val secondary = MaterialTheme.colorScheme.secondary
     val tertiary = MaterialTheme.colorScheme.tertiary
     val surface = MaterialTheme.colorScheme.surfaceContainerHigh
-    
+
     Canvas(modifier = modifier.size(size)) {
         val center = Offset(this.size.width / 2, this.size.height / 2)
         val nodeRadius = 12.dp.toPx()
         val orbitRadius = this.size.width * 0.3f
-        
+
         // Draw connecting lines first
         val nodePositions = (0 until 5).map { i ->
             val angle = (i * 72f - 90f) * (PI / 180f)
@@ -144,7 +145,7 @@ fun LanDeviceIllustration(
                 center.y + orbitRadius * sin(angle).toFloat()
             )
         }
-        
+
         // Lines from center to nodes
         nodePositions.forEach { pos ->
             drawLine(
@@ -154,7 +155,7 @@ fun LanDeviceIllustration(
                 strokeWidth = 2.dp.toPx()
             )
         }
-        
+
         // Lines between adjacent nodes
         nodePositions.forEachIndexed { i, pos ->
             val nextPos = nodePositions[(i + 1) % nodePositions.size]
@@ -165,7 +166,7 @@ fun LanDeviceIllustration(
                 strokeWidth = 1.dp.toPx()
             )
         }
-        
+
         // Animated data pulse traveling along a line
         val pulseNodeIndex = (pulse * 5).toInt() % 5
         val pulsePos = nodePositions[pulseNodeIndex]
@@ -179,7 +180,7 @@ fun LanDeviceIllustration(
             radius = 4.dp.toPx(),
             center = pulseOffset
         )
-        
+
         // Draw outer nodes
         val nodeColors = listOf(primary, secondary, tertiary, primary.copy(alpha = 0.7f), secondary.copy(alpha = 0.7f))
         nodePositions.forEachIndexed { i, pos ->
@@ -203,7 +204,7 @@ fun LanDeviceIllustration(
                 center = pos
             )
         }
-        
+
         // Center hub
         drawCircle(
             color = primary,
@@ -227,24 +228,24 @@ fun SpeedTestIllustration(
     size: Dp = 140.dp
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "speed_illustration")
-    
-    val needleAngle by infiniteTransition.animateFloat(
+
+    val needleAngle by infiniteTransition.animateAccessibleFloat(
         initialValue = -60f, targetValue = 60f,
         animationSpec = infiniteRepeatable(
             animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ), label = "needle"
     )
-    
+
     val primary = MaterialTheme.colorScheme.primary
     val tertiary = MaterialTheme.colorScheme.tertiary
     val error = MaterialTheme.colorScheme.error
     val surface = MaterialTheme.colorScheme.surfaceContainerHigh
-    
+
     Canvas(modifier = modifier.size(size)) {
         val center = Offset(this.size.width / 2, this.size.height * 0.6f)
         val arcRadius = this.size.width * 0.4f
-        
+
         // Background arc
         drawArc(
             color = surface,
@@ -255,7 +256,7 @@ fun SpeedTestIllustration(
             size = Size(arcRadius * 2, arcRadius * 2),
             style = Stroke(width = 12.dp.toPx(), cap = StrokeCap.Round)
         )
-        
+
         // Gradient arc segments
         val segments = listOf(
             Triple(180f, 60f, error.copy(alpha = 0.6f)),
@@ -273,7 +274,7 @@ fun SpeedTestIllustration(
                 style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Butt)
             )
         }
-        
+
         // Tick marks
         for (i in 0..6) {
             val angle = (180f + i * 30f) * (PI / 180f)
@@ -292,7 +293,7 @@ fun SpeedTestIllustration(
                 strokeWidth = 2.dp.toPx()
             )
         }
-        
+
         // Animated needle
         rotate(needleAngle, pivot = center) {
             drawLine(
@@ -303,7 +304,7 @@ fun SpeedTestIllustration(
                 cap = StrokeCap.Round
             )
         }
-        
+
         // Center cap
         drawCircle(color = primary, radius = 8.dp.toPx(), center = center)
         drawCircle(color = Color.White, radius = 4.dp.toPx(), center = center)
@@ -319,34 +320,34 @@ fun SurveyIllustration(
     size: Dp = 140.dp
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "survey_illustration")
-    
-    val spot1 by infiniteTransition.animateFloat(
+
+    val spot1 by infiniteTransition.animateAccessibleFloat(
         initialValue = 0.4f, targetValue = 0.8f,
         animationSpec = infiniteRepeatable(
             animation = tween(1200, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ), label = "spot1"
     )
-    val spot2 by infiniteTransition.animateFloat(
+    val spot2 by infiniteTransition.animateAccessibleFloat(
         initialValue = 0.5f, targetValue = 0.9f,
         animationSpec = infiniteRepeatable(
             animation = tween(1200, easing = FastOutSlowInEasing, delayMillis = 400),
             repeatMode = RepeatMode.Reverse
         ), label = "spot2"
     )
-    
+
     val primary = MaterialTheme.colorScheme.primary
     val tertiary = MaterialTheme.colorScheme.tertiary
     val error = MaterialTheme.colorScheme.error
     val outline = MaterialTheme.colorScheme.outline
-    
+
     Canvas(modifier = modifier.size(size)) {
         val padding = 16.dp.toPx()
         val left = padding
         val top = padding
         val right = this.size.width - padding
         val bottom = this.size.height - padding
-        
+
         // Floor plan outline
         val floorPath = Path().apply {
             moveTo(left, top)
@@ -362,7 +363,7 @@ fun SurveyIllustration(
             color = outline.copy(alpha = 0.3f),
             style = Stroke(width = 2.dp.toPx())
         )
-        
+
         // Interior walls
         drawLine(
             color = outline.copy(alpha = 0.2f),
@@ -370,14 +371,14 @@ fun SurveyIllustration(
             end = Offset(right * 0.4f, bottom * 0.5f),
             strokeWidth = 2.dp.toPx()
         )
-        
+
         // Signal heatmap spots
         val spots = listOf(
             Triple(Offset(left + 30.dp.toPx(), top + 30.dp.toPx()), primary, spot1),
             Triple(Offset(right - 40.dp.toPx(), top + 40.dp.toPx()), tertiary, spot2),
             Triple(Offset(left + 40.dp.toPx(), bottom - 30.dp.toPx()), error, 0.5f)
         )
-        
+
         spots.forEach { (center, color, alpha) ->
             // Glow
             drawCircle(
@@ -405,7 +406,7 @@ fun PrivacyIllustration(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "privacy_illustration")
 
-    val glowAlpha by infiniteTransition.animateFloat(
+    val glowAlpha by infiniteTransition.animateAccessibleFloat(
         initialValue = 0.2f, targetValue = 0.7f,
         animationSpec = infiniteRepeatable(
             animation = tween(1600, easing = FastOutSlowInEasing),
@@ -501,28 +502,28 @@ fun HistoryIllustration(
     size: Dp = 140.dp
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "history_illustration")
-    
-    val handRotation by infiniteTransition.animateFloat(
+
+    val handRotation by infiniteTransition.animateAccessibleFloat(
         initialValue = 0f, targetValue = 360f,
         animationSpec = infiniteRepeatable(
             animation = tween(8000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ), label = "hand"
     )
-    
+
     val primary = MaterialTheme.colorScheme.primary
     val secondary = MaterialTheme.colorScheme.secondary
     val surface = MaterialTheme.colorScheme.surfaceContainerHigh
     val outline = MaterialTheme.colorScheme.outline
-    
+
     Canvas(modifier = modifier.size(size)) {
         val center = Offset(this.size.width / 2, this.size.height / 2)
         val radius = this.size.width * 0.4f
-        
+
         // Clock face
         drawCircle(color = surface, radius = radius, center = center)
         drawCircle(color = outline.copy(alpha = 0.3f), radius = radius, center = center, style = Stroke(2.dp.toPx()))
-        
+
         // Hour markers
         for (i in 0 until 12) {
             val angle = (i * 30f - 90f) * (PI / 180f)
@@ -535,7 +536,7 @@ fun HistoryIllustration(
                 strokeWidth = 2.dp.toPx()
             )
         }
-        
+
         // Hour hand (fixed)
         val hourAngle = 45f * (PI / 180f)
         drawLine(
@@ -545,7 +546,7 @@ fun HistoryIllustration(
             strokeWidth = 4.dp.toPx(),
             cap = StrokeCap.Round
         )
-        
+
         // Minute hand (animated)
         rotate(handRotation, pivot = center) {
             drawLine(
@@ -556,7 +557,7 @@ fun HistoryIllustration(
                 cap = StrokeCap.Round
             )
         }
-        
+
         // Center dot
         drawCircle(color = primary, radius = 5.dp.toPx(), center = center)
     }
@@ -580,18 +581,18 @@ fun EmptyStateWithIllustration(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Surface(
-            shape = PulseWaveShapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-            shadowElevation = 4.dp,
+            shape = PulseWaveShapes.extraExtraLarge,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            shadowElevation = 0.dp,
             modifier = Modifier.size(160.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 illustration()
             }
         }
-        
+
         Spacer(Modifier.height(24.dp))
-        
+
         Text(
             title,
             style = MaterialTheme.typography.headlineSmall,
@@ -599,16 +600,16 @@ fun EmptyStateWithIllustration(
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        
+
         Spacer(Modifier.height(8.dp))
-        
+
         Text(
             subtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
-        
+
         action?.let {
             Spacer(Modifier.height(24.dp))
             it()

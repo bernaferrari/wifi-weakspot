@@ -1,13 +1,14 @@
 package com.pulsewave.app.feature.analyze
 
 import com.pulsewave.app.core.wifi.WifiNetwork
+import com.pulsewave.app.core.wifi.occupiedFrequencySegments
 import kotlin.math.pow
 
 enum class TrafficRating(val label: String, val colorHex: Long) {
-    LOW("Open Road", 0xFF4CAF50),      // Green
-    MEDIUM("Moderate", 0xFFFFC107),    // Amber
-    HIGH("Congested", 0xFFFF5722),     // Orange
-    SEVERE("Gridlock", 0xFFB00020);    // Red
+    LOW("Low overlap", 0xFF4CAF50),
+    MEDIUM("Moderate overlap", 0xFFFFC107),
+    HIGH("High overlap", 0xFFFF5722),
+    SEVERE("Very high overlap", 0xFFB00020);
 }
 
 data class ChannelScore(
@@ -26,7 +27,7 @@ data class ChannelScore(
 }
 
 object CongestionAnalyzer {
-    
+
     // 2.4GHz Channel Centers (channels 1-14)
     private val channels24 = (1..14).associateWith { ch ->
         if (ch == 14) 2484 else 2412 + (ch - 1) * 5
@@ -37,13 +38,16 @@ object CongestionAnalyzer {
         5180 + (ch - 36) * 5
     }
 
-    // 6GHz (WiFi 6E - 1200 MHz spectrum, channels 1-233 in steps of 4)
-    // Center frequencies from 5940 MHz (ch 1) to 7105 MHz (ch 233)
+    // 6 GHz channel 1 is centered at 5955 MHz. Channels step by 4 (20 MHz).
     private val channels6 = (1..233 step 4).associate { ch ->
-        ch to (5940 + (ch - 1) * 5)
+        ch to (5950 + ch * 5)
     }
 
-    fun analyze(networks: List<WifiNetwork>, band: FrequencyBand): List<ChannelScore> {
+    fun analyze(
+        networks: List<WifiNetwork>,
+        band: FrequencyBand,
+        supportedChannels: Set<Int>? = null
+    ): List<ChannelScore> {
         val targetChannels = when (band) {
             FrequencyBand.BAND_2_4 -> channels24
             FrequencyBand.BAND_5 -> channels5
@@ -54,14 +58,9 @@ object CongestionAnalyzer {
 
         val scores = targetChannels.map { (channel, centerFreq) ->
             var totalEnergy = 0.0
-            
+
             networks.forEach { net ->
-                // Check if network overlaps this channel
-                // WiFi channel width is typically 20MHz (+/- 10MHz form center)
-                // We consider a network relevant if its center freq is within 12MHz of the channel center
-                // (Simplistic overlap model)
-                val diff = kotlin.math.abs(net.frequency - centerFreq)
-                if (diff < 12) {
+                if (occupiedFrequencySegments(net).any { it.overlaps(centerFreq) }) {
                     val signal = net.rssi
                     // Normalize -100 to 0. -30 (strong) -> 70.
                     // Power law: (Signal + 100)^2
@@ -76,19 +75,26 @@ object CongestionAnalyzer {
             }
             ChannelScore(channel, centerFreq, totalEnergy)
         }
-        
+
         // Find best channel (lowest score)
         // Prefer channels 1, 6, 11 for 2.4GHz to minimize overlap
-        val bestChannel = if (band == FrequencyBand.BAND_2_4) {
-            val nonOverlapping = listOf(1, 6, 11)
-            scores.filter { it.channelNumber in nonOverlapping }
-                .minByOrNull { it.score } 
-                ?: scores.minByOrNull { it.score }
-        } else {
-            scores.minByOrNull { it.score }
+        // 5/6 GHz availability depends on country, DFS and router support. Do not
+        // invent support from an empty scan or assume every plotted channel is usable.
+        val hasBandObservations = networks.any { net ->
+            when (band) {
+                FrequencyBand.BAND_2_4 -> net.frequency in 2400..2500
+                FrequencyBand.BAND_5 -> net.frequency in 5000..5924
+                FrequencyBand.BAND_6 -> net.frequency in 5925..7125
+            }
         }
+        val candidates = supportedChannels ?: if (band == FrequencyBand.BAND_2_4) {
+            setOf(1, 6, 11)
+        } else emptySet()
+        val bestChannel = if (hasBandObservations) {
+            scores.filter { it.channelNumber in candidates }.minByOrNull { it.score }
+        } else null
 
-        return scores.map { 
+        return scores.map {
             if (it == bestChannel) it.copy(recommendation = true) else it
         }
     }

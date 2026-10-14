@@ -9,8 +9,14 @@ data class NetworkStatus(
     val linkSpeed: Int, // Mbps
     val ipAddress: String,
     val isConnected: Boolean,
-    val security: String
+    val security: String,
+    val internetValidated: Boolean = false,
+    /** IPv4 default gateway of the Wi-Fi link, usually the router. */
+    val gateway: String = "",
+    val txLinkSpeed: Int = 0,
+    val rxLinkSpeed: Int = 0
 ) {
+    val hasSignalMeasurement: Boolean get() = isConnected && rssi in -100..-1
     companion object {
         val Disconnected = NetworkStatus(
             ssid = "",

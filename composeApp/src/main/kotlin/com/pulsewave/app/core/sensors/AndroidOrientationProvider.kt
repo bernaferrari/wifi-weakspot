@@ -23,6 +23,7 @@ class AndroidOrientationProvider(private val context: Context) : OrientationProv
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
     override val azimuth = _azimuth.asSharedFlow()
+    override val isAvailable: Boolean get() = rotationVectorSensor != null
 
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)

@@ -1,165 +1,144 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package com.pulsewave.app.feature.analyze
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.rounded.ShowChart
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.pulsewave.app.core.designsystem.PulseWaveShapes
+import com.pulsewave.app.core.designsystem.component.SignalMorphBlob
+import com.pulsewave.app.core.designsystem.signalColors
+import com.pulsewave.app.core.util.relativeTime
+import com.pulsewave.app.core.wifi.SignalQuality
 import com.pulsewave.app.core.wifi.WifiNetwork
-import kotlin.math.pow
+import com.pulsewave.app.core.wifi.bandLabel
+import com.pulsewave.app.core.wifi.estimateDistanceMeters
+import com.pulsewave.app.core.wifi.formatDistance
+import com.pulsewave.app.core.wifi.frequencyToChannel
+import com.pulsewave.app.core.wifi.getVendorName
+import com.pulsewave.app.core.wifi.securityLabel
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Bottom-sheet content for one access point: the verdict first, then plain facts. */
 @Composable
 fun WifiDetailScreen(
     network: WifiNetwork,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isFavorite: Boolean = false,
+    onToggleFavorite: () -> Unit = {},
+    onTrack: () -> Unit = {},
+    onShare: () -> Unit = {}
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(network.ssid.ifEmpty { "Hidden Network" }) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Default.Share, "Share")
-                    }
+    val quality = SignalQuality.of(network.rssi)
+    val colors = signalColors(quality)
+    val security = securityLabel(network.capabilities.ifBlank { network.security })
+    Column(
+        modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 24.dp)
+            .navigationBarsPadding(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SignalMorphBlob(quality = quality, color = colors.container, size = 96.dp, spinning = false) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        "${network.rssi}",
+                        style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
+                        fontWeight = FontWeight.Black,
+                        color = colors.onContainer
+                    )
+                    Text("dBm", style = MaterialTheme.typography.labelSmall, color = colors.onContainer)
                 }
-            )
+            }
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    network.ssid.ifEmpty { "Hidden network" },
+                    style = MaterialTheme.typography.headlineSmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(quality.headline, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(
+                    "Seen ${relativeTime(network.timestamp)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
-    ) { padding ->
-        Column(
-            modifier = modifier.padding(padding).fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Signal Meter
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(24.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            "${network.rssi} dBm",
-                            style = MaterialTheme.typography.displayMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            when {
-                                network.rssi >= -50 -> "Excellent Signal"
-                                network.rssi >= -60 -> "Good Signal"
-                                network.rssi >= -70 -> "Fair Signal"
-                                else -> "Poor Signal"
-                            },
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    Icon(
-                        Icons.Default.Info,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
 
-            // Details Section
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Network Details", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(12.dp))
-                    DetailRow("BSSID", network.bssid)
-                    DetailRow("Frequency", "${network.frequency} MHz")
-                    DetailRow("Channel Width", "${network.channelWidth} MHz")
-                    DetailRow("Capabilities", network.capabilities.take(50) + "...")
-                }
+        Card(shape = PulseWaveShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            Column(Modifier.padding(vertical = 8.dp)) {
+                Fact("Channel", "${frequencyToChannel(network.frequency)} · ${bandLabel(network.frequency)}")
+                Fact("Width", if (network.is80Plus80) "80 + 80 MHz" else "${network.channelWidth} MHz")
+                Fact("Security", when (security) { "" -> "Unknown"; "Open" -> "None (no password)"; else -> security })
+                getVendorName(network.bssid)?.let { Fact("Made by", it) }
+                Fact("Distance", "${formatDistance(estimateDistanceMeters(network.rssi, network.frequency))} (rough guess)")
+                Fact("Address", network.bssid.uppercase())
             }
+        }
 
-            // Estimated Distance
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = onTrack,
+                shapes = ButtonDefaults.shapes(),
+                modifier = Modifier.weight(1f).heightIn(min = ButtonDefaults.MediumContainerHeight)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Estimated Distance", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(8.dp))
-                    val distance = estimateDistance(network.rssi, network.frequency)
-                    Text(
-                        "~${distance} meters",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        "Note: This is an approximation based on signal strength. " +
-                        "Actual distance varies with obstacles and environment.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
+                Icon(Icons.AutoMirrored.Rounded.ShowChart, null)
+                Spacer(Modifier.width(8.dp))
+                Text("Watch its signal", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
             }
-
-            // Actions
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = {},
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.Star, contentDescription = null)
-                    Spacer(Modifier.width(4.dp))
-                    Text("Favorite")
-                }
-                OutlinedButton(
-                    onClick = {},
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null)
-                    Spacer(Modifier.width(4.dp))
-                    Text("Track")
-                }
-            }
+            FilledTonalIconButton(
+                onClick = onToggleFavorite,
+                shapes = IconButtonDefaults.shapes(),
+                modifier = Modifier.size(ButtonDefaults.MediumContainerHeight)
+            ) { Icon(if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder, if (isFavorite) "Remove from favorites" else "Add to favorites") }
+            FilledTonalIconButton(
+                onClick = onShare,
+                shapes = IconButtonDefaults.shapes(),
+                modifier = Modifier.size(ButtonDefaults.MediumContainerHeight)
+            ) { Icon(Icons.Rounded.Share, "Share") }
         }
     }
 }
 
 @Composable
-fun DetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+private fun Fact(label: String, value: String) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+        Text(value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
     }
-}
-
-// Free Space Path Loss distance estimation
-fun estimateDistance(rssi: Int, frequencyMhz: Int): Double {
-    // FSPL formula: d = 10 ^ ((27.55 - (20 * log10(f)) + |RSSI|) / 20)
-    // Simplified for indoor use
-    val txPower = -40 // Assumed transmit power at 1 meter
-    val n = 3.0 // Path loss exponent (indoor)
-    return 10.0.pow((txPower - rssi) / (10 * n))
 }

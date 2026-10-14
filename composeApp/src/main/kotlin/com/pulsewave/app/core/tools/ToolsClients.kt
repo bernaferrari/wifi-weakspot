@@ -27,7 +27,7 @@ interface WhoisClient {
 
 interface PortScanner {
     val progress: Flow<Float>
-    
+
     suspend fun scanCommonPorts(host: String): PortScanResult
     suspend fun scanRange(host: String, startPort: Int, endPort: Int): PortScanResult
     suspend fun scanPorts(host: String, ports: List<Int>): PortScanResult

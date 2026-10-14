@@ -1,273 +1,135 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, ExperimentalLayoutApi::class)
 
 package com.pulsewave.app.feature.analyze
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import kotlin.math.pow
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.HelpOutline
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.automirrored.rounded.HelpOutline
+import androidx.compose.material.icons.automirrored.rounded.ShowChart
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Lightbulb
+import androidx.compose.material.icons.rounded.LocationOff
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.NetworkWifi1Bar
+import androidx.compose.material.icons.rounded.NetworkWifi2Bar
+import androidx.compose.material.icons.rounded.NetworkWifi3Bar
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.SignalWifi0Bar
+import androidx.compose.material.icons.rounded.SignalWifi4Bar
+import androidx.compose.material.icons.rounded.WaterfallChart
+import androidx.compose.material.icons.rounded.WifiFind
+import androidx.compose.material.icons.rounded.WifiOff
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalIconToggleButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumFlexibleTopAppBar
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
-import androidx.compose.runtime.*
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pulsewave.app.core.wifi.getVendorName
-import com.pulsewave.app.core.wifi.WifiNetwork
-import com.pulsewave.app.core.wifi.ThrottleState
-import com.pulsewave.app.core.designsystem.PulseWaveShapes
-import com.pulsewave.app.core.designsystem.PulseWaveAlpha
-import com.pulsewave.app.core.designsystem.ShimmerPlaceholder
-import com.pulsewave.app.core.designsystem.component.ScanRadarIndicator
 import com.pulsewave.app.core.datastore.SettingsRepository
+import com.pulsewave.app.core.designsystem.PulseWaveShapes
+import com.pulsewave.app.core.designsystem.component.ShapeIcon
+import com.pulsewave.app.core.designsystem.component.polygon
+import com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback
+import com.pulsewave.app.core.designsystem.signalColors
+import com.pulsewave.app.core.model.NetworkStatus
+import com.pulsewave.app.core.permissions.PermissionGate
+import com.pulsewave.app.core.wifi.ScanThrottleManager
+import com.pulsewave.app.core.wifi.SignalQuality
+import com.pulsewave.app.core.wifi.ThrottleState
+import com.pulsewave.app.core.wifi.WifiNetwork
+import com.pulsewave.app.core.wifi.bandLabel
+import com.pulsewave.app.core.wifi.frequencyToChannel
+import com.pulsewave.app.core.wifi.getVendorName
+import com.pulsewave.app.core.wifi.isNetworkSecured
+import com.pulsewave.app.core.wifi.rememberRadioState
+import com.pulsewave.app.core.wifi.securityLabel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 enum class FrequencyBand(val label: String) {
     BAND_2_4("2.4 GHz"),
     BAND_5("5 GHz"),
-    BAND_6("6 GHz")
-}
+    BAND_6("6 GHz");
 
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun InsightStrip(
-    networks: List<WifiNetwork>,
-    selectedBand: FrequencyBand,
-    modifier: Modifier = Modifier
-) {
-    val filteredNetworks = networks.filter { network ->
-        when (selectedBand) {
-            FrequencyBand.BAND_2_4 -> network.frequency in 2400..2500
-            FrequencyBand.BAND_5 -> network.frequency in 5150..5900
-            FrequencyBand.BAND_6 -> network.frequency in 5925..7125
-        }
-    }
-    
-    if (filteredNetworks.isEmpty()) return
-    
-    // Use CongestionAnalyzer for sophisticated channel analysis
-    val channelScores = remember(filteredNetworks, selectedBand) {
-        CongestionAnalyzer.analyze(filteredNetworks, selectedBand)
-    }
-    
-    val bestChannel = channelScores.find { it.recommendation }
-    val congestedChannels = channelScores.filter { it.rating == TrafficRating.HIGH || it.rating == TrafficRating.SEVERE }
-    
-    val strongestNetwork = filteredNetworks.maxByOrNull { it.rssi }
-    
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = PulseWaveShapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
-        )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Outlined.Lightbulb,
-                        contentDescription = "Insights",
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.secondary
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "Insights",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-                
-                // Network count chip
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
-                ) {
-                    Text(
-                        "${filteredNetworks.size} networks",
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
-            
-            Spacer(Modifier.height(12.dp))
-            
-            // Best channel recommendation (prominent)
-            if (bestChannel != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = when (bestChannel.rating) {
-                            TrafficRating.LOW -> Color(0xFF4CAF50)
-                            TrafficRating.MEDIUM -> Color(0xFFFFC107)
-                            else -> Color(0xFFFF5722)
-                        }
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Check,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = Color.White
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                "Ch ${bestChannel.channelNumber}",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "Best channel • ${bestChannel.rating.label}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
-            
-            // Congestion warnings
-            if (congestedChannels.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Outlined.Warning,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        "Avoid: Ch ${congestedChannels.take(3).joinToString(", ") { "${it.channelNumber}" }}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
-            
-            // Signal strength info
-            strongestNetwork?.let { network ->
-                Spacer(Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    SignalDot(network.rssi)
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "${network.ssid.ifEmpty { "Hidden" }} • ${network.rssi} dBm",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
-        }
+    fun contains(frequency: Int): Boolean = when (this) {
+        BAND_2_4 -> frequency in 2400..2500
+        BAND_5 -> frequency in 5150..5924
+        BAND_6 -> frequency in 5925..7125
     }
 }
 
-@Composable
-private fun SignalDot(rssi: Int) {
-    val color = when {
-        rssi > -50 -> Color(0xFF4CAF50)
-        rssi > -60 -> Color(0xFF8BC34A)
-        rssi > -70 -> Color(0xFFFFC107)
-        else -> Color(0xFFFF5722)
-    }
-    Surface(
-        shape = CircleShape,
-        color = color,
-        modifier = Modifier.size(8.dp)
-    ) {}
-}
-
-@Composable
-fun GraphLegendDialog(
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Understanding the Graph") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                LegendItem(
-                    title = "Signal Strength (Y-axis)",
-                    description = "Higher peaks = stronger signal. -30 dBm is excellent, -80 dBm is weak."
-                )
-                LegendItem(
-                    title = "Channel (X-axis)",
-                    description = "Wi-Fi channels. In 2.4GHz, channels 1, 6, and 11 don't overlap."
-                )
-                LegendItem(
-                    title = "Curve Width",
-                    description = "Represents channel width (20/40/80 MHz). Wider = more bandwidth but more interference."
-                )
-                LegendItem(
-                    title = "Heatmap Mode",
-                    description = "Shows congestion intensity. Red = crowded, blue = clear."
-                )
-                LegendItem(
-                    title = "History Mode",
-                    description = "Shows signal strength changes over time for selected network."
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Got it")
-            }
-        }
-    )
-}
-
-@Composable
-private fun LegendItem(title: String, description: String) {
-    Column {
-        Text(
-            title,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold
-        )
-        Text(
-            description,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+/** Unthrottled: near-live. Throttled: one scan every 30 s stays inside 4 per 2 minutes. */
+private fun throttleIntervalMs(state: ThrottleState): Long = when (state) {
+    ThrottleState.Unlimited -> 4_000L
+    is ThrottleState.Exhausted -> (state.secondsUntilNextScan + 1) * 1_000L
+    else -> 30_000L
 }
 
 @Composable
@@ -277,1493 +139,455 @@ fun AnalyzeScreen(
     onNavigateToPowerTools: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    
-    // Permission state
-    val permissionGate: com.pulsewave.app.core.permissions.PermissionGate = org.koin.compose.koinInject()
-    val permissionState by permissionGate.state.collectAsStateWithLifecycle()
-    
-    // Check permissions on launch
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        permissionGate.checkPermissions()
-    }
-    
-    // Get auto scan settings
-    val settingsRepository: SettingsRepository = koinInject()
-    val autoScan by settingsRepository.autoScan.collectAsState(initial = false)
-    val scanInterval by settingsRepository.scanInterval.collectAsState(initial = 10000L)
+    val connected by viewModel.connected.collectAsStateWithLifecycle()
+    val permissionGate: PermissionGate = koinInject()
+    val permissions by permissionGate.state.collectAsStateWithLifecycle()
+    val throttleManager: ScanThrottleManager = koinInject()
+    val throttle by throttleManager.throttleState.collectAsStateWithLifecycle()
+    val radios = rememberRadioState()
+    val context = LocalContext.current
+    val haptics = rememberPulseWaveHapticFeedback()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val canScan = permissions.canScanWifi && radios.wifiEnabled && radios.locationEnabled
 
-    // Get the throttle manager directly for real-time state in auto-scan loop
-    val throttleManager: com.pulsewave.app.core.wifi.ScanThrottleManager = org.koin.compose.koinInject()
-    val throttleState by throttleManager.throttleState.collectAsStateWithLifecycle()
-
-    // Respect AutoScan setting - but be throttle-aware!
-    LaunchedEffect(permissionState.wifiScan, autoScan, throttleState) {
-        if (permissionState.wifiScan == com.pulsewave.app.core.permissions.PermissionStatus.GRANTED) {
-            // Only scan if not already exhausted
-            if (throttleState !is ThrottleState.Exhausted) {
-                viewModel.startScan()
-            }
-            
-            // Only continue scanning if autoScan is enabled
-            if (autoScan) {
-                while (true) {
-                    // Re-read current throttle state each iteration
-                    val currentState = throttleManager.throttleState.value
-                    
-                    when (currentState) {
-                        is ThrottleState.Exhausted -> {
-                            // Wait for cooldown + buffer
-                            val waitTime = (currentState.secondsUntilNextScan + 5) * 1000L
-                            kotlinx.coroutines.delay(waitTime)
-                        }
-                        is ThrottleState.Ready, is ThrottleState.LowQuota, is ThrottleState.Unlimited -> {
-                            kotlinx.coroutines.delay(scanInterval)
-                            // Double-check before scanning
-                            if (throttleManager.throttleState.value !is ThrottleState.Exhausted) {
-                                viewModel.startScan()
-                            }
-                        }
-                        is ThrottleState.Unknown -> {
-                            kotlinx.coroutines.delay(scanInterval)
-                            viewModel.startScan()
-                        }
-                    }
-                }
-            }
+    // Refresh while the screen is visible, paced to what Android allows.
+    LaunchedEffect(canScan) {
+        if (!canScan) return@LaunchedEffect
+        while (isActive) {
+            if (throttleManager.throttleState.value !is ThrottleState.Exhausted) viewModel.startScan()
+            delay(throttleIntervalMs(throttleManager.throttleState.value))
         }
     }
-    
-    // Permission launcher
-    val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-        contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
-    ) { _ ->
-        permissionGate.checkPermissions()
-    }
 
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        val needsPermission = permissionState.wifiScan != com.pulsewave.app.core.permissions.PermissionStatus.GRANTED ||
-            permissionState.nearbyDevices != com.pulsewave.app.core.permissions.PermissionStatus.GRANTED
-        
-        if (needsPermission) {
-            PermissionRequestContent(
-                onRequestPermission = {
-                    val permissions = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                        arrayOf(
-                            android.Manifest.permission.ACCESS_FINE_LOCATION,
-                            android.Manifest.permission.NEARBY_WIFI_DEVICES
-                        )
+    val requestPermission = com.pulsewave.app.core.permissions.rememberScanPermissionRequest()
+
+    val networks = (uiState as? AnalyzeUiState.Success)?.networks.orEmpty()
+    val isScanning = (uiState as? AnalyzeUiState.Success)?.isScanning == true || uiState is AnalyzeUiState.Loading
+
+    Scaffold(
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            MediumFlexibleTopAppBar(
+                title = { Text("Nearby Wi-Fi") },
+                subtitle = { if (canScan) ScanSubtitle(networks, throttle) },
+                actions = {
+                    if (canScan) {
+                        Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                            if (isScanning) LoadingIndicator(Modifier.size(32.dp))
+                            else IconButton(onClick = {
+                                // While Android has paused scans, the hint below explains why.
+                                if (throttle is ThrottleState.Exhausted) haptics.error() else { haptics.click(); viewModel.startScan() }
+                            }) { Icon(Icons.Rounded.Refresh, "Scan now") }
+                        }
+                    }
+                },
+                scrollBehavior = scrollBehavior
+            )
+        }
+    ) { padding ->
+        val open: (String) -> Unit = { action -> context.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            when {
+                !permissions.canScanWifi -> CenteredMessage(
+                    icon = Icons.Rounded.WifiFind,
+                    title = "See the Wi-Fi around you",
+                    body = "Android only shares nearby network names with apps that have location access. PulseWave never records where you are.",
+                    action = "Allow",
+                    onAction = requestPermission
+                )
+                !radios.wifiEnabled -> CenteredMessage(Icons.Rounded.WifiOff, "Wi-Fi is off", "Turn on Wi-Fi to see nearby networks.", "Open Wi-Fi settings") { open(Settings.ACTION_WIFI_SETTINGS) }
+                !radios.locationEnabled -> CenteredMessage(Icons.Rounded.LocationOff, "Location is off", "Android needs Location on to list nearby Wi-Fi. PulseWave doesn't use GPS.", "Turn on Location") { open(Settings.ACTION_LOCATION_SOURCE_SETTINGS) }
+                networks.isEmpty() && uiState !is AnalyzeUiState.Success -> {
+                    if (uiState is AnalyzeUiState.Loading) {
+                        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                            LoadingIndicator(Modifier.size(96.dp))
+                            Spacer(Modifier.height(16.dp))
+                            Text("Listening for networks…", style = MaterialTheme.typography.titleMedium)
+                        }
                     } else {
-                        arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION)
-                    }
-                    permissionLauncher.launch(permissions)
-                },
-                onOpenSettings = { permissionGate.openAppSettings() }
-            )
-        } else {
-            AnimatedContent(
-                targetState = uiState,
-                transitionSpec = {
-                    when {
-                        // Loading -> Success: crossfade with slide up
-                        initialState is AnalyzeUiState.Loading && targetState is AnalyzeUiState.Success -> {
-                            (fadeIn(tween(400)) + slideInVertically { it / 8 }) togetherWith 
-                            (fadeOut(tween(200)))
-                        }
-                        else -> fadeIn(tween(300)) togetherWith fadeOut(tween(200))
-                    }
-                },
-                label = "analyzeStateTransition"
-            ) { state ->
-                when (state) {
-                    is AnalyzeUiState.Loading -> {
-                        Column(
-                            modifier = Modifier.padding(16.dp).fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            ShimmerPlaceholder(
-                                visible = true,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(0.4f),
-                                shape = PulseWaveShapes.medium
-                            )
-                            
-                            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                                ShimmerPlaceholder(visible = true, modifier = Modifier.width(100.dp).height(20.dp))
-                                ShimmerPlaceholder(visible = true, modifier = Modifier.width(60.dp).height(20.dp))
-                            }
-                            
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                modifier = Modifier.weight(0.6f)
-                            ) {
-                                repeat(5) {
-                                    WifiNetworkSkeleton()
-                                }
-                            }
-                        }
-                    }
-                    is AnalyzeUiState.Empty -> {
-                        EmptyStateContent(
-                            onScan = { viewModel.startScan() },
-                            throttleState = state.throttleState,
-                            onNavigateToPowerTools = onNavigateToPowerTools
-                        )
-                    }
-                    is AnalyzeUiState.Success -> {
-                        WifiAnalyzerContent(
-                            networks = state.networks,
-                            history = state.history,
-                            isScanning = state.isScanning,
-                            throttleState = state.throttleState,
-                            onScan = { viewModel.startScan() },
-                            onNavigateToPowerTools = onNavigateToPowerTools
+                        val exhausted = throttle as? ThrottleState.Exhausted
+                        CenteredMessage(
+                            icon = Icons.Rounded.WifiFind,
+                            title = if (exhausted != null) "Android paused scanning" else "Ready to scan",
+                            body = if (exhausted != null) "The next scan is allowed in ${exhausted.secondsUntilNextScan} s. Turn off scan throttling to skip the wait."
+                            else "Tap scan to see every network nearby.",
+                            action = if (exhausted != null) "Turn off throttling" else "Scan",
+                            onAction = { if (exhausted != null) onNavigateToPowerTools() else viewModel.startScan() }
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PermissionRequestContent(
-    onRequestPermission: () -> Unit,
-    onOpenSettings: () -> Unit
-) {
-    // Animated background gradient
-    val infiniteTransition = rememberInfiniteTransition(label = "bg")
-    val gradientOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "gradientOffset"
-    )
-    
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f * gradientOffset),
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.2f * (1f - gradientOffset))
-                    )
+                else -> NetworksContent(
+                    networks = networks,
+                    history = (uiState as? AnalyzeUiState.Success)?.history.orEmpty(),
+                    connected = connected,
+                    throttle = throttle,
+                    onUnlock = onNavigateToPowerTools
                 )
-            )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            // Animated WiFi waves
-            val pulseScale by infiniteTransition.animateFloat(
-                initialValue = 0.8f,
-                targetValue = 1.2f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(1500, easing = FastOutSlowInEasing),
-                    repeatMode = RepeatMode.Reverse
-                ),
-                label = "pulseScale"
-            )
-            
-            Box(contentAlignment = Alignment.Center) {
-                // Outer pulse ring
-                Surface(
-                    modifier = Modifier
-                        .size(160.dp)
-                        .scale(pulseScale)
-                        .graphicsLayer { alpha = 2f - pulseScale },
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                ) {}
-                
-                // Middle ring
-                Surface(
-                    modifier = Modifier.size(120.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {}
-                
-                // Center icon
-                Surface(
-                    modifier = Modifier.size(80.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Filled.Wifi,
-                            contentDescription = null,
-                            modifier = Modifier.size(40.dp),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                }
-            }
-            
-            Spacer(Modifier.height(48.dp))
-            
-            // Hero headline
-            Text(
-                "See Your\nInvisible World",
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                lineHeight = MaterialTheme.typography.displaySmall.lineHeight
-            )
-            
-            Spacer(Modifier.height(16.dp))
-            
-            Text(
-                "Discover and analyze WiFi networks around you with beautiful visualizations",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-            
-            Spacer(Modifier.height(48.dp))
-            
-            // Feature hints
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                FeatureHint(Icons.Outlined.BarChart, "Channel\nAnalysis")
-                FeatureHint(Icons.Outlined.Speed, "Signal\nStrength")
-                FeatureHint(Icons.Outlined.Security, "Security\nInfo")
-            }
-            
-            Spacer(Modifier.height(48.dp))
-            
-            // CTA Button
-            Button(
-                onClick = onRequestPermission,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text("Get Started", style = MaterialTheme.typography.titleMedium)
-            }
-            
-            Spacer(Modifier.height(12.dp))
-            
-            TextButton(onClick = onOpenSettings) {
-                Text("Already denied? Open Settings", style = MaterialTheme.typography.labelMedium)
             }
         }
     }
 }
 
 @Composable
-private fun FeatureHint(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            modifier = Modifier.size(48.dp),
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHighest
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = MaterialTheme.colorScheme.primary)
-            }
-        }
-        Spacer(Modifier.height(8.dp))
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+private fun ScanSubtitle(networks: List<WifiNetwork>, throttle: ThrottleState) {
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) { while (isActive) { delay(1_000); now = System.currentTimeMillis() } }
+    val latest = networks.maxOfOrNull { it.timestamp }
+    val age = latest?.let { ((now - it) / 1000).coerceAtLeast(0) }
+    val count = when (networks.size) { 0 -> "No networks yet"; 1 -> "1 network"; else -> "${networks.size} networks" }
+    val freshness = when {
+        throttle is ThrottleState.Unlimited -> "live"
+        age == null -> null
+        age < 60 -> "updated ${age}s ago"
+        else -> "updated ${age / 60} min ago"
     }
+    Text(listOfNotNull(count, freshness).joinToString(" · "))
 }
 
 @Composable
-private fun EmptyStateContent(
-    onScan: () -> Unit,
-    throttleState: ThrottleState = ThrottleState.Unknown,
-    onNavigateToPowerTools: () -> Unit = {},
-    wifiEnabled: Boolean = true,
-    locationEnabled: Boolean = true
-) {
-    val infiniteTransition = rememberInfiniteTransition(label = "empty")
-    val haptics = com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback()
-    
-    val isThrottled = throttleState is ThrottleState.Exhausted
-    val isLowQuota = throttleState is ThrottleState.LowQuota
-    val isUnlimited = throttleState is ThrottleState.Unlimited
-    
-    // Multiple expanding rings for radar effect
-    val ring1 by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearOutSlowInEasing)
-        ),
-        label = "ring1"
-    )
-    val ring2 by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearOutSlowInEasing, delayMillis = 500)
-        ),
-        label = "ring2"
-    )
-    val ring3 by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearOutSlowInEasing, delayMillis = 1000)
-        ),
-        label = "ring3"
-    )
-    
-    val (title, subtitle, actionText, icon) = when {
-        !wifiEnabled -> arrayOf(
-            "Wi-Fi is Off",
-            "Turn on Wi-Fi to scan for networks",
-            "Open Wi-Fi Settings",
-            Icons.Outlined.WifiOff
-        )
-        !locationEnabled -> arrayOf(
-            "Location is Off",
-            "Location services are required to scan Wi-Fi networks",
-            "Open Location Settings",
-            Icons.Outlined.LocationOff
-        )
-        isThrottled -> {
-            val state = throttleState as ThrottleState.Exhausted
-            val mins = state.secondsUntilNextScan / 60
-            val secs = state.secondsUntilNextScan % 60
-            arrayOf(
-                "Scan Cooldown",
-                "Android limits Wi-Fi scans to 4 per 2 minutes. Wait $mins:${"%02d".format(secs)} or disable throttling in Developer Options.",
-                "Scan Anyway",
-                Icons.Outlined.Schedule
-            )
-        }
-        isLowQuota -> {
-            val state = throttleState as ThrottleState.LowQuota
-            arrayOf(
-                "${state.scansRemaining} Scans Left",
-                "You have ${state.scansRemaining} scans remaining in this 2-minute window.",
-                "Scan Now",
-                Icons.Outlined.History
-            )
-        }
-        isUnlimited -> arrayOf(
-            "Unlimited Scans",
-            "Developer Mode detected! Scan throttling is disabled.",
-            "Start Scanning",
-            Icons.Outlined.Bolt
-        )
-        else -> arrayOf(
-            "Looking for Signals",
-            "Tap scan to discover the WiFi landscape around you",
-            "Start Scanning",
-            Icons.Outlined.WifiFind
-        )
-    }
-    
+private fun CenteredMessage(icon: ImageVector, title: String, body: String, action: String, onAction: () -> Unit) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Use ScanRadarIndicator when throttled or low quota
-        if (isThrottled || isLowQuota || isUnlimited) {
-            ScanRadarIndicator(
-                throttleState = throttleState,
-                onScanNow = onScan,
-                size = 180.dp
-            )
-        } else {
-            // Animated radar with expanding rings
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(160.dp)
-            ) {
-                // Expanding rings (only show for normal state)
-                if (wifiEnabled && locationEnabled) {
-                    listOf(ring1, ring2, ring3).forEach { progress ->
-                        Surface(
-                            modifier = Modifier
-                                .size((60 + 100 * progress).dp)
-                                .graphicsLayer { alpha = 1f - progress },
-                            shape = CircleShape,
-                            color = Color.Transparent,
-                            border = androidx.compose.foundation.BorderStroke(
-                                2.dp,
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f * (1f - progress))
-                            )
-                        ) {}
-                    }
-                }
-                
-                // Center icon
-                Surface(
-                    modifier = Modifier.size(80.dp),
-                    shape = CircleShape,
-                    color = when {
-                        !wifiEnabled || !locationEnabled -> MaterialTheme.colorScheme.errorContainer
-                        else -> MaterialTheme.colorScheme.surfaceContainerHighest
-                    }
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            icon as androidx.compose.ui.graphics.vector.ImageVector,
-                            contentDescription = null,
-                            modifier = Modifier.size(40.dp),
-                            tint = when {
-                                !wifiEnabled || !locationEnabled -> MaterialTheme.colorScheme.onErrorContainer
-                                else -> MaterialTheme.colorScheme.primary
-                            }
-                        )
-                    }
-                }
-            }
-        }
-        
-        Spacer(Modifier.height(32.dp))
-        
-        Text(
-            title as String,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center
-        )
-        
+        ShapeIcon(icon, MaterialShapes.Cookie9Sided, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, size = 120.dp, iconSize = 56.dp)
+        Spacer(Modifier.height(24.dp))
+        Text(title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
-        
-        Text(
-            subtitle as String,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-        
-        Spacer(Modifier.height(32.dp))
-        
-        // Don't show scan button if exhausted (ScanRadarIndicator handles it)
-        if (!isThrottled) {
-            Button(
-                onClick = onScan,
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(52.dp),
-                shape = RoundedCornerShape(26.dp)
-            ) {
-                Icon(Icons.Default.Radar, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(actionText as String, style = MaterialTheme.typography.titleSmall)
-            }
-        }
-        
-        // Learn more about throttling - link to PowerTools
-        if (isThrottled || isLowQuota) {
-            Spacer(Modifier.height(16.dp))
-            TextButton(onClick = {
-                haptics.light()
-                onNavigateToPowerTools()
-            }) {
-                Icon(Icons.Outlined.Build, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Learn how to disable throttling")
-            }
-        }
-        
-        // Show unlimited badge info
-        if (isUnlimited) {
-            Spacer(Modifier.height(16.dp))
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer
-            ) {
-                Text(
-                    "  Dev Mode Active  ",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.padding(vertical = 6.dp)
-                )
-            }
+        Text(body, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(24.dp))
+        Button(onClick = onAction, shapes = ButtonDefaults.shapes(), modifier = Modifier.heightIn(min = ButtonDefaults.MediumContainerHeight)) {
+            Text(action, style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun WifiAnalyzerContent(
+private fun NetworksContent(
     networks: List<WifiNetwork>,
     history: Map<String, List<Int>>,
-    isScanning: Boolean,
-    throttleState: ThrottleState = ThrottleState.Unknown,
-    onScan: () -> Unit,
-    onNavigateToPowerTools: () -> Unit = {}
+    connected: NetworkStatus,
+    throttle: ThrottleState,
+    onUnlock: () -> Unit
 ) {
-    var selectedBand by remember { mutableStateOf(FrequencyBand.BAND_2_4) }
-    var selectedNetwork by remember { mutableStateOf<WifiNetwork?>(null) }
-    var showHistoryChart by remember { mutableStateOf(false) }
-    var showHeatmap by remember { mutableStateOf(false) }
-    var showTrafficSheet by remember { mutableStateOf(false) }
-    var showLegendDialog by remember { mutableStateOf(false) }
-    var showThrottleWarning by remember { mutableStateOf(false) }
-    val haptics = com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback()
-    
-    // Show throttle warning when low or exhausted
-    val showThrottleBanner = throttleState is ThrottleState.LowQuota || throttleState is ThrottleState.Exhausted
-    
-    if (showLegendDialog) {
-        GraphLegendDialog(onDismiss = { showLegendDialog = false })
-    }
-    
-    // Throttle warning dialog
-    if (showThrottleWarning) {
-        AlertDialog(
-            onDismissRequest = { showThrottleWarning = false },
-            title = { Text("Scan Throttling") },
-            text = {
-                Column {
-                    Text("Android limits Wi-Fi scans to 4 per 2 minutes for privacy and battery reasons.")
-                    Spacer(Modifier.height(16.dp))
-                    Text("When you run out of scans:", style = MaterialTheme.typography.labelLarge)
-                    Spacer(Modifier.height(8.dp))
-                    Text("• Wait for the cooldown timer")
-                    Text("• Or disable throttling in Developer Options")
-                    Spacer(Modifier.height(16.dp))
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh
-                    ) {
-                        Text(
-                            "Developer Options → Networking →\nWi-Fi scan throttling → OFF",
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(12.dp)
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    showThrottleWarning = false
-                    onNavigateToPowerTools()
-                }) {
-                    Text("Open Power Tools")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showThrottleWarning = false }) {
-                    Text("Got it")
-                }
-            }
-        )
-    }
-    
-    val bestNetwork = remember(networks) { networks.maxByOrNull { it.rssi } }
-    
-    // Filter out "my" network (best signal) from traffic report
-    val congestionNetworks = remember(networks, bestNetwork) { 
-        if (bestNetwork != null) networks - bestNetwork else networks 
-    }
-    
-    val congestionScores = remember(congestionNetworks, selectedBand) {
-        CongestionAnalyzer.analyze(congestionNetworks, selectedBand)
-    }
-    
-    // Professional Export Logic
-    val exportSummary = remember(networks) {
-        val topNetworks = networks.sortedByDescending { it.rssi }.take(5)
-        buildString {
-            appendLine("WiFi Environment Report")
-            appendLine("-----------------------")
-            appendLine("Total Networks: ${networks.size}")
-            appendLine("Best Signal: ${topNetworks.firstOrNull()?.ssid ?: "N/A"}")
-            appendLine("\nTop 5 Networks:")
-            topNetworks.forEach { 
-                appendLine("- ${it.ssid} (${it.rssi} dBm) on Ch ${frequencyToChannel(it.frequency)}")
-            }
-        }
-    }
+    val haptics = rememberPulseWaveHapticFeedback()
+    val connectedBand = FrequencyBand.entries.firstOrNull { connected.isConnected && it.contains(connected.frequency) }
+    var band by rememberSaveable { mutableStateOf(connectedBand ?: FrequencyBand.BAND_2_4) }
+    var showHistory by rememberSaveable { mutableStateOf(false) }
+    var showHelp by remember { mutableStateOf(false) }
+    var selected by remember { mutableStateOf<WifiNetwork?>(null) }
+    var detail by remember { mutableStateOf<WifiNetwork?>(null) }
+    val inBand = remember(networks, band) { networks.filter { band.contains(it.frequency) }.sortedByDescending { it.rssi } }
+    val counts = remember(networks) { FrequencyBand.entries.associateWith { b -> networks.count { b.contains(it.frequency) } } }
 
-    // Filter networks by band
-    val filteredNetworks = remember(networks, selectedBand) {
-        when (selectedBand) {
-            FrequencyBand.BAND_2_4 -> networks.filter { it.frequency in 2400..2500 }
-            FrequencyBand.BAND_5 -> networks.filter { it.frequency in 5150..5900 }
-            FrequencyBand.BAND_6 -> networks.filter { it.frequency in 5925..7125 }
+    val controls: LazyListScope.() -> Unit = {
+        // Only when Android actually gets in the way; otherwise the subtitle says how fresh it is.
+        if (throttle is ThrottleState.Exhausted) {
+            item(key = "throttle") { ThrottleHint(throttle, onUnlock) }
         }
-    }
-
-    Scaffold(
-        // FAB removed per user request
-    ) { innerPadding ->
-        // Consume innerPadding here to prevent double padding, but pass it down if needed
-        Column(
-            modifier = Modifier
-                .padding(top = innerPadding.calculateTopPadding())
-                .fillMaxSize()
-        ) {
-            // Throttle Status Banner (shows when low quota or exhausted)
-            if (showThrottleBanner) {
-                ThrottleStatusBanner(
-                    throttleState = throttleState,
-                    onLearnMore = {
-                        haptics.light()
-                        showThrottleWarning = true
-                    },
-                    onScan = onScan,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-            }
-            
-            BoxWithConstraints(
-                modifier = Modifier.weight(1f).fillMaxSize()
-            ) {
-                val isWideScreen = maxWidth > 600.dp
-                val contentBottomPadding = innerPadding.calculateBottomPadding() + 80.dp // FAB space
-            
-            if (isWideScreen) {
-                // Multi-pane Layout
-                Row(modifier = Modifier.fillMaxSize()) {
-                    // Left Pane: Network List
-                    Box(modifier = Modifier.weight(0.4f).fillMaxHeight()) {
-                        NetworkList(
-                            networks = filteredNetworks,
-                            bestNetwork = bestNetwork,
-                            selectedNetwork = selectedNetwork,
-                            onNetworkSelected = { network ->
-                                haptics.click()
-                                selectedNetwork = if (selectedNetwork == network) null else network
-                            },
-                            onClearSelection = {
-                                haptics.light()
-                                selectedNetwork = null
-                            },
-                            contentPadding = PaddingValues(bottom = contentBottomPadding)
-                        )
-                    }
-                    
-                    VerticalDivider(modifier = Modifier.fillMaxHeight(), color = MaterialTheme.colorScheme.outlineVariant)
-                    
-                    // Right Pane: Charts & Details
-                    Column(modifier = Modifier.weight(0.6f).fillMaxHeight()) {
-                        ChartSection(
-                            networks = networks,
-                            filteredNetworks = filteredNetworks,
-                            history = history,
-                            selectedBand = selectedBand,
-                            selectedNetwork = selectedNetwork,
-                            showHistoryChart = showHistoryChart,
-                            showHeatmap = showHeatmap,
-                            onBandChanged = { band ->
-                                haptics.light()
-                                selectedBand = band
-                            },
-                            onChartTypeToggle = { isHistory ->
-                                haptics.light()
-                                showHistoryChart = isHistory
-                            },
-                            onToggleHeatmap = { 
-                                haptics.light()
-                                showHeatmap = it 
-                            },
-                            onNetworkSelected = { network ->
-                                haptics.click()
-                                selectedNetwork = network
-                            },
-                            onShowLegend = {
-                                haptics.light()
-                                showLegendDialog = true
-                            }
-                        )
-                    }
-                }
-            } else {
-                // Mobile Portrait Layout - Immersive Chart + Bottom Sheet
-                val sheetState = rememberBottomSheetScaffoldState()
-                
-                BottomSheetScaffold(
-                    scaffoldState = sheetState,
-                    sheetPeekHeight = 180.dp,
-                    sheetDragHandle = { BottomSheetDefaults.DragHandle() },
-                    sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                    sheetContent = {
-                        // Network List in Bottom Sheet
-                        NetworkList(
-                            networks = filteredNetworks,
-                            bestNetwork = bestNetwork,
-                            selectedNetwork = selectedNetwork,
-                            onNetworkSelected = { network ->
-                                haptics.click()
-                                selectedNetwork = if (selectedNetwork == network) null else network
-                            },
-                            onClearSelection = {
-                                haptics.light()
-                                selectedNetwork = null
-                            },
-                            contentPadding = PaddingValues(bottom = contentBottomPadding),
-                            modifier = Modifier.fillMaxSize() // Allow list to fill sheet content naturally
-                        )
-                    }
-                ) { sheetPadding ->
-                    // Immersive Chart Content
-                    Column(
-                        modifier = Modifier
-                            .padding(sheetPadding)
-                            .padding(bottom = 80.dp) // Bottom padding for sheet handle visibility
-                            .fillMaxSize()
-                    ) {
-                        // Floating Controls (Toolbar)
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp, bottom = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            // Connected Band Selector
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                FrequencyBand.entries.forEachIndexed { index, band ->
-                                    ToggleButton(
-                                        checked = selectedBand == band,
-                                        onCheckedChange = { 
-                                            haptics.light()
-                                            selectedBand = band 
-                                        },
-                                        shapes = when (index) {
-                                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                            FrequencyBand.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                                        },
-                                        modifier = Modifier.height(40.dp)
-                                    ) {
-                                        Text(
-                                            band.label,
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = if (selectedBand == band) FontWeight.Bold else FontWeight.Normal
-                                        )
-                                    }
-                                }
-                                
-                                Spacer(Modifier.width(12.dp))
-                                
-                                // Chart toggle icons
-                                FilledTonalIconToggleButton(
-                                    checked = !showHistoryChart,
-                                    onCheckedChange = { 
-                                        haptics.light()
-                                        showHistoryChart = false 
-                                    },
-                                    modifier = Modifier.size(40.dp)
-                                ) {
-                                    Icon(Icons.Default.BarChart, "Channels", Modifier.size(20.dp))
-                                }
-                                FilledTonalIconToggleButton(
-                                    checked = showHistoryChart,
-                                    onCheckedChange = { 
-                                        haptics.light()
-                                        showHistoryChart = true 
-                                    },
-                                    modifier = Modifier.size(40.dp)
-                                ) {
-                                    Icon(Icons.Default.Timeline, "History", Modifier.size(20.dp))
-                                }
-                                
-                                Spacer(Modifier.width(4.dp))
-                                
-                                // Help/Legend button
-                                IconButton(
-                                    onClick = { 
-                                        haptics.light()
-                                        showLegendDialog = true 
-                                    },
-                                    modifier = Modifier.size(40.dp)
-                                ) {
-                                    Icon(Icons.AutoMirrored.Outlined.HelpOutline, "Help", Modifier.size(20.dp))
-                                }
-                            }
+        item(key = "bands") {
+            BandSelector(band, counts) { haptics.light(); band = it; selected = null }
+        }
+        item(key = "chart") {
+            Card(shape = PulseWaveShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                Column(Modifier.padding(vertical = 12.dp)) {
+                    Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(if (showHistory) "Signal over time" else "Channels", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                        FilledTonalIconToggleButton(checked = !showHistory, onCheckedChange = { showHistory = false }, shapes = IconButtonDefaults.toggleableShapes()) {
+                            Icon(Icons.Rounded.WaterfallChart, "Channels")
                         }
-                        
-                        // Insight Strip
-                        InsightStrip(
-                            networks = networks,
-                            selectedBand = selectedBand,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                        )
-                        
-                        // Progress indicator
-                        AnimatedVisibility(
-                            visible = isScanning,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp))
+                        FilledTonalIconToggleButton(checked = showHistory, onCheckedChange = { showHistory = true }, shapes = IconButtonDefaults.toggleableShapes()) {
+                            Icon(Icons.AutoMirrored.Rounded.ShowChart, "Signal over time")
                         }
-
-                        // Main Chart Area
-                        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                            if (showHistoryChart) {
-                                SignalHistoryGraph(
-                                    history = history.filterKeys { bssid ->
-                                        val network = networks.find { it.bssid == bssid }
-                                        network != null && ( 
-                                            (selectedBand == FrequencyBand.BAND_2_4 && network.frequency in 2400..2500) ||
-                                            (selectedBand == FrequencyBand.BAND_5 && network.frequency in 5150..5900) ||
-                                            (selectedBand == FrequencyBand.BAND_6 && network.frequency in 5925..7125))
-                                    },
-                                    networks = filteredNetworks,
-                                    onNetworkSelected = { network ->
-                                        haptics.click()
-                                        selectedNetwork = network
-                                    },
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            } else {
-                                ChannelGraph(
-                                    networks = filteredNetworks,
-                                    selectedBand = selectedBand,
-                                    selectedNetwork = selectedNetwork,
-                                    showHeatmap = showHeatmap,
-                                    onNetworkSelected = { network ->
-                                        haptics.click()
-                                        selectedNetwork = network
-                                    },
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
-                        }
+                        IconButton(onClick = { showHelp = true }) { Icon(Icons.AutoMirrored.Rounded.HelpOutline, "How to read this") }
                     }
-                }
-            }
-        }
-        }
-    }
-
-    if (showTrafficSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showTrafficSheet = false },
-            sheetState = rememberModalBottomSheetState()
-        ) {
-            CongestionInsightSheet(scores = congestionScores)
-        }
-    }
-}
-
-@Composable
-private fun DetailItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(icon, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.height(4.dp))
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun NetworkList(
-    networks: List<WifiNetwork>,
-    bestNetwork: WifiNetwork?,
-    selectedNetwork: WifiNetwork?,
-    onNetworkSelected: (WifiNetwork) -> Unit,
-    onClearSelection: () -> Unit,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
-) {
-    // Channel filter state
-    var selectedChannel by remember { mutableStateOf<Int?>(null) }
-    
-    // Get unique channels with network counts
-    val channelGroups = remember(networks) {
-        networks.groupBy { frequencyToChannel(it.frequency) }
-            .mapValues { it.value.size }
-            .toList()
-            .sortedBy { it.first }
-    }
-    
-    // Filter networks by selected channel
-    val displayNetworks = remember(networks, selectedChannel) {
-        if (selectedChannel == null) {
-            networks.sortedByDescending { it.rssi }
-        } else {
-            networks.filter { frequencyToChannel(it.frequency) == selectedChannel }
-                .sortedByDescending { it.rssi }
-        }
-    }
-    
-    LazyColumn(
-        contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = modifier
-    ) {
-        // Header with network count
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "${displayNetworks.size} Networks" + if (selectedChannel != null) " on Ch $selectedChannel" else " Nearby",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                
-                AnimatedVisibility(visible = selectedNetwork != null || selectedChannel != null) {
-                    TextButton(
-                        onClick = { 
-                            onClearSelection()
-                            selectedChannel = null
-                        },
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text("Clear", style = MaterialTheme.typography.labelMedium)
-                    }
-                }
-            }
-        }
-        
-        // Channel filter chips - only show if we have more than 1 channel
-        if (channelGroups.size > 1) {
-            item {
-                FlowRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    // "All" chip
-                    FilterChip(
-                        selected = selectedChannel == null,
-                        onClick = { selectedChannel = null },
-                        label = { Text("All", style = MaterialTheme.typography.labelSmall) },
-                        modifier = Modifier.height(28.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    )
-                    
-                    // Channel chips
-                    channelGroups.forEach { (channel, count) ->
-                        FilterChip(
-                            selected = selectedChannel == channel,
-                            onClick = { 
-                                selectedChannel = if (selectedChannel == channel) null else channel
-                            },
-                            label = { 
-                                Text("Ch $channel ($count)", style = MaterialTheme.typography.labelSmall)
-                            },
-                            modifier = Modifier.height(28.dp),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer
+                    Box(Modifier.fillMaxWidth().height(280.dp).padding(horizontal = 4.dp)) {
+                        if (inBand.isEmpty()) {
+                            Text(
+                                "No ${band.label} networks nearby.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.align(Alignment.Center)
                             )
-                        )
+                        } else if (showHistory) {
+                            SignalHistoryGraph(
+                                history = history.filterKeys { bssid -> inBand.any { it.bssid == bssid } },
+                                networks = inBand,
+                                selectedNetwork = selected,
+                                connectedBssid = connected.bssid.takeIf { connected.isConnected },
+                                onNetworkSelected = { selected = it },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            ChannelGraph(
+                                networks = inBand,
+                                selectedBand = band,
+                                selectedNetwork = selected,
+                                connectedBssid = connected.bssid.takeIf { connected.isConnected },
+                                onNetworkSelected = { selected = it },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                     }
                 }
             }
         }
-        
-        // Network cards
-        items(displayNetworks.size, key = { displayNetworks[it].bssid }) { index ->
-            val network = displayNetworks[index]
-            
-            // Custom shape for first/last items
-            val shape = if (displayNetworks.size == 1) {
-                RoundedCornerShape(16.dp)
-            } else when (index) {
-                0 -> RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
-                displayNetworks.size - 1 -> RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 16.dp, bottomEnd = 16.dp)
-                else -> RoundedCornerShape(4.dp)
-            }
-            
-            WifiNetworkCard(
-                network = network,
-                isSelected = selectedNetwork == network,
-                onSelect = { onNetworkSelected(network) },
-                shape = shape,
-                modifier = Modifier.animateItem().padding(horizontal = 16.dp)
-            )
-        }
+        item(key = "advice") { ChannelAdvice(networks, band, connected) }
     }
-}
-
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
-@Composable
-private fun ChartSection(
-    networks: List<WifiNetwork>,
-    filteredNetworks: List<WifiNetwork>,
-    history: Map<String, List<Int>>,
-    selectedBand: FrequencyBand,
-    selectedNetwork: WifiNetwork?,
-    showHistoryChart: Boolean,
-    showHeatmap: Boolean,
-    onBandChanged: (FrequencyBand) -> Unit,
-    onChartTypeToggle: (Boolean) -> Unit,
-    onToggleHeatmap: (Boolean) -> Unit,
-    onNetworkSelected: (WifiNetwork?) -> Unit,
-    onShowLegend: () -> Unit = {},
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        // Multi-row Chips Layout
-        FlowRow(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Band Chips
-            FrequencyBand.entries.forEach { band ->
-                FilterChip(
-                    selected = selectedBand == band,
-                    onClick = { onBandChanged(band) },
-                    label = { Text(band.label) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                )
-            }
-            
-            // View Toggle Chips
-            FilterChip(
-                selected = !showHistoryChart,
-                onClick = { onChartTypeToggle(false) },
-                label = { Text("Channels") },
-                leadingIcon = { Icon(Icons.Default.BarChart, null, Modifier.size(16.dp)) }
-            )
-            FilterChip(
-                selected = showHistoryChart,
-                onClick = { onChartTypeToggle(true) },
-                label = { Text("History") },
-                leadingIcon = { Icon(Icons.Default.Timeline, null, Modifier.size(16.dp)) }
-            )
-            
-            // Heatmap Toggle
-            if (!showHistoryChart) {
-                FilterChip(
-                    selected = showHeatmap,
-                    onClick = { onToggleHeatmap(!showHeatmap) },
-                    label = { Text("Heatmap") },
-                    leadingIcon = { 
-                        Icon(
-                            if(showHeatmap) Icons.Default.Visibility else Icons.Default.VisibilityOff, 
-                            null, 
-                            Modifier.size(16.dp)
-                        ) 
-                    }
-                )
-            }
-            
-            // Help/Legend button
-            AssistChip(
-                onClick = onShowLegend,
-                label = { Text("Help") },
-                leadingIcon = { Icon(Icons.AutoMirrored.Outlined.HelpOutline, null, Modifier.size(16.dp)) }
+    val colorFor = rememberNetworkColors(inBand, connected.bssid.takeIf { connected.isConnected })
+    val list: LazyListScope.() -> Unit = {
+        item(key = "listHeader") {
+            Text(
+                when (inBand.size) { 0 -> "No networks on ${band.label}"; 1 -> "1 network on ${band.label}"; else -> "${inBand.size} networks on ${band.label}" },
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(start = 4.dp, top = 8.dp, bottom = 4.dp)
             )
         }
-        
-        // Insight Strip for wide screen
-        InsightStrip(
-            networks = networks,
-            selectedBand = selectedBand,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-        )
-        
-        // Main chart
-        Box(modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 8.dp)) {
-            if (showHistoryChart) {
-                SignalHistoryGraph(
-                    history = history.filterKeys { bssid ->
-                        val network = networks.find { it.bssid == bssid }
-                        network != null && ( 
-                            (selectedBand == FrequencyBand.BAND_2_4 && network.frequency in 2400..2500) ||
-                            (selectedBand == FrequencyBand.BAND_5 && network.frequency in 5150..5900) ||
-                            (selectedBand == FrequencyBand.BAND_6 && network.frequency in 5925..7125))
-                    },
-                    networks = filteredNetworks,
-                    onNetworkSelected = onNetworkSelected
-                )
-            } else {
-                ChannelGraph(
-                    networks = filteredNetworks,
-                    selectedBand = selectedBand,
-                    selectedNetwork = selectedNetwork,
-                    showHeatmap = showHeatmap,
-                    onNetworkSelected = onNetworkSelected,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun NetworkList(
-    networks: List<WifiNetwork>,
-    selectedNetwork: WifiNetwork?,
-    onNetworkSelected: (WifiNetwork) -> Unit,
-    onClearSelection: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    LazyColumn(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = modifier
-    ) {
-        // Header with network count
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "${networks.size} Networks",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                
-                AnimatedVisibility(visible = selectedNetwork != null) {
-                    TextButton(
-                        onClick = onClearSelection,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text("Clear", style = MaterialTheme.typography.labelMedium)
-                    }
-                }
-            }
-        }
-        
-        items(networks.sortedByDescending { it.rssi }, key = { it.bssid }) { network ->
-            WifiNetworkCard(
+        itemsIndexed(inBand, key = { _, n -> n.bssid }) { index, network ->
+            NetworkRow(
                 network = network,
-                isSelected = selectedNetwork == network,
-                onSelect = { onNetworkSelected(network) },
+                index = index,
+                count = inBand.size,
+                isConnected = connected.isConnected && network.bssid.equals(connected.bssid, ignoreCase = true),
+                isSelected = selected?.bssid == network.bssid,
+                chartColor = colorFor(network.bssid),
+                onClick = { haptics.click(); selected = network; detail = network },
                 modifier = Modifier.animateItem()
             )
         }
     }
+
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val padding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 32.dp)
+        if (maxWidth >= 840.dp) {
+            Row(Modifier.fillMaxSize()) {
+                LazyColumn(Modifier.weight(1.2f), contentPadding = padding, verticalArrangement = Arrangement.spacedBy(12.dp), content = controls)
+                LazyColumn(Modifier.weight(1f), contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap), content = list)
+            }
+        } else {
+            LazyColumn(Modifier.fillMaxSize(), contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+                controls()
+                list()
+            }
+        }
+    }
+
+    if (showHelp) GraphLegendDialog { showHelp = false }
+    detail?.let { network ->
+        val settings: SettingsRepository = koinInject()
+        val favorites by settings.favoriteBssids.collectAsState(initial = emptySet())
+        val scope = rememberCoroutineScope()
+        val context = LocalContext.current
+        ModalBottomSheet(onDismissRequest = { detail = null }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+            WifiDetailScreen(
+                network = network,
+                onBack = { detail = null },
+                isFavorite = network.bssid in favorites,
+                onToggleFavorite = { scope.launch { settings.toggleFavorite(network.bssid) } },
+                onTrack = { selected = network; showHistory = true; detail = null },
+                onShare = {
+                    val text = buildString {
+                        appendLine(network.ssid.ifEmpty { "Hidden network" })
+                        appendLine("${network.rssi} dBm · Ch ${frequencyToChannel(network.frequency)} · ${bandLabel(network.frequency)}")
+                        appendLine(network.bssid)
+                    }
+                    context.startActivity(
+                        Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), "Share network")
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
+                }
+            )
+        }
+    }
 }
 
 @Composable
-fun WifiNetworkCard(
+private fun BandSelector(band: FrequencyBand, counts: Map<FrequencyBand, Int>, onSelect: (FrequencyBand) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+    ) {
+        FrequencyBand.entries.forEachIndexed { index, entry ->
+            ToggleButton(
+                checked = band == entry,
+                onCheckedChange = { onSelect(entry) },
+                shapes = when (index) {
+                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                    FrequencyBand.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                },
+                modifier = Modifier.weight(1f).heightIn(min = 56.dp)
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(entry.label, style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        when (val n = counts[entry] ?: 0) { 0 -> "none"; 1 -> "1 network"; else -> "$n networks" },
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThrottleHint(throttle: ThrottleState, onUnlock: () -> Unit) {
+    val text = (throttle as? ThrottleState.Exhausted)?.let { "Android paused scans for ${it.secondsUntilNextScan} s" }
+        ?: "Android is limiting scans"
+    Surface(
+        onClick = onUnlock,
+        shape = PulseWaveShapes.full,
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        modifier = Modifier.padding(bottom = 6.dp)
+    ) {
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 2.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.Bolt, null, Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+            TextButton(onClick = onUnlock) { Text("Remove limit") }
+        }
+    }
+}
+
+@Composable
+private fun ChannelAdvice(networks: List<WifiNetwork>, band: FrequencyBand, connected: NetworkStatus) {
+    val scores = remember(networks, band, connected.bssid) {
+        CongestionAnalyzer.analyze(networks.filter { band.contains(it.frequency) && !it.bssid.equals(connected.bssid, true) }, band)
+    }
+    val best = scores.firstOrNull { it.recommendation }
+    val connectedHere = connected.isConnected && band.contains(connected.frequency)
+    val sharing = if (connectedHere) networks.count {
+        band.contains(it.frequency) && frequencyToChannel(it.frequency) == connected.channel && !it.bssid.equals(connected.bssid, true)
+    } else 0
+    val message = when {
+        connectedHere && best != null && best.channelNumber == connected.channel ->
+            "Your network is already on channel ${connected.channel}, the clearest choice nearby."
+        connectedHere && best != null ->
+            "Your network is on channel ${connected.channel}" +
+                (if (sharing > 0) ", shared with $sharing other network${if (sharing == 1) "" else "s"}" else "") +
+                ". Channel ${best.channelNumber} looks clearer; you can switch in your router's settings."
+        best != null -> "Channel ${best.channelNumber} is the clearest on ${band.label} right now."
+        band == FrequencyBand.BAND_2_4 -> null
+        else -> "On ${band.label}, walls block neighbors quickly, so signal strength matters more than overlap."
+    } ?: return
+    Card(
+        shape = PulseWaveShapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer),
+        modifier = Modifier.padding(top = 6.dp)
+    ) {
+        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.Lightbulb, null)
+            Spacer(Modifier.width(16.dp))
+            Text(message, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}
+
+private fun barsIcon(quality: SignalQuality): ImageVector = when (quality) {
+    SignalQuality.Excellent -> Icons.Rounded.SignalWifi4Bar
+    SignalQuality.Good -> Icons.Rounded.NetworkWifi3Bar
+    SignalQuality.Fair -> Icons.Rounded.NetworkWifi2Bar
+    SignalQuality.Weak -> Icons.Rounded.NetworkWifi1Bar
+    SignalQuality.DeadZone -> Icons.Rounded.SignalWifi0Bar
+}
+
+@Composable
+private fun NetworkRow(
     network: WifiNetwork,
-    isSelected: Boolean = false,
-    onSelect: () -> Unit = {},
-    shape: androidx.compose.ui.graphics.Shape = PulseWaveShapes.small,
+    index: Int,
+    count: Int,
+    isConnected: Boolean,
+    isSelected: Boolean,
+    chartColor: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val signalColor = when {
-        network.rssi > -50 -> Color(0xFF4CAF50)
-        network.rssi > -60 -> Color(0xFF8BC34A)
-        network.rssi > -70 -> Color(0xFFFFC107)
-        else -> Color(0xFFFF5722)
-    }
-    
-    // Distance Calc
-    val distance = remember(network.rssi, network.frequency) {
-        val mhz = network.frequency.toDouble()
-        val dbm = network.rssi.toDouble()
-        val exp = (27.55 - (20 * kotlin.math.log10(mhz)) + kotlin.math.abs(dbm)) / 20.0
-        10.0.pow(exp)
-    }
-    
-    // Signal strength as percentage (0-100)
-    val signalPercent = ((network.rssi + 100) / 60f * 100).coerceIn(0f, 100f)
-    
-    // Selection animation
-    val cardScale by animateFloatAsState(
-        targetValue = if (isSelected) 1.02f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "cardScale"
-    )
-    
-    val containerColor by animateColorAsState(
-        targetValue = if (isSelected) 
-            MaterialTheme.colorScheme.primaryContainer 
-        else 
-            MaterialTheme.colorScheme.surfaceContainerLow,
-        label = "cardColor"
-    )
-    
-    val borderColor by animateColorAsState(
-        targetValue = if (isSelected) 
-            MaterialTheme.colorScheme.primary 
-        else 
-            Color.Transparent,
-        label = "borderColor"
-    )
-
-    Card(
-        onClick = onSelect,
-        shape = shape,
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        border = if (isSelected) CardDefaults.outlinedCardBorder().copy(
-            brush = Brush.linearGradient(listOf(borderColor, borderColor))
-        ) else null,
-        modifier = modifier
-            .fillMaxWidth()
-            .scale(cardScale)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(horizontal = 14.dp, vertical = 12.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Signal strength indicator (visual bars)
-            SignalStrengthBars(
-                rssi = network.rssi,
-                color = signalColor,
-                modifier = Modifier.padding(end = 12.dp)
-            )
-            
-            // Network info
-            Column(modifier = Modifier.weight(1f)) {
+    val quality = SignalQuality.of(network.rssi)
+    val colors = signalColors(quality)
+    val scheme = MaterialTheme.colorScheme
+    val vendor = remember(network.bssid) { getVendorName(network.bssid) }
+    val protocol = securityLabel(network.capabilities.ifBlank { network.security })
+    val secured = isNetworkSecured(network.capabilities) || isNetworkSecured(network.security)
+    SegmentedListItem(
+        onClick = onClick,
+        shapes = ListItemDefaults.segmentedShapes(index = index, count = count),
+        colors = ListItemDefaults.colors(containerColor = if (isSelected) scheme.secondaryContainer else scheme.surfaceContainer),
+        modifier = modifier,
+        leadingContent = { ShapeIcon(barsIcon(quality), quality.polygon(), colors.container, colors.onContainer, size = 48.dp, iconSize = 24.dp) },
+        supportingContent = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (secured && protocol.isNotEmpty() && protocol != "Open") {
+                    Icon(Icons.Rounded.Lock, "Secured", Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                }
                 Text(
-                    text = network.ssid.ifEmpty { "Hidden Network" },
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    listOfNotNull(
+                        vendor,
+                        "Ch ${frequencyToChannel(network.frequency)}",
+                        if (network.channelWidth > 20) "${network.channelWidth} MHz" else null,
+                        when (protocol) { "" -> null; "Open" -> "No password"; else -> protocol }
+                    ).joinToString(" · "),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                val vendor = remember(network.bssid) { getVendorName(network.bssid) }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = (if (vendor != null) "$vendor • " else "") + "Ch ${frequencyToChannel(network.frequency)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    
-                    // Security Info
-                    val isSecured = network.security.isNotEmpty() && !network.security.contains("Open", ignoreCase = true)
-                    if (isSecured) {
-                        Spacer(Modifier.width(4.dp))
-                        Icon(
-                            Icons.Default.Lock,
-                            contentDescription = "Secured",
-                            modifier = Modifier.size(12.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = PulseWaveAlpha.strong)
-                        )
-                        // Show simplified security protocol (e.g. WPA3)
-                        val securityLabel = network.security
-                            .replace("WPA2", "WPA2")
-                            .replace("WPA3", "WPA3")
-                            .replace("ESS", "")
-                            .replace("WPS", "")
-                            .trim()
-                            .split(" ")
-                            .firstOrNull() ?: ""
-                            
-                        if (securityLabel.isNotEmpty()) {
-                            Text(
-                                text = securityLabel,
-                                style = MaterialTheme.typography.labelSmall,
-                                fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = PulseWaveAlpha.strong),
-                                modifier = Modifier.padding(start = 2.dp)
-                            )
-                        }
-                    }
-                }
             }
-            
-            // Signal dBm value - Compact pill
-            Surface(
-                shape = PulseWaveShapes.extraSmall,
-                color = signalColor.copy(alpha = PulseWaveAlpha.subtle + 0.05f)
-            ) {
+        },
+        trailingContent = {
+            Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "${network.rssi}",
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = signalColor
+                    "${network.rssi}",
+                    style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.semantics { contentDescription = "${network.rssi} dBm" }
                 )
+                Text(quality.label, style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
             }
         }
-    }
-}
-
-@Composable
-private fun SignalStrengthBars(
-    rssi: Int,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    val bars = when {
-        rssi > -50 -> 4
-        rssi > -60 -> 3
-        rssi > -70 -> 2
-        else -> 1
-    }
-    
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-        verticalAlignment = Alignment.Bottom
     ) {
-        repeat(4) { index ->
-            val height = (8 + index * 4).dp
-            val isActive = index < bars
-            
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(height)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(
-                        if (isActive) color 
-                        else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // Matches this network's hill and line in the chart above.
+            Box(Modifier.size(10.dp).background(chartColor, androidx.compose.foundation.shape.CircleShape))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                network.ssid.ifEmpty { "Hidden network" },
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false)
             )
+            if (isConnected) {
+                Spacer(Modifier.width(8.dp))
+                Surface(shape = PulseWaveShapes.full, color = scheme.primary, contentColor = scheme.onPrimary) {
+                    Text("Connected", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
+                }
+            }
         }
     }
 }
 
-/**
- * Compact banner showing scan quota status with countdown and learn more link.
- */
 @Composable
-private fun ThrottleStatusBanner(
-    throttleState: ThrottleState,
-    onLearnMore: () -> Unit,
-    onScan: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val stateColor = when (throttleState) {
-        is ThrottleState.LowQuota -> MaterialTheme.colorScheme.tertiary
-        is ThrottleState.Exhausted -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.outline
-    }
-    
-    val infiniteTransition = rememberInfiniteTransition(label = "banner")
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.7f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse"
+fun GraphLegendDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Reading the graph") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                LegendItem("Height", "Taller means stronger. Around -50 dBm is excellent; below -80 dBm is weak.")
+                LegendItem("Position", "Each hill sits on its channel. On 2.4 GHz only channels 1, 6 and 11 don't overlap.")
+                LegendItem("Width", "Wider hills use more spectrum (40, 80 or 160 MHz): faster, but they overlap more neighbors.")
+                LegendItem("Signal over time", "Shows how steady each network has been. A jumpy line means an unstable link.")
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Got it") } }
     )
-    
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = stateColor.copy(alpha = 0.1f)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Status with dots
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                when (throttleState) {
-                    is ThrottleState.LowQuota -> {
-                        // Quota dots
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            repeat(4) { i ->
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(RoundedCornerShape(2.dp))
-                                        .background(
-                                            if (i < throttleState.scansRemaining) stateColor
-                                            else stateColor.copy(alpha = 0.2f)
-                                        )
-                                )
-                            }
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "${throttleState.scansRemaining}/4 scans left",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = stateColor,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    is ThrottleState.Exhausted -> {
-                        // Countdown
-                        val mins = throttleState.secondsUntilNextScan / 60
-                        val secs = throttleState.secondsUntilNextScan % 60
-                        Text(
-                            "⏱ $mins:${"%02d".format(secs)}",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = stateColor.copy(alpha = pulseAlpha),
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "until next scan",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = stateColor
-                        )
-                    }
-                    else -> {}
-                }
-            }
-            
-            // Action buttons
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(
-                    onClick = onLearnMore,
-                    contentPadding = PaddingValues(horizontal = 8.dp)
-                ) {
-                    Text("Help", style = MaterialTheme.typography.labelMedium, color = stateColor)
-                }
-                
-                if (throttleState is ThrottleState.LowQuota) {
-                    FilledTonalButton(
-                        onClick = onScan,
-                        modifier = Modifier.height(32.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = stateColor.copy(alpha = 0.2f),
-                            contentColor = stateColor
-                        )
-                    ) {
-                        Text("Scan", style = MaterialTheme.typography.labelMedium)
-                    }
-                }
-            }
-        }
-    }
 }
 
-private fun frequencyToChannel(frequency: Int): Int {
-    return when {
-        frequency in 2400..2500 -> ((frequency - 2412) / 5) + 1
-        frequency in 5150..5350 -> ((frequency - 5180) / 5) + 36
-        frequency in 5470..5730 -> ((frequency - 5500) / 5) + 100
-        frequency in 5735..5900 -> ((frequency - 5745) / 5) + 149
-        frequency in 5925..7125 -> ((frequency - 5950) / 5) + 1
-        else -> 0
+@Composable
+private fun LegendItem(title: String, description: String) {
+    Column {
+        Text(title, style = MaterialTheme.typography.labelLarge)
+        Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

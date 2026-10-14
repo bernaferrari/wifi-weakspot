@@ -2,339 +2,307 @@
 
 package com.pulsewave.app.feature.survey
 
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectDragGestures
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pulsewave.app.core.database.entities.SurveyProjectEntity
+import com.pulsewave.app.core.wifi.WifiNetwork
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.compose.viewmodel.koinViewModel
+import java.io.File
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SurveyScreen(
     modifier: Modifier = Modifier,
+    onBack: () -> Unit = {},
     viewModel: SurveyViewModel = koinViewModel()
 ) {
-    val projects: List<com.pulsewave.app.core.database.entities.SurveyProjectEntity> by viewModel.projects.collectAsState()
-    val points: List<com.pulsewave.app.core.database.entities.SurveyPointEntity> by viewModel.currentPoints.collectAsState()
-
+    val projects by viewModel.projects.collectAsStateWithLifecycle()
+    val project by viewModel.currentProject.collectAsStateWithLifecycle()
+    val points by viewModel.currentPoints.collectAsStateWithLifecycle()
+    val projectPointCount by viewModel.projectPointCount.collectAsStateWithLifecycle()
+    val isRecording by viewModel.isRecording.collectAsStateWithLifecycle()
+    val currentHeading by viewModel.currentHeading.collectAsStateWithLifecycle()
+    val position by viewModel.currentPosition.collectAsStateWithLifecycle()
+    val surveyMode by viewModel.surveyMode.collectAsStateWithLifecycle()
+    val ghostPath by viewModel.ghostPath.collectAsStateWithLifecycle()
+    val isSampling by viewModel.isSampling.collectAsStateWithLifecycle()
+    val isUpdatingProject by viewModel.isUpdatingProject.collectAsStateWithLifecycle()
+    val selectedFloor by viewModel.selectedFloor.collectAsStateWithLifecycle()
+    val networks by viewModel.availableNetworks.collectAsStateWithLifecycle()
+    val isScanning by viewModel.isScanning.collectAsStateWithLifecycle()
+    val message by viewModel.message.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    fun releaseOwnedFloorplan(path: String?) {
+        if (path == null) return
+        scope.launch(Dispatchers.IO) {
+            val ownedDirectory = File(context.filesDir, "survey_floorplans").canonicalFile
+            val file = File(path).canonicalFile
+            if (file.parentFile == ownedDirectory) file.delete()
+        }
+    }
+    val snackbar = remember { SnackbarHostState() }
     var showCreateDialog by remember { mutableStateOf(false) }
-    var projectName by remember { mutableStateOf("") }
-    var fabExpanded by remember { mutableStateOf(false) }
+    var showNetworks by remember { mutableStateOf(false) }
+    var showMapSettings by remember { mutableStateOf(false) }
+    var showCoordinates by remember { mutableStateOf(false) }
+    var showPoints by remember { mutableStateOf(false) }
+    var projectsExpanded by remember { mutableStateOf(false) }
+    var actionsExpanded by remember { mutableStateOf(false) }
+    var deletingProject by remember { mutableStateOf<SurveyProjectEntity?>(null) }
+    var replacingTarget by remember { mutableStateOf<WifiNetwork?>(null) }
+    var importingProjectId by remember { mutableStateOf<Long?>(null) }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) viewModel.onScreenStopped()
+        }
+        lifecycle.addObserver(observer)
+        onDispose {
+            lifecycle.removeObserver(observer)
+            viewModel.onScreenStopped()
+        }
+    }
+    LaunchedEffect(message) {
+        message?.let { snackbar.showSnackbar(it); viewModel.dismissMessage() }
+    }
 
-    val isRecording: Boolean by viewModel.isRecording.collectAsState()
-    val currentHeading: Float by viewModel.currentHeading.collectAsState()
-    val surveyMode: SurveyViewModel.SurveyMode by viewModel.surveyMode.collectAsState()
-    val ghostPath: List<Pair<Float, Float>> by viewModel.ghostPath.collectAsState()
+    val activityRecognitionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) viewModel.toggleRecording()
+        else viewModel.reportMessage("Walking needs activity recognition. You can still map points manually.")
+    }
+    val importFloorplan = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            // Copy into private storage; the temporary picker grant need not survive a restart.
+            val destinationProjectId = importingProjectId
+            scope.launch {
+                try {
+                    val path = withContext(Dispatchers.IO) {
+                        val folder = File(context.filesDir, "survey_floorplans").apply { mkdirs() }
+                        val file = File(folder, "floorplan_${destinationProjectId}_${System.currentTimeMillis()}")
+                        try {
+                            context.contentResolver.openInputStream(uri)?.use { input ->
+                                file.outputStream().use { output ->
+                                    val buffer = ByteArray(8192)
+                                    var total = 0L
+                                    while (true) {
+                                        val read = input.read(buffer)
+                                        if (read < 0) break
+                                        total += read
+                                        require(total <= 20L * 1024 * 1024) { "Image too large" }
+                                        output.write(buffer, 0, read)
+                                    }
+                                }
+                            } ?: error("Image unavailable")
+                            val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                            android.graphics.BitmapFactory.decodeFile(file.absolutePath, bounds)
+                            require(bounds.outWidth > 0 && bounds.outHeight > 0) { "Image unreadable" }
+                            file.absolutePath
+                        } catch (error: Exception) { file.delete(); throw error }
+                    }
+                    if (viewModel.currentProject.value?.id == destinationProjectId) viewModel.setFloorplan(path, ::releaseOwnedFloorplan)
+                    else File(path).delete()
+                } catch (_: Exception) {
+                    viewModel.reportMessage("Choose a readable floorplan image smaller than 20 MB.")
+                }
+            }
+        }
+    }
 
     Scaffold(
         modifier = modifier,
         topBar = {
-            LargeTopAppBar(
-                title = { 
-                    Column {
-                        Text("Site Survey")
-                        if (isRecording) {
-                            Text(
-                                "🔴 Recording Path", 
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
+            TopAppBar(
+                title = { Text("Site Survey") },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+                actions = {
+                    IconButton(onClick = { actionsExpanded = true }, enabled = project != null && !isUpdatingProject) { Icon(Icons.Default.MoreVert, "Project actions") }
+                    DropdownMenu(expanded = actionsExpanded, onDismissRequest = { actionsExpanded = false }) {
+                        DropdownMenuItem(text = { Text("Map dimensions") }, onClick = { actionsExpanded = false; showMapSettings = true })
+                        DropdownMenuItem(text = { Text("Import floorplan image") }, onClick = { actionsExpanded = false; importingProjectId = project?.id; importFloorplan.launch("image/*") })
+                        if (project?.imagePath != null) DropdownMenuItem(text = { Text("Remove floorplan image") }, onClick = { actionsExpanded = false; viewModel.setFloorplan(null, ::releaseOwnedFloorplan) })
+                        DropdownMenuItem(text = { Text("Export all floors to CSV") }, onClick = { actionsExpanded = false; viewModel.exportProject() })
+                        DropdownMenuItem(text = { Text("Delete project") }, onClick = { actionsExpanded = false; deletingProject = project })
                     }
-                },
-                scrollBehavior = scrollBehavior
+                }
             )
         },
-        floatingActionButton = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                // Recording Controls
-                if (projects.isNotEmpty()) {
-                    // Manual Anchor Button (Only visible when recording in MANUAL mode)
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = isRecording && surveyMode == SurveyViewModel.SurveyMode.MANUAL_ANCHOR,
-                        enter =   androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(),
-                        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut()
-                    ) {
-                        FloatingActionButton(
-                            onClick = { 
-                                // In a real app, we'd pop a dialog for name here
-                                viewModel.addManualAnchor() 
-                            },
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                        ) {
-                            Icon(Icons.Default.AddLocation, "Add Point")
-                        }
-                    }
-
-                    // Start/Stop Walk Button
-                    ExtendedFloatingActionButton(
-                        onClick = { viewModel.toggleRecording() },
-                        containerColor = if (isRecording) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = if (isRecording) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer,
-                        icon = { 
-                            if (isRecording) 
-                                Icon(Icons.Default.Stop, null)
-                            else 
-                                Icon(Icons.Default.DirectionsWalk, null)
-                        },
-                        text = { Text(if (isRecording) "Stop Walk" else "Start Walk") }
-                    )
-                }
-
-                // Unified Expressive FAB with speed-dial
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // A+ POLISH: Floor Selector (Elevator Style)
-                    if (projects.isNotEmpty() && !isRecording && !fabExpanded) {
-                         Surface(
-                            shape = RoundedCornerShape(24.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            shadowElevation = 4.dp
-                        ) {
-                            Column(modifier = Modifier.padding(6.dp)) {
-                                val floors = listOf(3, 2, 1, 0) // L3, L2, L1, B1
-                                val selectedFloor: Int by viewModel.selectedFloor.collectAsState()
-                                
-                                floors.forEach { floor ->
-                                    val isSelected = selectedFloor == floor
-                                    val label = if (floor == 0) "B1" else "L$floor"
-                                    
-                                    Box(
-                                        modifier = Modifier
-                                            .size(44.dp)
-                                            .clip(CircleShape)
-                                            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
-                                            .clickable { viewModel.setFloor(floor) },
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            label,
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Start of Speed Dial items
-                    
-                    // Mode Toggle (Only visible when NOT recording)
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = fabExpanded && !isRecording && projects.isNotEmpty(),
-                        enter =   androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
-                        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { it / 2 }
-                    ) {
-                        // Custom small toggle for mode
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            shadowElevation = 4.dp,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        ) {
-                            Row(modifier = Modifier.padding(4.dp)) {
-                                val modes = listOf(
-                                    SurveyViewModel.SurveyMode.AUTO_SAMPLE to "Auto",
-                                    SurveyViewModel.SurveyMode.MANUAL_ANCHOR to "Manual"
-                                )
-                                modes.forEach { (mode, label) ->
-                                    val isSelected = surveyMode == mode
-                                    Surface(
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.clickable { viewModel.setSurveyMode(mode) }
-                                    ) {
-                                        Text(
-                                            label, 
-                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                            style = MaterialTheme.typography.labelLarge
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Mini FABs - animated visibility
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = fabExpanded,
-                        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(),
-                        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut()
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.End,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // Export button
-                            SmallFloatingActionButton(
-                                onClick = { 
-                                    fabExpanded = false
-                                    viewModel.exportProject()
-                                },
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                            ) {
-                                Icon(Icons.Default.Share, "Export", tint = MaterialTheme.colorScheme.onTertiaryContainer)
-                            }
-                            // New Project button
-                            SmallFloatingActionButton(
-                                onClick = { 
-                                    fabExpanded = false
-                                    showCreateDialog = true 
-                                },
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer
-                            ) {
-                                Icon(Icons.Default.Add, "New", tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                            }
-                        }
-                    }
-                    
-                    // Main FAB with rotation animation
-                    val rotation by animateFloatAsState(
-                        targetValue = if (fabExpanded) 45f else 0f,
-                        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-                        label = "fabRotation"
-                    )
-                    
-                    LargeFloatingActionButton(
-                        onClick = { fabExpanded = !fabExpanded },
-                        shape = RoundedCornerShape(28.dp),
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                    ) {
-                        Icon(
-                            Icons.Default.Add, 
-                            "Menu",
-                            modifier = Modifier.size(36.dp).graphicsLayer { rotationZ = rotation },
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-        }
+        snackbarHost = { SnackbarHost(snackbar) }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (projects.isEmpty()) {
-                AnimatedEmptyState(onCreateProject = { showCreateDialog = true })
-            } else {
-                SurveyCanvas(
-                    points = points,
-                    onPointAdded = { x, y -> 
-                        if (isRecording) {
-                            // If recording, tapping sets a manual anchor or start point
-                            if (surveyMode == SurveyViewModel.SurveyMode.MANUAL_ANCHOR) {
-                                viewModel.setStartPoint(x, y) // Updates internal position
-                                // In manual mode, maybe we don't auto-add point on tap unless it's the (+) button
-                                // But the prompt says "Tap to map signal", so let's allow it.
-                            } else {
-                                // Auto mode tap = just force add a point? Or redundant?
-                                // Let's keep it simple: Tap always adds a point.
-                                viewModel.addPoint(x, y)
-                            }
-                        } else {
-                            viewModel.addPoint(x, y)
+        if (projects.isEmpty()) {
+            Box(Modifier.padding(padding).fillMaxSize()) { AnimatedEmptyState { showCreateDialog = true } }
+        } else {
+            BoxWithConstraints(Modifier.padding(padding).fillMaxSize()) {
+                val mapHeight = (maxHeight - 420.dp).coerceIn(200.dp, 700.dp)
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.weight(1f)) {
+                        OutlinedButton(onClick = { projectsExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(project?.name ?: "Choose project", modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Icon(Icons.Default.ArrowDropDown, null)
                         }
+                        DropdownMenu(expanded = projectsExpanded, onDismissRequest = { projectsExpanded = false }) {
+                            projects.forEach { item -> DropdownMenuItem(
+                                text = { Text(item.name) },
+                                onClick = { viewModel.selectProject(item.id); projectsExpanded = false },
+                                leadingIcon = { if (item.id == project?.id) Icon(Icons.Default.Check, null) }
+                            ) }
+                        }
+                    }
+                    IconButton(onClick = { showCreateDialog = true }, enabled = !isUpdatingProject) { Icon(Icons.Default.Add, "Create project") }
+                }
+                OutlinedButton(onClick = { showNetworks = true; viewModel.refreshNetworks() }, modifier = Modifier.fillMaxWidth(), enabled = !isRecording && !isUpdatingProject) {
+                    Icon(Icons.Default.Wifi, null)
+                    Spacer(Modifier.width(8.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(project?.targetSsid?.ifBlank { "Hidden network" } ?: "Choose an access point", maxLines = 1)
+                        project?.targetBssid?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
+                    }
+                    Icon(Icons.Default.ArrowDropDown, null)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SurveyFloorPicker(selectedFloor, viewModel::setFloor, modifier = Modifier.weight(1f), enabled = !isRecording && !isUpdatingProject)
+                    TextButton(onClick = { showPoints = true }) { Text("${points.size} points") }
+                    IconButton(onClick = viewModel::undoLastPoint, enabled = points.isNotEmpty() && !isSampling && !isUpdatingProject) { Icon(Icons.Default.Undo, "Undo latest point on this floor") }
+                }
+                Text(
+                    when {
+                        isRecording -> "Walk estimate · drag to correct your position. Set map dimensions and bearing in project actions."
+                        project?.targetBssid == null && projectPointCount > 0 -> "This older map has no fixed access point. Export it before replacing measurements with a selected radio."
+                        project?.targetBssid == null -> "Choose an access point, then tap the map or enter coordinates to measure its coverage."
+                        else -> "Tap to measure the selected access point. Stay at that location until the sample finishes."
                     },
-                    onPositionCorrected = { x, y ->
-                        viewModel.correctCurrentPosition(x, y)
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                    isRecording = isRecording,
-                    heading = currentHeading,
-                    ghostPath = ghostPath
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (points.isNotEmpty()) Text(
+                    "Average ${points.map { it.rssi }.average().toInt()} dBm · weakest ${points.minOf { it.rssi }} dBm",
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Box(Modifier.height(mapHeight).fillMaxWidth()) {
+                    SurveyCanvas(
+                        points = points, onPointAdded = viewModel::setStartPoint,
+                        onPositionCorrected = viewModel::correctCurrentPosition,
+                        modifier = Modifier.fillMaxSize(), isRecording = isRecording,
+                        heading = currentHeading - (project?.mapTopBearingDegrees ?: 0f), ghostPath = ghostPath,
+                        livePosition = position, imagePath = project?.imagePath
+                    )
+                    if (isSampling) Surface(Modifier.align(Alignment.TopCenter).padding(8.dp), shape = MaterialTheme.shapes.medium) {
+                        Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                            Text("Waiting for fresh signal…", style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(onClick = { showCoordinates = true }, modifier = Modifier.weight(1f), enabled = !isSampling && !isUpdatingProject) { Text("Add at coordinates") }
+                    FilledTonalButton(onClick = {
+                        if (isRecording) viewModel.stopRecording()
+                        else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && ContextCompat.checkSelfPermission(context,
+                            android.Manifest.permission.ACTIVITY_RECOGNITION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            activityRecognitionLauncher.launch(android.Manifest.permission.ACTIVITY_RECOGNITION)
+                        } else viewModel.toggleRecording()
+                    }, enabled = project?.targetBssid != null && position != null && !isUpdatingProject) {
+                        Icon(if (isRecording) Icons.Default.Stop else Icons.AutoMirrored.Filled.DirectionsWalk, null)
+                        Spacer(Modifier.width(6.dp)); Text(if (isRecording) "Stop walk" else "Start walk")
+                    }
+                }
+                if (isRecording) {
+                    SurveyModeToggle(surveyMode, viewModel::setSurveyMode, enabled = false)
+                    Button(onClick = viewModel::addManualAnchor, enabled = !isSampling, modifier = Modifier.fillMaxWidth()) { Text("Sample here") }
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SurveyModeToggle(surveyMode, viewModel::setSurveyMode, enabled = !isRecording && !isUpdatingProject)
+                        Text("Auto: at most every 30 s", style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                }
             }
         }
     }
 
-    if (showCreateDialog) {
-        AlertDialog(
-            onDismissRequest = { showCreateDialog = false },
-            icon = {
-                Icon(Icons.Default.Map, null, modifier = Modifier.size(28.dp))
-            },
-            title = { 
-                Text(
-                    "New Survey", 
-                    style = MaterialTheme.typography.headlineSmall,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold
-                ) 
-            },
-            text = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        "Create a floorplan survey to map WiFi coverage.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    OutlinedTextField(
-                        value = projectName,
-                        onValueChange = { projectName = it },
-                        label = { Text("Project Name") },
-                        placeholder = { Text("e.g. Living Room") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                        )
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (projectName.isNotBlank()) {
-                            viewModel.createProject(projectName)
-                            showCreateDialog = false
-                            projectName = ""
+    if (showCreateDialog) SurveyNameDialog(onDismiss = { showCreateDialog = false }) { name -> viewModel.createProject(name); showCreateDialog = false }
+    if (showNetworks) AlertDialog(
+        onDismissRequest = { showNetworks = false }, title = { Text("Choose access point") },
+        text = {
+            Column {
+                Text("Map one radio at a time. Matching SSIDs can have different access points.", style = MaterialTheme.typography.bodySmall)
+                LazyColumn(Modifier.heightIn(max = 360.dp)) {
+                    if (networks.isEmpty()) item { Text("No access points available. Turn on Wi-Fi and location, then refresh.", Modifier.padding(vertical = 16.dp)) }
+                    items(networks.distinctBy { it.bssid }.sortedByDescending { it.rssi }, key = { it.bssid }) { network ->
+                        TextButton(onClick = {
+                            if (projectPointCount > 0 && !project?.targetBssid.equals(network.bssid, true)) replacingTarget = network
+                            else viewModel.selectTarget(network)
+                            showNetworks = false
+                        }, modifier = Modifier.fillMaxWidth()) {
+                            Column(Modifier.fillMaxWidth()) {
+                                Text(network.ssid.ifBlank { "Hidden network" })
+                                Text("${network.bssid} · ${network.rssi} dBm", style = MaterialTheme.typography.bodySmall)
+                            }
                         }
-                    },
-                    modifier = Modifier.padding(end = 8.dp),
-                    shape = RoundedCornerShape(12.dp)
-                ) { Text("Create Project") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCreateDialog = false }) { Text("Cancel") }
+                    }
+                }
             }
-        )
-    }
+        },
+        confirmButton = { TextButton(onClick = viewModel::refreshNetworks, enabled = !isScanning) { Text(if (isScanning) "Scanning…" else "Refresh") } },
+        dismissButton = { TextButton(onClick = { showNetworks = false }) { Text("Close") } }
+    )
+    replacingTarget?.let { network -> AlertDialog(
+        onDismissRequest = { replacingTarget = null }, title = { Text("Replace mapped access point?") },
+        text = { Text("This clears all measurements on every floor of this project. Create another project to keep both maps.") },
+        confirmButton = { TextButton(onClick = { viewModel.selectTarget(network); replacingTarget = null }) { Text("Clear and switch") } },
+        dismissButton = { TextButton(onClick = { replacingTarget = null }) { Text("Cancel") } }
+    ) }
+    deletingProject?.let { item -> AlertDialog(
+        onDismissRequest = { deletingProject = null }, title = { Text("Delete ${item.name}?") }, text = { Text("All measurements on every floor will be deleted.") },
+        confirmButton = { TextButton(onClick = { viewModel.deleteProject(item, ::releaseOwnedFloorplan); deletingProject = null }) { Text("Delete") } },
+        dismissButton = { TextButton(onClick = { deletingProject = null }) { Text("Cancel") } }
+    ) }
+    if (showMapSettings) project?.let { item -> SurveyMapSettingsDialog(item, onDismiss = { showMapSettings = false }) { width, height, step, bearing ->
+        viewModel.configureMap(width, height, step, bearing); showMapSettings = false
+    } }
+    if (showCoordinates) project?.let { item -> SurveyCoordinateDialog(item, position, onDismiss = { showCoordinates = false }) { x, y ->
+        viewModel.addPoint(x, y); showCoordinates = false
+    } }
+    if (showPoints) AlertDialog(
+        onDismissRequest = { showPoints = false }, title = { Text("Floor $selectedFloor measurements") },
+        text = { LazyColumn(Modifier.heightIn(max = 400.dp)) {
+            if (points.isEmpty()) item { Text("No measurements on this floor yet.") }
+            items(points, key = { it.id }) { point ->
+                Column(Modifier.padding(vertical = 8.dp)) {
+                    Text("${point.rssi} dBm · ${point.ssid ?: "Unknown access point"}")
+                    Text("X ${"%.1f".format(point.x * (project?.widthMeters ?: 10f))} m, Y ${"%.1f".format(point.y * (project?.heightMeters ?: 10f))} m", style = MaterialTheme.typography.bodySmall)
+                    Text(point.bssid ?: "Unknown radio", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        } }, confirmButton = { TextButton(onClick = { showPoints = false }) { Text("Close") } }
+    )
 }
 
 @Composable
@@ -346,8 +314,8 @@ fun AnimatedEmptyState(onCreateProject: () -> Unit) {
         action = {
             Button(
                 onClick = onCreateProject,
-                modifier = Modifier.height(52.dp),
-                shape = RoundedCornerShape(28.dp)
+                modifier = Modifier.height(ButtonDefaults.ExtraLargeContainerHeight),
+                shapes = ButtonDefaults.shapes()
             ) {
                 Icon(Icons.Default.Add, null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
@@ -357,454 +325,55 @@ fun AnimatedEmptyState(onCreateProject: () -> Unit) {
     )
 }
 
-// ============================================================
-// A+ POLISH: Signal Legend Component
-// ============================================================
 @Composable
-fun SignalLegend(modifier: Modifier = Modifier) {
-    Surface(
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
-        shadowElevation = 8.dp,
-        modifier = modifier
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            LegendItem(color = Color(0xFF4CAF50), label = "Excellent")
-            LegendItem(color = Color(0xFFFFC107), label = "Good")
-            LegendItem(color = Color(0xFFFF9800), label = "Fair")
-            LegendItem(color = Color(0xFFF44336), label = "Poor")
-        }
-    }
-}
-
-@Composable
-private fun LegendItem(color: Color, label: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(10.dp)
-                .background(color, CircleShape)
-        )
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-
-// ============================================================
-// A+ POLISH: Summary Stats Card
-// ============================================================
-@Composable
-fun SurveySummaryCard(
-    points: List<com.pulsewave.app.core.database.entities.SurveyPointEntity>,
-    modifier: Modifier = Modifier
-) {
-    if (points.isEmpty()) return
-    
-    val avgRssi = points.map { it.rssi }.average()
-    val minRssi = points.minOfOrNull { it.rssi } ?: -100
-    val maxRssi = points.maxOfOrNull { it.rssi } ?: -100
-    
-    val qualityLabel = when {
-        avgRssi > -50 -> "Excellent"
-        avgRssi > -60 -> "Good"
-        avgRssi > -70 -> "Fair"
-        else -> "Poor"
-    }
-    
-    val qualityColor = when {
-        avgRssi > -50 -> Color(0xFF4CAF50)
-        avgRssi > -60 -> Color(0xFFFFC107)
-        avgRssi > -70 -> Color(0xFFFF9800)
-        else -> Color(0xFFF44336)
-    }
-
-    Surface(
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shadowElevation = 8.dp,
-        modifier = modifier
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Quality Badge
-            Surface(
-                shape = CircleShape,
-                color = qualityColor.copy(alpha = 0.15f)
-            ) {
-                Text(
-                    qualityLabel,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = qualityColor
-                )
-            }
-            
-            // Stats
-            Column {
-                Text(
-                    "${points.size} points",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    "Avg: ${avgRssi.toInt()} dBm • Range: $maxRssi to $minRssi",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-// ============================================================
-// MAIN CANVAS with A+ Polish
-// ============================================================
-@Composable
-fun SurveyCanvas(
-    points: List<com.pulsewave.app.core.database.entities.SurveyPointEntity>,
-    onPointAdded: (Float, Float) -> Unit,
-    onPositionCorrected: (Float, Float) -> Unit = { _, _ -> },
+private fun SurveyFloorPicker(
+    selectedFloor: Int,
+    onFloorSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    isRecording: Boolean = false,
-    heading: Float = 0f,
-    ghostPath: List<Pair<Float, Float>> = emptyList()
+    enabled: Boolean = true
 ) {
-    // ... (existing color defs)
-    val colorScheme = MaterialTheme.colorScheme
-    val primary = colorScheme.primary
-    val tertiary = colorScheme.tertiary
-    val error = colorScheme.error
-    val onSurface = colorScheme.onSurface
-    val gridColor = onSurface.copy(alpha = 0.08f)
-    
-    // ... (existing animations)
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseScale"
-    )
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.6f,
-        targetValue = 0.1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulseAlpha"
-    )
-    
-    val haptics = rememberPulseWaveHapticFeedback()
-
-    Box(modifier = modifier) {
-        Canvas(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colorScheme.surface)
-                .pointerInput(isRecording) {
-                    detectDragGestures(
-                        onDragStart = { _ ->
-                            haptics.light()
-                        },
-                        onDrag = { change, _ ->
-                            change.consume()
-                            if (isRecording) {
-                                onPositionCorrected(change.position.x / size.width, change.position.y / size.height)
-                            }
-                        }
-                    )
-                }
-                .pointerInput(isRecording) {
-                    detectTapGestures { _ ->
-                         haptics.light()
-                         onPointAdded(0f, 0f)
-                    }
-                }
-        ) {
-            val width = size.width
-            val height = size.height
-            
-            // 1. Draw Technical "Blueprint" Grid (refined)
-            val gridSize = 48.dp.toPx() // Slightly larger for cleaner look
-            
-            // Vertical lines
-            var x = 0f
-            while (x <= width) {
-                drawLine(
-                    color = gridColor,
-                    start = Offset(x, 0f),
-                    end = Offset(x, height),
-                    strokeWidth = 0.5.dp.toPx()
-                )
-                x += gridSize
-            }
-            
-            // Horizontal lines
-            var y = 0f
-            while (y <= height) {
-                drawLine(
-                    color = gridColor,
-                    start = Offset(0f, y),
-                    end = Offset(width, y),
-                    strokeWidth = 0.5.dp.toPx()
-                )
-                y += gridSize
-            }
-            
-            // 2. Draw Gradient Heatmap (Soft Splats) - uses consistent palette
-            points.forEach { point ->
-                val center = Offset(point.x * width, point.y * height)
-                val rssi = point.rssi
-                
-                // A+ Polish: Refined color palette (still vibrant but more cohesive)
-                val signalColor = when {
-                    rssi > -50 -> Color(0xFF00C853) // Vibrant Green
-                    rssi > -60 -> Color(0xFF64DD17) // Light Green
-                    rssi > -70 -> Color(0xFFFFD600) // Bright Yellow
-                    rssi > -80 -> Color(0xFFFF9100) // Orange
-                    else -> Color(0xFFFF1744)       // Vivid Red
-                }
-                
-                // Large soft glow
-                val radius = 100.dp.toPx()
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            signalColor.copy(alpha = 0.5f),
-                            signalColor.copy(alpha = 0.15f),
-                            Color.Transparent
-                        ),
-                        center = center,
-                        radius = radius
-                    ),
-                    radius = radius,
-                    center = center
-                )
-                
-                // Intense center core
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            signalColor.copy(alpha = 0.9f),
-                            signalColor.copy(alpha = 0.0f)
-                        ),
-                        center = center,
-                        radius = 24.dp.toPx()
-                    ),
-                    radius = 24.dp.toPx(),
-                    center = center
-                )
-            }
-
-            // 3. Draw Live Path Snake (Connecting lines)
-            // A) Official Points Path
-            if (points.size > 1) {
-                val path = androidx.compose.ui.graphics.Path()
-                path.moveTo(points.first().x * width, points.first().y * height)
-                
-                points.forEach { p -> 
-                    path.lineTo(p.x * width, p.y * height)
-                }
-                
-                // Solid gradient stroke for premium look
-                drawPath(
-                    path = path,
-                    color = primary.copy(alpha = 0.7f),
-                    style = Stroke(
-                        width = 3.dp.toPx(),
-                        cap = androidx.compose.ui.graphics.StrokeCap.Round,
-                        join = androidx.compose.ui.graphics.StrokeJoin.Round
-                    )
-                )
-            }
-            
-            // B) Ghost Path (Manual Mode)
-            if (isRecording && ghostPath.isNotEmpty()) {
-                val path = androidx.compose.ui.graphics.Path()
-                path.moveTo(ghostPath.first().first * width, ghostPath.first().second * height)
-                
-                ghostPath.forEach { (gx, gy) ->
-                    path.lineTo(gx * width, gy * height)
-                }
-                 
-                drawPath(
-                    path = path,
-                    color = tertiary.copy(alpha = 0.4f),
-                    style = Stroke(
-                        width = 2.dp.toPx(),
-                        cap = androidx.compose.ui.graphics.StrokeCap.Round,
-                        join = androidx.compose.ui.graphics.StrokeJoin.Round,
-                        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f)
-                    )
-                )
-            }
-            
-            // 4. Draw Physical Points (Markers) on top
-            points.forEach { point ->
-                val center = Offset(point.x * width, point.y * height)
-                val rssi = point.rssi
-                
-                // Use semantic colors from theme
-                val pointColor = when {
-                    rssi > -60 -> primary
-                    rssi > -80 -> tertiary
-                    else -> error
-                }
-
-                // Outer ring with shadow effect
-                drawCircle(
-                    color = Color.White,
-                    radius = 8.dp.toPx(),
-                    center = center
-                )
-                drawCircle(
-                    color = pointColor,
-                    radius = 6.dp.toPx(),
-                    center = center
-                )
-                // Inner dot
-                drawCircle(
-                    color = Color.White,
-                    radius = 2.dp.toPx(),
-                    center = center
-                )
-            }
-
-            // 5. A+ Polish: Pulsing "Current Location" Indicator with Heading
-            if (isRecording && points.isNotEmpty()) {
-                val last = points.last()
-                val center = Offset(last.x * width, last.y * height)
-                
-                // Pulsing outer ring (animated)
-                drawCircle(
-                    color = error.copy(alpha = pulseAlpha),
-                    radius = 20.dp.toPx() * pulseScale,
-                    center = center
-                )
-                
-                // Solid center
-                drawCircle(
-                    color = error,
-                    radius = 8.dp.toPx(),
-                    center = center
-                )
-                drawCircle(
-                    color = Color.White,
-                    radius = 3.dp.toPx(),
-                    center = center
-                )
-                
-                // Heading Arrow - rotate points manually around center
-                val rad = Math.toRadians(heading.toDouble())
-                val cos = kotlin.math.cos(rad).toFloat()
-                val sin = kotlin.math.sin(rad).toFloat()
-
-                fun rotatePoint(x: Float, y: Float): Offset {
-                    val dx = x - center.x
-                    val dy = y - center.y
-                    return Offset(
-                        center.x + dx * cos - dy * sin,
-                        center.y + dx * sin + dy * cos
-                    )
-                }
-
-                val arrowPath = androidx.compose.ui.graphics.Path().apply {
-                    val tip = rotatePoint(center.x, center.y - 28.dp.toPx())
-                    val right = rotatePoint(center.x + 10.dp.toPx(), center.y - 8.dp.toPx())
-                    val notch = rotatePoint(center.x, center.y - 14.dp.toPx())
-                    val left = rotatePoint(center.x - 10.dp.toPx(), center.y - 8.dp.toPx())
-
-                    moveTo(tip.x, tip.y)
-                    lineTo(right.x, right.y)
-                    lineTo(notch.x, notch.y)
-                    lineTo(left.x, left.y)
-                    close()
-                }
-                drawPath(arrowPath, color = error)
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier) {
+        OutlinedButton(onClick = { expanded = true }, enabled = enabled) {
+            Text(if (selectedFloor == 0) "Basement" else "Floor $selectedFloor")
+            Icon(Icons.Default.ArrowDropDown, null)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            listOf(3, 2, 1, 0).forEach { floor ->
+                DropdownMenuItem(text = { Text(if (floor == 0) "Basement" else "Floor $floor") },
+                    onClick = { onFloorSelected(floor); expanded = false })
             }
         }
-        
-        // A+ POLISH: Signal Legend (top-left)
-        SignalLegend(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
+    }
+}
+
+@Composable
+private fun SurveyModeToggle(
+    mode: SurveyViewModel.SurveyMode,
+    onModeSelected: (SurveyViewModel.SurveyMode) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+    ) {
+        val modes = listOf(
+            SurveyViewModel.SurveyMode.AUTO_SAMPLE to "Auto",
+            SurveyViewModel.SurveyMode.MANUAL_ANCHOR to "Manual"
         )
-        
-        // A+ POLISH: Summary Stats (bottom)
-        if (points.isNotEmpty() && !isRecording) {
-            SurveySummaryCard(
-                points = points,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-            )
-        }
-        
-        // Instruction overlay when empty
-        if (points.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+        modes.forEachIndexed { index, (value, label) ->
+            ToggleButton(
+                checked = mode == value,
+                enabled = enabled,
+                onCheckedChange = { onModeSelected(value) },
+                shapes = when (index) {
+                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                    else -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                },
+                modifier = Modifier.height(48.dp)
             ) {
-                Surface(
-                   shape = RoundedCornerShape(28.dp),
-                   color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
-                   border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                   shadowElevation = 8.dp
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 24.dp)
-                    ) {
-                        // Animated icon
-                        val iconScale by infiniteTransition.animateFloat(
-                            initialValue = 1f,
-                            targetValue = 1.15f,
-                            animationSpec = infiniteRepeatable(
-                                animation = tween(1000),
-                                repeatMode = RepeatMode.Reverse
-                            ),
-                            label = "iconPulse"
-                        )
-                        Icon(
-                            Icons.Default.TouchApp, 
-                            null, 
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(48.dp).scale(iconScale)
-                        )
-                        Spacer(Modifier.height(12.dp))
-                        Text(
-                            "Tap anywhere to map signal",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            "or start walking to auto-record",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                Text(label, style = MaterialTheme.typography.labelLarge)
             }
         }
     }

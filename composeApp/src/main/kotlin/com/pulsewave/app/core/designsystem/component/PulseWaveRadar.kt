@@ -1,5 +1,6 @@
 package com.pulsewave.app.core.designsystem.component
 
+import com.pulsewave.app.core.designsystem.animateAccessibleFloat
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
@@ -22,7 +23,7 @@ import kotlin.math.sin
 
 /**
  * PulseWave Signature Radar Animation
- * 
+ *
  * A beautiful, brand-defining radar animation that pulses with WiFi-like waves.
  * Use this as loading indicator, empty state decoration, or brand element.
  */
@@ -35,9 +36,9 @@ fun PulseWaveRadar(
     secondaryColor: Color = MaterialTheme.colorScheme.tertiary
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulsewave_radar")
-    
+
     // Main rotation
-    val rotation by infiniteTransition.animateFloat(
+    val rotation by infiniteTransition.animateAccessibleFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
@@ -46,9 +47,9 @@ fun PulseWaveRadar(
         ),
         label = "rotation"
     )
-    
+
     // Pulse rings (3 staggered)
-    val ring1 by infiniteTransition.animateFloat(
+    val ring1 by infiniteTransition.animateAccessibleFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
@@ -57,7 +58,7 @@ fun PulseWaveRadar(
         ),
         label = "ring1"
     )
-    val ring2 by infiniteTransition.animateFloat(
+    val ring2 by infiniteTransition.animateAccessibleFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
@@ -66,7 +67,7 @@ fun PulseWaveRadar(
         ),
         label = "ring2"
     )
-    val ring3 by infiniteTransition.animateFloat(
+    val ring3 by infiniteTransition.animateAccessibleFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
@@ -75,9 +76,9 @@ fun PulseWaveRadar(
         ),
         label = "ring3"
     )
-    
+
     // Breathing glow
-    val glow by infiniteTransition.animateFloat(
+    val glow by infiniteTransition.animateAccessibleFloat(
         initialValue = 0.3f,
         targetValue = 0.7f,
         animationSpec = infiniteRepeatable(
@@ -86,11 +87,11 @@ fun PulseWaveRadar(
         ),
         label = "glow"
     )
-    
+
     Canvas(modifier = modifier.size(size)) {
         val center = Offset(this.size.width / 2, this.size.height / 2)
         val maxRadius = minOf(this.size.width, this.size.height) / 2
-        
+
         // Draw expanding pulse rings
         listOf(ring1, ring2, ring3).forEach { progress ->
             val ringRadius = maxRadius * 0.3f + (maxRadius * 0.7f * progress)
@@ -102,7 +103,7 @@ fun PulseWaveRadar(
                 style = Stroke(width = 2.dp.toPx())
             )
         }
-        
+
         // Center glow
         drawCircle(
             brush = Brush.radialGradient(
@@ -116,7 +117,7 @@ fun PulseWaveRadar(
             radius = maxRadius * 0.4f,
             center = center
         )
-        
+
         // Rotating sweep beam
         if (isAnimating) {
             rotate(rotation, pivot = center) {
@@ -137,7 +138,7 @@ fun PulseWaveRadar(
                     ),
                     style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
                 )
-                
+
                 // Sweep arc trail
                 drawArc(
                     brush = Brush.sweepGradient(
@@ -156,14 +157,14 @@ fun PulseWaveRadar(
                 )
             }
         }
-        
+
         // Center dot
         drawCircle(
             color = primaryColor,
             radius = 4.dp.toPx(),
             center = center
         )
-        
+
         // Draw signal arcs (WiFi-style)
         val arcAngles = listOf(-30f, -15f, 0f, 15f, 30f)
         arcAngles.forEach { offsetAngle ->
@@ -172,7 +173,7 @@ fun PulseWaveRadar(
                 val arcAlpha = (0.6f - i * 0.15f).coerceAtLeast(0.1f)
                 val startAngle = 270f - 20f + offsetAngle
                 val sweepAngle = 40f
-                
+
                 drawArc(
                     color = secondaryColor.copy(alpha = arcAlpha),
                     startAngle = startAngle,

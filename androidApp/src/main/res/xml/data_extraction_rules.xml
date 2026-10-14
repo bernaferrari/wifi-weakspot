@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
     <cloud-backup>
+        <exclude domain="file" path="survey_floorplans/" />
+        <exclude domain="file" path="datastore/" />
         <exclude domain="database" path="pulsewave.db" />
         <exclude domain="database" path="pulsewave.db-shm" />
         <exclude domain="database" path="pulsewave.db-wal" />
     </cloud-backup>
     <device-transfer>
+        <exclude domain="file" path="survey_floorplans/" />
+        <exclude domain="file" path="datastore/" />
         <exclude domain="database" path="pulsewave.db" />
         <exclude domain="database" path="pulsewave.db-shm" />
         <exclude domain="database" path="pulsewave.db-wal" />
