@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -113,7 +114,7 @@ fun LanScreen(
                 actions = {
                     IconButton(onClick = { haptics.click(); if (isScanning) viewModel.stopScan() else viewModel.startScan() }) {
                         Icon(
-                            if (isScanning) Icons.Rounded.Close else Icons.Rounded.Refresh,
+                            if (isScanning) Icons.Rounded.Stop else Icons.Rounded.Refresh,
                             contentDescription = if (isScanning) "Stop looking" else "Look again"
                         )
                     }
@@ -224,7 +225,7 @@ private fun QuietToggle(count: Int, expanded: Boolean, onToggle: () -> Unit, mod
             Column(Modifier.weight(1f)) {
                 Text(if (count == 1) "1 quiet device" else "$count quiet devices", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "They answered, but didn't say what they are. Tap one to name it.",
+                    "They didn't say what they are",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

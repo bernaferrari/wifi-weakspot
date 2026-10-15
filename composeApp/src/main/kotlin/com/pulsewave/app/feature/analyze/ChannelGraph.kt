@@ -1,5 +1,6 @@
 package com.pulsewave.app.feature.analyze
 
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.animation.core.Animatable
@@ -116,6 +117,9 @@ fun ChannelGraph(
     // One hill per radio: a router's guest and hidden names share its airtime, so they share its hill.
     val groups = remember(networks, connectedBssid) { groupByRadio(networks, connectedBssid) }
     val radios = remember(groups) { groups.map { it.lead } }
+    val showCrowd = selectedBand == FrequencyBand.BAND_2_4 && radios.size >= 2
+    // The crowd strip flips to exact counts (and back) when tapped.
+    var crowdCounts by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
     val extraNames = remember(groups) { groups.associate { it.lead.bssid to it.extraNames } }
     val focused = selectedNetwork?.let { pick -> groups.firstOrNull { group -> group.members.any { it.bssid == pick.bssid } }?.lead }
     val latestFocus by androidx.compose.runtime.rememberUpdatedState(focused)
@@ -153,7 +157,12 @@ fun ChannelGraph(
             .pointerInput(radios, selectedBand) {
                 // Tapping the same spot again steps through overlapping hills, strongest first.
                 detectTapGestures { tap ->
-                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand)
+                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, showCrowd)
+                    if (showCrowd && tap.y > plot.bottom + 24.dp.toPx()) {
+                        haptics.light()
+                        crowdCounts = !crowdCounts
+                        return@detectTapGestures
+                    }
                     val here = networksAt(tap, radios, selectedBand, plot)
                     val current = here.indexOfFirst { it.bssid == latestFocus?.bssid }
                     onNetworkSelected?.invoke(if (here.isEmpty()) null else here[(current + 1) % here.size])
@@ -163,7 +172,7 @@ fun ChannelGraph(
                 // Press and hold, then slide: the focus follows your finger across the channels.
                 var last: String? = null
                 fun scrub(at: Offset) {
-                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand)
+                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, showCrowd)
                     val pick = networksAt(Offset(at.x, plot.bottom), radios, selectedBand, plot, anyHeight = true).firstOrNull() ?: return
                     if (pick.bssid != last) {
                         last = pick.bssid
@@ -174,12 +183,12 @@ fun ChannelGraph(
                 detectDragGesturesAfterLongPress(onDragStart = { last = null; scrub(it) }) { change, _ -> scrub(change.position) }
             }
     ) {
-        val plot = plotRect(size.width, size.height, this, selectedBand)
+        val plot = plotRect(size.width, size.height, this, selectedBand, showCrowd)
         drawZones(plot, zones)
         drawQualityLabels(plot, textMeasurer, labelStyle.copy(color = scheme.onSurfaceVariant.copy(alpha = 0.7f)))
         drawChannelAxis(plot, selectedBand, textMeasurer, labelStyle, scheme.onSurfaceVariant, scheme.onSurface, scheme.outlineVariant)
-        if (selectedBand == FrequencyBand.BAND_2_4 && radios.size > 3) {
-            drawCrowdRow(plot, radios, textMeasurer, labelStyle, crowdColors)
+        if (showCrowd) {
+            drawCrowdRow(plot, radios, textMeasurer, labelStyle, crowdColors, crowdCounts)
         }
 
         val dimOthers = focused != null
@@ -241,9 +250,9 @@ fun ChannelGraph(
     }
 }
 
-private fun plotRect(width: Float, height: Float, density: Density, band: FrequencyBand): Rect = with(density) {
-    // Room below the channel numbers for the 2.4 GHz crowd row; other bands only need the numbers.
-    val below = if (band == FrequencyBand.BAND_2_4) 52.dp else 28.dp
+private fun plotRect(width: Float, height: Float, density: Density, band: FrequencyBand, crowd: Boolean = band == FrequencyBand.BAND_2_4): Rect = with(density) {
+    // Room below the channel numbers for the 2.4 GHz crowd strip, only when it's drawn.
+    val below = if (crowd) 52.dp else 28.dp
     // The gutter holds the signal words, so they never collide with hills or names.
     Rect(left = QualityGutter.toPx(), top = 12.dp.toPx(), right = width - 12.dp.toPx(), bottom = height - below.toPx())
 }
@@ -258,24 +267,46 @@ internal data class CrowdColors(
 /** Networks weaker than this rarely slow yours down. */
 internal const val CrowdFloorDbm = -80
 
-/** How many networks overlap each 2.4 GHz channel: the number that actually decides congestion. */
-private fun DrawScope.drawCrowdRow(plot: Rect, networks: List<WifiNetwork>, measurer: TextMeasurer, style: TextStyle, colors: CrowdColors) {
-    val y = plot.bottom + 30.dp.toPx()
-    val pill = Size(20.dp.toPx(), 16.dp.toPx())
+/**
+ * How crowded each part of 2.4 GHz is, as one soft strip under the channels: green where few
+ * routers overlap, red where many do. Counting stays in the help; the strip just shows where.
+ */
+private fun DrawScope.drawCrowdRow(plot: Rect, networks: List<WifiNetwork>, measurer: TextMeasurer, style: TextStyle, colors: CrowdColors, counts: Boolean) {
+    val y = plot.bottom + 34.dp.toPx()
     val caption = measurer.measure("Busy", style.copy(color = colors.quietText))
-    drawText(caption, topLeft = Offset(plot.left - caption.size.width - 8.dp.toPx(), y + (pill.height - caption.size.height) / 2f))
-    (1..13).forEach { channel ->
+    val perChannel = (1..13).map { channel ->
         val center = 2407 + channel * 5
-        // Only networks loud enough to compete for airtime; distant ones barely matter.
-        val count = networks.count { network ->
-            network.rssi >= CrowdFloorDbm && occupiedFrequencySegments(network).any { it.overlaps(center) }
+        val count = networks.count { network -> network.rssi >= CrowdFloorDbm && occupiedFrequencySegments(network).any { it.overlaps(center) } }
+        val tone = when { count <= 2 -> colors.calm; count <= 5 -> colors.busy; else -> colors.packed }
+        Triple(mapFreqToNormX(center.toFloat(), FrequencyBand.BAND_2_4).coerceIn(0f, 1f), count, tone)
+    }
+    if (!counts) {
+        val height = 8.dp.toPx()
+        drawText(caption, topLeft = Offset(plot.left - caption.size.width - 8.dp.toPx(), y + (height - caption.size.height) / 2f))
+        drawRoundRect(
+            androidx.compose.ui.graphics.Brush.horizontalGradient(
+                colorStops = perChannel.map { (x, count, tone) -> x to tone.accent.copy(alpha = if (count == 0) 0.25f else 0.85f) }.toTypedArray(),
+                startX = plot.left, endX = plot.right
+            ),
+            topLeft = Offset(plot.left, y),
+            size = Size(plot.width, height),
+            cornerRadius = CornerRadius(height / 2)
+        )
+        return
+    }
+    // Exact counts: small tonal dots, quiet where nobody is.
+    val dot = 18.dp.toPx()
+    drawText(caption, topLeft = Offset(plot.left - caption.size.width - 8.dp.toPx(), y + (dot - caption.size.height) / 2f - 4.dp.toPx()))
+    perChannel.forEach { (fx, count, tone) ->
+        val cx = plot.left + fx * plot.width
+        val top = y - 4.dp.toPx()
+        if (count == 0) {
+            drawCircle(colors.quietText.copy(alpha = 0.25f), radius = 2.dp.toPx(), center = Offset(cx, top + dot / 2))
+            return@forEach
         }
-        if (count == 0) return@forEach
-        val tone = when { count <= 3 -> colors.calm; count <= 8 -> colors.busy; else -> colors.packed }
-        val x = plot.left + mapFreqToNormX(center.toFloat(), FrequencyBand.BAND_2_4) * plot.width
-        drawRoundRect(tone.container, topLeft = Offset(x - pill.width / 2, y), size = pill, cornerRadius = CornerRadius(pill.height / 2))
+        drawRoundRect(tone.container, topLeft = Offset(cx - dot / 2, top), size = Size(dot, dot), cornerRadius = CornerRadius(dot / 2))
         val layout = measurer.measure("$count", style.copy(color = tone.onContainer, fontWeight = FontWeight.Bold))
-        drawText(layout, topLeft = Offset(x - layout.size.width / 2f, y + (pill.height - layout.size.height) / 2f))
+        drawText(layout, topLeft = Offset(cx - layout.size.width / 2f, top + (dot - layout.size.height) / 2f))
     }
 }
 
@@ -395,9 +426,11 @@ private fun networksAt(tap: Offset, networks: List<WifiNetwork>, band: Frequency
 // so a network on channel 1 (2402-2422 MHz) touches the axis instead of floating after a gap.
 // 2.4 GHz folds channel 14 (Japan only) next to 13; 5 GHz compresses the 5350-5470 MHz gap.
 internal fun mapFreqToNormX(freq: Float, band: FrequencyBand): Float = when (band) {
+    // The edges sit one tick (5 MHz) past channels 1 and 13, so the spacing reads evenly; the outer
+    // skirts of channel 1 and 13 hills are pressed against the edge rather than leaving empty room.
     FrequencyBand.BAND_2_4 -> {
         val visual = if (freq > 2472f) freq - 7f else freq
-        (visual - 2402f) / (2482f - 2402f)
+        (visual - 2407f) / (2477f - 2407f)
     }
     FrequencyBand.BAND_5 -> when {
         freq <= 5350f -> (freq - 5170f) / (5350f - 5170f) * 0.38f

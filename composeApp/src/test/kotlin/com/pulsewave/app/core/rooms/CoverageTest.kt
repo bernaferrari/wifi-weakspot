@@ -21,9 +21,9 @@ class CoverageTest {
     }
 
     @Test
-    fun upsertReplacesSameNameIgnoringCase() {
+    fun newMeasurementPreservesPreviousSameName() {
         val list = listOf(spot("Kitchen", -60)).upsert(spot("kitchen", -70))
-        assertEquals(listOf(-70), list.map { it.averageRssi })
+        assertEquals(listOf(-60, -70), list.map { it.averageRssi })
     }
 
     @Test
@@ -42,9 +42,9 @@ class CoverageTest {
         assertEquals(2, summary.weakMoments)
         assertEquals(-50, summary.bestRssi)
         assertEquals(-86, summary.worstRssi)
-        assertEquals(0.5f, summary.weakShare, 0.001f)
+        assertEquals(0.6f, summary.weakShare, 0.001f)
         assertEquals(5_000L, summary.durationMs)
-        assertEquals(9f, summary.medianRouterMs)
+        assertEquals(6f, summary.medianRouterMs)
         assertNull(summarizeWalk(emptyList()))
     }
 }

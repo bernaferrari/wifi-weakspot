@@ -2,6 +2,7 @@
 
 package com.pulsewave.app.feature.overview
 
+import com.pulsewave.app.feature.history.quality
 import com.pulsewave.app.core.util.fixed
 
 import androidx.compose.foundation.layout.Arrangement
@@ -128,6 +129,9 @@ fun OverviewScreen(
                 bottom = padding.calculateBottomPadding() + 32.dp
             ),
             primary = {
+            item(key = "rooms") {
+                FindWeakSpotsCard(rooms = rooms, onClick = { haptics.click(); onNavigateToRooms() })
+            }
             item(key = "hero") {
                 ConnectionHero(
                     status = status,
@@ -171,9 +175,6 @@ fun OverviewScreen(
 
             },
             secondary = {
-            item(key = "rooms") {
-                FindWeakSpotsCard(rooms = rooms, onClick = { haptics.click(); onNavigateToRooms() })
-            }
 
             item(key = "toolsHeader") {
                 Text(
@@ -185,17 +186,28 @@ fun OverviewScreen(
 
             item(key = "tiles") {
                 val scheme = MaterialTheme.colorScheme
+                // The gauge remembers last time: the needle swings right for a quick router, and
+                // the tile takes the colour of that result.
+                val routerGauge = latestSpeed?.takeIf { it.pingMs >= 0f }?.let { test ->
+                    val verdict = com.pulsewave.app.core.router.linkVerdict(
+                        com.pulsewave.app.core.router.RouterLatency(test.pingMs, test.jitterMs, test.lossPercent ?: 0f, 1)
+                    )
+                    // 2 ms or less pins the needle right; 80 ms or more rests it left, on a log scale.
+                    val fraction = 1f - (kotlin.math.ln(test.pingMs.coerceIn(2f, 80f) / 2f) / kotlin.math.ln(40f))
+                    RouterGauge(com.pulsewave.app.core.designsystem.component.RouterGaugeIcon.of(fraction), com.pulsewave.app.core.designsystem.signalColors(verdict.quality))
+                }
                 QuickTileGrid(
                     listOf(
                         QuickTileSpec(
-                            "Wi-Fi speed",
-                            latestSpeed?.takeIf { it.uploadMbps >= 0f }?.let { "${it.uploadMbps.fixed(0)} Mbps · ${relativeTime(it.timestamp)}" }
-                                ?: "Phone to router",
-                            Icons.Rounded.Speed, MaterialShapes.Sunny, scheme.primaryContainer, scheme.onPrimaryContainer, onNavigateToSpeedTest
+                            "Router check",
+                            latestSpeed?.pingMs?.takeIf { it >= 0f }?.let { "${it.fixed(1)} ms last time" }
+                                ?: "Response and missed replies",
+                            routerGauge?.icon ?: Icons.Rounded.Speed, MaterialShapes.Sunny,
+                            routerGauge?.colors?.container ?: scheme.primaryContainer, routerGauge?.colors?.onContainer ?: scheme.onPrimaryContainer, onNavigateToSpeedTest
                         ),
                         QuickTileSpec("Devices", knownDevices?.let { if (it == 1) "1 device" else "$it devices" } ?: "Who's connected", Icons.Rounded.Devices, MaterialShapes.Clover8Leaf, scheme.tertiaryContainer, scheme.onTertiaryContainer, onNavigateToLan),
                         QuickTileSpec("Test a website", "Ping, DNS, ports", com.pulsewave.app.core.designsystem.component.SiteCheckIcon.Filled, MaterialShapes.Cookie6Sided, scheme.secondaryContainer, scheme.onSecondaryContainer, onNavigateToDiagnose),
-                        QuickTileSpec("History", when (savedTests) { 0 -> "Past results"; 1 -> "1 speed test"; else -> "$savedTests speed tests" }, Icons.Rounded.History, MaterialShapes.Puffy, scheme.surfaceContainerHighest, scheme.onSurface, onNavigateToHistory)
+                        QuickTileSpec("History", when (savedTests) { 0 -> "Past results"; 1 -> "1 check"; else -> "$savedTests checks" }, Icons.Rounded.History, MaterialShapes.Puffy, scheme.surfaceContainerHighest, scheme.onSurface, onNavigateToHistory)
                     )
                 )
             }
@@ -284,7 +296,7 @@ private fun ConnectionHero(status: NetworkStatus, wifiEnabled: Boolean, onOpenWi
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     InfoPill(bandLabel(status.frequency))
                     if (status.channel > 0) InfoPill("Channel ${status.channel}")
-                    if (status.linkSpeed > 0) InfoPill("Up to ${status.linkSpeed} Mbps")
+                    if (status.linkSpeed > 0) InfoPill("Link rate ${status.linkSpeed} Mbps")
                     if (status.security.isNotBlank()) InfoPill(if (status.security == "Open") "No password" else status.security)
                 }
             } else if (!status.isConnected) {
@@ -337,19 +349,19 @@ private fun FindWeakSpotsCard(rooms: CoverageSummary, onClick: () -> Unit) {
     ) {
         Row(Modifier.fillMaxWidth().padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Walk your home", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text("Find weak spots", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Text(
                     when (rooms.rankedRooms.size) {
                         0 -> "Find the rooms where your Wi-Fi gets weak."
-                        1 -> "1 saved spot · ${rooms.headline}"
-                        else -> "${rooms.rankedRooms.size} saved spots · ${rooms.headline}"
+                        1 -> "1 saved room · ${rooms.headline}"
+                        else -> "${rooms.rankedRooms.size} saved rooms · ${rooms.headline}"
                     },
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "Start walking",
+                        if (rooms.rankedRooms.isEmpty()) "Check your home" else "Review and recheck",
                         style = MaterialTheme.typography.labelLarge
                     )
                     Spacer(Modifier.width(6.dp))
@@ -364,3 +376,5 @@ private fun FindWeakSpotsCard(rooms: CoverageSummary, onClick: () -> Unit) {
         }
     }
 }
+
+private class RouterGauge(val icon: androidx.compose.ui.graphics.vector.ImageVector, val colors: com.pulsewave.app.core.designsystem.SignalColors)

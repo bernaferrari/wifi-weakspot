@@ -23,21 +23,16 @@ fun summarizeLatency(rtts: List<Float>, sent: Int): RouterLatency? {
 }
 
 enum class LinkVerdict(val headline: String, val explanation: String) {
-    Great("Great Wi-Fi here", "Fast, quick to respond, and steady. Calls, games, and 4K video will feel smooth."),
-    Good("Good Wi-Fi here", "Plenty for streaming and video calls. Busy moments may add a little delay."),
-    Slow("Slow Wi-Fi here", "Expect buffering or lag. Try moving closer to the router or switching bands."),
-    Unreliable("Unreliable Wi-Fi here", "The router is dropping or delaying replies. This spot needs a closer access point.")
+    Great("Router responds quickly", "Replies were quick and steady."),
+    Good("Router response is usable", "Some replies were a little slow or uneven."),
+    Slow("Router replies are delayed", "Replies were slow or uneven. Try again near the router to compare."),
+    Unreliable("Router check inconclusive", "Many replies went missing. Some routers ignore these checks, so try again before changing anything.")
 }
 
-/**
- * Judges what people feel: steadiness and loss first, then raw speed.
- * Upload is null when the burst could not run.
- */
-fun linkVerdict(latency: RouterLatency, uploadMbps: Double?): LinkVerdict = when {
+/** Judges local router replies only. There is no receiver-backed throughput measurement. */
+fun linkVerdict(latency: RouterLatency): LinkVerdict = when {
     latency.samples == 0 || latency.lossPercent >= 10f || latency.medianMs > 100f -> LinkVerdict.Unreliable
-    latency.lossPercent >= 3f || latency.medianMs > 30f || latency.jitterMs > 25f ||
-        (uploadMbps != null && uploadMbps < 10.0) -> LinkVerdict.Slow
-    latency.lossPercent > 0f || latency.medianMs > 10f || latency.jitterMs > 8f ||
-        (uploadMbps != null && uploadMbps < 80.0) -> LinkVerdict.Good
+    latency.lossPercent >= 3f || latency.medianMs > 30f || latency.jitterMs > 25f -> LinkVerdict.Slow
+    latency.lossPercent > 0f || latency.medianMs > 10f || latency.jitterMs > 8f -> LinkVerdict.Good
     else -> LinkVerdict.Great
 }

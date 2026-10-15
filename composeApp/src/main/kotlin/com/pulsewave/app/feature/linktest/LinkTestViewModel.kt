@@ -6,182 +6,135 @@ import com.pulsewave.app.core.database.dao.PulseWaveDao
 import com.pulsewave.app.core.database.entities.SpeedTestResultEntity
 import com.pulsewave.app.core.domain.NetworkStatusRepository
 import com.pulsewave.app.core.model.NetworkStatus
-import com.pulsewave.app.core.router.LinkVerdict
-import com.pulsewave.app.core.router.PingEvent
-import com.pulsewave.app.core.router.RouterLatency
-import com.pulsewave.app.core.router.RouterProbe
-import com.pulsewave.app.core.router.linkVerdict
-import com.pulsewave.app.core.router.summarizeLatency
+import com.pulsewave.app.core.rooms.*
+import com.pulsewave.app.core.router.*
+import com.pulsewave.app.core.util.nowMillis
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+/** Snapshot of the tested connection; tagging never reads a later connection's identity. */
 data class LinkTestResult(
-    val latency: RouterLatency,
-    val uploadMbps: Double?,
-    val verdict: LinkVerdict,
-    val txLinkMbps: Int,
-    val rxLinkMbps: Int,
-    val rssi: Int,
-    val frequency: Int,
-    val gateway: String
+    val latency: RouterLatency, val verdict: LinkVerdict,
+    val txLinkMbps: Int, val rxLinkMbps: Int, val rssi: Int, val frequency: Int,
+    val gateway: String, val ssid: String, val bssid: String, val timestamp: Long,
+    val savedId: Long? = null
 )
 
 sealed interface LinkTestState {
     data object Idle : LinkTestState
     data class Pinging(val progress: Float, val latestMs: Float?) : LinkTestState
-    data class Uploading(val progress: Float, val mbps: Double) : LinkTestState
     data class Done(val result: LinkTestResult) : LinkTestState
     data class Failed(val message: String) : LinkTestState
 }
 
-/** Phone-to-router test: response time first, then a short local upload burst. */
+/** Local ICMP responsiveness; throughput requires a cooperating receiver and is not claimed. */
 class LinkTestViewModel(
     networkStatusRepository: NetworkStatusRepository,
     private val probe: RouterProbe,
     private val dao: PulseWaveDao,
-    private val rooms: com.pulsewave.app.core.rooms.RoomCheckRepository
+    private val rooms: RoomCheckRepository
 ) : ViewModel() {
-
-    /** Rooms already saved in Walk, offered first when tagging a result. */
-    val savedRooms: StateFlow<List<String>> = rooms.readings
-        .map { readings -> readings.sortedByDescending { it.timestamp }.map { it.name } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
+    val status = networkStatusRepository.getCurrentNetworkStatus(refreshIntervalMs = 1_000)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NetworkStatus.Disconnected)
+    val savedRooms = combine(rooms.readings, status) { readings, current ->
+        readings.forNetwork(current.ssid, current.bssid).sortedByDescending { it.timestamp }
+            .distinctBy { it.name.lowercase() }.map { it.name }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     private val _taggedRoom = MutableStateFlow<String?>(null)
-    val taggedRoom: StateFlow<String?> = _taggedRoom.asStateFlow()
+    val taggedRoom = _taggedRoom.asStateFlow()
+    private val _message = MutableStateFlow<String?>(null)
+    val message = _message.asStateFlow()
+    val history = combine(dao.getSpeedTestHistory(), status) { tests, current ->
+        com.pulsewave.app.feature.history.routerTests(tests.filter { it.ssid == current.ssid })
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    private val _state = MutableStateFlow<LinkTestState>(LinkTestState.Idle)
+    val state = _state.asStateFlow()
+    private var job: Job? = null
+    private var tagging = false
 
-    /**
-     * Files the latest result under a room: History shows it, and the room's Walk spot gains the
-     * speed (or is created from this test), so rooms can be compared by what people feel.
-     */
     fun tagRoom(name: String) {
         val result = (_state.value as? LinkTestState.Done)?.result ?: return
         val room = name.trim().ifEmpty { return }
-        _taggedRoom.value = room
+        val savedId = result.savedId ?: return
+        if (tagging || _taggedRoom.value == room) return
+        tagging = true
         viewModelScope.launch {
-            runCatching { dao.tagLatestSpeedTest(room) }
-            val current = status.value
-            val existing = rooms.readings.first().firstOrNull { it.name.equals(room, ignoreCase = true) }
-            val speed = result.uploadMbps?.toFloat()
-            val routerMs = result.latency.medianMs.takeIf { it.isFinite() }
-            // A test in a saved room is a fresh measurement there: refresh its signal and time too.
-            val reading = existing?.let {
-                if (result.rssi !in -100..-1) it.copy(speedMbps = speed, routerMs = routerMs ?: it.routerMs)
-                else it.copy(
-                    speedMbps = speed, routerMs = routerMs ?: it.routerMs, averageRssi = result.rssi,
-                    minRssi = minOf(it.minRssi, result.rssi), frequencyMhz = result.frequency,
-                    timestamp = com.pulsewave.app.core.util.nowMillis()
-                )
-            }
-                ?: com.pulsewave.app.core.rooms.RoomReading(
-                    id = com.pulsewave.app.core.util.randomId(), name = room,
-                    averageRssi = result.rssi, minRssi = result.rssi, linkSpeedMbps = result.txLinkMbps,
-                    frequencyMhz = result.frequency, ssid = current.ssid, bssid = current.bssid,
-                    samples = 1, timestamp = com.pulsewave.app.core.util.nowMillis(), routerMs = routerMs, speedMbps = speed
-                ).takeIf { result.rssi in -100..-1 }
-            reading?.let { runCatching { rooms.save(it) } }
+            try {
+                // Only the result actually displayed is tagged, even if another test was saved.
+                dao.tagSpeedTest(savedId, room)
+                if (result.rssi in -100..-1 && roomNetworkKey(result.ssid, result.bssid) != null) {
+                    rooms.save(RoomReading(
+                        id = "router-result-$savedId", name = room, averageRssi = result.rssi, minRssi = result.rssi,
+                        linkSpeedMbps = result.txLinkMbps, frequencyMhz = result.frequency,
+                        ssid = result.ssid, bssid = result.bssid, samples = 1, timestamp = result.timestamp,
+                        routerMs = result.latency.medianMs.takeIf { it.isFinite() }
+                    ))
+                }
+                _taggedRoom.value = room
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { _message.value = "Couldn't save this spot. Try again." }
+            finally { tagging = false }
         }
     }
 
-    val status: StateFlow<NetworkStatus> = networkStatusRepository.getCurrentNetworkStatus(refreshIntervalMs = 2_000)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NetworkStatus.Disconnected)
-
-    /** Earlier router tests, oldest first, for "last time" and "your usual". */
-    val history: StateFlow<List<com.pulsewave.app.feature.history.RouterTestPoint>> = dao.getSpeedTestHistory()
-        .map { com.pulsewave.app.feature.history.routerTests(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    private val _state = MutableStateFlow<LinkTestState>(LinkTestState.Idle)
-    val state: StateFlow<LinkTestState> = _state.asStateFlow()
-    private var job: Job? = null
-
     fun start() {
-        if (job?.isActive == true) return
+        if (job?.isActive == true || tagging) return
         _taggedRoom.value = null
+        _message.value = null
         job = viewModelScope.launch {
             val current = status.value
-            val gateway = current.gateway
-            if (!current.isConnected || gateway.isBlank()) {
-                _state.value = LinkTestState.Failed("Connect to your Wi-Fi first. This test measures the link between your phone and your router.")
+            if (!current.isConnected || current.gateway.isBlank()) {
+                _state.value = LinkTestState.Failed("Connect to your Wi-Fi first. This check measures replies from your router.")
                 return@launch
             }
             try {
                 _state.value = LinkTestState.Pinging(0f, null)
                 val rtts = mutableListOf<Float>()
                 var sent = PING_COUNT
-                probe.ping(gateway, PING_COUNT).collect { event ->
+                probe.ping(current.gateway, PING_COUNT).collect { event ->
+                    val latest = status.value
+                    check(latest.isConnected && latest.bssid == current.bssid && latest.gateway == current.gateway) {
+                        "Connection changed"
+                    }
                     when (event) {
                         is PingEvent.Reply -> {
                             rtts += event.rttMs
-                            _state.value = LinkTestState.Pinging((event.sequence.toFloat() / PING_COUNT).coerceAtMost(1f), event.rttMs)
+                            // The running median settles instead of flickering with every odd reply.
+                            val sorted = rtts.sorted()
+                            _state.value = LinkTestState.Pinging(event.sequence.toFloat() / PING_COUNT, sorted[sorted.size / 2])
                         }
                         is PingEvent.Finished -> sent = event.sent.coerceAtLeast(1)
                     }
                 }
                 val latency = summarizeLatency(rtts, sent) ?: RouterLatency(Float.NaN, Float.NaN, 100f, 0)
-
-                _state.value = LinkTestState.Uploading(0f, 0.0)
-                val upload = runCatching {
-                    val cap = current.txLinkSpeed.takeIf { it > 0 }?.let { it * 1.1 } ?: 1_000.0
-                    probe.uploadMbps(gateway, UPLOAD_MS, capMbps = cap) { progress, mbps ->
-                        _state.value = LinkTestState.Uploading(progress, mbps)
-                    }
-                }.getOrNull()?.takeIf { it > 0.0 }
-                    // The radio cannot move more than its negotiated rate.
-                    ?.let { measured -> current.txLinkSpeed.takeIf { it > 0 }?.let { measured.coerceAtMost(it.toDouble()) } ?: measured }
-
-                val result = LinkTestResult(
-                    latency = latency,
-                    uploadMbps = upload,
-                    verdict = linkVerdict(latency, upload),
-                    txLinkMbps = current.txLinkSpeed,
-                    rxLinkMbps = current.rxLinkSpeed,
-                    rssi = current.rssi,
-                    frequency = current.frequency,
-                    gateway = gateway
-                )
-                _state.value = LinkTestState.Done(result)
-                runCatching {
-                    dao.insertSpeedTest(
-                        SpeedTestResultEntity(
-                            timestamp = com.pulsewave.app.core.util.nowMillis(),
-                            downloadMbps = -1f,
-                            uploadMbps = upload?.toFloat() ?: -1f,
-                            pingMs = latency.medianMs.takeIf { it.isFinite() } ?: -1f,
-                            jitterMs = latency.jitterMs.takeIf { it.isFinite() } ?: -1f,
-                            serverName = "$ROUTER_PREFIX$gateway",
-                            rssi = current.rssi.takeIf { it in -100..-1 },
-                            frequencyMhz = current.frequency.takeIf { it > 0 },
-                            ssid = current.ssid.takeIf { it.isNotBlank() },
-                            lossPercent = latency.lossPercent
-                        )
-                    )
-                }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: Exception) {
-                _state.value = LinkTestState.Failed("Your router didn't answer. Some routers block replies; the signal reading above still applies.")
+                val timestamp = nowMillis()
+                val result = LinkTestResult(latency, linkVerdict(latency), current.txLinkSpeed, current.rxLinkSpeed,
+                    current.rssi, current.frequency, current.gateway, current.ssid, current.bssid, timestamp)
+                val savedId = try {
+                    dao.insertSpeedTest(SpeedTestResultEntity(
+                        timestamp = timestamp, downloadMbps = -1f, uploadMbps = -1f,
+                        pingMs = latency.medianMs.takeIf { it.isFinite() } ?: -1f,
+                        jitterMs = latency.jitterMs.takeIf { it.isFinite() } ?: -1f,
+                        serverName = "$ROUTER_PREFIX${current.gateway}",
+                        rssi = current.rssi.takeIf { it in -100..-1 }, frequencyMhz = current.frequency.takeIf { it > 0 },
+                        ssid = current.ssid.takeIf { it.isNotBlank() }, lossPercent = latency.lossPercent
+                    ))
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { _message.value = "Result measured, but history couldn't be saved."; null }
+                _state.value = LinkTestState.Done(result.copy(savedId = savedId))
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                _state.value = LinkTestState.Failed("The connection changed or the router check stopped. Keep this Wi-Fi connected and try again. Some routers block ping.")
             }
         }
     }
 
-    fun cancel() {
-        job?.cancel()
-        _state.value = LinkTestState.Idle
-    }
-
+    fun cancel() { job?.cancel(); _state.value = LinkTestState.Idle }
     companion object {
         const val PING_COUNT = 25
-        const val UPLOAD_MS = 5_000L
-        /** History rows from this test carry this server-name prefix. */
-        const val ROUTER_PREFIX = "Router "
+        const val ROUTER_PREFIX = "Router response "
+        const val LEGACY_ROUTER_PREFIX = "Router "
     }
 }

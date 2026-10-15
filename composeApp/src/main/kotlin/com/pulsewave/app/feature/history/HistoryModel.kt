@@ -14,7 +14,7 @@ import com.pulsewave.app.core.wifi.bandLabel
 import com.pulsewave.app.feature.linktest.LinkTestViewModel
 
 enum class HistoryKind(val label: String) {
-    Speed("Speed tests"),
+    Speed("Connection checks"),
     Scan("Scans"),
     Tool("Tools"),
     Devices("Devices")
@@ -46,7 +46,7 @@ data class HistoryEntry(
 )
 
 /** One router test on the trend chart. */
-data class RouterTestPoint(val timestamp: Long, val uploadMbps: Float?, val responseMs: Float?, val verdict: LinkVerdict, val rssi: Int? = null)
+data class RouterTestPoint(val timestamp: Long, val responseMs: Float?, val verdict: LinkVerdict, val rssi: Int? = null, val networkName: String? = null)
 
 /** Rows saved less than this far apart belong to the same session. */
 internal const val SESSION_GAP_MS = 2 * 60_000L
@@ -58,34 +58,47 @@ fun buildHistory(
     speedTests: List<SpeedTestResultEntity>
 ): List<HistoryEntry> = buildList {
     speedTests.forEach { add(speedEntry(it)) }
-    sessions(scans) { it.timestamp }.forEach { add(scanEntry(it)) }
+    addAll(withoutRepeats(sessions(scans) { it.timestamp }.map(::scanEntry)))
     sessions(devices) { it.lastSeen }.forEach { add(devicesEntry(it)) }
     tools.forEach { add(toolEntry(it)) }
 }.sortedByDescending { it.timestamp }
 
+/** Scans repeat whenever Networks opens; within an hour, an unchanged neighbourhood shows once (newest). */
+internal fun withoutRepeats(scans: List<HistoryEntry>): List<HistoryEntry> {
+    val kept = mutableListOf<HistoryEntry>()
+    scans.sortedByDescending { it.timestamp }.forEach { entry ->
+        val last = kept.lastOrNull()
+        val same = last != null && last.lines.map { it.title }.toSet() == entry.lines.map { it.title }.toSet() &&
+            last.summary == entry.summary && last.timestamp - entry.timestamp <= REPEAT_WINDOW_MS
+        if (!same) kept += entry
+    }
+    return kept
+}
+
+internal const val REPEAT_WINDOW_MS = 60 * 60_000L
+
 /** Router tests oldest first, for the trend chart. */
-fun routerTests(speedTests: List<SpeedTestResultEntity>): List<RouterTestPoint> = speedTests
-    .filter { it.isRouterTest }
-    .sortedBy { it.timestamp }
-    .map { RouterTestPoint(it.timestamp, it.uploadMbps.takeIf { mbps -> mbps >= 0f }, it.pingMs.takeIf { ms -> ms >= 0f }, it.verdict, it.rssi) }
+fun routerTests(speedTests: List<SpeedTestResultEntity>): List<RouterTestPoint> {
+    val tests = speedTests.filter { it.isRouterTest }
+    val latest = tests.maxByOrNull { it.timestamp } ?: return emptyList()
+    // Unknown legacy identities cannot safely be combined into a cross-network trend.
+    val scoped = if (latest.ssid.isNullOrBlank()) listOf(latest) else tests.filter { it.ssid == latest.ssid }
+    return scoped.sortedBy { it.timestamp }.map {
+        RouterTestPoint(it.timestamp, it.pingMs.takeIf { ms -> ms >= 0f }, it.verdict, it.rssi, it.ssid)
+    }
+}
 
 /** One plain sentence comparing the latest router test with the ones before it. */
 fun trendInsight(points: List<RouterTestPoint>): String {
     val latest = points.lastOrNull() ?: return ""
-    val earlier = points.dropLast(1).mapNotNull { it.uploadMbps }
-    val now = latest.uploadMbps
+    val earlier = points.dropLast(1).mapNotNull { it.responseMs }.sorted()
+    val now = latest.responseMs ?: return "No reply from the router. Some routers ignore these checks."
+    if (earlier.isEmpty()) return "Recheck after a change to compare."
+    val usual = earlier[earlier.size / 2]
     return when {
-        now == null -> "Your router didn't take the speed test last time. Try again closer to it."
-        earlier.isEmpty() -> "Test again in other rooms or at busy times to see how your Wi-Fi changes."
-        else -> {
-            val usual = earlier.sorted()[earlier.size / 2]
-            val ratio = now / usual
-            when {
-                ratio >= 1.15f -> "Faster than your usual ${usual.fixed(0)} Mbps."
-                ratio <= 0.7f -> "Slower than your usual ${usual.fixed(0)} Mbps. Where you stand and what else is busy both matter."
-                else -> "About your usual ${usual.fixed(0)} Mbps."
-            }
-        }
+        now < usual - 3f -> "Quicker than usual (${usual.fixed(1)} ms)"
+        now > usual + 3f -> "Slower than usual (${usual.fixed(1)} ms)"
+        else -> "About the same as usual (${usual.fixed(1)} ms)"
     }
 }
 
@@ -101,7 +114,7 @@ internal fun <T> sessions(rows: List<T>, time: (T) -> Long): List<List<T>> {
     return groups
 }
 
-private val SpeedTestResultEntity.isRouterTest get() = serverName.startsWith(LinkTestViewModel.ROUTER_PREFIX)
+private val SpeedTestResultEntity.isRouterTest get() = serverName.startsWith(LinkTestViewModel.ROUTER_PREFIX) || serverName.startsWith(LinkTestViewModel.LEGACY_ROUTER_PREFIX)
 
 internal val SpeedTestResultEntity.verdict: LinkVerdict
     get() {
@@ -112,7 +125,7 @@ internal val SpeedTestResultEntity.verdict: LinkVerdict
             lossPercent = lossPercent ?: if (answered) 0f else 100f,
             samples = if (answered) 1 else 0
         )
-        return linkVerdict(latency, uploadMbps.takeIf { it >= 0f }?.toDouble())
+        return linkVerdict(latency)
     }
 
 private fun signalText(rssi: Int) = "${SignalQuality.of(rssi).label} signal · $rssi dBm"
@@ -133,8 +146,7 @@ private fun speedEntry(test: SpeedTestResultEntity): HistoryEntry {
             facts = listOf("Server" to test.serverName)
         )
     }
-    val router = test.serverName.removePrefix(LinkTestViewModel.ROUTER_PREFIX)
-    val upload = test.uploadMbps.takeIf { it >= 0f }
+    val router = test.serverName.removePrefix(LinkTestViewModel.ROUTER_PREFIX).removePrefix(LinkTestViewModel.LEGACY_ROUTER_PREFIX)
     val response = test.pingMs.takeIf { it >= 0f }
     val verdict = test.verdict
     return HistoryEntry(
@@ -142,7 +154,6 @@ private fun speedEntry(test: SpeedTestResultEntity): HistoryEntry {
         kind = HistoryKind.Speed,
         timestamp = test.timestamp,
         title = when {
-            upload != null -> "${upload.fixed(0)} Mbps to router"
             response != null -> "${response.fixed(0)} ms to router"
             else -> "Router didn't answer"
         },
@@ -150,7 +161,6 @@ private fun speedEntry(test: SpeedTestResultEntity): HistoryEntry {
         rssi = test.rssi,
         verdict = verdict,
         metrics = listOfNotNull(
-            upload?.let { HistoryMetric(it.fixed(0), "Mbps", "Speed") },
             response?.let { HistoryMetric(it.fixed(if (it < 10f) 1 else 0), "ms", "Response") },
             test.jitterMs.takeIf { response != null && it >= 0f }?.let { HistoryMetric(it.fixed(1), "ms", "Jitter") },
             test.rssi?.let { HistoryMetric("$it", "dBm", "Signal") }
@@ -163,7 +173,7 @@ private fun speedEntry(test: SpeedTestResultEntity): HistoryEntry {
             test.rssi?.let { "Signal" to signalText(it) },
             test.lossPercent?.let { "Lost replies" to "${it.fixed(0)}%" }
         ),
-        note = verdict.explanation
+        note = verdict.explanation + if (test.uploadMbps >= 0f) " Earlier sender-rate estimates are hidden because delivery to the router was not verified." else ""
     )
 }
 
@@ -247,7 +257,7 @@ private fun toolDetails(result: ToolResultEntity, key: String): HistoryEntry {
                 kind = HistoryKind.Tool,
                 timestamp = result.timestamp,
                 title = "Ping ${result.target}",
-                summary = if (average != null) "${times.size} of ${lines.size} replied · ${average.fixed(0)} ms average" else "No replies",
+                summary = if (average != null) "${average.fixed(0)} ms · ${times.size} of ${lines.size} replied" else "No replies",
                 metrics = listOfNotNull(
                     HistoryMetric("${times.size}/${lines.size}", "", "Replies"),
                     average?.let { HistoryMetric(it.fixed(1), "ms", "Average") },

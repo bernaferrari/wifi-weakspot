@@ -25,7 +25,7 @@ data class RoomReading(
     val timestamp: Long,
     /** Median router response while saving, when the router answered. */
     val routerMs: Float? = null,
-    /** Phone-to-router speed from a Wi-Fi speed test taken here. */
+    /** Legacy sender-rate estimate; retained for decoding old data but never displayed as throughput. */
     val speedMbps: Float? = null
 ) {
     val quality: SignalQuality get() = SignalQuality.of(averageRssi)
@@ -60,9 +60,24 @@ fun summarizeRoom(
     )
 }
 
-/** Re-checking a room replaces its earlier reading, matched by name. */
+/** A stable network scope. Unknown SSIDs fall back to the access point, never a global bucket. */
+fun roomNetworkKey(ssid: String, bssid: String): String? {
+    val name = ssid.trim().removeSurrounding("\"")
+    if (name.isNotBlank() && !name.equals("<unknown ssid>", true)) return "ssid:$name"
+    return bssid.lowercase().takeIf { it.isNotBlank() && it != "02:00:00:00:00:00" }?.let { "ap:$it" }
+}
+
+val RoomReading.networkKey: String? get() = roomNetworkKey(ssid, bssid)
+val RoomReading.spotKey: String get() = "${(networkKey ?: id).length}:${networkKey ?: id}:${name.lowercase()}"
+
+fun List<RoomReading>.forNetwork(ssid: String, bssid: String): List<RoomReading> {
+    val key = roomNetworkKey(ssid, bssid) ?: return emptyList()
+    return filter { it.networkKey == key }
+}
+
+/** Rechecks append; saving an existing ID is idempotent (including Undo). */
 fun List<RoomReading>.upsert(reading: RoomReading): List<RoomReading> =
-    filterNot { it.name.equals(reading.name, ignoreCase = true) } + reading
+    filterNot { it.id == reading.id } + reading
 
 class RoomCheckRepository(private val dataStore: DataStore<Preferences>) {
     private val key = stringPreferencesKey("room_readings_v1")

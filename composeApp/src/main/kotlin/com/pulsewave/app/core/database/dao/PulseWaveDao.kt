@@ -51,10 +51,10 @@ interface PulseWaveDao {
 
     // Speed Test Results
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSpeedTest(result: SpeedTestResultEntity)
+    suspend fun insertSpeedTest(result: SpeedTestResultEntity): Long
 
-    @Query("UPDATE speed_test_results SET room = :room WHERE id = (SELECT id FROM speed_test_results ORDER BY timestamp DESC LIMIT 1)")
-    suspend fun tagLatestSpeedTest(room: String?)
+    @Query("UPDATE speed_test_results SET room = :room WHERE id = :id")
+    suspend fun tagSpeedTest(id: Long, room: String?)
 
     @Query("SELECT * FROM speed_test_results ORDER BY timestamp DESC")
     fun getSpeedTestHistory(): Flow<List<SpeedTestResultEntity>>

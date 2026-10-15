@@ -59,6 +59,9 @@ fun WifiBadge(rssi: Int, modifier: Modifier = Modifier, size: androidx.compose.u
     val quality = SignalQuality.of(rssi)
     val colors = signalColors(quality)
     val score = SignalQuality.score(rssi)
+    // The fill always shows the score; the digits follow the person's choice in Settings.
+    val showDbm = com.pulsewave.app.core.designsystem.LocalShowDbm.current
+    val label = if (showDbm) "$rssi" else "$score"
     val level by androidx.compose.animation.core.animateFloatAsState(
         (score / 100f).coerceIn(0.12f, 1f), MaterialTheme.motionScheme.defaultSpatialSpec(), label = "signalLevel"
     )
@@ -87,7 +90,7 @@ fun WifiBadge(rssi: Int, modifier: Modifier = Modifier, size: androidx.compose.u
             drawRect(track)
             drawRect(colors.accent, topLeft = Offset(0f, line), size = Size(this.size.width, this.size.height - line))
         }
-        val text = measurer.measure("$score", style)
+        val text = measurer.measure(label, if (showDbm) style.copy(fontSize = style.fontSize * 0.8f) else style)
         val topLeft = Offset((this.size.width - text.size.width) / 2f, (this.size.height - text.size.height) / 2f)
         drawText(text, color = surface, topLeft = topLeft)
     }

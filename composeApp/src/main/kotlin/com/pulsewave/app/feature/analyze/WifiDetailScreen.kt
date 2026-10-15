@@ -97,7 +97,7 @@ fun WifiDetailScreen(
                 Fact("Width", if (network.is80Plus80) "80 + 80 MHz" else "${network.channelWidth} MHz")
                 Fact("Security", when (security) { "" -> "Unknown"; "Open" -> "None (no password)"; else -> security })
                 getVendorName(network.bssid)?.let { Fact("Made by", it) }
-                Fact("Distance", "${formatDistance(estimateDistanceMeters(network.rssi, network.frequency))} (rough guess)")
+                Fact("Distance", formatDistance(estimateDistanceMeters(network.rssi, network.frequency)))
                 Fact("Address", network.bssid.uppercase())
             }
         }

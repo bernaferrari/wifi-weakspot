@@ -14,6 +14,9 @@ import androidx.compose.runtime.staticCompositionLocalOf
 val LocalReduceMotion = staticCompositionLocalOf { false }
 val LocalHapticsEnabled = staticCompositionLocalOf { true }
 
+/** True when the person chose raw dBm over the 0–100 score in Settings. */
+val LocalShowDbm = staticCompositionLocalOf { false }
+
 /** Decorative loops stop completely when motion is reduced. */
 @Composable
 fun InfiniteTransition.animateAccessibleFloat(

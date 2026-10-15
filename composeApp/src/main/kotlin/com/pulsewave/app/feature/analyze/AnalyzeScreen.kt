@@ -2,6 +2,10 @@
 
 package com.pulsewave.app.feature.analyze
 
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material3.toShape
 import androidx.compose.ui.draw.clip
@@ -167,7 +171,6 @@ fun AnalyzeScreen(
         topBar = {
             MediumFlexibleTopAppBar(
                 title = { Text("Networks") },
-                subtitle = { if (canScan) ScanSubtitle(networks, throttle, scanning = isScanning && networks.isNotEmpty()) },
                 actions = {
                     // Scrolled down, the bands stay one tap away in the bar.
                     androidx.compose.animation.AnimatedVisibility(
@@ -231,22 +234,6 @@ fun AnalyzeScreen(
     }
 }
 
-@Composable
-private fun ScanSubtitle(networks: List<WifiNetwork>, throttle: ThrottleState, scanning: Boolean = false) {
-    var now by remember { mutableLongStateOf(com.pulsewave.app.core.util.nowMillis()) }
-    LaunchedEffect(Unit) { while (isActive) { delay(1_000); now = com.pulsewave.app.core.util.nowMillis() } }
-    val latest = networks.maxOfOrNull { it.timestamp }
-    val age = latest?.let { ((now - it) / 1000).coerceAtLeast(0) }
-    val count = when (networks.size) { 0 -> "No networks yet"; 1 -> "1 network"; else -> "${networks.size} networks" }
-    val freshness = when {
-        throttle is ThrottleState.Unlimited -> "live"
-        scanning -> "scanning…"
-        age == null -> null
-        age < 60 -> "updated ${age}s ago"
-        else -> "updated ${age / 60} min ago"
-    }
-    Text(listOfNotNull(count, freshness).joinToString(" · "))
-}
 
 @Composable
 private fun CenteredMessage(icon: ImageVector, title: String, body: String, action: String, onAction: () -> Unit) {
@@ -280,6 +267,11 @@ private fun NetworksContent(
     var showHistory by rememberSaveable { mutableStateOf(false) }
     var showHelp by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf<WifiNetwork?>(null) }
+    // Tapping the highlighted network again clears it; null always clears.
+    val toggle: (WifiNetwork?) -> Unit = { pick ->
+        haptics.light()
+        selected = if (pick == null || pick.bssid == selected?.bssid) null else pick
+    }
     LaunchedEffect(band) { selected = null }
     var detail by remember { mutableStateOf<WifiNetwork?>(null) }
     val inBand = remember(networks, band) { networks.filter { band.contains(it.frequency) }.sortedByDescending { it.rssi } }
@@ -303,6 +295,7 @@ private fun NetworksContent(
                         FilledTonalIconToggleButton(checked = showHistory, onCheckedChange = { showHistory = true }, shapes = IconButtonDefaults.toggleableShapes()) {
                             Icon(Icons.AutoMirrored.Rounded.ShowChart, "Signal over time")
                         }
+                        IconButton(onClick = { showHelp = true }) { Icon(Icons.Outlined.Info, "About this chart") }
                     }
                     Box(Modifier.fillMaxWidth().height(if (wide) 420.dp else 300.dp).padding(horizontal = 4.dp)) {
                         if (inBand.isEmpty()) {
@@ -318,7 +311,7 @@ private fun NetworksContent(
                                 networks = inBand,
                                 selectedNetwork = selected,
                                 connectedBssid = connected.bssid.takeIf { connected.isConnected },
-                                onNetworkSelected = { haptics.light(); selected = it },
+                                onNetworkSelected = toggle,
                                 modifier = Modifier.fillMaxSize()
                             )
                         } else {
@@ -327,22 +320,10 @@ private fun NetworksContent(
                                 selectedBand = band,
                                 selectedNetwork = selected,
                                 connectedBssid = connected.bssid.takeIf { connected.isConnected },
-                                onNetworkSelected = { haptics.light(); selected = it },
+                                onNetworkSelected = toggle,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
-                    }
-                    if (inBand.isNotEmpty()) {
-                        FocusBar(
-                            focused = selected?.let { pick -> inBand.firstOrNull { it.bssid == pick.bssid } },
-                            color = selected?.let { palette.color(it.bssid) },
-                            isYou = selected != null && connected.isConnected && selected?.bssid.equals(connected.bssid, ignoreCase = true),
-                            onDetails = { selected?.let { pick -> detail = inBand.firstOrNull { it.bssid == pick.bssid } ?: pick } },
-                            onClear = { haptics.light(); selected = null },
-                            onHelp = { showHelp = true },
-                            hint = if (showHistory) "Tap a line to focus" else "Tap a hill to focus",
-                            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 4.dp)
-                        )
                     }
                 }
             }
@@ -370,7 +351,8 @@ private fun NetworksContent(
                 isYourRouter = connected.isConnected && network.isSiblingOf(connected.bssid, connected.frequency),
                 isSelected = selected?.bssid == network.bssid,
                 chartColor = palette.color(network.bssid),
-                onClick = { haptics.click(); selected = network; detail = network },
+                onClick = { toggle(network) },
+                onDetails = { haptics.click(); detail = network },
                 modifier = Modifier.animateItem()
             )
         }
@@ -401,7 +383,7 @@ private fun NetworksContent(
         }
     }
 
-    if (showHelp) GraphLegendDialog { showHelp = false }
+    if (showHelp) ChartGuideSheet { showHelp = false }
     detail?.let { network ->
         val settings: SettingsRepository = koinInject()
         val favorites by settings.favoriteBssids.collectAsState(initial = emptySet())
@@ -459,6 +441,8 @@ private fun BandSelector(band: FrequencyBand, counts: Map<FrequencyBand, Int>, o
 /** The band picker squeezed into the collapsed top bar: just "2.4 · 5 · 6". */
 @Composable
 private fun CompactBandSelector(band: FrequencyBand, onSelect: (FrequencyBand) -> Unit) {
+    // Narrow segments would otherwise be padded out to 48 dp each, opening gaps between them.
+    androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalMinimumInteractiveComponentSize provides 0.dp) {
     Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
         FrequencyBand.entries.forEachIndexed { index, entry ->
             ToggleButton(
@@ -469,10 +453,14 @@ private fun CompactBandSelector(band: FrequencyBand, onSelect: (FrequencyBand) -
                     FrequencyBand.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
                     else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                 },
-                contentPadding = PaddingValues(horizontal = 12.dp),
-                modifier = Modifier.heightIn(min = 36.dp).semantics { contentDescription = entry.label }
+                contentPadding = PaddingValues(horizontal = 14.dp),
+                // Same connected group as the full selector; unselected segments get a tone so they
+                // read as buttons against the app bar.
+                colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+                modifier = Modifier.height(40.dp).widthIn(min = 48.dp).semantics { contentDescription = entry.label }
             ) { Text(entry.label.removeSuffix(" GHz"), style = MaterialTheme.typography.labelLarge) }
         }
+    }
     }
 }
 
@@ -497,7 +485,7 @@ private fun ChannelAdvice(networks: List<WifiNetwork>, band: FrequencyBand, conn
             "Your network is on channel ${connected.channel}" +
                 (if (sharing > 0) ", shared with $sharing other network${if (sharing == 1) "" else "s"}" else "") +
                 ". Channel ${best.channelNumber} looks clearer; you can switch in your router's settings."
-        best != null -> "Channel ${best.channelNumber} is the clearest on ${band.label} right now."
+        best != null -> "Channel ${best.channelNumber} is the clearest on ${band.label.replace(" ", "\u00A0")} right now."
         band == FrequencyBand.BAND_2_4 -> null
         else -> "On ${band.label}, walls block neighbors quickly, so signal strength matters more than overlap."
     } ?: return
@@ -525,6 +513,7 @@ private fun NetworkRow(
     isSelected: Boolean,
     chartColor: androidx.compose.ui.graphics.Color,
     onClick: () -> Unit,
+    onDetails: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val quality = SignalQuality.of(network.rssi)
@@ -540,6 +529,9 @@ private fun NetworkRow(
         modifier = modifier,
         // Like a battery icon: the reading sits inside a shape whose color and lobes say how good it is.
         leadingContent = { com.pulsewave.app.core.designsystem.component.WifiBadge(network.rssi) },
+        trailingContent = {
+            IconButton(onClick = onDetails) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Details for ${network.ssid.ifEmpty { "hidden network" }}") }
+        },
         supportingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // Most networks have a password; only the exception gets marked.
@@ -581,88 +573,4 @@ private fun NetworkRow(
     }
 }
 
-@Composable
-fun GraphLegendDialog(onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Reading the graph") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                LegendItem("Height", "Taller means stronger, from weak at the bottom to strong at the top. Readings drift a few dB between scans, so treat them as a guide.")
-                LegendItem("Position", "Each hill sits on its channel. On 2.4 GHz only channels 1, 6 and 11 don't overlap.")
-                LegendItem("Width", "Wider hills use more spectrum: faster, but they overlap more neighbors.")
-                LegendItem("+1, +2", "Extra names from the same router, like a guest network. They share one radio, so they share one hill.")
-                LegendItem("Busy", "On 2.4 GHz, how many nearby routers overlap each channel. Fewer is better.")
-                LegendItem("Faint hills", "Weaker networks, drawn quietly so the important ones stand out.")
-                LegendItem("Signal over time", "Shows how steady each network has been. A jumpy line means an unstable link.")
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Got it") } }
-    )
-}
 
-@Composable
-private fun LegendItem(title: String, description: String) {
-    Column {
-        Text(title, style = MaterialTheme.typography.labelLarge)
-        Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-/**
- * Says what the chart is showing. Unfocused, it teaches the tap; focused, it names the network,
- * opens its details and clears the focus, so a dimmed chart never feels stuck.
- */
-@Composable
-private fun FocusBar(
-    focused: WifiNetwork?,
-    color: androidx.compose.ui.graphics.Color?,
-    isYou: Boolean,
-    onDetails: () -> Unit,
-    onClear: () -> Unit,
-    onHelp: () -> Unit,
-    hint: String,
-    modifier: Modifier = Modifier
-) {
-    val fade = MaterialTheme.motionScheme.fastEffectsSpec<Float>()
-    androidx.compose.animation.AnimatedContent(
-        targetState = focused,
-        contentKey = { it?.bssid },
-        transitionSpec = {
-            androidx.compose.animation.fadeIn(fade) togetherWith androidx.compose.animation.fadeOut(fade)
-        },
-        modifier = modifier.fillMaxWidth().heightIn(min = 48.dp),
-        label = "focus"
-    ) { network ->
-        if (network == null) {
-            Row(Modifier.heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    hint,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f)
-                )
-                TextButton(onClick = onHelp) { Text("How to read") }
-            }
-        } else {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(Modifier.size(10.dp).background(color ?: MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.CircleShape))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        network.ssid.ifEmpty { "Hidden network" } + if (isYou) " (you)" else "",
-                        style = MaterialTheme.typography.titleSmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        "${network.rssi} dBm · Ch ${frequencyToChannel(network.frequency)} · ${SignalQuality.of(network.rssi).label}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                TextButton(onClick = onDetails) { Text("Details") }
-                IconButton(onClick = onClear) { Icon(Icons.Rounded.Close, "Show all networks") }
-            }
-        }
-    }
-}

@@ -17,6 +17,7 @@ class SettingsRepository(
         val REDUCE_MOTION = booleanPreferencesKey("reduce_motion")
         val FAVORITE_BSSIDS = stringSetPreferencesKey("favorite_bssids")
         val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
+        val SHOW_DBM = booleanPreferencesKey("show_dbm")
     }
 
     val isDarkMode: Flow<Boolean?> = dataStore.data.map { it[Keys.DARK_MODE] }
@@ -24,6 +25,8 @@ class SettingsRepository(
     val seedColor: Flow<Int> = dataStore.data.map { it[Keys.SEED_COLOR] ?: 0xFF3F51B5.toInt() } // Indigo Default
     val hapticsEnabled: Flow<Boolean> = dataStore.data.map { it[Keys.HAPTICS_ENABLED] ?: true }
     val reduceMotion: Flow<Boolean> = dataStore.data.map { it[Keys.REDUCE_MOTION] ?: false }
+    /** Show raw dBm instead of the 0–100 score, for people who think in dBm. */
+    val showDbm: Flow<Boolean> = dataStore.data.map { it[Keys.SHOW_DBM] ?: false }
     val favoriteBssids: Flow<Set<String>> = dataStore.data.map { it[Keys.FAVORITE_BSSIDS] ?: emptySet() }
     /** False until the first-run welcome is finished or skipped. */
     val onboardingDone: Flow<Boolean> = dataStore.data.map { it[Keys.ONBOARDING_DONE] ?: false }
@@ -47,6 +50,10 @@ class SettingsRepository(
 
     suspend fun setHapticsEnabled(enabled: Boolean) {
         dataStore.edit { it[Keys.HAPTICS_ENABLED] = enabled }
+    }
+
+    suspend fun setShowDbm(enabled: Boolean) {
+        dataStore.edit { it[Keys.SHOW_DBM] = enabled }
     }
 
     suspend fun setReduceMotion(enabled: Boolean) {

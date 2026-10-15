@@ -57,10 +57,14 @@ class InMemoryDao : PulseWaveDao {
     override suspend fun insertToolResult(result: ToolResultEntity) = tools.update { listOf(result.copy(id = nextId++)) + it }
     override fun getToolHistory(): Flow<List<ToolResultEntity>> = tools
 
-    override suspend fun insertSpeedTest(result: SpeedTestResultEntity) = speed.update { listOf(result.copy(id = nextId++)) + it }
+    override suspend fun insertSpeedTest(result: SpeedTestResultEntity): Long {
+        val id = nextId++
+        speed.update { listOf(result.copy(id = id)) + it }
+        return id
+    }
     override fun getSpeedTestHistory(): Flow<List<SpeedTestResultEntity>> = speed
-    override suspend fun tagLatestSpeedTest(room: String?) =
-        speed.update { list -> list.sortedByDescending { it.timestamp }.mapIndexed { i, t -> if (i == 0) t.copy(room = room) else t } }
+    override suspend fun tagSpeedTest(id: Long, room: String?) =
+        speed.update { list -> list.map { t -> if (t.id == id) t.copy(room = room) else t } }
 
     override suspend fun insertSurveyProject(project: SurveyProjectEntity): Long {
         val id = nextId++

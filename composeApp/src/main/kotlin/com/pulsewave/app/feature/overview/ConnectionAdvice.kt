@@ -15,14 +15,14 @@ fun connectionAdvice(status: NetworkStatus): ConnectionAdvice = when {
     )
     !status.hasSignalMeasurement -> ConnectionAdvice(
         "Read your Wi-Fi signal",
-        "Allow Wi-Fi scans in Analyze to see signal measurements. Compare signal in the room where you notice problems."
+        "Allow Wi-Fi scans in Networks to see signal measurements. Compare signal in the room where you notice problems."
     )
-    status.rssi < -70 -> ConnectionAdvice(
+    com.pulsewave.app.core.wifi.SignalQuality.of(status.rssi).isProblem -> ConnectionAdvice(
         "Compare coverage near your router",
-        "The current Wi-Fi signal is weak. Run a speed test here, then repeat near the router. Use a survey of your own network to find weak spots."
+        "The current Wi-Fi signal is weak. Run a router check here, then repeat near the router. Use a survey of your own network to find weak spots."
     )
     else -> ConnectionAdvice(
-        "Check speed and responsiveness",
-        "Signal strength looks usable and Android reports internet access. If the connection feels slow, compare a speed test and a ping test; strong signal alone does not guarantee performance."
+        "Compare router responsiveness",
+        "Signal strength looks usable and Android reports internet access. If the connection feels slow, compare router response here and near the router; strong signal alone does not guarantee performance."
     )
 }

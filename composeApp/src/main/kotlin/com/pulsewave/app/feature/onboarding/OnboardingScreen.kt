@@ -109,7 +109,7 @@ private fun PrivacyNote() {
         Icon(Icons.Rounded.Shield, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.width(12.dp))
         Text(
-            "Android asks for location to list nearby networks. PulseWave never saves where you are, and nothing leaves your phone.",
+            "Android asks for location to list nearby networks. No GPS location is saved. Scan and spot history stay on this device; network tools contact the targets you choose.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -163,9 +163,9 @@ private fun WelcomePage() {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
         val scheme = MaterialTheme.colorScheme
         FeatureRow(Icons.AutoMirrored.Rounded.DirectionsWalk, MaterialShapes.SoftBurst, scheme.tertiaryContainer, scheme.onTertiaryContainer,
-            "Walk your home", "Watch the signal drop as you move.")
+            "Check every room", "See which rooms have weak Wi-Fi.")
         FeatureRow(Icons.Rounded.Speed, MaterialShapes.Sunny, scheme.primaryContainer, scheme.onPrimaryContainer,
-            "Test your Wi-Fi", "Phone-to-router speed, no internet needed.")
+            "Check your router", "Measure response time and missed replies locally.")
         FeatureRow(com.pulsewave.app.core.designsystem.component.NetworksIcons.Filled, MaterialShapes.Cookie7Sided, scheme.secondaryContainer, scheme.onSecondaryContainer,
             "See every network", "Pick a clearer channel for your router.")
     }

@@ -270,7 +270,7 @@ fun SurveyScreen(
     if (showCoordinates) project?.let { item -> SurveyCoordinateDialog(item, position, onDismiss = { showCoordinates = false }) { x, y ->
         viewModel.addPoint(x, y); showCoordinates = false
     } }
-    if (showPoints) ModalBottomSheet(onDismissRequest = { showPoints = false }) {
+    if (showPoints) ModalBottomSheet(onDismissRequest = { showPoints = false }, sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         val ranked = points.sortedBy { it.rssi }
         LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             item {

@@ -1,5 +1,9 @@
 package com.pulsewave.app.feature.tools
 
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import kotlinx.coroutines.flow.map
+import androidx.compose.ui.draw.alpha
+import androidx.compose.material.icons.outlined.NetworkPing
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.runtime.Composable
@@ -91,9 +95,9 @@ fun ToolsScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     val tools = listOf(
-        Tool("ping", "Ping", Icons.Outlined.Speed, "Does it answer?"),
-        Tool("dns", "DNS", Icons.Outlined.Dns, "Find its address"),
-        Tool("portscan", "Ports", Icons.Outlined.Security, "What's open?"),
+        Tool("ping", "Ping", Icons.Outlined.NetworkPing, "Answers?"),
+        Tool("dns", "DNS", Icons.Outlined.Dns, "Address"),
+        Tool("portscan", "Ports", Icons.Outlined.Security, "What's open"),
     )
 
     Scaffold(
@@ -101,7 +105,6 @@ fun ToolsScreen(
         topBar = {
             MediumFlexibleTopAppBar(
                 title = { Text("Test a website") },
-                subtitle = { Text("See if a site or device answers, and how fast") },
                 navigationIcon = {
                     if (onBack != null) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
                 },
@@ -208,12 +211,16 @@ fun ToolsHomeContent(
     initialTool: ToolType? = null,
     modifier: Modifier = Modifier
 ) {
-    val inputFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
     val hasInput = inputText.isNotBlank()
+    val scheme = MaterialTheme.colorScheme
     // Your router is the most useful thing to test at home, so it's the first suggestion.
     val statusRepository: com.pulsewave.app.core.domain.NetworkStatusRepository = org.koin.compose.koinInject()
     val status by remember(statusRepository) { statusRepository.getCurrentNetworkStatus(refreshIntervalMs = 10_000) }
         .collectAsState(initial = com.pulsewave.app.core.model.NetworkStatus.Disconnected)
+    val dao: com.pulsewave.app.core.database.dao.PulseWaveDao = org.koin.compose.koinInject()
+    val recent by remember(dao) {
+        dao.getToolHistory().map { results -> results.map { it.target }.distinct().take(4) }
+    }.collectAsState(initial = emptyList())
     val suggestions = listOfNotNull(
         status.gateway.takeIf { status.isConnected && it.isNotBlank() }?.let { "Your router" to it },
         "Google" to "google.com",
@@ -224,37 +231,31 @@ fun ToolsHomeContent(
     Column(
         modifier = modifier
             .verticalScroll(androidx.compose.foundation.rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        OutlinedTextField(
+        // A search-style field: filled, rounded, no outline to fuss over.
+        TextField(
             value = inputText,
             onValueChange = onInputChange,
-            label = { Text("Hostname or IP address") },
-            placeholder = { Text("google.com or 8.8.8.8") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(inputFocusRequester),
+            placeholder = { Text("Website or IP address") },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
             singleLine = true,
-            shape = PulseWaveShapes.medium,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+            shape = PulseWaveShapes.full,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = scheme.surfaceContainerHigh,
+                unfocusedContainerColor = scheme.surfaceContainerHigh,
+                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
             ),
-            leadingIcon = {
-                Icon(
-                    Icons.Default.Language,
-                    contentDescription = null,
-                    tint = if (hasInput) MaterialTheme.colorScheme.primary
-                           else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Uri,
+                imeAction = androidx.compose.ui.text.input.ImeAction.Go
+            ),
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onGo = { if (hasInput) onToolSelect(tools.first()) }),
+            leadingIcon = { Icon(Icons.Default.Search, null, tint = scheme.onSurfaceVariant) },
             trailingIcon = {
-                if (hasInput) {
-                    IconButton(onClick = { onInputChange("") }) {
-                        Icon(Icons.Default.Clear, contentDescription = "Clear")
-                    }
-                }
+                if (hasInput) IconButton(onClick = { onInputChange("") }) { Icon(Icons.Default.Clear, contentDescription = "Clear") }
             }
         )
 
@@ -263,18 +264,10 @@ fun ToolsHomeContent(
             modifier = Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
             suggestions.forEach { (label, target) ->
-                AssistChip(
-                    onClick = {
-                        haptics.light()
-                        onInputChange(target)
-                    },
-                    label = { Text(label, style = MaterialTheme.typography.labelLarge) },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = if (inputText == target)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surfaceContainerHigh
-                    ),
-                    border = null
+                FilterChip(
+                    selected = inputText == target,
+                    onClick = { haptics.light(); onInputChange(target) },
+                    label = { Text(label) }
                 )
             }
         }
@@ -282,34 +275,70 @@ fun ToolsHomeContent(
         initialTool?.let { type ->
             val toolId = when (type) { ToolType.PING -> "ping"; ToolType.DNS -> "dns"; ToolType.PORT_SCAN -> "portscan" }
             tools.find { it.id == toolId }?.let { requested ->
-                FilledTonalButton(onClick = { onToolSelect(requested) }, enabled = hasInput, modifier = Modifier.fillMaxWidth()) {
+                Button(onClick = { onToolSelect(requested) }, enabled = hasInput, shapes = ButtonDefaults.shapes(), modifier = Modifier.fillMaxWidth()) {
                     Text("Run ${requested.name} on $inputText")
                 }
             }
         }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            tools.forEach { tool ->
-                ToolButton(
+        // The checks as plain questions, in one rounded group.
+        Text("Check", style = MaterialTheme.typography.titleSmall, color = scheme.primary, modifier = Modifier.padding(start = 8.dp, top = 8.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            tools.forEachIndexed { index, tool ->
+                CheckRow(
                     tool = tool,
                     enabled = hasInput,
-                    onClick = { onToolSelect(tool) },
-                    modifier = Modifier.weight(1f)
+                    shape = com.pulsewave.app.core.designsystem.component.segmentedShape(index, tools.size),
+                    onClick = { onToolSelect(tool) }
                 )
             }
         }
 
-        if (!hasInput) {
-            Text(
-                "Enter a website or IP address, then pick a check.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
+        if (recent.isNotEmpty()) {
+            Text("Recent", style = MaterialTheme.typography.titleSmall, color = scheme.primary, modifier = Modifier.padding(start = 8.dp, top = 8.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                recent.forEachIndexed { index, target ->
+                    Surface(
+                        onClick = { haptics.light(); onInputChange(target) },
+                        shape = com.pulsewave.app.core.designsystem.component.segmentedShape(index, recent.size),
+                        color = scheme.surfaceContainer,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Icon(Icons.Default.History, null, tint = scheme.onSurfaceVariant)
+                            Text(target, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** One check as a question; dimmed until there's something to check. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun CheckRow(tool: Tool, enabled: Boolean, shape: androidx.compose.ui.graphics.Shape, onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val (question, detail) = when (tool.id) {
+        "ping" -> "Does it answer?" to "Ping · response time"
+        "dns" -> "What's its address?" to "DNS lookup"
+        else -> "What does it offer?" to "Open ports"
+    }
+    Surface(onClick = onClick, enabled = enabled, shape = shape, color = scheme.surfaceContainer, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            Modifier.padding(horizontal = 16.dp, vertical = 14.dp).alpha(if (enabled) 1f else 0.5f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            com.pulsewave.app.core.designsystem.component.ShapeIcon(
+                tool.icon, MaterialShapes.Cookie6Sided, scheme.secondaryContainer, scheme.onSecondaryContainer, size = 44.dp, iconSize = 22.dp
             )
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(question, style = MaterialTheme.typography.titleMedium)
+                Text(detail, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = scheme.onSurfaceVariant)
         }
     }
 }

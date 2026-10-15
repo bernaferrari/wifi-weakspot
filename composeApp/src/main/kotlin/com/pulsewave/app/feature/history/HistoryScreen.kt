@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
+import com.pulsewave.app.core.designsystem.bleed
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -143,7 +144,7 @@ fun HistoryScreen(
                 EmptyStateWithIllustration(
                     illustration = { HistoryIllustration() },
                     title = "Nothing saved yet",
-                    subtitle = "Wi-Fi speed tests, network scans and tool results show up here, so you can see how your Wi-Fi changes over time."
+                    subtitle = "Router checks, network scans and tool results show up here, so you can see how your Wi-Fi changes over time."
                 )
             }
             return@Scaffold
@@ -205,7 +206,7 @@ fun HistoryScreen(
 @Composable
 private fun KindFilters(kinds: List<HistoryKind>, selected: HistoryKind?, onSelect: (HistoryKind?) -> Unit, modifier: Modifier = Modifier) {
     Row(
-        modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        modifier.fillMaxWidth().bleed().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         (listOf<HistoryKind?>(null) + kinds).forEach { kind ->
@@ -287,19 +288,6 @@ private fun HistoryRow(entry: HistoryEntry, shape: Shape, onClick: () -> Unit, m
 }
 
 @Composable
-fun VerdictBadge(verdict: LinkVerdict) {
-    val colors = signalColors(verdict.quality)
-    Surface(shape = RoundedCornerShape(50), color = colors.container, contentColor = colors.onContainer) {
-        Text(
-            verdict.headline.removeSuffix(" here"),
-            style = MaterialTheme.typography.labelLarge,
-            maxLines = 1,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-        )
-    }
-}
-
-@Composable
 private fun RouterTrendCard(points: List<RouterTestPoint>, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val latest = points.last()
     Surface(
@@ -309,41 +297,47 @@ private fun RouterTrendCard(points: List<RouterTestPoint>, onClick: () -> Unit, 
         modifier = modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(Modifier.weight(1f)) {
-                    Text("Speed to your router", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        momentLabel(latest.timestamp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                VerdictBadge(latest.verdict)
-            }
-            Row(verticalAlignment = Alignment.Bottom) {
-                val (value, unit) = when {
-                    latest.uploadMbps != null -> latest.uploadMbps.fixed(0) to "Mbps"
-                    latest.responseMs != null -> latest.responseMs.fixed(0) to "ms"
-                    else -> "No reply" to ""
-                }
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    value,
-                    style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = "tnum"),
-                    fontWeight = FontWeight.SemiBold
+                    latest.networkName ?: "Router check",
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
-                if (unit.isNotEmpty()) {
+                Text(
+                    momentLabel(latest.timestamp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    modifier = Modifier.padding(start = 12.dp)
+                )
+            }
+            Column {
+                Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        unit,
-                        style = MaterialTheme.typography.titleLarge,
+                        latest.responseMs?.fixed(0) ?: "No reply",
+                        style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = "tnum"),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    if (latest.responseMs != null) Text(
+                        "ms",
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 6.dp, bottom = 8.dp)
                     )
                 }
+                // The verdict reads as a sentence, tinted by how it went, instead of a pill.
+                Text(
+                    latest.verdict.headline.removeSuffix(" here"),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = signalColors(latest.verdict.quality).accent
+                )
             }
             if (points.size >= 2) {
                 RouterTrendBars(points.takeLast(MaxTrendBars), Modifier.fillMaxWidth().height(88.dp))
             }
-            Text(trendInsight(points), style = MaterialTheme.typography.bodyMedium)
+            if (points.size >= 2) Text(trendInsight(points), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -359,8 +353,8 @@ fun RouterTrendBars(points: List<RouterTestPoint>, modifier: Modifier = Modifier
     val grow = remember { Animatable(if (reduceMotion) 1f else 0f) }
     val growSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
     LaunchedEffect(Unit) { grow.animateTo(1f, growSpec) }
-    val peak = points.mapNotNull { it.uploadMbps }.maxOrNull()?.coerceAtLeast(1f) ?: 1f
-    val description = "Last ${points.size} router tests: " + points.joinToString { it.uploadMbps?.let { mbps -> "${mbps.fixed(0)} Mbps" } ?: "no reply" }
+    val peak = points.mapNotNull { it.responseMs }.maxOrNull()?.coerceAtLeast(1f) ?: 1f
+    val description = "Last ${points.size} router tests: " + points.joinToString { it.responseMs?.let { ms -> "${ms.fixed(1)} ms" } ?: "no reply" }
     Canvas(modifier.semantics { contentDescription = description }) {
         // At least a week's worth of slots, so two tests don't become two giant slabs.
         val slots = points.size.coerceAtLeast(7)
@@ -370,11 +364,11 @@ fun RouterTrendBars(points: List<RouterTestPoint>, modifier: Modifier = Modifier
         // Oldest on the left, filling toward the right as tests accumulate.
         val first = 0
         points.forEachIndexed { index, point ->
-            val fraction = point.uploadMbps?.let { (it / peak).coerceIn(0.06f, 1f) } ?: 0.06f
+            val fraction = point.responseMs?.let { (it / peak).coerceIn(0.06f, 1f) } ?: 0.06f
             val height = (size.height * fraction * grow.value).coerceAtLeast(barWidth.coerceAtMost(size.height * 0.06f))
             val latest = index == points.lastIndex
             drawRoundRect(
-                color = if (point.uploadMbps == null) missing else colors[index].copy(alpha = if (latest) 1f else 0.45f),
+                color = if (point.responseMs == null) missing else colors[index].copy(alpha = if (latest) 1f else 0.45f),
                 topLeft = Offset((first + index) * slot + (slot - barWidth) / 2, size.height - height),
                 size = Size(barWidth, height),
                 cornerRadius = radius
@@ -385,7 +379,7 @@ fun RouterTrendBars(points: List<RouterTestPoint>, modifier: Modifier = Modifier
 
 @Composable
 private fun HistoryDetailSheet(entry: HistoryEntry, onDismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         LazyColumn(
             contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp)

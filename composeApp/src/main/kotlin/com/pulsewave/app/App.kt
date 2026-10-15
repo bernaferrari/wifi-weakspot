@@ -56,6 +56,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 fun App() {
     val settingsRepository: SettingsRepository = koinInject()
     val hapticsEnabled by settingsRepository.hapticsEnabled.collectAsState(initial = true)
+    val showDbm by settingsRepository.showDbm.collectAsState(initial = false)
     val permissionGate: PermissionGate = koinInject()
     val permissionState by permissionGate.state.collectAsState()
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -69,7 +70,10 @@ fun App() {
     }
     val requestScanPermission = com.pulsewave.app.core.platform.rememberScanPermissionRequest()
     PulseWaveTheme {
-        CompositionLocalProvider(com.pulsewave.app.core.designsystem.LocalHapticsEnabled provides hapticsEnabled) {
+        CompositionLocalProvider(
+            com.pulsewave.app.core.designsystem.LocalHapticsEnabled provides hapticsEnabled,
+            com.pulsewave.app.core.designsystem.LocalShowDbm provides showDbm
+        ) {
             // Null while preferences load, so returning users never see the welcome flash by.
             val onboardingDone by remember(settingsRepository) {
                 settingsRepository.onboardingDone.map<Boolean, Boolean?> { it }
@@ -227,7 +231,11 @@ fun MainAppContent(
                     }
                 }
                 entry<com.pulsewave.app.navigation.SpeedTestDestination>(metadata = push) { key ->
-                    Readable { LinkTestScreen(onBack = { backStack.pop(key) }, onOpenInternetTest = { open(com.pulsewave.app.navigation.InternetSpeedDestination) }) }
+                    Readable { LinkTestScreen(
+                        onBack = { backStack.pop(key) },
+                        onOpenInternetTest = { open(com.pulsewave.app.navigation.InternetSpeedDestination) },
+                        onOpenHistory = { open(com.pulsewave.app.navigation.HistoryDestination) }
+                    ) }
                 }
                 entry<com.pulsewave.app.navigation.InternetSpeedDestination>(metadata = push) { key ->
                     Readable { InternetSpeedScreen(onBack = { backStack.pop(key) }) }

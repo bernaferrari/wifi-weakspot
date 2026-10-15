@@ -174,23 +174,7 @@ class SimulatedRouterProbe : RouterProbe {
         emit(PingEvent.Finished(count, received))
     }
 
-    override suspend fun uploadMbps(
-        host: String,
-        durationMs: Long,
-        capMbps: Double,
-        onProgress: (elapsedFraction: Float, mbps: Double) -> Unit
-    ): Double {
-        val steps = 20
-        var mbps = 0.0
-        repeat(steps) { step ->
-            delay(durationMs / steps)
-            val rate = SimulatedHome.linkSpeedMbps(SimulatedHome.connectedRssi()) * (0.52 + Random.nextDouble(0.08))
-            mbps = if (step == 0) rate else mbps * 0.8 + rate * 0.2
-            mbps = mbps.coerceAtMost(capMbps)
-            onProgress((step + 1f) / steps, mbps)
-        }
-        return mbps
-    }
+
 }
 
 class SimulatedPingClient : PingClient {

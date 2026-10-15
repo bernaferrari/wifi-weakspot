@@ -14,7 +14,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import com.pulsewave.app.core.rooms.forNetwork
 import kotlinx.coroutines.flow.stateIn
 
 class OverviewViewModel(
@@ -34,8 +36,9 @@ class OverviewViewModel(
             initialValue = NetworkStatus.Disconnected
         )
 
-    val latestSpeedTest: StateFlow<SpeedTestResultEntity?> = dao.getSpeedTestHistory()
-        .map { it.firstOrNull() }
+    val latestSpeedTest: StateFlow<SpeedTestResultEntity?> = combine(dao.getSpeedTestHistory(), networkStatus) { tests, status ->
+            tests.firstOrNull { status.isConnected && it.ssid == status.ssid && (it.serverName.startsWith("Router ")) }
+        }
         .catch { emitAll(flowOf(null)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -54,7 +57,8 @@ class OverviewViewModel(
         .catch { emitAll(flowOf(0)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
-    val rooms: StateFlow<CoverageSummary> = roomCheckRepository.readings
-        .map(::coverageSummary)
+    val rooms: StateFlow<CoverageSummary> = combine(roomCheckRepository.readings, networkStatus) { list, status ->
+            coverageSummary(list.forNetwork(status.ssid, status.bssid))
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), coverageSummary(emptyList()))
 }

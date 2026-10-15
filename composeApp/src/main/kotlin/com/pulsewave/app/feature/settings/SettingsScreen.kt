@@ -3,6 +3,9 @@
 package com.pulsewave.app.feature.settings
 
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.selection.toggleable
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,6 +57,7 @@ fun SettingsScreen(
     val darkMode by settingsRepository.isDarkMode.collectAsState(initial = null)
     val reduceMotion by settingsRepository.reduceMotion.collectAsState(initial = false)
     val hapticsEnabled by settingsRepository.hapticsEnabled.collectAsState(initial = true)
+    val showDbm by settingsRepository.showDbm.collectAsState(initial = false)
     val permissionGate: com.pulsewave.app.core.permissions.PermissionGate = koinInject()
     val permissionState by permissionGate.state.collectAsState()
     val scope = rememberCoroutineScope()
@@ -103,7 +107,7 @@ fun SettingsScreen(
                         subtitle = when {
                             scanSetup.rootScanning -> "Unlimited, using root"
                             scanSetup.isUnlimited -> "Unlimited scanning is on"
-                            else -> "Limited to 4 scans every 2 minutes. Tap to fix"
+                            else -> "Limited to 4 scans every 2 minutes"
                         },
                         onClick = {
                             haptics.click()
@@ -118,7 +122,7 @@ fun SettingsScreen(
                 SettingsSection("Appearance") {
                     val themes = listOf("System" to null, "Light" to false, "Dark" to true)
                     Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                     ) {
                         themes.forEachIndexed { index, (label, value) ->
@@ -148,6 +152,22 @@ fun SettingsScreen(
                             }
                         }
                     )
+                    // Score (0–100, bigger is better) or the raw dBm reading, everywhere in the app.
+                    Row(
+                        Modifier.fillMaxWidth().padding(start = 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Show signal as", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                        Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                            listOf("0–100" to false, "dBm" to true).forEachIndexed { index, (label, value) ->
+                                ToggleButton(
+                                    checked = showDbm == value,
+                                    onCheckedChange = { haptics.light(); scope.launch { settingsRepository.setShowDbm(value) } },
+                                    shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes() else ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                ) { Text(label) }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -191,11 +211,6 @@ fun SettingsScreen(
 
                     // Settings (only visible when enabled)
                     if (isMonitoring) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = PulseWaveAlpha.medium)
-                        )
-
                         // Scan interval slider
                         Column(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
@@ -223,11 +238,6 @@ fun SettingsScreen(
                                 steps = 18
                             )
                         }
-
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = PulseWaveAlpha.medium)
-                        )
 
                         // Notification options
                         SettingsToggle(
@@ -286,7 +296,7 @@ fun SettingsScreen(
 fun SettingsSection(
     title: String,
     icon: ImageVector? = null,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable () -> Unit
 ) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         Row(
@@ -309,15 +319,48 @@ fun SettingsSection(
                 fontWeight = FontWeight.SemiBold
             )
         }
-        Card(
-            shape = PulseWaveShapes.extraLarge,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
-        ) {
-            Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                content()
+        SegmentedGroup(content)
+    }
+}
+
+/**
+ * Expressive settings groups: every row is its own segment with a hairline gap. The outer corners
+ * are fully round and the inner ones nearly square, so the rows read as one group yet stay distinct.
+ */
+@Composable
+private fun SegmentedGroup(content: @Composable () -> Unit) {
+    val color = MaterialTheme.colorScheme.surfaceContainerLow
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val outer = with(density) { 24.dp.toPx() }
+    val inner = with(density) { 8.dp.toPx() }
+    var segments by remember { mutableStateOf(emptyList<androidx.compose.ui.geometry.Rect>()) }
+    androidx.compose.ui.layout.Layout(
+        content = content,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
+            .drawBehind {
+                segments.forEachIndexed { index, rect ->
+                    val top = androidx.compose.ui.geometry.CornerRadius(if (index == 0) outer else inner)
+                    val bottom = androidx.compose.ui.geometry.CornerRadius(if (index == segments.lastIndex) outer else inner)
+                    val path = androidx.compose.ui.graphics.Path().apply {
+                        addRoundRect(androidx.compose.ui.geometry.RoundRect(rect, top, top, bottom, bottom))
+                    }
+                    drawPath(path, color)
+                }
             }
+    ) { measurables, constraints ->
+        val gap = 4.dp.roundToPx()
+        val placeables = measurables.map { it.measure(constraints.copy(minHeight = 0)) }.filter { it.height > 0 }
+        val width = constraints.maxWidth
+        val height = placeables.sumOf { it.height } + gap * (placeables.size - 1).coerceAtLeast(0)
+        layout(width, height) {
+            var y = 0
+            val rects = placeables.map { placeable ->
+                placeable.place(0, y)
+                androidx.compose.ui.geometry.Rect(0f, y.toFloat(), width.toFloat(), (y + placeable.height).toFloat()).also { y += placeable.height + gap }
+            }
+            if (rects != segments) segments = rects
         }
     }
 }

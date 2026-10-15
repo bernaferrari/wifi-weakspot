@@ -14,20 +14,30 @@ import com.pulsewave.app.core.wifi.SignalQuality
 
 /** One rounded bar per second, colored and sized by signal, newest on the right. */
 @Composable
-fun WalkTimeline(samples: List<WalkSample>, modifier: Modifier = Modifier, maxBars: Int = 60) {
+fun WalkTimeline(samples: List<WalkSample>, modifier: Modifier = Modifier, maxBars: Int = 60, fullSession: Boolean = false) {
     val palette = SignalQuality.entries.associateWith { signalColors(it).accent }
+    val disconnected = MaterialTheme.colorScheme.error
     val empty = MaterialTheme.colorScheme.surfaceContainerHighest
     Canvas(modifier) {
         val gap = 3.dp.toPx()
         val barWidth = (size.width - gap * (maxBars - 1)) / maxBars
-        val visible = samples.takeLast(maxBars)
+        val visible = if (!fullSession || samples.size <= maxBars) samples.takeLast(maxBars) else
+            samples.chunked((samples.size + maxBars - 1) / maxBars).map { interval ->
+                interval.firstOrNull { !it.connected }
+                    ?: interval.firstOrNull { it.measuredRssi == null }
+                    ?: interval.minBy { it.measuredRssi!! }
+            }
         repeat(maxBars) { index ->
             val sample = visible.getOrNull(index - (maxBars - visible.size))
             val x = index * (barWidth + gap)
-            val fraction = sample?.let { SignalQuality.fraction(it.rssi).coerceAtLeast(0.08f) } ?: 0.08f
+            val fraction = sample?.measuredRssi?.let { SignalQuality.fraction(it).coerceAtLeast(0.08f) } ?: 0.08f
             val height = size.height * fraction
             drawRoundRect(
-                color = sample?.let { palette.getValue(SignalQuality.of(it.rssi)) } ?: empty,
+                color = when {
+                    sample != null && !sample.connected -> disconnected
+                    sample?.measuredRssi != null -> palette.getValue(SignalQuality.of(sample.measuredRssi!!))
+                    else -> empty
+                },
                 topLeft = Offset(x, size.height - height),
                 size = Size(barWidth, height),
                 cornerRadius = CornerRadius(barWidth / 2)

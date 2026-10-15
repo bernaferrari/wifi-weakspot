@@ -4,90 +4,98 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pulsewave.app.core.domain.NetworkStatusRepository
 import com.pulsewave.app.core.model.NetworkStatus
-import com.pulsewave.app.core.rooms.CoverageSummary
-import com.pulsewave.app.core.rooms.RoomCheckRepository
-import com.pulsewave.app.core.rooms.RoomReading
-import com.pulsewave.app.core.rooms.WalkSample
-import com.pulsewave.app.core.rooms.WalkSummary
-import com.pulsewave.app.core.rooms.coverageSummary
-import com.pulsewave.app.core.rooms.summarizeRoom
-import com.pulsewave.app.core.rooms.summarizeWalk
+import com.pulsewave.app.core.rooms.*
 import com.pulsewave.app.core.router.PingEvent
 import com.pulsewave.app.core.router.RouterProbe
+import com.pulsewave.app.core.util.nowMillis
+import com.pulsewave.app.core.util.randomId
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class WalkSession(
     val startedAt: Long,
     val samples: List<WalkSample> = emptyList(),
-    val latestRouterMs: Float? = null
+    val latestRouterMs: Float? = null,
+    val routerReplyAt: Long? = null,
+    val networkKey: String? = null
 )
 
-/**
- * Signal finder: the connected link is read every second (Android does not throttle it)
- * and the router is pinged once a second, so weak spots show up as you walk.
- */
 class WalkViewModel(
     networkStatusRepository: NetworkStatusRepository,
     private val repository: RoomCheckRepository,
-    private val probe: RouterProbe
+    private val probe: RouterProbe,
+    private val clock: () -> Long = ::nowMillis
 ) : ViewModel() {
-
-    private val _trail = MutableStateFlow<List<Int>>(emptyList())
-    val trail: StateFlow<List<Int>> = _trail.asStateFlow()
-
     private val _session = MutableStateFlow<WalkSession?>(null)
-    val session: StateFlow<WalkSession?> = _session.asStateFlow()
-
+    val session = _session.asStateFlow()
     private val _finished = MutableStateFlow<Pair<WalkSummary, List<WalkSample>>?>(null)
-    val finished: StateFlow<Pair<WalkSummary, List<WalkSample>>?> = _finished.asStateFlow()
-
+    val finished = _finished.asStateFlow()
     private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message.asStateFlow()
-
-    val live: StateFlow<NetworkStatus> = networkStatusRepository.getCurrentNetworkStatus(refreshIntervalMs = LIVE_REFRESH_MS)
-        .onEach { status ->
-            if (status.hasSignalMeasurement) _trail.value = (_trail.value + status.rssi).takeLast(TRAIL_SIZE)
-        }
+    val message = _message.asStateFlow()
+    private val _saving = MutableStateFlow<String?>(null)
+    val saving = _saving.asStateFlow()
+    val live = networkStatusRepository.getCurrentNetworkStatus(refreshIntervalMs = LIVE_REFRESH_MS)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NetworkStatus.Disconnected)
-
-    val spots: StateFlow<CoverageSummary> = repository.readings.map(::coverageSummary)
+    val readings = repository.readings.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    /** Null follows the connected network; an explicit selection lets old spots be inspected offline. */
+    private val _selectedNetwork = MutableStateFlow<String?>(null)
+    val networkChoices = readings.map { list -> list.distinctBy { it.networkKey }.filter { it.networkKey != null } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val selectedNetwork = combine(_selectedNetwork, live) { selected, status ->
+        selected ?: roomNetworkKey(status.ssid, status.bssid)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    val spots = combine(readings, selectedNetwork) { list, key -> coverageSummary(list.filter { key != null && it.networkKey == key }) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), coverageSummary(emptyList()))
-
+    fun selectNetwork(key: String?) { _selectedNetwork.value = key }
     private var walkJob: Job? = null
+    private var saveJob: Job? = null
+    private var walkNetwork: String? = null
+
+    private fun sample(elapsed: Long): WalkSample {
+        val status = live.value
+        val current = _session.value
+        val connected = status.isConnected && roomNetworkKey(status.ssid, status.bssid) == walkNetwork
+        val fresh = current?.routerReplyAt?.let { clock() - it in 0..ROUTER_FRESH_MS } == true
+        return WalkSample(elapsed, status.rssi.takeIf { connected && status.hasSignalMeasurement },
+            current?.latestRouterMs?.takeIf { connected && fresh }, connected, current?.routerReplyAt?.takeIf { fresh })
+    }
 
     fun startWalk() {
         if (walkJob?.isActive == true) return
+        val status = live.value
+        walkNetwork = roomNetworkKey(status.ssid, status.bssid)
+        if (!status.hasSignalMeasurement || walkNetwork == null) {
+            _message.value = "Connect to your Wi-Fi and allow signal readings before walking."
+            return
+        }
+        _selectedNetwork.value = null
         _finished.value = null
-        val started = com.pulsewave.app.core.util.nowMillis()
-        _session.value = WalkSession(startedAt = started)
+        val started = clock()
+        _session.value = WalkSession(started, networkKey = walkNetwork)
         walkJob = viewModelScope.launch {
             launch {
-                val gateway = live.value.gateway
-                if (gateway.isNotBlank()) {
-                    runCatching {
-                        probe.ping(gateway, count = MAX_WALK_SECONDS, intervalSeconds = 1.0).collect { event ->
-                            if (event is PingEvent.Reply) _session.value = _session.value?.copy(latestRouterMs = event.rttMs)
+                live.map { current ->
+                    if (current.isConnected && roomNetworkKey(current.ssid, current.bssid) == walkNetwork && current.gateway.isNotBlank())
+                        current.bssid to current.gateway else null
+                }.distinctUntilChanged().collectLatest { target ->
+                    _session.value = _session.value?.copy(latestRouterMs = null, routerReplyAt = null)
+                    if (target != null) try {
+                        probe.ping(target.second, count = MAX_WALK_SECONDS, intervalSeconds = 1.0).collect { event ->
+                            if (event is PingEvent.Reply) _session.value = _session.value?.copy(latestRouterMs = event.rttMs, routerReplyAt = clock())
                         }
-                    }
+                    } catch (cancelled: CancellationException) { throw cancelled }
+                    catch (_: Exception) { _session.value = _session.value?.copy(latestRouterMs = null, routerReplyAt = null) }
                 }
             }
-            while (true) {
-                val status = live.value
+            while (clock() - started < MAX_WALK_SECONDS * 1_000L) {
                 val current = _session.value ?: break
-                if (status.hasSignalMeasurement) {
-                    val sample = WalkSample(com.pulsewave.app.core.util.nowMillis() - started, status.rssi, current.latestRouterMs)
-                    _session.value = current.copy(samples = (current.samples + sample).takeLast(MAX_WALK_SECONDS))
-                }
-                if (com.pulsewave.app.core.util.nowMillis() - started > MAX_WALK_SECONDS * 1_000L) break
+                val elapsed = clock() - started
+                val next = sample(elapsed)
+                _session.value = current.copy(samples = current.samples + next,
+                    latestRouterMs = next.routerMs, routerReplyAt = next.routerReplyId)
                 delay(LIVE_REFRESH_MS)
             }
             finishWalk()
@@ -95,60 +103,62 @@ class WalkViewModel(
     }
 
     fun finishWalk() {
-        val samples = _session.value?.samples.orEmpty()
+        val current = _session.value ?: return
+        val samples = current.samples + sample(clock() - current.startedAt)
         _session.value = null
         walkJob?.cancel()
         walkJob = null
         _finished.value = summarizeWalk(samples)?.let { it to samples }
     }
+    fun dismissSummary() { _finished.value = null }
 
-    fun dismissSummary() {
-        _finished.value = null
-    }
-
-    /** Saves the last few seconds where the person is standing. */
+    /** Collect new readings only after the person has stopped at the named spot. */
     fun saveSpot(name: String) {
         val trimmed = name.trim().ifEmpty { return }
-        val status = live.value
-        val recent = _trail.value.takeLast(SPOT_SAMPLES)
-        val reading = summarizeRoom(
-            id = com.pulsewave.app.core.util.randomId(), name = trimmed, rssiSamples = recent,
-            linkSpeedsMbps = listOf(status.linkSpeed), frequencyMhz = status.frequency,
-            ssid = status.ssid, bssid = status.bssid, timestamp = com.pulsewave.app.core.util.nowMillis(),
-            routerMs = _session.value?.latestRouterMs
-        )
-        if (reading == null) {
+        if (saveJob?.isActive == true) return
+        val initial = live.value
+        val key = roomNetworkKey(initial.ssid, initial.bssid)
+        if (!initial.hasSignalMeasurement || key == null) {
             _message.value = "No Wi-Fi signal to save. Connect to your Wi-Fi first."
             return
         }
-        viewModelScope.launch {
-            runCatching { repository.save(reading) }
-                .onSuccess { _message.value = "Saved ${reading.name} · ${reading.averageRssi} dBm" }
-                .onFailure { _message.value = "Couldn't save this spot. Try again." }
+        if (_selectedNetwork.value != null && _selectedNetwork.value != key) {
+            _message.value = "Connect to this spot's network before rechecking it."
+            return
+        }
+        _saving.value = trimmed
+        saveJob = viewModelScope.launch {
+            try {
+                val snapshots = mutableListOf<NetworkStatus>()
+                repeat(SPOT_SAMPLES) {
+                    delay(LIVE_REFRESH_MS)
+                    val next = live.value
+                    check(next.hasSignalMeasurement && roomNetworkKey(next.ssid, next.bssid) == key && next.bssid == initial.bssid)
+                    snapshots += next
+                }
+                val reading = summarizeRoom(randomId(), trimmed, snapshots.map { it.rssi }, snapshots.map { it.linkSpeed },
+                    initial.frequency, initial.ssid, initial.bssid, clock())!!
+                repository.save(reading)
+                val previous = readings.value.filter { it.spotKey == reading.spotKey && it.id != reading.id }.maxByOrNull { it.timestamp }
+                _message.value = "Saved $trimmed · ${spotComparison(reading, previous)}"
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { _message.value = "Couldn't save a stable reading. Keep still on the same Wi-Fi and try again." }
+            finally { _saving.value = null }
         }
     }
-
-    /** Puts back a spot removed by mistake. */
-    fun restore(reading: RoomReading) {
-        viewModelScope.launch { runCatching { repository.save(reading) } }
-    }
-
+    fun restore(reading: RoomReading) { viewModelScope.launch { repository.save(reading) } }
     fun delete(reading: RoomReading) {
-        viewModelScope.launch { repository.delete(reading.id) }
+        viewModelScope.launch {
+            try { repository.delete(reading.id) }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { _message.value = "Couldn't remove this reading. Try again." }
+        }
     }
-
-    fun clearSpots() {
-        viewModelScope.launch { repository.clear() }
-    }
-
-    fun dismissMessage() {
-        _message.value = null
-    }
-
+    fun dismissMessage() { _message.value = null }
     companion object {
         const val LIVE_REFRESH_MS = 1_000L
         const val MAX_WALK_SECONDS = 600
-        private const val TRAIL_SIZE = 60
         private const val SPOT_SAMPLES = 4
+        private const val ROUTER_FRESH_MS = 2_000L
     }
 }

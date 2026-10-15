@@ -14,8 +14,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
-import androidx.compose.material.icons.automirrored.outlined.DirectionsWalk
+import androidx.compose.material.icons.filled.MeetingRoom
+import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Radar
 import androidx.compose.material.icons.filled.Settings
@@ -48,22 +48,24 @@ private class TabItem(val destination: NavKey, val label: String, val icon: Imag
 private val Tabs = listOf(
     TabItem(HomeDestination, "Home", Icons.Outlined.Home, Icons.Filled.Home),
     TabItem(NetworksDestination, "Networks", com.pulsewave.app.core.designsystem.component.NetworksIcons.Outlined, com.pulsewave.app.core.designsystem.component.NetworksIcons.Filled),
-    TabItem(WalkDestination, "Walk", Icons.AutoMirrored.Outlined.DirectionsWalk, Icons.AutoMirrored.Filled.DirectionsWalk),
+    TabItem(WalkDestination, "Rooms", Icons.Outlined.MeetingRoom, Icons.Filled.MeetingRoom),
     TabItem(SettingsDestination, "Settings", Icons.Outlined.Settings, Icons.Filled.Settings)
 )
 
 /**
- * A bottom bar on phones and a rail on wide windows, shown only on the tabs: pushed screens get the
- * whole canvas. The content keeps one place in the tree whether or not the bar shows, so screens
+ * A bottom bar on phones and a rail on wide windows. Screens opened from a tab keep the bar, so
+ * they read as part of that tab; immersive ones (the floor plan, scan setup) get the whole canvas. The content keeps one place in the tree whether or not the bar shows, so screens
  * keep their state and pushes animate instead of being rebuilt.
  */
 @Composable
 fun PulseWaveNavigationSuite(backStack: NavBackStack<NavKey>, content: @Composable () -> Unit) {
     val haptics = rememberPulseWaveHapticFeedback()
     val current = backStack.lastOrNull { it.isRootTab() } ?: HomeDestination
-    val showBar = backStack.lastOrNull()?.isRootTab() == true
+    // Tools opened from a tab stay inside it, so the bar stays; only immersive screens hide it.
+    val showBar = backStack.lastOrNull().let { it !is FloorPlanDestination && it !is ScanSetupDestination }
     val select: (NavKey) -> Unit = { tab ->
-        if (tab != current) {
+        // Tapping the current tab from one of its screens goes back to the tab's start.
+        if (tab != current || backStack.lastOrNull() != current) {
             haptics.click()
             backStack.selectTab(tab)
         }

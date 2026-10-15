@@ -16,15 +16,15 @@ class LinkQualityTest {
     @Test
     fun noRepliesMeansUnreliable() {
         val latency = summarizeLatency(emptyList(), sent = 10)!!
-        assertEquals(LinkVerdict.Unreliable, linkVerdict(latency, null))
+        assertEquals(LinkVerdict.Unreliable, linkVerdict(latency))
     }
 
     @Test
     fun verdictWeighsSteadinessBeforeSpeed() {
         val fast = RouterLatency(medianMs = 2f, jitterMs = 1f, lossPercent = 0f, samples = 25)
-        assertEquals(LinkVerdict.Great, linkVerdict(fast, 300.0))
-        assertEquals(LinkVerdict.Good, linkVerdict(fast, 40.0))
-        assertEquals(LinkVerdict.Slow, linkVerdict(fast.copy(lossPercent = 4f), 300.0))
-        assertEquals(LinkVerdict.Unreliable, linkVerdict(fast.copy(medianMs = 150f), 300.0))
+        assertEquals(LinkVerdict.Great, linkVerdict(fast))
+        assertEquals(LinkVerdict.Good, linkVerdict(fast.copy(jitterMs = 9f)))
+        assertEquals(LinkVerdict.Slow, linkVerdict(fast.copy(lossPercent = 4f)))
+        assertEquals(LinkVerdict.Unreliable, linkVerdict(fast.copy(medianMs = 150f)))
     }
 }

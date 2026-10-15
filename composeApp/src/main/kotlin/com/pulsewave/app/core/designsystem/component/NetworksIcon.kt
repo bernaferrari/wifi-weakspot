@@ -64,3 +64,45 @@ object SiteCheckIcon {
         }.build()
     }
 }
+
+/**
+ * A speed gauge whose needle shows how quickly the router answered last time:
+ * [fraction] 1 swings it fully right (fast), 0 leaves it resting left (slow).
+ */
+object RouterGaugeIcon {
+    private val cache = mutableMapOf<Int, ImageVector>()
+
+    fun of(fraction: Float): ImageVector {
+        // A handful of steps is plenty at icon size, and keeps the cache tiny.
+        val step = (fraction.coerceIn(0f, 1f) * 12).toInt()
+        return cache.getOrPut(step) { build(step / 12f) }
+    }
+
+    private fun build(fraction: Float): ImageVector {
+        val cx = 12f; val cy = 13.5f; val r = 8.5f
+        // The dial spans 240°, open at the bottom; angles are clockwise from the right, y down.
+        val start = 150f; val sweep = 240f
+        fun point(deg: Float, radius: Float): Pair<Float, Float> {
+            val rad = deg * kotlin.math.PI / 180.0
+            return (cx + radius * kotlin.math.cos(rad)).toFloat() to (cy + radius * kotlin.math.sin(rad)).toFloat()
+        }
+        val (sx, sy) = point(start, r)
+        val (ex, ey) = point(start + sweep, r)
+        val (nx, ny) = point(start + sweep * fraction, r - 3f)
+        return ImageVector.Builder("RouterGauge.$fraction", 24.dp, 24.dp, 24f, 24f).apply {
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2.2f, strokeLineCap = StrokeCap.Round) {
+                moveTo(sx, sy)
+                arcTo(r, r, 0f, isMoreThanHalf = true, isPositiveArc = true, x1 = ex, y1 = ey)
+            }
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2.4f, strokeLineCap = StrokeCap.Round) {
+                moveTo(cx, cy); lineTo(nx, ny)
+            }
+            path(fill = SolidColor(Color.Black)) {
+                moveTo(cx + 2.2f, cy)
+                arcTo(2.2f, 2.2f, 0f, isMoreThanHalf = true, isPositiveArc = true, x1 = cx - 2.2f, y1 = cy)
+                arcTo(2.2f, 2.2f, 0f, isMoreThanHalf = true, isPositiveArc = true, x1 = cx + 2.2f, y1 = cy)
+                close()
+            }
+        }.build()
+    }
+}

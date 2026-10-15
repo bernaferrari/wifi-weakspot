@@ -13,7 +13,20 @@ class HistoryModelTest {
         WifiScanResultEntity(timestamp = time, ssid = ssid, bssid = bssid, rssi = rssi, frequency = freq, channelWidth = 80, security = "WPA2")
 
     private fun routerTest(time: Long, mbps: Float, ms: Float = 4f, rssi: Int? = -50) =
-        SpeedTestResultEntity(timestamp = time, downloadMbps = -1f, uploadMbps = mbps, pingMs = ms, jitterMs = 1f, serverName = "Router 192.168.1.1", rssi = rssi)
+        SpeedTestResultEntity(timestamp = time, downloadMbps = -1f, uploadMbps = mbps, pingMs = ms, jitterMs = 1f, serverName = "Router 192.168.1.1", rssi = rssi, ssid = "Home")
+
+    @Test
+    fun unchangedScansWithinAnHourShowOnce() {
+        val minute = 60_000L
+        val rows = listOf(
+            scan(0, "Home", "a", -50), scan(0, "Neighbour", "c", -80),
+            scan(20 * minute, "Home", "a", -52), scan(20 * minute, "Neighbour", "c", -79),
+            // A new network appeared, so this one is worth keeping.
+            scan(40 * minute, "Home", "a", -51), scan(40 * minute, "Cafe", "d", -85)
+        )
+        val entries = buildHistory(rows, emptyList(), emptyList(), emptyList())
+        assertEquals(listOf(40 * minute, 20 * minute), entries.map { it.timestamp })
+    }
 
     @Test
     fun scansSavedTogetherBecomeOneEntryPerSession() {
@@ -35,11 +48,11 @@ class HistoryModelTest {
     }
 
     @Test
-    fun routerTestsReadAsSpeedWithVerdict() {
+    fun legacySenderEstimatesAreHiddenWithoutLosingLatency() {
         val entry = buildHistory(emptyList(), emptyList(), emptyList(), listOf(routerTest(1, 412f))).single()
-        assertEquals("412 Mbps to router", entry.title)
+        assertEquals("4 ms to router", entry.title)
         assertEquals(LinkVerdict.Great, entry.verdict)
-        assertTrue(entry.summary.startsWith("Great Wi-Fi"))
+        assertTrue(entry.summary.startsWith("Router responds quickly"))
     }
 
     @Test
@@ -54,15 +67,26 @@ class HistoryModelTest {
         val ping = ToolResultEntity(timestamp = 1, toolType = "PING", target = "1.1.1.1",
             resultJson = "Reply from 1.1.1.1: time=10.0 ms\nRequest timed out: timeout\nReply from 1.1.1.1: time=20.0 ms", isSuccess = true)
         val entry = buildHistory(emptyList(), emptyList(), listOf(ping), emptyList()).single()
-        assertEquals("2 of 3 replied · 15 ms average", entry.summary)
+        assertEquals("15 ms · 2 of 3 replied", entry.summary)
         assertEquals("Lost", entry.lines[1].trailing)
     }
 
     @Test
     fun insightComparesWithUsualSpeed() {
-        val points = routerTests(listOf(routerTest(1, 400f), routerTest(2, 420f), routerTest(3, 100f)))
-        assertTrue(trendInsight(points).startsWith("Slower than your usual"))
-        assertTrue(trendInsight(points.take(2)).startsWith("About your usual"))
-        assertTrue(trendInsight(points.take(1)).startsWith("Test again"))
+        val points = routerTests(listOf(routerTest(1, 400f, ms = 4f), routerTest(2, 420f, ms = 4f), routerTest(3, 100f, ms = 40f)))
+        assertTrue(trendInsight(points).startsWith("Slower"))
+        assertTrue(trendInsight(points.take(2)).startsWith("About the same"))
+        assertTrue(trendInsight(points.take(1)).startsWith("Recheck"))
+    }
+
+    @Test fun trendsNeverCompareUnrelatedNetworksOrUnverifiedSenderRates() {
+        val home = routerTest(1, 900f, ms = 2f)
+        val office = routerTest(2, 20f, ms = 80f).copy(ssid = "Office")
+        val points = routerTests(listOf(home, office))
+        assertEquals(1, points.size)
+        assertEquals("Office", points.single().networkName)
+        assertEquals(80f, points.single().responseMs)
+        val entry = buildHistory(emptyList(), emptyList(), emptyList(), listOf(home)).single()
+        assertTrue(entry.metrics.none { it.unit == "Mbps" })
     }
 }
