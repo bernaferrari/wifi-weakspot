@@ -2,8 +2,8 @@
 
 package com.pulsewave.app.feature.overview
 
-import android.content.Intent
-import android.provider.Settings
+import com.pulsewave.app.core.util.fixed
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Radar
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.NetworkCheck
 import androidx.compose.material.icons.rounded.TravelExplore
 import androidx.compose.material.icons.rounded.WifiFind
 import androidx.compose.material.icons.rounded.WifiOff
@@ -47,7 +48,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -58,7 +59,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -92,62 +92,50 @@ fun OverviewScreen(
     onNavigateToLan: () -> Unit = {},
     onNavigateToSpeedTest: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
-    onNavigateToSettings: () -> Unit = {},
+    onNavigateToDiagnose: () -> Unit = {},
     onNavigateToScanSetup: () -> Unit = {},
-    onRequestScanPermission: () -> Unit = {}
+    onRequestScanPermission: () -> Unit = {},
+    viewModel: OverviewViewModel = koinViewModel()
 ) {
-    val viewModel: OverviewViewModel = koinViewModel()
     val status by viewModel.networkStatus.collectAsStateWithLifecycle()
     val latestSpeed by viewModel.latestSpeedTest.collectAsStateWithLifecycle()
+    val knownDevices by viewModel.knownDevices.collectAsStateWithLifecycle()
+    val savedTests by viewModel.savedTests.collectAsStateWithLifecycle()
     val rooms by viewModel.rooms.collectAsStateWithLifecycle()
+    val nearby by viewModel.nearby.collectAsStateWithLifecycle()
     val permissionGate: PermissionGate = koinInject()
     val permissions by permissionGate.state.collectAsStateWithLifecycle()
     val settings: SettingsRepository = koinInject()
     val radios = rememberRadioState()
     val haptics = rememberPulseWaveHapticFeedback()
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val platform: com.pulsewave.app.core.platform.PlatformActions = org.koin.compose.koinInject()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
-                title = {
-                    Text("PulseWave", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                },
-                actions = {
-                    IconButton(onClick = onNavigateToSettings) { Icon(Icons.Rounded.Settings, "Settings") }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
+            MediumFlexibleTopAppBar(
+                title = { Text("PulseWave") },
                 scrollBehavior = scrollBehavior
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+        com.pulsewave.app.core.designsystem.AdaptiveColumns(
             contentPadding = PaddingValues(
                 start = 16.dp, end = 16.dp,
                 top = padding.calculateTopPadding() + 8.dp,
                 bottom = padding.calculateBottomPadding() + 32.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+            primary = {
             item(key = "hero") {
                 ConnectionHero(
                     status = status,
                     wifiEnabled = radios.wifiEnabled,
                     onOpenWifiSettings = {
-                        context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        platform.openWifiSettings()
                     }
                 )
-            }
-
-            item(key = "rooms") {
-                FindWeakSpotsCard(rooms = rooms, onClick = { haptics.click(); onNavigateToRooms() })
             }
 
             val needsPermission = !permissions.canScanWifi
@@ -166,15 +154,30 @@ fun OverviewScreen(
                         onAction = {
                             haptics.click()
                             if (needsPermission) onRequestScanPermission()
-                            else context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                            else platform.openLocationSettings()
                         }
                     )
                 }
             }
 
+            item(key = "nearby") {
+                NearbySummaryCard(
+                    networks = nearby,
+                    connectedBssid = status.bssid.takeIf { status.isConnected },
+                    connectedFrequency = if (status.isConnected) status.frequency else 0,
+                    onClick = { haptics.click(); onNavigateToWifi() }
+                )
+            }
+
+            },
+            secondary = {
+            item(key = "rooms") {
+                FindWeakSpotsCard(rooms = rooms, onClick = { haptics.click(); onNavigateToRooms() })
+            }
+
             item(key = "toolsHeader") {
                 Text(
-                    "Quick checks",
+                    "Tools",
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(start = 4.dp, top = 12.dp).semantics { heading() }
                 )
@@ -182,54 +185,19 @@ fun OverviewScreen(
 
             item(key = "tiles") {
                 val scheme = MaterialTheme.colorScheme
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        QuickTile(
-                            title = "Wi-Fi speed",
-                            subtitle = latestSpeed?.takeIf { it.uploadMbps >= 0f }
-                                ?.let { "%.0f Mbps · %s".format(it.uploadMbps, relativeTime(it.timestamp)) }
-                                ?: "Phone to router, no internet needed",
-                            icon = Icons.Rounded.Speed,
-                            shape = MaterialShapes.Sunny,
-                            container = scheme.primaryContainer,
-                            content = scheme.onPrimaryContainer,
-                            onClick = onNavigateToSpeedTest,
-                            modifier = Modifier.weight(1f)
-                        )
-                        QuickTile(
-                            title = "Nearby Wi-Fi",
-                            subtitle = "Channels and neighbors",
-                            icon = Icons.Rounded.Radar,
-                            shape = MaterialShapes.Cookie7Sided,
-                            container = scheme.secondaryContainer,
-                            content = scheme.onSecondaryContainer,
-                            onClick = onNavigateToWifi,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        QuickTile(
-                            title = "Devices",
-                            subtitle = "Who's on your network",
-                            icon = Icons.Rounded.Devices,
-                            shape = MaterialShapes.Clover8Leaf,
-                            container = scheme.tertiaryContainer,
-                            content = scheme.onTertiaryContainer,
-                            onClick = onNavigateToLan,
-                            modifier = Modifier.weight(1f)
-                        )
-                        QuickTile(
-                            title = "History",
-                            subtitle = "Past tests and scans",
-                            icon = Icons.Rounded.History,
-                            shape = MaterialShapes.Puffy,
-                            container = scheme.surfaceContainerHighest,
-                            content = scheme.onSurface,
-                            onClick = onNavigateToHistory,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
+                QuickTileGrid(
+                    listOf(
+                        QuickTileSpec(
+                            "Wi-Fi speed",
+                            latestSpeed?.takeIf { it.uploadMbps >= 0f }?.let { "${it.uploadMbps.fixed(0)} Mbps · ${relativeTime(it.timestamp)}" }
+                                ?: "Phone to router",
+                            Icons.Rounded.Speed, MaterialShapes.Sunny, scheme.primaryContainer, scheme.onPrimaryContainer, onNavigateToSpeedTest
+                        ),
+                        QuickTileSpec("Devices", knownDevices?.let { if (it == 1) "1 device" else "$it devices" } ?: "Who's connected", Icons.Rounded.Devices, MaterialShapes.Clover8Leaf, scheme.tertiaryContainer, scheme.onTertiaryContainer, onNavigateToLan),
+                        QuickTileSpec("Test a website", "Ping, DNS, ports", com.pulsewave.app.core.designsystem.component.SiteCheckIcon.Filled, MaterialShapes.Cookie6Sided, scheme.secondaryContainer, scheme.onSecondaryContainer, onNavigateToDiagnose),
+                        QuickTileSpec("History", when (savedTests) { 0 -> "Past results"; 1 -> "1 speed test"; else -> "$savedTests speed tests" }, Icons.Rounded.History, MaterialShapes.Puffy, scheme.surfaceContainerHighest, scheme.onSurface, onNavigateToHistory)
+                    )
+                )
             }
 
             if (status.isConnected && !status.internetValidated) {
@@ -249,7 +217,8 @@ fun OverviewScreen(
                     }
                 }
             }
-        }
+            }
+        )
     }
 }
 
@@ -264,23 +233,11 @@ private fun ConnectionHero(status: NetworkStatus, wifiEnabled: Boolean, onOpenWi
     ) {
         Column(Modifier.fillMaxWidth().padding(24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SignalMorphBlob(
-                    quality = quality,
-                    color = if (quality != null) colors.container else scheme.surfaceContainerHighest,
-                    size = 116.dp,
-                    spinning = quality != null
-                ) {
-                    if (quality != null) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                "${status.rssi}",
-                                style = MaterialTheme.typography.headlineLarge.copy(fontFeatureSettings = "tnum"),
-                                fontWeight = FontWeight.Black,
-                                color = colors.onContainer
-                            )
-                            Text("dBm", style = MaterialTheme.typography.labelMedium, color = colors.onContainer)
-                        }
-                    } else {
+                // The same gauge as every list: shape and fill show the level, the score sits inside.
+                if (quality != null) {
+                    com.pulsewave.app.core.designsystem.component.WifiBadge(status.rssi, size = 116.dp)
+                } else {
+                    SignalMorphBlob(quality = null, color = scheme.surfaceContainerHighest, size = 116.dp, spinning = false) {
                         Icon(Icons.Rounded.WifiOff, null, Modifier.size(40.dp), tint = scheme.onSurfaceVariant)
                     }
                 }
@@ -327,7 +284,7 @@ private fun ConnectionHero(status: NetworkStatus, wifiEnabled: Boolean, onOpenWi
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     InfoPill(bandLabel(status.frequency))
                     if (status.channel > 0) InfoPill("Channel ${status.channel}")
-                    if (status.linkSpeed > 0) InfoPill("${status.linkSpeed} Mbps link")
+                    if (status.linkSpeed > 0) InfoPill("Up to ${status.linkSpeed} Mbps")
                     if (status.security.isNotBlank()) InfoPill(if (status.security == "Open") "No password" else status.security)
                 }
             } else if (!status.isConnected) {
@@ -380,10 +337,10 @@ private fun FindWeakSpotsCard(rooms: CoverageSummary, onClick: () -> Unit) {
     ) {
         Row(Modifier.fillMaxWidth().padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Find weak spots", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text("Walk your home", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Text(
                     when (rooms.rankedRooms.size) {
-                        0 -> "Walk around your home. The shape shrinks wherever Wi-Fi gets weak."
+                        0 -> "Find the rooms where your Wi-Fi gets weak."
                         1 -> "1 saved spot · ${rooms.headline}"
                         else -> "${rooms.rankedRooms.size} saved spots · ${rooms.headline}"
                     },
@@ -404,39 +361,6 @@ private fun FindWeakSpotsCard(rooms: CoverageSummary, onClick: () -> Unit) {
                 Icons.Rounded.TravelExplore, MaterialShapes.SoftBurst,
                 scheme.tertiary, scheme.onTertiary, size = 88.dp, iconSize = 40.dp
             )
-        }
-    }
-}
-
-@Composable
-private fun QuickTile(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    shape: RoundedPolygon,
-    container: Color,
-    content: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        onClick = onClick,
-        shape = PulseWaveShapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        modifier = modifier.heightIn(min = 148.dp)
-    ) {
-        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            ShapeIcon(icon, shape, container, content, size = 52.dp, iconSize = 26.dp)
-            Column {
-                Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
         }
     }
 }

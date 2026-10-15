@@ -38,12 +38,10 @@ data class ScanSetupStatus(
     /** `su` exists on this phone, so root can lift the limit instead of Developer options. */
     val rootAvailable: Boolean = false,
     /** The person opted in to root scanning and it was granted. */
-    val rootScanning: Boolean = false,
-    /** Installed as a privileged system app, which Android exempts from throttling. */
-    val systemApp: Boolean = false
+    val rootScanning: Boolean = false
 ) {
     /** Scans run as often as the app asks. */
-    val isUnlimited: Boolean get() = !throttlingApplies || !throttlingEnabled || rootScanning || systemApp
+    val isUnlimited: Boolean get() = !throttlingApplies || !throttlingEnabled || rootScanning
     /** Worth suggesting to everyone: the Developer options switch exists and is still on. */
     val needsAttention: Boolean get() = !isUnlimited && canDisableThrottling
 }

@@ -1,5 +1,7 @@
 package com.pulsewave.app.feature.tools
 
+import com.pulsewave.app.core.util.fixed
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pulsewave.app.core.tools.*
@@ -56,7 +58,7 @@ class ToolsViewModel(
         val collectorJob = launch {
             pingClient.ping(host).collect { result ->
                 val line = if (result.isSuccess) {
-                    "Reply from $host: time=%.1f ms".format(result.rttMs)
+                    "Reply from $host: time=${result.rttMs.fixed(1)} ms"
                 } else {
                     "Request timed out: ${result.error}"
                 }
@@ -69,7 +71,7 @@ class ToolsViewModel(
         // Save to DB
         dao.insertToolResult(
             com.pulsewave.app.core.database.entities.ToolResultEntity(
-                timestamp = System.currentTimeMillis(),
+                timestamp = com.pulsewave.app.core.util.nowMillis(),
                 toolType = "PING",
                 target = host,
                 resultJson = results.joinToString("\n"),
@@ -89,7 +91,7 @@ class ToolsViewModel(
         // Save to DB
         dao.insertToolResult(
             com.pulsewave.app.core.database.entities.ToolResultEntity(
-                timestamp = System.currentTimeMillis(),
+                timestamp = com.pulsewave.app.core.util.nowMillis(),
                 toolType = "DNS",
                 target = query,
                 resultJson = lines.joinToString("\n"),
@@ -106,7 +108,7 @@ class ToolsViewModel(
         // Save to DB
         dao.insertToolResult(
             com.pulsewave.app.core.database.entities.ToolResultEntity(
-                timestamp = System.currentTimeMillis(),
+                timestamp = com.pulsewave.app.core.util.nowMillis(),
                 toolType = "PORT_SCAN",
                 target = host,
                 resultJson = encodePortScan(pairs),

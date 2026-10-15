@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 data class WalkSession(
     val startedAt: Long,
@@ -68,7 +67,7 @@ class WalkViewModel(
     fun startWalk() {
         if (walkJob?.isActive == true) return
         _finished.value = null
-        val started = System.currentTimeMillis()
+        val started = com.pulsewave.app.core.util.nowMillis()
         _session.value = WalkSession(startedAt = started)
         walkJob = viewModelScope.launch {
             launch {
@@ -85,10 +84,10 @@ class WalkViewModel(
                 val status = live.value
                 val current = _session.value ?: break
                 if (status.hasSignalMeasurement) {
-                    val sample = WalkSample(System.currentTimeMillis() - started, status.rssi, current.latestRouterMs)
+                    val sample = WalkSample(com.pulsewave.app.core.util.nowMillis() - started, status.rssi, current.latestRouterMs)
                     _session.value = current.copy(samples = (current.samples + sample).takeLast(MAX_WALK_SECONDS))
                 }
-                if (System.currentTimeMillis() - started > MAX_WALK_SECONDS * 1_000L) break
+                if (com.pulsewave.app.core.util.nowMillis() - started > MAX_WALK_SECONDS * 1_000L) break
                 delay(LIVE_REFRESH_MS)
             }
             finishWalk()
@@ -113,9 +112,9 @@ class WalkViewModel(
         val status = live.value
         val recent = _trail.value.takeLast(SPOT_SAMPLES)
         val reading = summarizeRoom(
-            id = UUID.randomUUID().toString(), name = trimmed, rssiSamples = recent,
+            id = com.pulsewave.app.core.util.randomId(), name = trimmed, rssiSamples = recent,
             linkSpeedsMbps = listOf(status.linkSpeed), frequencyMhz = status.frequency,
-            ssid = status.ssid, bssid = status.bssid, timestamp = System.currentTimeMillis(),
+            ssid = status.ssid, bssid = status.bssid, timestamp = com.pulsewave.app.core.util.nowMillis(),
             routerMs = _session.value?.latestRouterMs
         )
         if (reading == null) {
@@ -127,6 +126,11 @@ class WalkViewModel(
                 .onSuccess { _message.value = "Saved ${reading.name} · ${reading.averageRssi} dBm" }
                 .onFailure { _message.value = "Couldn't save this spot. Try again." }
         }
+    }
+
+    /** Puts back a spot removed by mistake. */
+    fun restore(reading: RoomReading) {
+        viewModelScope.launch { runCatching { repository.save(reading) } }
     }
 
     fun delete(reading: RoomReading) {

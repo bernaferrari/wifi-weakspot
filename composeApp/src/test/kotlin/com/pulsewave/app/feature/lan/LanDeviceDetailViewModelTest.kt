@@ -11,13 +11,17 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LanDeviceDetailViewModelTest {
+    private fun status() = mockk<com.pulsewave.app.core.domain.NetworkStatusRepository> {
+        every { getCurrentNetworkStatus(any()) } returns kotlinx.coroutines.flow.flowOf(com.pulsewave.app.core.model.NetworkStatus.Disconnected)
+    }
+
     @Test fun missingDeviceNeverClaimsOnlineOrInventsPorts() = runTest {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
             val dao = mockk<PulseWaveDao>()
             coEvery { dao.getLanDevice(any()) } returns null
             coEvery { dao.getLatestPortScan(any()) } returns null
-            val vm = LanDeviceDetailViewModel(dao)
+            val vm = LanDeviceDetailViewModel(dao, status())
             vm.loadDevice("192.168.1.4")
             advanceUntilIdle()
             assertFalse(vm.device.value!!.isOnline)
@@ -33,7 +37,7 @@ class LanDeviceDetailViewModelTest {
             val ip = "192.168.1.4"
             coEvery { dao.getLanDevice(ip) } returns LanDeviceEntity(ip, null, null, null, 10L, true)
             coEvery { dao.getLatestPortScan(ip) } returns ToolResultEntity(timestamp = 20L, toolType = "PORT_SCAN", target = ip, resultJson = "8080:HTTP-Proxy", isSuccess = true)
-            val vm = LanDeviceDetailViewModel(dao)
+            val vm = LanDeviceDetailViewModel(dao, status())
             vm.loadDevice(ip)
             advanceUntilIdle()
             assertEquals(listOf(8080), vm.device.value!!.openPorts)

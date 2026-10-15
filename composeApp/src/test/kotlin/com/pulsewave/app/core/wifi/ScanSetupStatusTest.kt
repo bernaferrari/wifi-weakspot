@@ -39,9 +39,4 @@ class ScanSetupStatusTest {
         val android9 = ScanSetupStatus(canDisableThrottling = false, rootAvailable = true)
         assertFalse(android9.needsAttention)
     }
-
-    @Test
-    fun privilegedSystemAppIsUnlimited() {
-        assertTrue(ScanSetupStatus(systemApp = true).isUnlimited)
-    }
 }

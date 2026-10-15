@@ -2,9 +2,7 @@
 
 package com.pulsewave.app.feature.setup
 
-import android.content.ClipData
-import android.content.Intent
-import android.provider.Settings
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,11 +53,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -105,9 +101,8 @@ fun ScanSetupScreen(
     onBack: () -> Unit = {}
 ) {
     val status = rememberScanSetupStatus()
-    val context = LocalContext.current
+    val platform: com.pulsewave.app.core.platform.PlatformActions = org.koin.compose.koinInject()
     val haptics = rememberPulseWaveHapticFeedback()
-    val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -121,11 +116,6 @@ fun ScanSetupScreen(
     LaunchedEffect(status.isUnlimited) {
         if (status.isUnlimited && !wasUnlimited) haptics.success()
         wasUnlimited = status.isUnlimited
-    }
-
-    fun open(action: String) {
-        runCatching { context.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-            .onFailure { context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
     }
 
     Scaffold(
@@ -159,11 +149,11 @@ fun ScanSetupScreen(
                         number = 1,
                         shape = MaterialShapes.Cookie4Sided,
                         title = "Turn on Developer options",
-                        body = "In Settings, open About phone and tap Build number 7 times. You may need to enter your screen lock.",
+                        body = "In Settings, open **About phone** and tap **Build number** 7 times. You may need to enter your screen lock.",
                         done = status.developerOptionsEnabled || !status.throttlingEnabled,
                         enabled = true,
                         actionLabel = "Open About phone",
-                        onAction = { open(Settings.ACTION_DEVICE_INFO_SETTINGS) }
+                        onAction = { platform.openDeviceInfo() }
                     )
                 }
                 item {
@@ -171,11 +161,11 @@ fun ScanSetupScreen(
                         number = 2,
                         shape = MaterialShapes.Cookie6Sided,
                         title = "Turn off Wi-Fi scan throttling",
-                        body = "In Developer options, scroll to Networking and switch off Wi-Fi scan throttling.",
+                        body = "In **Developer options**, scroll down to **Networking** and switch off **Wi-Fi scan throttling**.",
                         done = !status.throttlingEnabled,
                         enabled = status.developerOptionsEnabled,
                         actionLabel = "Open Developer options",
-                        onAction = { open(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS) }
+                        onAction = { platform.openDeveloperOptions() }
                     )
                 }
                 item {
@@ -207,17 +197,7 @@ fun ScanSetupScreen(
                                         AdbCommand,
                                         style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
                                     )
-                                    FilledTonalButton(onClick = {
-                                        haptics.click()
-                                        scope.launch {
-                                            clipboard.setClipEntry(ClipData.newPlainText("ADB command", AdbCommand).toClipEntry())
-                                            snackbar.showSnackbar("Command copied")
-                                        }
-                                    }) {
-                                        Icon(Icons.Rounded.ContentCopy, null, Modifier.size(18.dp))
-                                        Spacer(Modifier.width(8.dp))
-                                        Text("Copy command")
-                                    }
+                                    CopyButton(onCopy = { platform.copyToClipboard("ADB command", AdbCommand) })
                                 }
                             }
                         }
@@ -271,13 +251,12 @@ private fun StatusHero(status: ScanSetupStatus) {
     val good = status.isUnlimited
     val colors = signalColors(if (good) SignalQuality.Excellent else SignalQuality.Fair)
     val (title, body) = when {
-        status.systemApp -> "Unlimited scans" to "PulseWave is installed as a system app, so Android doesn't limit its scans."
         status.rootScanning -> "Unlimited scans with root" to "PulseWave asks the system to scan, which Android never limits."
         good && !status.throttlingApplies -> "No scan limit on this phone" to "This Android version lets PulseWave scan as often as it needs."
         good -> "Unlimited scans are on" to "Nearby networks and channel graphs refresh every few seconds."
         !status.canDisableThrottling -> "Scans are limited" to "Android 9 allows 4 scans every 2 minutes and can't turn this off. PulseWave reuses recent results in between."
-        status.developerOptionsEnabled -> "Scans are limited" to "Android allows 4 scans every 2 minutes, so lists can lag behind as you walk. One switch in Developer options removes the limit."
-        else -> "Scans are limited" to "Android allows 4 scans every 2 minutes, so lists can lag behind as you walk. Turn on Developer options, then flip one switch to remove the limit."
+        status.developerOptionsEnabled -> "Scans are limited" to "Android allows only 4 scans every 2 minutes, so lists lag as you move. One switch removes the limit."
+        else -> "Scans are limited" to "Android allows only 4 scans every 2 minutes, so lists lag as you move. Two quick steps remove the limit."
     }
     Card(
         shape = PulseWaveShapes.extraExtraLarge,
@@ -299,7 +278,7 @@ private fun StatusHero(status: ScanSetupStatus) {
             Spacer(Modifier.height(20.dp))
             Text(title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
             Spacer(Modifier.height(8.dp))
-            Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            Text(highlighted(body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         }
     }
 }
@@ -341,7 +320,7 @@ private fun SetupStep(
                         }
                     }
                 }
-                Text(body, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+                Text(highlighted(body), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
                 if (actionLabel != null && !done) {
                     Spacer(Modifier.height(8.dp))
                     Button(onClick = onAction, enabled = enabled, shapes = ButtonDefaults.shapes()) { Text(actionLabel) }
@@ -391,6 +370,60 @@ private fun RootCard(
                         Text(if (rootState == RootState.Denied) "Try root again" else "Use root")
                     }
                 }
+            }
+        }
+    }
+}
+
+/** Names of on-screen settings, written **like this**, are bolded in the accent color so they're easy to spot. */
+@Composable
+private fun highlighted(text: String): androidx.compose.ui.text.AnnotatedString {
+    val accent = MaterialTheme.colorScheme.primary
+    return androidx.compose.ui.text.buildAnnotatedString {
+        text.split("**").forEachIndexed { index, part ->
+            if (index % 2 == 1) withStyle(androidx.compose.ui.text.SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, color = accent)) { append(part) }
+            else append(part)
+        }
+    }
+}
+
+/**
+ * Confirms in place: the icon morphs to a check, the label to "Copied", and the button fills
+ * with the accent color, then settles back. No snackbar to read.
+ */
+@Composable
+private fun CopyButton(onCopy: () -> Unit) {
+    val haptics = rememberPulseWaveHapticFeedback()
+    var copied by remember { mutableStateOf(false) }
+    LaunchedEffect(copied) {
+        if (copied) { kotlinx.coroutines.delay(2_000); copied = false }
+    }
+    val scheme = MaterialTheme.colorScheme
+    val container by androidx.compose.animation.animateColorAsState(
+        if (copied) scheme.primary else scheme.secondaryContainer, MaterialTheme.motionScheme.defaultEffectsSpec(), label = "copyContainer"
+    )
+    val content by androidx.compose.animation.animateColorAsState(
+        if (copied) scheme.onPrimary else scheme.onSecondaryContainer, MaterialTheme.motionScheme.defaultEffectsSpec(), label = "copyContent"
+    )
+    val pop = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
+    val fade = MaterialTheme.motionScheme.fastEffectsSpec<Float>()
+    Button(
+        onClick = { onCopy(); haptics.success(); copied = true },
+        shapes = ButtonDefaults.shapes(),
+        colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = content)
+    ) {
+        androidx.compose.animation.AnimatedContent(
+            targetState = copied,
+            transitionSpec = {
+                (androidx.compose.animation.scaleIn(pop, initialScale = 0.6f) + androidx.compose.animation.fadeIn(fade)) togetherWith
+                    androidx.compose.animation.fadeOut(fade)
+            },
+            label = "copyLabel"
+        ) { done ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(if (done) Icons.Rounded.Check else Icons.Rounded.ContentCopy, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(if (done) "Copied" else "Copy command")
             }
         }
     }

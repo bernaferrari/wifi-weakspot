@@ -12,11 +12,11 @@ import androidx.compose.ui.unit.dp
 import com.pulsewave.app.core.database.entities.SurveyProjectEntity
 
 @Composable
-internal fun SurveyNameDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
-    var name by remember { mutableStateOf("") }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("New survey project") },
-        text = { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Project name") }, singleLine = true) },
-        confirmButton = { TextButton(onClick = { onCreate(name.trim()) }, enabled = name.isNotBlank()) { Text("Create") } },
+internal fun SurveyNameDialog(current: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    var name by remember { mutableStateOf(current) }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("Rename map") },
+        text = { OutlinedTextField(value = name, onValueChange = { name = it.take(60) }, label = { Text("Name") }, placeholder = { Text("Upstairs, Office…") }, singleLine = true) },
+        confirmButton = { TextButton(onClick = { onSave(name.trim()) }, enabled = name.isNotBlank()) { Text("Save") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
 }
 
@@ -31,14 +31,14 @@ internal fun SurveyMapSettingsDialog(project: SurveyProjectEntity, onDismiss: ()
     val h = height.replace(',', '.').toFloatOrNull()
     val s = step.replace(',', '.').toFloatOrNull()
     val valid = w != null && w in 1f..500f && h != null && h in 1f..500f && s != null && s in 0.2f..1.5f && b != null && b in 0f..359.99f
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("Calibrate map") }, text = {
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("Size and direction") }, text = {
         Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Width runs left to right; height runs top to bottom. Set the compass direction toward the map's top edge. Walking is an estimate; correct your position on the map.", style = MaterialTheme.typography.bodySmall)
-            SurveyNumberField(width, { width = it }, "Map width (m)", "1–500 m")
-            SurveyNumberField(height, { height = it }, "Map height (m)", "1–500 m")
-            SurveyNumberField(step, { step = it }, "Step length (m)", "0.2–1.5 m")
-            SurveyNumberField(bearing, { bearing = it }, "Map top bearing (degrees)", "North 0 · East 90 · South 180 · West 270")
-            Text("Dimensions and floorplan apply to all floors. Measure your average step length for better walking estimates.", style = MaterialTheme.typography.bodySmall)
+            Text("Rough numbers are fine. They help the walking dot move the right distance; you can always drag it.", style = MaterialTheme.typography.bodySmall)
+            SurveyNumberField(width, { width = it }, "Width, left to right (m)", "1–500 m")
+            SurveyNumberField(height, { height = it }, "Depth, top to bottom (m)", "1–500 m")
+            SurveyNumberField(step, { step = it }, "Your step length (m)", "Most people: 0.6–0.8 m")
+            SurveyNumberField(bearing, { bearing = it }, "Compass direction of the map's top", "0 north · 90 east · 180 south · 270 west")
+            Text("These apply to every floor of this map.", style = MaterialTheme.typography.bodySmall)
         }
     }, confirmButton = { TextButton(onClick = { onSave(w!!, h!!, s!!, b!!) }, enabled = valid) { Text("Save") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
 }
@@ -50,12 +50,12 @@ internal fun SurveyCoordinateDialog(project: SurveyProjectEntity, position: Surv
     val xMeters = x.replace(',', '.').toFloatOrNull()
     val yMeters = y.replace(',', '.').toFloatOrNull()
     val valid = xMeters != null && xMeters in 0f..project.widthMeters && yMeters != null && yMeters in 0f..project.heightMeters && project.targetBssid != null
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("Measure at coordinates") }, text = {
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("Add a reading by distance") }, text = {
         Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Enter your position in meters from the map's top-left corner. Stay there while the fresh scan runs.", style = MaterialTheme.typography.bodySmall)
-            SurveyNumberField(x, { x = it }, "X from left (m)", "0–${project.widthMeters} m")
-            SurveyNumberField(y, { y = it }, "Y from top (m)", "0–${project.heightMeters} m")
-            if (project.targetBssid == null) Text("Choose an access point first.", color = MaterialTheme.colorScheme.error)
+            Text("How far you are from the map's top-left corner. Stay put while it measures.", style = MaterialTheme.typography.bodySmall)
+            SurveyNumberField(x, { x = it }, "From the left edge (m)", "0–${project.widthMeters} m")
+            SurveyNumberField(y, { y = it }, "From the top edge (m)", "0–${project.heightMeters} m")
+            if (project.targetBssid == null) Text("Pick the Wi-Fi to measure first.", color = MaterialTheme.colorScheme.error)
         }
     }, confirmButton = { TextButton(onClick = { onSample(xMeters!! / project.widthMeters, yMeters!! / project.heightMeters) }, enabled = valid) { Text("Measure") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
 }

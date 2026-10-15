@@ -2,6 +2,8 @@
 
 package com.pulsewave.app.core.designsystem.component
 
+import com.pulsewave.app.core.util.twoDigits
+
 import com.pulsewave.app.core.designsystem.animateAccessibleFloat
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -250,7 +252,7 @@ fun ScanRadarIndicator(
                         val minutes = throttleState.secondsUntilNextScan / 60
                         val seconds = throttleState.secondsUntilNextScan % 60
                         Text(
-                            "$minutes:${"%02d".format(seconds)}",
+                            "$minutes:${"${seconds.twoDigits()}"}",
                             style = MaterialTheme.typography.headlineMedium,
                             color = stateColor,
                             fontWeight = FontWeight.Bold
@@ -337,7 +339,7 @@ fun ScanThrottleStatusBar(
                     is ThrottleState.Exhausted -> {
                         val mins = throttleState.secondsUntilNextScan / 60
                         val secs = throttleState.secondsUntilNextScan % 60
-                        "Next scan in $mins:${"%02d".format(secs)}"
+                        "Next scan in $mins:${"${secs.twoDigits()}"}"
                     }
                     is ThrottleState.Unlimited -> "Developer Mode: Unlimited"
                     is ThrottleState.Unknown -> "Checking..."

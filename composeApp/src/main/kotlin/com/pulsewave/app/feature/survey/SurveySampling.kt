@@ -22,7 +22,7 @@ fun moveSurveyPosition(
     heightMeters: Float,
     mapTopBearingDegrees: Float = 0f
 ): SurveyPosition {
-    val radians = Math.toRadians((headingDegrees - mapTopBearingDegrees).toDouble())
+    val radians = (headingDegrees - mapTopBearingDegrees).toDouble() * kotlin.math.PI / 180.0
     return SurveyPosition(
         position.x + (sin(radians) * stepLengthMeters / widthMeters).toFloat(),
         position.y - (cos(radians) * stepLengthMeters / heightMeters).toFloat()

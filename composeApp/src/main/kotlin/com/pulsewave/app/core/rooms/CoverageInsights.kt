@@ -13,7 +13,12 @@ data class CoverageSummary(
 ) {
     val headline: String get() = when {
         rankedRooms.isEmpty() -> "No spots saved yet"
+        // Okay-but-not-good spots get honest wording; "good" is reserved for good signal.
+        weakRooms.isEmpty() && rankedRooms.size == 1 && rankedRooms.first().quality == com.pulsewave.app.core.wifi.SignalQuality.Fair ->
+            "${rankedRooms.first().name} is okay"
         weakRooms.isEmpty() && rankedRooms.size == 1 -> "${rankedRooms.first().name} looks good"
+        weakRooms.isEmpty() && rankedRooms.any { it.quality == com.pulsewave.app.core.wifi.SignalQuality.Fair } ->
+            "No weak spots; ${rankedRooms.first().name} is the weakest"
         weakRooms.isEmpty() -> "All ${rankedRooms.size} spots look good"
         weakRooms.size == 1 -> "1 weak spot: ${weakRooms.first().name}"
         else -> "${weakRooms.size} weak spots found"

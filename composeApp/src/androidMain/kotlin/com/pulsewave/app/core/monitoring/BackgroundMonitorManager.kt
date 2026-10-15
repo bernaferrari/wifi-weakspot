@@ -13,19 +13,19 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class BackgroundMonitorManager(
     private val context: Context
-) {
+) : BackgroundMonitor {
     private val prefs: SharedPreferences = context.getSharedPreferences(
         BackgroundMonitorService.PREF_KEY,
         Context.MODE_PRIVATE
     )
 
-    val isMonitoring: StateFlow<Boolean> = BackgroundMonitorService.runningState
-    val error: StateFlow<String?> = BackgroundMonitorService.errorState
+    override val isMonitoring: StateFlow<Boolean> = BackgroundMonitorService.runningState
+    override val error: StateFlow<String?> = BackgroundMonitorService.errorState
 
     private val _settings = MutableStateFlow(loadSettings())
-    val settings: StateFlow<MonitorSettings> = _settings.asStateFlow()
+    override val settings: StateFlow<MonitorSettings> = _settings.asStateFlow()
 
-    fun startMonitoring() {
+    override fun startMonitoring() {
         val intent = Intent(context, BackgroundMonitorService::class.java).apply {
             action = BackgroundMonitorService.ACTION_START
         }
@@ -39,7 +39,7 @@ class BackgroundMonitorManager(
         }
     }
 
-    fun stopMonitoring() {
+    override fun stopMonitoring() {
         context.stopService(Intent(context, BackgroundMonitorService::class.java))
 
     }
@@ -48,7 +48,7 @@ class BackgroundMonitorManager(
         if (isMonitoring.value) stopMonitoring() else startMonitoring()
     }
 
-    fun updateSettings(settings: MonitorSettings) {
+    override fun updateSettings(settings: MonitorSettings) {
         prefs.edit()
             .putLong(BackgroundMonitorService.PREF_INTERVAL, settings.scanIntervalMs)
             .putBoolean(BackgroundMonitorService.PREF_NOTIFY_NEW, settings.notifyNewNetworks)
@@ -69,16 +69,4 @@ class BackgroundMonitorManager(
             signalThresholdDb = prefs.getInt(BackgroundMonitorService.PREF_SIGNAL_THRESHOLD, 15)
         )
     }
-}
-
-data class MonitorSettings(
-    val scanIntervalMs: Long = 60_000L,
-    val notifyNewNetworks: Boolean = true,
-    val notifySignalChange: Boolean = false,
-    val signalThresholdDb: Int = 15
-) {
-    val intervalMinutes: Float
-        get() = scanIntervalMs / 60_000f
-
-    fun withIntervalMinutes(minutes: Float) = copy(scanIntervalMs = (minutes.coerceIn(0.5f, 10f) * 60_000).toLong())
 }

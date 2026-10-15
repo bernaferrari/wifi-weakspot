@@ -1,5 +1,9 @@
 package com.pulsewave.app.feature.analyze
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -7,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -46,13 +51,18 @@ fun SignalHistoryGraph(
     onNetworkSelected: ((WifiNetwork?) -> Unit)? = null
 ) {
     val textMeasurer = rememberTextMeasurer()
-    val colorFor = rememberNetworkColors(networks, connectedBssid)
+    val palette = rememberNetworkPalette(networks, connectedBssid)
+    val colorFor: (String) -> androidx.compose.ui.graphics.Color = palette::color
     val scheme = MaterialTheme.colorScheme
     val zones = SignalQuality.entries.associateWith { signalColors(it).container }
     val labelStyle = MaterialTheme.typography.labelSmall
     val nameStyle = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
 
-    val shown = networks
+    // One line per radio: guest and hidden names would draw the same line again.
+    val leads = remember(networks, connectedBssid) { com.pulsewave.app.core.wifi.groupByRadio(networks, connectedBssid) }
+    @Suppress("NAME_SHADOWING")
+    val selectedNetwork = selectedNetwork?.let { pick -> leads.firstOrNull { group -> group.members.any { it.bssid == pick.bssid } }?.lead }
+    val shown = leads.map { it.lead }
         .filter { (history[it.bssid]?.size ?: 0) > 0 }
         .sortedWith(
             compareByDescending<WifiNetwork> { it.bssid == selectedNetwork?.bssid }
@@ -61,6 +71,21 @@ fun SignalHistoryGraph(
         )
         .take(MaxLines)
     val samples = shown.maxOfOrNull { history[it.bssid]?.size ?: 0 } ?: 0
+    val haptics = com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    var canvasSize by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
+    /** The line closest to the finger, measured at the finger's point in time. */
+    fun nearestLine(at: Offset): WifiNetwork? {
+        val plot = timelinePlot(canvasSize.width, canvasSize.height, density)
+        return shown.minByOrNull { network ->
+            val values = history[network.bssid].orEmpty()
+            if (values.isEmpty()) Float.MAX_VALUE else {
+                val index = (((at.x - plot.left) / plot.width) * (samples - 1)).toInt().coerceIn(0, samples - 1)
+                val value = values.getOrNull(index - (samples - values.size)) ?: values.first()
+                abs(plot.bottom - plot.height * dbmToFraction(value.toFloat()) - at.y)
+            }
+        }
+    }
 
     if (samples < 2) {
         Box(modifier, contentAlignment = Alignment.Center) {
@@ -75,27 +100,28 @@ fun SignalHistoryGraph(
 
     Canvas(
         modifier
+            .onSizeChanged { canvasSize = androidx.compose.ui.geometry.Size(it.width.toFloat(), it.height.toFloat()) }
             .semantics {
                 contentDescription = "Signal over the last $samples scans for ${shown.size} networks."
             }
             .pointerInput(shown, history) {
-                detectTapGestures { tap ->
-                    val plot = timelinePlot(size.width.toFloat(), size.height.toFloat(), this)
-                    val nearest = shown.minByOrNull { network ->
-                        val values = history[network.bssid].orEmpty()
-                        if (values.isEmpty()) Float.MAX_VALUE else {
-                            val index = (((tap.x - plot.left) / plot.width) * (samples - 1)).toInt().coerceIn(0, samples - 1)
-                            val value = values.getOrNull(index - (samples - values.size)) ?: values.first()
-                            abs(plot.bottom - plot.height * dbmToFraction(value.toFloat()) - tap.y)
-                        }
-                    }
-                    onNetworkSelected?.invoke(nearest)
+                detectTapGestures { tap -> onNetworkSelected?.invoke(nearestLine(tap)) }
+            }
+            .pointerInput(shown, history) {
+                // Press and hold, then slide up and down to move between lines that sit close together.
+                var last: String? = null
+                detectDragGesturesAfterLongPress(onDragStart = { at ->
+                    last = null
+                    nearestLine(at)?.let { last = it.bssid; haptics.light(); onNetworkSelected?.invoke(it) }
+                }) { change, _ ->
+                    val pick = nearestLine(change.position) ?: return@detectDragGesturesAfterLongPress
+                    if (pick.bssid != last) { last = pick.bssid; haptics.light(); onNetworkSelected?.invoke(pick) }
                 }
             }
     ) {
         val plot = timelinePlot(size.width, size.height, this)
         drawZones(plot, zones)
-        drawDbmAxis(plot, textMeasurer, labelStyle.copy(color = scheme.onSurfaceVariant))
+        drawQualityLabels(plot, textMeasurer, labelStyle.copy(color = scheme.onSurfaceVariant.copy(alpha = 0.7f)))
         listOf("older" to plot.left, "now" to plot.right).forEach { (label, x) ->
             val layout = textMeasurer.measure(label, labelStyle.copy(color = scheme.onSurfaceVariant))
             val left = if (label == "now") x - layout.size.width else x
@@ -126,7 +152,18 @@ fun SignalHistoryGraph(
                     cubicTo(midX, previous.y, midX, current.y, current.x, current.y)
                 }
             }
-            drawPath(path, color, style = Stroke((if (emphasized) 3.5f else 2f).dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+            if (emphasized) {
+                // A soft area under the lines that matter, fading to the floor.
+                val area = Path().apply {
+                    addPath(path)
+                    lineTo(point(values.lastIndex).x, plot.bottom)
+                    lineTo(point(0).x, plot.bottom)
+                    close()
+                }
+                val top = values.indices.minOf { point(it).y }
+                drawPath(area, androidx.compose.ui.graphics.Brush.verticalGradient(listOf(color.copy(alpha = 0.28f * color.alpha), color.copy(alpha = 0f)), startY = top, endY = plot.bottom))
+            }
+            drawPath(path, color, style = Stroke((if (emphasized) 3f else 2f).dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
             val end = point(values.lastIndex)
             drawCircle(color, radius = (if (emphasized) 5f else 3.5f).dp.toPx(), center = end)
         }
@@ -160,5 +197,5 @@ fun SignalHistoryGraph(
 }
 
 private fun timelinePlot(width: Float, height: Float, density: Density): Rect = with(density) {
-    Rect(left = 40.dp.toPx(), top = 24.dp.toPx(), right = width - 12.dp.toPx(), bottom = height - 26.dp.toPx())
+    Rect(left = QualityGutter.toPx(), top = 12.dp.toPx(), right = width - 12.dp.toPx(), bottom = height - 26.dp.toPx())
 }

@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -22,7 +23,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.IntOffset
-import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -74,17 +74,13 @@ fun ToolsScreen(
     viewModel: ToolsViewModel = koinViewModel(),
     initialTarget: String = "",
     initialTool: ToolType? = null,
-    onOpenSpeedTest: () -> Unit = {},
-    onOpenDevices: () -> Unit = {},
-    onOpenHistory: () -> Unit = {},
-    /** Set when opened from a device; hides the hub and shows a back arrow. */
     onBack: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val haptics = rememberPulseWaveHapticFeedback()
     val reduceMotion = LocalReduceMotion.current
 
-    BackHandler(enabled = uiState !is ToolsUiState.Home) {
+    com.pulsewave.app.core.platform.LocalBackHandler.current(uiState !is ToolsUiState.Home) {
         viewModel.reset()
     }
 
@@ -95,17 +91,17 @@ fun ToolsScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     val tools = listOf(
-        Tool("ping", "Ping", Icons.Outlined.Speed, "Check latency"),
-        Tool("dns", "DNS", Icons.Outlined.Dns, "IPv4 addresses"),
-        Tool("portscan", "Ports", Icons.Outlined.Security, "Scan open ports"),
+        Tool("ping", "Ping", Icons.Outlined.Speed, "Does it answer?"),
+        Tool("dns", "DNS", Icons.Outlined.Dns, "Find its address"),
+        Tool("portscan", "Ports", Icons.Outlined.Security, "What's open?"),
     )
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             MediumFlexibleTopAppBar(
-                title = { Text(if (onBack != null) "Diagnose" else "Tools") },
-                subtitle = { Text(if (onBack != null) "Ping and check ports" else "Test speed, find devices, diagnose") },
+                title = { Text("Test a website") },
+                subtitle = { Text("See if a site or device answers, and how fast") },
                 navigationIcon = {
                     if (onBack != null) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
                 },
@@ -148,10 +144,6 @@ fun ToolsScreen(
                         inputText = inputText,
                         initialTool = initialTool,
                         onInputChange = { inputText = it },
-                        showHub = onBack == null,
-                        onOpenSpeedTest = onOpenSpeedTest,
-                        onOpenDevices = onOpenDevices,
-                        onOpenHistory = onOpenHistory,
                         onToolSelect = { tool ->
                             val type = when (tool.id) {
                                 "ping" -> ToolType.PING
@@ -176,28 +168,18 @@ fun ToolsScreen(
                         }
                     )
                 }
-                is ToolsUiState.PingResult -> {
-                    ResultContent(
-                        title = "Ping",
-                        target = state.target,
-                        results = state.results,
-                        onBack = {
-                            haptics.light()
-                            viewModel.reset()
-                        }
-                    )
-                }
-                is ToolsUiState.DnsResult -> {
-                    ResultContent(
-                        title = "DNS",
-                        target = state.query,
-                        results = state.records,
-                        onBack = {
-                            haptics.light()
-                            viewModel.reset()
-                        }
-                    )
-                }
+                is ToolsUiState.PingResult -> PingResultContent(
+                    target = state.target,
+                    lines = state.results,
+                    onRetry = { haptics.click(); viewModel.startTool(ToolType.PING, state.target) },
+                    onDone = { haptics.light(); viewModel.reset() }
+                )
+                is ToolsUiState.DnsResult -> DnsResultContent(
+                    query = state.query,
+                    lines = state.records,
+                    onRetry = { haptics.click(); viewModel.startTool(ToolType.DNS, state.query) },
+                    onDone = { haptics.light(); viewModel.reset() }
+                )
                 is ToolsUiState.Error -> {
                     Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Text("Diagnostic failed", style = MaterialTheme.typography.headlineSmall)
@@ -205,16 +187,12 @@ fun ToolsScreen(
                         Button(onClick = { viewModel.reset() }) { Text("Try again") }
                     }
                 }
-                is ToolsUiState.PortScanResult -> {
-                    PortScanResultContent(
-                        host = state.host,
-                        ports = state.ports,
-                        onBack = {
-                            haptics.light()
-                            viewModel.reset()
-                        }
-                    )
-                }
+                is ToolsUiState.PortScanResult -> PortsResultContent(
+                    host = state.host,
+                    ports = state.ports,
+                    onRetry = { haptics.click(); viewModel.startTool(ToolType.PORT_SCAN, state.host) },
+                    onDone = { haptics.light(); viewModel.reset() }
+                )
             }
         }
     }
@@ -228,14 +206,19 @@ fun ToolsHomeContent(
     onInputChange: (String) -> Unit,
     onToolSelect: (Tool) -> Unit,
     initialTool: ToolType? = null,
-    onOpenSpeedTest: () -> Unit = {},
-    onOpenDevices: () -> Unit = {},
-    onOpenHistory: () -> Unit = {},
-    showHub: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val inputFocusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
     val hasInput = inputText.isNotBlank()
+    // Your router is the most useful thing to test at home, so it's the first suggestion.
+    val statusRepository: com.pulsewave.app.core.domain.NetworkStatusRepository = org.koin.compose.koinInject()
+    val status by remember(statusRepository) { statusRepository.getCurrentNetworkStatus(refreshIntervalMs = 10_000) }
+        .collectAsState(initial = com.pulsewave.app.core.model.NetworkStatus.Disconnected)
+    val suggestions = listOfNotNull(
+        status.gateway.takeIf { status.isConnected && it.isNotBlank() }?.let { "Your router" to it },
+        "Google" to "google.com",
+        "Cloudflare" to "1.1.1.1"
+    )
     val haptics = rememberPulseWaveHapticFeedback()
 
     Column(
@@ -244,30 +227,6 @@ fun ToolsHomeContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        val scheme = MaterialTheme.colorScheme
-        val hubItems = listOf(
-            HubItem("Wi-Fi speed", "Phone to router: speed and response time", Icons.Rounded.Speed, MaterialShapes.Sunny, scheme.primaryContainer, scheme.onPrimaryContainer, onOpenSpeedTest),
-            HubItem("Devices", "Everything connected to your network", Icons.Rounded.Devices, MaterialShapes.Clover8Leaf, scheme.tertiaryContainer, scheme.onTertiaryContainer, onOpenDevices),
-            HubItem("History", "Past speed tests, scans, and tools", Icons.Rounded.History, MaterialShapes.Puffy, scheme.secondaryContainer, scheme.onSecondaryContainer, onOpenHistory)
-        )
-        if (showHub) Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
-            hubItems.forEachIndexed { index, item ->
-                SegmentedListItem(
-                    onClick = { haptics.click(); item.onClick() },
-                    shapes = ListItemDefaults.segmentedShapes(index = index, count = hubItems.size),
-                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                    leadingContent = { ShapeIcon(item.icon, item.shape, item.container, item.content) },
-                    supportingContent = { Text(item.subtitle) },
-                    trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) }
-                ) { Text(item.title, style = MaterialTheme.typography.titleMedium) }
-            }
-        }
-
-        if (showHub) Text(
-            "Diagnose a host",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(start = 4.dp, top = 8.dp)
-        )
         OutlinedTextField(
             value = inputText,
             onValueChange = onInputChange,
@@ -301,15 +260,15 @@ fun ToolsHomeContent(
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
-            listOf("1.1.1.1", "8.8.8.8", "google.com").forEach { target ->
+            suggestions.forEach { (label, target) ->
                 AssistChip(
                     onClick = {
                         haptics.light()
                         onInputChange(target)
                     },
-                    label = { Text(target, style = MaterialTheme.typography.labelMedium) },
+                    label = { Text(label, style = MaterialTheme.typography.labelLarge) },
                     colors = AssistChipDefaults.assistChipColors(
                         containerColor = if (inputText == target)
                             MaterialTheme.colorScheme.primaryContainer
@@ -328,8 +287,6 @@ fun ToolsHomeContent(
                 }
             }
         }
-        Text("DNS uses the system resolver for IPv4 addresses. Ports checks common TCP services.", style = MaterialTheme.typography.bodySmall)
-        Spacer(Modifier.height(8.dp))
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -357,16 +314,6 @@ fun ToolsHomeContent(
     }
 }
 
-private data class HubItem(
-    val title: String,
-    val subtitle: String,
-    val icon: ImageVector,
-    val shape: androidx.graphics.shapes.RoundedPolygon,
-    val container: androidx.compose.ui.graphics.Color,
-    val content: androidx.compose.ui.graphics.Color,
-    val onClick: () -> Unit
-)
-
 @Composable
 fun ToolButton(
     tool: Tool,
@@ -389,10 +336,10 @@ fun ToolButton(
                 MaterialTheme.colorScheme.primaryContainer
             else
                 MaterialTheme.colorScheme.surfaceContainerLow,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
         modifier = modifier
-            .height(100.dp)
+            .heightIn(min = 120.dp)
             .scale(scale)
     ) {
         Column(
@@ -407,7 +354,7 @@ fun ToolButton(
                 tint = if (enabled)
                     MaterialTheme.colorScheme.onPrimaryContainer
                 else
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = PulseWaveAlpha.medium)
+                    MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(Modifier.height(8.dp))
             Text(
@@ -417,7 +364,13 @@ fun ToolButton(
                 color = if (enabled)
                     MaterialTheme.colorScheme.onPrimaryContainer
                 else
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = PulseWaveAlpha.medium)
+                    MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                tool.description,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                color = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -484,180 +437,6 @@ fun RunningToolContent(
             )
         ) {
             Text("Cancel")
-        }
-    }
-}
-
-@Composable
-fun ResultContent(
-    title: String,
-    target: String,
-    results: List<String>,
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.padding(16.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            FilledTonalIconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-            }
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    target,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
-        Card(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            shape = PulseWaveShapes.extraLarge,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
-        ) {
-            LazyColumn(
-                modifier = Modifier.padding(16.dp).fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                itemsIndexed(results) { index, line ->
-                    Text(
-                        line,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        modifier = Modifier
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Button(
-            onClick = onBack,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            shape = PulseWaveShapes.medium
-        ) {
-            Text("Done")
-        }
-    }
-}
-
-@Composable
-fun PortScanResultContent(
-    host: String,
-    ports: List<Pair<Int, String>>,
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.padding(16.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            FilledTonalIconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-            }
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Text(
-                    "Port Scan",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    host,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            Spacer(Modifier.weight(1f))
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Text(
-                    "${ports.size}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-        }
-
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            if (ports.isEmpty()) {
-                item { Text("No open common TCP ports found. Ports may be closed, filtered, or the target may be unreachable.") }
-            }
-            itemsIndexed(ports) { index, (port, service) ->
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                    ),
-                    shape = PulseWaveShapes.medium,
-                    modifier = Modifier
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        Icons.Default.LockOpen,
-                                        null,
-                                        modifier = Modifier.size(20.dp),
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                }
-                            }
-                            Spacer(Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    "$port",
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    "Typical service: $service",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Button(
-            onClick = onBack,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            shape = PulseWaveShapes.medium
-        ) {
-            Text("Done")
         }
     }
 }

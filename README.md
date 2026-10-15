@@ -4,14 +4,14 @@ A Material 3 Expressive Wi-Fi analyzer for finding bad Wi-Fi around the home. Ev
 
 ## Workflows
 
-- **First run:** a short welcome (what the app does), the one permission it needs (skipped if already granted; if Android has stopped asking, Allow opens the app's settings instead), and an optional "live updates" step shown only when scans are throttled and Developer options can lift the limit. Settings → About can replay it.
-- **Home:** the connected network at a glance: a shape that morphs with signal quality, a plain-language verdict, band, channel, link rate, and internet status. Setup cards appear only when something is missing (scan permission, Location, or the optional faster-scans tip).
+- **First run:** a short welcome and the one permission it needs (skipped if already granted; if Android has stopped asking, Allow opens the app's settings instead). Settings → About can replay it. Faster scans are offered in context instead: Networks shows a hint only when Android actually pauses scanning, and Settings keeps a row for it.
+- **Home:** your Wi-Fi and every tool in one place. The connected network at a glance: a shape that morphs with signal quality, a plain-language verdict, band, channel, link rate, and internet status. A nearby summary says how crowded your channel is and whether a clearer one exists. Setup cards appear only when something is missing (scan permission or Location). Tools (Wi-Fi speed, Devices, Diagnose, History) sit in an equal-height grid.
 - **Walk (signal finder):** tap **Start walking** and move around. The connected link's signal is read every second (Android does not throttle it) and the router is pinged once a second. The shape grows and shrinks with signal, haptics mark weak spots, and a timeline records the walk. **Finish** shows the strongest and weakest readings, time spent in weak signal, and typical router response. **Pin spot** saves a named place in one tap; saved spots are ranked weakest first, with fixes.
 - **Networks:** nearby access points by band. The channel graph draws each network as a hill exactly as wide as its channel, names the peaks, emphasises your network and channels 1, 6 and 11, and tints signal zones; signal over time shows how steady each network is. Colors match the list. Also a channel suggestion that mentions your own network, and a segmented list with your network marked. It refreshes about every 4 s when scan throttling is off, otherwise every 30 s to stay within Android's 4-scans-per-2-minutes limit.
 - **Wi-Fi speed:** measures only the hop between the phone and the router: median response time, steadiness, and loss from 25 pings, then a 5-second UDP burst to the router's discard port, paced just above the negotiated rate and clamped to it. Results go to History. Internet speed is optional and opens fast.com in a web view.
 - **Faster scans:** detects Developer options and Wi-Fi scan throttling (`WifiManager.isScanThrottleEnabled` on Android 11+) and walks through turning throttling off, re-checking when you return. An ADB command is offered as an alternative.
 - **Root and system installs (optional):** on rooted phones, a collapsed "Rooted phone?" option at the bottom of Faster scans offers "Use root". After the root manager grants it, scans are started with `cmd wifi start-scan` from the root shell, which Android does not throttle, and results arrive through the normal scan broadcast. On Android 9 and 10 root switches the global throttle setting off instead. Root is never requested without a tap, can be turned off, and falls back to normal scanning if access is revoked. Unrooted phones never see the option. When installed as a privileged system app (holding `NETWORK_SETTINGS`), Android already exempts its scans, and the app reports unlimited scanning.
-- **Tools:** devices on the LAN, ping, DNS, port checks, and History. The floor-plan heatmap survey is still available from Walk for detailed mapping.
+- **Tabs:** Home, Networks and Walk. Phones get a bottom bar; tablets, foldables and desktop windows get a navigation rail, a two-column Home and Networks, and readable widths elsewhere. The floor-plan heatmap survey is available from Walk.
 
 Signal levels use one scale everywhere: Excellent ≥ -55 dBm, Good ≥ -67, Fair ≥ -75, Weak ≥ -82, otherwise Dead zone. Signal colors are toned for light and dark themes and harmonized with dynamic color.
 
@@ -21,7 +21,17 @@ RSSI-based distance is approximate. The router upload burst reflects how fast th
 
 The previous Cloudflare internet speed test is kept, unbuilt, in `archive/cloudflare-speedtest/`.
 
-`composeApp` is the library (UI and domain). `androidApp` is the application.
+`composeApp` holds the app. Its `src/main/kotlin` is platform-free: every screen, view model, chart and repository, plus interfaces for device services (Wi-Fi scanning, router probe, sensors, storage, `PlatformActions`, `PlatformTheme`). `src/androidMain/kotlin` implements those services for Android and hosts the app through `AndroidApp()`. `androidApp` is the application shell.
+
+`webDemo` compiles the same `src/main/kotlin` for Kotlin/Wasm and swaps in simulated services: a block of ~30 drifting networks, a router whose replies and speed follow the signal, in-memory storage. There is no demo-specific UI; the browser runs the real app, onboarding included.
+
+## Web demo
+
+```
+./gradlew :webDemo:wasmJsBrowserDevelopmentRun
+```
+
+Or build static files with `./gradlew :webDemo:wasmJsBrowserDistribution` and serve `webDemo/build/dist/wasmJs/productionExecutable/`. In the browser, system Settings shortcuts do nothing, shared reports go to the clipboard, floor plan images can't be imported, and the internet speed test opens fast.com in a new tab.
 
 ## Build
 

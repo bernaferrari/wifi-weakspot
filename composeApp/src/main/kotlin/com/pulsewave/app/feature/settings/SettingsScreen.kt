@@ -2,6 +2,8 @@
 
 package com.pulsewave.app.feature.settings
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.selection.toggleable
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -24,20 +26,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
-import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 
 import com.pulsewave.app.core.datastore.SettingsRepository
 import com.pulsewave.app.core.designsystem.PulseWaveAlpha
 import com.pulsewave.app.core.designsystem.PulseWaveShapes
 import com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback
-import com.pulsewave.app.core.monitoring.BackgroundMonitorManager
+import com.pulsewave.app.core.monitoring.BackgroundMonitor
 import com.pulsewave.app.core.monitoring.MonitorSettings
 import org.koin.compose.koinInject
 import androidx.compose.ui.graphics.Color
@@ -65,25 +60,20 @@ fun SettingsScreen(
     val haptics = rememberPulseWaveHapticFeedback()
 
     // Background monitoring
-    val monitorManager: BackgroundMonitorManager = koinInject()
+    val monitorManager: BackgroundMonitor = koinInject()
     val isMonitoring by monitorManager.isMonitoring.collectAsState()
     val monitorSettings by monitorManager.settings.collectAsState()
     val monitorError by monitorManager.error.collectAsState()
     var intervalMinutes by remember(monitorSettings.scanIntervalMs) { mutableFloatStateOf(monitorSettings.intervalMinutes) }
-    val context = LocalContext.current
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) monitorManager.startMonitoring()
-        else android.widget.Toast.makeText(context, "Allow notifications to see monitoring status and alerts.", android.widget.Toast.LENGTH_LONG).show()
-    }
+    val platform: com.pulsewave.app.core.platform.PlatformActions = koinInject()
+    val launchers = com.pulsewave.app.core.platform.LocalPermissionLaunchers.current
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeFlexibleTopAppBar(
+            MediumFlexibleTopAppBar(
                 title = { Text("Settings") },
                 navigationIcon = {
                     if (onBack != null) {
@@ -99,7 +89,8 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp),
+            // Room below the last card, matching the gap between sections.
+            contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Power Tools Section
@@ -143,56 +134,40 @@ fun SettingsScreen(
                             ) { Text(label) }
                         }
                     }
-                    SettingsToggle(
-                        icon = Icons.Default.Palette,
-                        title = "Match my wallpaper",
-                        subtitle = "Use your phone's colors",
-                        checked = dynamicColor,
-                        onCheckedChange = {
-                            haptics.click()
-                            scope.launch { settingsRepository.setDynamicColor(it) }
+                    val platformTheme: com.pulsewave.app.core.platform.PlatformTheme = org.koin.compose.koinInject()
+                    val wallpaperScheme = platformTheme.dynamicColorScheme(androidx.compose.foundation.isSystemInDarkTheme())
+                    ColorPickerRow(
+                        useWallpaper = dynamicColor,
+                        currentSeed = seedColor,
+                        wallpaper = wallpaperScheme?.let { listOf(it.primary, it.secondary, it.tertiary) },
+                        onWallpaper = { scope.launch { settingsRepository.setDynamicColor(true) } },
+                        onSeed = { color ->
+                            scope.launch {
+                                settingsRepository.setSeedColor(color)
+                                settingsRepository.setDynamicColor(false)
+                            }
                         }
                     )
-
-                    if (!dynamicColor) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = PulseWaveAlpha.medium)
-                        )
-                        Text(
-                            "App color",
-                            style = MaterialTheme.typography.labelMedium,
-                            modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        ColorPickerRow(
-                            currentSeed = seedColor,
-                            onColorSelected = { color ->
-                                haptics.click()
-                                scope.launch { settingsRepository.setSeedColor(color) }
-                            }
-                        )
-                    }
                 }
             }
 
             item {
                 SettingsSection("Comfort") {
-                    SettingsToggle(icon = Icons.Default.Animation, title = "Reduce motion", subtitle = "Stop decorative loops and use instant transitions", checked = reduceMotion,
+                    SettingsToggle(icon = Icons.Default.Animation, title = "Reduce motion", subtitle = "Calmer animations", checked = reduceMotion,
                         onCheckedChange = { scope.launch { settingsRepository.setReduceMotion(it) } })
-                    SettingsToggle(icon = Icons.Default.Vibration, title = "Haptic feedback", subtitle = "Feel feedback for taps and results", checked = hapticsEnabled,
+                    SettingsToggle(icon = Icons.Default.Vibration, title = "Haptic feedback", subtitle = "Vibrate on taps and results", checked = hapticsEnabled,
                         onCheckedChange = { scope.launch { settingsRepository.setHapticsEnabled(it) } })
                 }
             }
 
             // Background Monitoring Section
             item {
-                SettingsSection("Background monitoring") {
+                SettingsSection("Background") {
                     // Main toggle
                     SettingsToggle(
-                        icon = if (isMonitoring) Icons.Default.Radar else Icons.Default.Radar,
-                        title = "Watch in the background",
-                        subtitle = if (isMonitoring) "On. Checking in the background" else "Off",
+                        icon = Icons.Default.Radar,
+                        title = "Background alerts",
+                        subtitle = "Tell me when nearby Wi-Fi changes",
                         checked = isMonitoring,
                         onCheckedChange = { enabled ->
                             haptics.click()
@@ -200,17 +175,16 @@ fun SettingsScreen(
                                 monitorManager.stopMonitoring()
                             } else if (!permissionState.canScanWifi) {
                                 onRequestScanPermission()
-                            } else if (needsNotificationPermission(context)) {
-                                notificationPermissionLauncher.launch(
-                                    android.Manifest.permission.POST_NOTIFICATIONS
-                                )
+                            } else if (platform.needsNotificationPermission()) {
+                                launchers.notifications { granted ->
+                                    if (granted) monitorManager.startMonitoring()
+                                    else platform.showMessage("Allow notifications to see monitoring status and alerts.")
+                                }
                             } else {
                                 monitorManager.startMonitoring()
                             }
                         }
                     )
-                    Text("Checks nearby Wi-Fi every few minutes and tells you about changes. Stop it anytime from its notification.",
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.bodySmall)
                     monitorError?.let { message ->
                         Text(message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
                     }
@@ -259,7 +233,7 @@ fun SettingsScreen(
                         SettingsToggle(
                             icon = Icons.Default.Notifications,
                             title = "New network alerts",
-                            subtitle = "Notify when new networks appear",
+                            subtitle = "When a network appears nearby",
                             checked = monitorSettings.notifyNewNetworks,
                             onCheckedChange = {
                                 haptics.click()
@@ -270,7 +244,7 @@ fun SettingsScreen(
                         SettingsToggle(
                             icon = Icons.Default.SignalCellularAlt,
                             title = "Signal change alerts",
-                            subtitle = "Notify on significant signal changes",
+                            subtitle = "When your signal rises or drops a lot",
                             checked = monitorSettings.notifySignalChange,
                             onCheckedChange = {
                                 haptics.click()
@@ -388,7 +362,7 @@ fun SettingsRow(
             iconSize = 20.dp
         )
         Spacer(Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
             Text(
                 subtitle,
@@ -441,14 +415,6 @@ fun SettingsInfoRow(
     }
 }
 
-private fun needsNotificationPermission(context: Context): Boolean {
-    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-        ContextCompat.checkSelfPermission(
-            context,
-            android.Manifest.permission.POST_NOTIFICATIONS
-        ) != PackageManager.PERMISSION_GRANTED
-}
-
 @Composable
 fun SettingsToggle(
     icon: ImageVector,
@@ -458,29 +424,31 @@ fun SettingsToggle(
     onCheckedChange: (Boolean) -> Unit,
     iconContainerColor: Color = MaterialTheme.colorScheme.secondaryContainer
 ) {
+    // The whole row is the switch: bigger target, one tap anywhere. The icon fills in when on.
+    val scheme = MaterialTheme.colorScheme
+    val container by androidx.compose.animation.animateColorAsState(if (checked) scheme.primary else iconContainerColor, label = "toggleIcon")
+    val content by androidx.compose.animation.animateColorAsState(if (checked) scheme.onPrimary else scheme.onSecondaryContainer, label = "toggleIconContent")
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .toggleable(value = checked, role = androidx.compose.ui.semantics.Role.Switch, onValueChange = onCheckedChange)
             .padding(horizontal = 12.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         com.pulsewave.app.core.designsystem.component.ShapeIcon(
             icon = icon,
             shape = androidx.compose.material3.MaterialShapes.Cookie6Sided,
-            containerColor = iconContainerColor,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            containerColor = container,
+            contentColor = content,
             size = 40.dp,
             iconSize = 20.dp
         )
-        Spacer(Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-            Text(
-                subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(checked = checked, onCheckedChange = null)
     }
 }

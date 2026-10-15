@@ -98,7 +98,9 @@ fun estimateDistanceMeters(rssi: Int, frequencyMhz: Int): Double {
 }
 
 fun formatDistance(meters: Double): String {
-    return if (meters < 10.0) "~%.1f m".format(meters) else "~${meters.toInt()} m"
+    if (meters >= 10.0) return "~${meters.toInt()} m"
+    val tenths = kotlin.math.round(meters * 10).toInt()
+    return "~${tenths / 10}.${tenths % 10} m"
 }
 
 fun isNetworkSecured(capabilities: String): Boolean {

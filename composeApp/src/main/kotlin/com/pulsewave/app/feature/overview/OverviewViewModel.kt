@@ -20,8 +20,12 @@ import kotlinx.coroutines.flow.stateIn
 class OverviewViewModel(
     networkStatusRepository: NetworkStatusRepository,
     dao: PulseWaveDao,
-    roomCheckRepository: RoomCheckRepository
+    roomCheckRepository: RoomCheckRepository,
+    wifiScanner: com.pulsewave.app.core.wifi.WifiScanner
 ) : ViewModel() {
+
+    /** Latest networks Android already knows about; Home never triggers a scan itself. */
+    val nearby: StateFlow<List<com.pulsewave.app.core.wifi.WifiNetwork>> = wifiScanner.scanResults
 
     val networkStatus: StateFlow<NetworkStatus> = networkStatusRepository.getCurrentNetworkStatus(refreshIntervalMs = 2_000)
         .stateIn(
@@ -34,6 +38,21 @@ class OverviewViewModel(
         .map { it.firstOrNull() }
         .catch { emitAll(flowOf(null)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /** Devices from the most recent device scan, so the tile can say "15 devices". */
+    val knownDevices: StateFlow<Int?> = dao.getAllLanDevices()
+        .map { devices ->
+            val latest = devices.maxOfOrNull { it.lastSeen } ?: return@map null
+            devices.count { latest - it.lastSeen <= 2 * 60_000L }
+        }
+        .catch { emitAll(flowOf(null)) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /** Saved router tests, so the History tile says what it holds. */
+    val savedTests: StateFlow<Int> = dao.getSpeedTestHistory()
+        .map { it.size }
+        .catch { emitAll(flowOf(0)) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     val rooms: StateFlow<CoverageSummary> = roomCheckRepository.readings
         .map(::coverageSummary)

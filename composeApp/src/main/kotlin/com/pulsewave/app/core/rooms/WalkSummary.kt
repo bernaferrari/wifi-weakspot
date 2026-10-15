@@ -15,8 +15,13 @@ data class WalkSummary(
     val weakMoments: Int,
     val medianRouterMs: Float?
 ) {
+    /** The weakest level reached, so the headline never promises more than the meter showed. */
+    val floor: SignalQuality get() = SignalQuality.of(worstRssi)
+
     val headline: String get() = when {
-        weakMoments == 0 -> "Strong everywhere you walked"
+        weakMoments == 0 && floor == SignalQuality.Excellent -> "Strong everywhere you walked"
+        weakMoments == 0 && floor == SignalQuality.Good -> "Good everywhere you walked"
+        weakMoments == 0 -> "Okay everywhere you walked"
         weakMoments == 1 -> "1 weak spot on your walk"
         else -> "$weakMoments weak spots on your walk"
     }

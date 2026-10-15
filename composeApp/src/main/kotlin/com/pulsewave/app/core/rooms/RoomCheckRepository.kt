@@ -24,7 +24,9 @@ data class RoomReading(
     val samples: Int,
     val timestamp: Long,
     /** Median router response while saving, when the router answered. */
-    val routerMs: Float? = null
+    val routerMs: Float? = null,
+    /** Phone-to-router speed from a Wi-Fi speed test taken here. */
+    val speedMbps: Float? = null
 ) {
     val quality: SignalQuality get() = SignalQuality.of(averageRssi)
 }
@@ -46,9 +48,9 @@ fun summarizeRoom(
     return RoomReading(
         id = id,
         name = name.trim(),
-        averageRssi = Math.round(valid.average()).toInt(),
+        averageRssi = kotlin.math.round(valid.average()).toInt(),
         minRssi = valid.min(),
-        linkSpeedMbps = linkSpeedsMbps.filter { it > 0 }.takeIf { it.isNotEmpty() }?.let { Math.round(it.average()).toInt() } ?: 0,
+        linkSpeedMbps = linkSpeedsMbps.filter { it > 0 }.takeIf { it.isNotEmpty() }?.let { kotlin.math.round(it.average()).toInt() } ?: 0,
         frequencyMhz = frequencyMhz,
         ssid = ssid,
         bssid = bssid,

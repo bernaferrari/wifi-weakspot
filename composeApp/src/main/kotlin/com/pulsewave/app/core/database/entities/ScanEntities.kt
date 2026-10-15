@@ -25,5 +25,10 @@ data class LanDeviceEntity(
     val lastSeen: Long,
     val isOnline: Boolean,
     val isTrusted: Boolean = false,
-    val customName: String? = null
+    val customName: String? = null,
+    /** What the device announces over mDNS; null for rows saved before version 4. */
+    val announcedName: String? = null,
+    val model: String? = null,
+    /** Comma-separated mDNS service types. */
+    val services: String? = null
 )

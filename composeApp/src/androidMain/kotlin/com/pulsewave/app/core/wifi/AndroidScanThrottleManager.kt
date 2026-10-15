@@ -37,7 +37,6 @@ class AndroidScanThrottleManager(
         private const val WINDOW_MS = 2 * 60 * 1000L // 2 minutes
         private const val WIFI_SCAN_THROTTLE_ENABLED = "wifi_scan_throttle_enabled"
         /** Held only by privileged system apps; those scans are never throttled. */
-        private const val NETWORK_SETTINGS = "android.permission.NETWORK_SETTINGS"
         private const val PREFS_NAME = "wifi_throttle_prefs"
         private const val KEY_SCAN_TIMESTAMPS = "scan_timestamps"
     }
@@ -202,8 +201,7 @@ class AndroidScanThrottleManager(
             developerOptionsEnabled = developerOptions,
             throttlingEnabled = throttled,
             rootAvailable = rootState != com.pulsewave.app.core.root.RootState.NotRooted,
-            rootScanning = rootState == com.pulsewave.app.core.root.RootState.Enabled,
-            systemApp = context.checkSelfPermission(NETWORK_SETTINGS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            rootScanning = rootState == com.pulsewave.app.core.root.RootState.Enabled
         )
     }
 

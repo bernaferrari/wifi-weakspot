@@ -2,7 +2,6 @@ package com.pulsewave.app.di
 
 import com.pulsewave.app.core.data.AndroidNetworkStatusRepository
 import com.pulsewave.app.core.datastore.createDataStore
-import com.pulsewave.app.core.datastore.SettingsRepository
 import com.pulsewave.app.core.database.getDatabaseBuilder
 import com.pulsewave.app.core.database.PulseWaveDatabase
 import com.pulsewave.app.core.domain.NetworkStatusRepository
@@ -27,39 +26,17 @@ import com.pulsewave.app.core.wifi.AndroidScanThrottleManager
 import com.pulsewave.app.core.wifi.AndroidWifiScanner
 import com.pulsewave.app.core.wifi.ScanThrottleManager
 import com.pulsewave.app.core.wifi.WifiScanner
-import com.pulsewave.app.feature.analyze.AnalyzeViewModel
-import com.pulsewave.app.feature.walk.WalkViewModel
-import com.pulsewave.app.feature.linktest.LinkTestViewModel
 import com.pulsewave.app.core.router.AndroidRouterProbe
 import com.pulsewave.app.core.router.RouterProbe
-import com.pulsewave.app.core.rooms.RoomCheckRepository
-import com.pulsewave.app.feature.lan.LanDeviceDetailViewModel
-import com.pulsewave.app.feature.lan.LanViewModel
-import com.pulsewave.app.feature.overview.OverviewViewModel
-import com.pulsewave.app.feature.survey.SurveyViewModel
-import com.pulsewave.app.feature.tools.ToolsViewModel
 import android.app.Application
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
-import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val appModule = module {
-    // ViewModels
-    factoryOf(::AnalyzeViewModel)
-    factoryOf(::ToolsViewModel)
-    factoryOf(::LanViewModel)
-    factoryOf(::LinkTestViewModel)
-    factoryOf(::SurveyViewModel)
-    factoryOf(::OverviewViewModel)
-    factoryOf(::LanDeviceDetailViewModel)
-    factoryOf(::WalkViewModel)
-
     // DataStore & Settings
     single { createDataStore(androidContext()) }
-    single { SettingsRepository(get()) }
-    single { RoomCheckRepository(get()) }
 
     // Database
     single<PulseWaveDatabase> {
@@ -89,12 +66,17 @@ val appModule = module {
     single<OrientationProvider> { AndroidOrientationProvider(androidContext()) }
 
     // Background Monitoring
-    single { BackgroundMonitorManager(androidContext()) }
+    single { BackgroundMonitorManager(androidContext()) } bind com.pulsewave.app.core.monitoring.BackgroundMonitor::class
+
+    // Platform hooks for the shared UI
+    single<com.pulsewave.app.core.platform.PlatformActions> { com.pulsewave.app.core.platform.AndroidPlatformActions(androidContext()) }
+    single<com.pulsewave.app.core.platform.PlatformTheme> { com.pulsewave.app.core.designsystem.AndroidPlatformTheme() }
+    single<com.pulsewave.app.core.wifi.RadioMonitor> { com.pulsewave.app.core.wifi.AndroidRadioMonitor(androidContext()) }
 }
 
 fun initKoin(application: Application) {
     startKoin {
         androidContext(application)
-        modules(appModule)
+        modules(sharedModule, appModule)
     }
 }

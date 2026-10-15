@@ -10,7 +10,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pulsewave.app.core.designsystem.PulseWaveShapes
 
-/** Compact fact such as "5 GHz" or "433 Mbps link". */
+/** Compact fact such as "5 GHz" or "Up to 433 Mbps". */
 @Composable
 fun InfoPill(text: String, modifier: Modifier = Modifier) {
     Surface(shape = PulseWaveShapes.full, color = MaterialTheme.colorScheme.surfaceContainerHighest, modifier = modifier) {

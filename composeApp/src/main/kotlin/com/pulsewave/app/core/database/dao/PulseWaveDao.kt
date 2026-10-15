@@ -23,7 +23,7 @@ interface PulseWaveDao {
     )
     suspend fun trimWifiScans(keep: Int)
 
-    @Query("SELECT * FROM wifi_scan_results ORDER BY timestamp DESC LIMIT 100")
+    @Query("SELECT * FROM wifi_scan_results ORDER BY timestamp DESC LIMIT 3000")
     fun getRecentWifiScans(): Flow<List<WifiScanResultEntity>>
 
     // LAN Devices
@@ -52,6 +52,9 @@ interface PulseWaveDao {
     // Speed Test Results
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSpeedTest(result: SpeedTestResultEntity)
+
+    @Query("UPDATE speed_test_results SET room = :room WHERE id = (SELECT id FROM speed_test_results ORDER BY timestamp DESC LIMIT 1)")
+    suspend fun tagLatestSpeedTest(room: String?)
 
     @Query("SELECT * FROM speed_test_results ORDER BY timestamp DESC")
     fun getSpeedTestHistory(): Flow<List<SpeedTestResultEntity>>

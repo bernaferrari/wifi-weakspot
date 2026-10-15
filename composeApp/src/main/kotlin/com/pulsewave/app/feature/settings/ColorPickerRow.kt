@@ -1,78 +1,187 @@
 package com.pulsewave.app.feature.settings
 
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.Row
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.LinearGradientShader
+import androidx.compose.ui.graphics.Shader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
+/** A color choice for the app: the wallpaper's colors, or a seed the theme is built from. */
+data class PaletteOption(val name: String, val seed: Long?, val preview: List<Color>)
+
+/** Seed colors ordered warm to cool; the first is PulseWave's own. */
+val SeedPalettes = listOf(
+    "PulseWave" to 0xFF3F51B5,
+    "Orange" to 0xFFFF5722,
+    "Amber" to 0xFFFFC107,
+    "Green" to 0xFF4CAF50,
+    "Teal" to 0xFF009688,
+    "Cyan" to 0xFF00BCD4,
+    "Blue" to 0xFF2196F3,
+    "Purple" to 0xFF9C27B0,
+    "Pink" to 0xFFE91E63
+)
+
+/**
+ * The app's palettes as one row of swatches; each swatch names itself for screen readers. [wallpaper] is
+ * null where the platform has no wallpaper colors, and then that option isn't offered.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun ColorPickerRow(
+    useWallpaper: Boolean,
     currentSeed: Int,
-    onColorSelected: (Int) -> Unit
+    wallpaper: List<Color>?,
+    onWallpaper: () -> Unit,
+    onSeed: (Int) -> Unit
 ) {
-    val colors = listOf(
-        0xFF3F51B5, // Indigo (Default)
-        0xFF2196F3, // Blue
-        0xFF00BCD4, // Cyan
-        0xFF009688, // Teal
-        0xFF4CAF50, // Green
-        0xFFFFEB3B, // Yellow
-        0xFFFF9800, // Orange
-        0xFFFF5722, // Deep Orange
-        0xFFF44336, // Red
-        0xFFE91E63, // Pink
-        0xFF9C27B0, // Purple
-        0xFF673AB7, // Deep Purple
-    )
-
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+    val scheme = MaterialTheme.colorScheme
+    val wallpaperChosen = useWallpaper && wallpaper != null
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).selectableGroup(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(colors) { colorLong ->
-            val colorInt = colorLong.toInt()
-            val color = Color(colorLong)
-            val isSelected = currentSeed == colorInt
-
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(color)
-                    .clickable { onColorSelected(colorInt) }
-                    .then(
-                        if (isSelected) {
-                            Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
-                        } else {
-                            Modifier
-                        }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isSelected) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Selected",
-                        tint = Color.White, // Assuming dark-ish colors, or check contrast. 
-                        // Simplified for now.
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+        androidx.compose.foundation.layout.FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Wallpaper colors come first, marked with a small picture icon.
+            if (wallpaper != null) PaletteSwatch(
+                colors = wallpaper,
+                selected = wallpaperChosen,
+                label = "Wallpaper colors",
+                size = 44.dp,
+                icon = Icons.Rounded.Wallpaper,
+                onClick = onWallpaper
+            )
+            SeedPalettes.forEach { (name, seed) ->
+                PaletteSwatch(
+                    colors = listOf(Color(seed), lerp(Color(seed), Color.White, 0.45f)),
+                    selected = !wallpaperChosen && seed.toInt() == currentSeed,
+                    label = name,
+                    size = 44.dp,
+                    onClick = { onSeed(seed.toInt()) }
+                )
             }
         }
+    }
+}
+
+/**
+ * A gradient swatch with expressive motion: unselected it is a disc turned 45°; chosen, it springs
+ * upright into a rounded square and gains a ring. The gradient counter-rotates, so the colors hold
+ * still while the shape turns, and the change of shape (not only color) shows the selection.
+ */
+@Composable
+fun PaletteSwatch(
+    colors: List<Color>,
+    selected: Boolean,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = 48.dp,
+    icon: ImageVector? = null
+) {
+    val haptics = rememberPulseWaveHapticFeedback()
+    val interactions = remember { MutableInteractionSource() }
+    val focused by interactions.collectIsFocusedAsState()
+    val bouncy = spring<Dp>(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
+    val corner by animateDpAsState(if (selected) size * 0.3f else size / 2, bouncy, label = "corner")
+    // The bounce overshoots; widths never go below zero.
+    val ring = animateDpAsState(if (selected) 3.dp else 0.dp, bouncy, label = "ring").value.coerceAtLeast(0.dp)
+    val rotation by animateFloatAsState(
+        if (selected) 0f else 45f,
+        spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "rotation"
+    )
+    val ringColor by animateColorAsState(if (selected) MaterialTheme.colorScheme.surfaceContainerLow else Color.Transparent, label = "ringColor")
+    val stops = if (colors.size == 1) colors + colors else colors
+    val angle = -rotation * PI.toFloat() / 180f
+    val brush = object : ShaderBrush() {
+        override fun createShader(size: Size): Shader {
+            val half = Offset(size.width * cos(angle) - size.height * sin(angle), size.width * sin(angle) + size.height * cos(angle)) / 2f
+            val center = Offset(size.width / 2, size.height / 2)
+            return LinearGradientShader(from = center - half, to = center + half, colors = stops)
+        }
+    }
+    val outer = RoundedCornerShape(corner.coerceAtLeast(0.dp))
+    val inner = RoundedCornerShape((corner - ring).coerceAtLeast(0.dp))
+    val core = RoundedCornerShape((corner - ring - 2.dp).coerceAtLeast(0.dp))
+    Box(
+        modifier
+            .size(size)
+            .semantics { contentDescription = label }
+            .selectable(selected = selected, role = Role.RadioButton, interactionSource = interactions, indication = null) {
+                if (!selected) {
+                    haptics.click()
+                    onClick()
+                }
+            }
+            .rotate(rotation)
+            .clip(outer)
+            .background(brush)
+            .then(if (focused) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, outer) else Modifier)
+            .padding(ring)
+            .clip(inner)
+            .background(ringColor)
+            .padding(if (selected) 2.dp else 0.dp)
+            .clip(core)
+            .background(brush),
+        contentAlignment = Alignment.Center
+    ) {
+        if (icon != null) Icon(icon, null, Modifier.size(size * 0.45f).rotate(-rotation), tint = Color.White)
     }
 }

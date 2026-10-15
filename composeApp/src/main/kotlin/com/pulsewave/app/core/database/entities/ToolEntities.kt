@@ -21,5 +21,12 @@ data class SpeedTestResultEntity(
     val uploadMbps: Float,
     val pingMs: Float,
     val jitterMs: Float,
-    val serverName: String
+    val serverName: String,
+    /** Where the phone stood during the test; null for results saved before version 3. */
+    val rssi: Int? = null,
+    val frequencyMhz: Int? = null,
+    val ssid: String? = null,
+    val lossPercent: Float? = null,
+    /** Where the person said they were, such as "Office"; null when not tagged. */
+    val room: String? = null
 )

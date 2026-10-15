@@ -2,16 +2,21 @@
 
 package com.pulsewave.app.feature.walk
 
-import android.content.Intent
-import android.provider.Settings
+import kotlinx.coroutines.launch
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.SwipeToDismissBox
+import com.pulsewave.app.core.util.twoDigits
+
+import com.pulsewave.app.core.util.fixed
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -61,7 +66,6 @@ import androidx.compose.material.icons.rounded.WifiOff
 import androidx.compose.material.icons.rounded.Yard
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -86,6 +90,9 @@ import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -99,7 +106,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
@@ -111,12 +117,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pulsewave.app.core.designsystem.PulseWaveShapes
-import com.pulsewave.app.core.designsystem.animateAccessibleFloat
 import com.pulsewave.app.core.designsystem.component.ShapeIcon
 import com.pulsewave.app.core.designsystem.component.SignalMorphBlob
 import com.pulsewave.app.core.designsystem.component.polygon
+import com.pulsewave.app.core.designsystem.component.WalkTimeline
 import com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback
 import com.pulsewave.app.core.designsystem.signalColors
 import com.pulsewave.app.core.rooms.CoverageSummary
@@ -142,8 +149,9 @@ fun WalkScreen(
     val message by viewModel.message.collectAsStateWithLifecycle()
     val haptics = rememberPulseWaveHapticFeedback()
     val snackbar = remember { SnackbarHostState() }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     var pinning by rememberSaveable { mutableStateOf(false) }
-    val context = LocalContext.current
+    val platform: com.pulsewave.app.core.platform.PlatformActions = org.koin.compose.koinInject()
     val walking = session != null
     val quality = if (live.hasSignalMeasurement) SignalQuality.of(live.rssi) else null
 
@@ -167,32 +175,26 @@ fun WalkScreen(
         snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = {
             Surface(color = MaterialTheme.colorScheme.surface) {
-                Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
+                // With a navigation rail there's no bottom bar to absorb the system gesture area.
+                Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
                     when {
                         quality == null -> FilledTonalButton(
-                            onClick = { context.startActivity(Intent(Settings.ACTION_WIFI_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) },
+                            onClick = { platform.openWifiSettings() },
                             shapes = ButtonDefaults.shapes()
                         ) { Text("Open Wi-Fi settings") }
                         walking -> WalkingControls(
                             onPin = { haptics.click(); pinning = true },
                             onFinish = { haptics.heavy(); viewModel.finishWalk() }
                         )
-                        else -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(
-                                onClick = { haptics.heavy(); viewModel.startWalk() },
-                                shapes = ButtonDefaults.shapes(),
-                                contentPadding = ButtonDefaults.contentPaddingFor(ButtonDefaults.MediumContainerHeight),
-                                modifier = Modifier.weight(1f).heightIn(min = ButtonDefaults.MediumContainerHeight)
-                            ) {
-                                Icon(Icons.AutoMirrored.Rounded.DirectionsWalk, null, Modifier.size(ButtonDefaults.iconSizeFor(ButtonDefaults.MediumContainerHeight)))
-                                Spacer(Modifier.width(ButtonDefaults.iconSpacingFor(ButtonDefaults.MediumContainerHeight)))
-                                Text("Start walking", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
-                            }
-                            androidx.compose.material3.FilledTonalIconButton(
-                                onClick = { pinning = true },
-                                shapes = androidx.compose.material3.IconButtonDefaults.shapes(),
-                                modifier = Modifier.size(ButtonDefaults.MediumContainerHeight)
-                            ) { Icon(Icons.Rounded.PushPin, "Save this spot") }
+                        else -> Button(
+                            onClick = { haptics.heavy(); viewModel.startWalk() },
+                            shapes = ButtonDefaults.shapes(),
+                            contentPadding = ButtonDefaults.contentPaddingFor(ButtonDefaults.MediumContainerHeight),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = ButtonDefaults.MediumContainerHeight)
+                        ) {
+                            Icon(Icons.AutoMirrored.Rounded.DirectionsWalk, null, Modifier.size(ButtonDefaults.iconSizeFor(ButtonDefaults.MediumContainerHeight)))
+                            Spacer(Modifier.width(ButtonDefaults.iconSpacingFor(ButtonDefaults.MediumContainerHeight)))
+                            Text("Start walking", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
                         }
                     }
                 }
@@ -200,34 +202,53 @@ fun WalkScreen(
         },
         topBar = {
             MediumFlexibleTopAppBar(
-                title = { Text("Signal finder") },
-                subtitle = { Text(if (walking) "Walking · keep the app open" else "Walk around to find weak Wi-Fi") },
+                title = { Text("Walk your home") },
+                subtitle = { if (walking) Text("Walking · keep the app open") },
                 scrollBehavior = scrollBehavior
             )
         }
     ) { padding ->
+        // The stage absorbs spare height, so tall screens get a bigger meter instead of a gap.
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val itemHeights = remember { androidx.compose.runtime.mutableStateMapOf<String, Int>() }
+        fun Modifier.measured(key: String) = onSizeChanged { itemHeights[key] = it.height }
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
+        val bottomPadding = padding.calculateBottomPadding() + 24.dp
+        val shown = buildList {
+            add("headline")
+            if (walking) add("walking") else {
+                if (spots.rankedRooms.isNotEmpty()) add("spots")
+                add("floorplan")
+            }
+        }
+        val others = with(density) { shown.sumOf { itemHeights[it] ?: 0 }.toDp() }
+        val gaps = 16.dp * shown.size
+        val spare = maxHeight - padding.calculateTopPadding() - bottomPadding - others - gaps
+        // Compact phones shrink the meter rather than pushing the hint under the button.
+        val stageHeight = if (walking) spare.coerceIn(200.dp, 400.dp) else spare.coerceIn(220.dp, 460.dp)
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 16.dp, end = 16.dp,
                 top = padding.calculateTopPadding(),
-                bottom = padding.calculateBottomPadding() + 32.dp
+                bottom = bottomPadding
             ),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
         ) {
             item(key = "stage") {
-                FinderStage(rssi = live.rssi.takeIf { live.hasSignalMeasurement }, active = walking, height = if (walking) 236.dp else 320.dp)
+                FinderStage(rssi = live.rssi.takeIf { live.hasSignalMeasurement }, active = walking, height = stageHeight)
             }
             item(key = "headline") {
                 val fade = MaterialTheme.motionScheme.fastEffectsSpec<Float>()
                 AnimatedContent(quality, transitionSpec = { fadeIn(fade) togetherWith fadeOut(fade) }, label = "finderHeadline") { q ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth().measured("headline")) {
                         Text(q?.headline ?: "Connect to your Wi-Fi", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
                         if (!walking) Text(
                             when {
                                 q == null -> "The finder reads the Wi-Fi your phone is connected to."
-                                else -> "Bigger shape, better signal. Start walking and watch it shrink in weak spots."
+                                // What the signal means here, not how to read the meter.
+                                else -> q.explanation
                             },
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -237,29 +258,36 @@ fun WalkScreen(
                 }
             }
             if (walking) {
-                item(key = "walking") { WalkingStats(session!!) }
+                item(key = "walking") { Box(Modifier.measured("walking")) { WalkingStats(session!!) } }
             }
             if (!walking && spots.rankedRooms.isNotEmpty()) {
-                item(key = "spots") { SavedSpots(spots, onDelete = viewModel::delete, onClear = viewModel::clearSpots) }
-            }
-            if (!walking) {
-                item(key = "floorplan") {
-                    Card(
-                        onClick = onOpenFloorPlan,
-                        shape = PulseWaveShapes.large,
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                    ) {
-                        Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                            ShapeIcon(Icons.Rounded.Map, MaterialShapes.Clover4Leaf, MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
-                            Spacer(Modifier.width(16.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text("Floor plan heatmap", style = MaterialTheme.typography.titleMedium)
-                                Text("For a detailed map, place readings on a plan of your home.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                item(key = "spots") {
+                    Box(Modifier.measured("spots")) {
+                        SavedSpots(spots, onDelete = { spot ->
+                            viewModel.delete(spot)
+                            scope.launch {
+                                val result = snackbar.showSnackbar("Removed ${spot.name}", actionLabel = "Undo", duration = SnackbarDuration.Short)
+                                if (result == SnackbarResult.ActionPerformed) viewModel.restore(spot)
                             }
-                        }
+                        }, onClear = viewModel::clearSpots)
                     }
                 }
             }
+            if (!walking) {
+                item(key = "floorplan") {
+                    // An action, not another saved spot: a plain button sets it apart from the list.
+                    FilledTonalButton(
+                        onClick = onOpenFloorPlan,
+                        shapes = ButtonDefaults.shapes(),
+                        modifier = Modifier.measured("floorplan")
+                    ) {
+                        Icon(Icons.Rounded.Map, null, Modifier.size(ButtonDefaults.IconSize))
+                        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                        Text("Map it on a floor plan")
+                    }
+                }
+            }
+        }
         }
     }
 
@@ -286,12 +314,27 @@ private fun FinderStage(rssi: Int?, active: Boolean, height: androidx.compose.ui
         MaterialTheme.motionScheme.defaultSpatialSpec(),
         label = "finderSize"
     )
-    val ripple by rememberInfiniteTransition(label = "finderRipple").animateAccessibleFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(if (active) 1_600 else 3_200, easing = LinearEasing), RepeatMode.Restart),
-        label = "rippleProgress"
-    )
+    // The pulse is a second gauge, like sonar: strong signal sends quick, bold rings far out;
+    // weak signal sends slow, faint rings that barely leave the shape.
+    val strength by animateFloatAsState(fraction, MaterialTheme.motionScheme.slowEffectsSpec(), label = "finderStrength")
+    val reduceMotion = com.pulsewave.app.core.designsystem.LocalReduceMotion.current
+    var ripple by remember { mutableFloatStateOf(0f) }
+    val latestRssi by androidx.compose.runtime.rememberUpdatedState(rssi)
+    if (quality != null && !reduceMotion) {
+        LaunchedEffect(Unit) {
+            var last = withFrameNanos { it }
+            while (true) {
+                withFrameNanos { now ->
+                    // Calm at every level: full pace (2.2 s) from -65 dBm up, slowing to 6 s at -90.
+                    val pace = ((latestRssi ?: -95) + 90).coerceIn(0, 25) / 25f
+                    val periodMs = lerp(6_000f, 2_200f, pace)
+                    ripple = (ripple + (now - last) / 1_000_000f / periodMs) % 1f
+                    last = now
+                }
+            }
+        }
+    }
+    val rings = 1 + (quality?.bars ?: 0).coerceAtMost(3)
     val ringColor = colors.accent
     Box(
         Modifier.fillMaxWidth().height(height).semantics(mergeDescendants = true) {
@@ -301,30 +344,29 @@ private fun FinderStage(rssi: Int?, active: Boolean, height: androidx.compose.ui
         contentAlignment = Alignment.Center
     ) {
         if (quality != null) {
-            Canvas(Modifier.size(height)) {
-                repeat(3) { index ->
-                    val t = (ripple + index / 3f) % 1f
-                    val radius = blobSize.toPx() / 2 + t * (size.minDimension / 2 - blobSize.toPx() / 2)
-                    drawCircle(ringColor.copy(alpha = (1f - t) * 0.35f), radius = radius, style = Stroke(width = 3.dp.toPx()))
+            // Full width, so strong signal can send rings well past the shape.
+            Canvas(Modifier.fillMaxWidth().height(height)) {
+                // Rings start hidden behind the shape and emerge from its edge, easing out as they fade.
+                val start = blobSize.toPx() * 0.3f
+                val edge = blobSize.toPx() / 2
+                val reach = minOf(size.width / 2, size.height * 0.62f)
+                val end = edge + (reach - edge).coerceAtLeast(0f) * lerp(0.45f, 1f, strength)
+                val peak = lerp(0.18f, 0.5f, strength)
+                val stroke = lerp(1.5f, 4f, strength).dp.toPx()
+                repeat(rings) { index ->
+                    val t = (ripple + index / rings.toFloat()) % 1f
+                    val eased = 1f - (1f - t) * (1f - t)
+                    val radius = start + eased * (end - start)
+                    val alpha = peak * (1f - t) * (1f - t)
+                    drawCircle(ringColor.copy(alpha = alpha), radius = radius, style = Stroke(width = stroke))
                 }
             }
         }
-        SignalMorphBlob(
-            quality = quality,
-            color = if (quality != null) colors.container else MaterialTheme.colorScheme.surfaceContainerHighest,
-            size = blobSize
-        ) {
-            if (rssi != null) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        "$rssi",
-                        style = MaterialTheme.typography.displayLarge.copy(fontFeatureSettings = "tnum"),
-                        fontWeight = FontWeight.Black,
-                        color = colors.onContainer
-                    )
-                    Text("dBm", style = MaterialTheme.typography.titleMedium, color = colors.onContainer)
-                }
-            } else {
+        // The same gauge as everywhere else, just bigger: its fill and shape track the signal live.
+        if (rssi != null) {
+            com.pulsewave.app.core.designsystem.component.WifiBadge(rssi, size = blobSize)
+        } else {
+            SignalMorphBlob(quality = null, color = MaterialTheme.colorScheme.surfaceContainerHighest, size = blobSize, spinning = false) {
                 Icon(Icons.Rounded.WifiOff, null, Modifier.size(56.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -337,8 +379,8 @@ private fun WalkingStats(session: WalkSession) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             val seconds = (session.samples.lastOrNull()?.elapsedMs ?: 0L) / 1000
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                StatPill(Icons.Rounded.Timer, "%d:%02d".format(seconds / 60, seconds % 60))
-                session.latestRouterMs?.let { StatPill(Icons.Rounded.Router, "Router %.0f ms".format(it)) }
+                StatPill(Icons.Rounded.Timer, "${seconds / 60}:${(seconds % 60).twoDigits()}")
+                session.latestRouterMs?.let { StatPill(Icons.Rounded.Router, "Router ${it.fixed(0)} ms") }
             }
             WalkTimeline(session.samples, Modifier.fillMaxWidth().height(64.dp))
         }
@@ -347,7 +389,7 @@ private fun WalkingStats(session: WalkSession) {
 
 @Composable
 private fun WalkingControls(onPin: () -> Unit, onFinish: () -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         FilledTonalButton(
             onClick = onPin,
             shapes = ButtonDefaults.shapes(),
@@ -380,64 +422,51 @@ private fun StatPill(icon: ImageVector, text: String) {
     }
 }
 
-/** One rounded bar per second, colored and sized by signal, newest on the right. */
-@Composable
-fun WalkTimeline(samples: List<WalkSample>, modifier: Modifier = Modifier, maxBars: Int = 60) {
-    val palette = SignalQuality.entries.associateWith { signalColors(it).accent }
-    val empty = MaterialTheme.colorScheme.surfaceContainerHighest
-    Canvas(modifier) {
-        val gap = 3.dp.toPx()
-        val barWidth = (size.width - gap * (maxBars - 1)) / maxBars
-        val visible = samples.takeLast(maxBars)
-        repeat(maxBars) { index ->
-            val sample = visible.getOrNull(index - (maxBars - visible.size))
-            val x = index * (barWidth + gap)
-            val fraction = sample?.let { SignalQuality.fraction(it.rssi).coerceAtLeast(0.08f) } ?: 0.08f
-            val height = size.height * fraction
-            drawRoundRect(
-                color = sample?.let { palette.getValue(SignalQuality.of(it.rssi)) } ?: empty,
-                topLeft = Offset(x, size.height - height),
-                size = Size(barWidth, height),
-                cornerRadius = CornerRadius(barWidth / 2)
-            )
-        }
-    }
-}
-
 @Composable
 private fun SavedSpots(spots: CoverageSummary, onDelete: (RoomReading) -> Unit, onClear: () -> Unit) {
     Column(Modifier.fillMaxWidth().animateContentSize(MaterialTheme.motionScheme.defaultSpatialSpec())) {
-        Row(Modifier.fillMaxWidth().padding(start = 4.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("Saved spots", style = MaterialTheme.typography.titleLarge)
-                Text(spots.headline, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            TextButton(onClick = onClear) { Text("Clear") }
-        }
+        Text(
+            "Saved spots",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
+        )
         Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
             spots.rankedRooms.forEachIndexed { index, spot ->
                 androidx.compose.runtime.key(spot.id) {
-                    val colors = signalColors(spot.quality)
-                    SegmentedListItem(
-                        onClick = {},
-                        shapes = ListItemDefaults.segmentedShapes(index = index, count = spots.rankedRooms.size),
-                        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                        leadingContent = { ShapeIcon(spotIcon(spot.name), spot.quality.polygon(), colors.container, colors.onContainer, size = 48.dp, iconSize = 22.dp) },
-                        supportingContent = {
-                            Text(
-                                buildString {
-                                    append("${spot.quality.label} · ${spot.averageRssi} dBm · ${bandLabel(spot.frequencyMhz)}")
-                                    spot.routerMs?.let { append(" · %.0f ms".format(it)) }
-                                    append(" · ${relativeTime(spot.timestamp)}")
-                                },
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        },
-                        trailingContent = {
-                            IconButton(onClick = { onDelete(spot) }) { Icon(Icons.Rounded.DeleteOutline, "Delete ${spot.name}") }
+                    // Swipe a spot away to forget it; the row stays calm otherwise.
+                    // Not saveable on purpose: a spot brought back by Undo must start settled, not dismissed.
+                    val dismiss = remember(spot.id) { androidx.compose.material3.SwipeToDismissBoxState(SwipeToDismissBoxValue.Settled) { it * 0.4f } }
+                    SwipeToDismissBox(
+                        state = dismiss,
+                        enableDismissFromStartToEnd = false,
+                        onDismiss = { onDelete(spot) },
+                        backgroundContent = {
+                            Box(
+                                Modifier.fillMaxSize().clip(ListItemDefaults.segmentedShapes(index = index, count = spots.rankedRooms.size).shape)
+                                    .background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 24.dp),
+                                contentAlignment = Alignment.CenterEnd
+                            ) { Icon(Icons.Rounded.DeleteOutline, "Delete ${spot.name}", tint = MaterialTheme.colorScheme.onErrorContainer) }
                         }
-                    ) { Text(spot.name, style = MaterialTheme.typography.titleMedium) }
+                    ) {
+                        SegmentedListItem(
+                            onClick = {},
+                            shapes = ListItemDefaults.segmentedShapes(index = index, count = spots.rankedRooms.size),
+                            colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                            leadingContent = { com.pulsewave.app.core.designsystem.component.WifiBadge(spot.averageRssi) },
+                            supportingContent = {
+                                Text(
+                                    listOfNotNull(
+                                        // Speed, when tested here, is what people feel; it leads.
+                                        spot.speedMbps?.let { "${it.fixed(0)} Mbps" },
+                                        relativeTime(spot.timestamp)
+                                    ).joinToString(" · "),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        ) { Text(spot.name, style = MaterialTheme.typography.titleMedium) }
+                    }
                 }
             }
         }
@@ -512,11 +541,13 @@ private fun WalkSummarySheet(summary: WalkSummary, samples: List<WalkSample>, on
                 SummaryTile("Weakest", "${summary.worstRssi}", "dBm", Modifier.weight(1f))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SummaryTile("Weak signal", "%.0f".format(summary.weakShare * 100), "% of walk", Modifier.weight(1f))
-                SummaryTile("Router", summary.medianRouterMs?.let { "%.0f".format(it) } ?: "—", "ms typical", Modifier.weight(1f))
+                SummaryTile("Weak signal", "${(summary.weakShare * 100).fixed(0)}", "% of walk", Modifier.weight(1f))
+                SummaryTile("Router", summary.medianRouterMs?.let { "${it.fixed(0)}" } ?: "—", "ms typical", Modifier.weight(1f))
             }
             Text(
-                if (summary.weakMoments == 0) "Your Wi-Fi reached every place you walked."
+                if (summary.weakMoments == 0 && summary.floor == SignalQuality.Fair)
+                    "No weak spots, but at ${summary.worstRssi} dBm calls and games may stutter. Moving the router closer would help."
+                else if (summary.weakMoments == 0) "Your Wi-Fi reached every place you walked."
                 else "Walk back to where the shape shrank and pin it, so you can compare after moving the router.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

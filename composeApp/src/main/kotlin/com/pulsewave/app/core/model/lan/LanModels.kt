@@ -12,10 +12,16 @@ data class LanDevice(
     val isOnline: Boolean,
     val isTrusted: Boolean,
     val customName: String?,
-    val openPorts: List<Int>
+    val openPorts: List<Int>,
+    /** Name the device announces over mDNS, such as "Sala de Estar". */
+    val announcedName: String? = null,
+    /** Model hint from mDNS, such as "AppleTV14,1". */
+    val model: String? = null,
+    /** mDNS service types it offers, such as "_airplay._tcp". */
+    val services: List<String> = emptyList()
 ) {
     val displayName: String
-        get() = customName ?: hostname ?: macAddress ?: ipAddress
+        get() = customName ?: announcedName ?: hostname ?: macAddress ?: ipAddress
 }
 
 @Serializable

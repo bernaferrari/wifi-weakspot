@@ -2,9 +2,6 @@
 
 package com.pulsewave.app.feature.linktest
 
-import android.annotation.SuppressLint
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -18,10 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.viewinterop.AndroidView
+import com.pulsewave.app.core.platform.LocalWebContent
 
 /** Internet throughput is optional and runs on fast.com, kept apart from the local Wi-Fi test. */
-@SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun InternetSpeedScreen(onBack: () -> Unit) {
     Scaffold(
@@ -33,18 +29,7 @@ fun InternetSpeedScreen(onBack: () -> Unit) {
         }
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
-            AndroidView(
-                factory = { context ->
-                    WebView(context).apply {
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        webViewClient = WebViewClient()
-                        loadUrl("https://fast.com")
-                    }
-                },
-                onRelease = { it.destroy() },
-                modifier = Modifier.fillMaxSize()
-            )
+            LocalWebContent.current("https://fast.com", Modifier.fillMaxSize())
         }
     }
 }

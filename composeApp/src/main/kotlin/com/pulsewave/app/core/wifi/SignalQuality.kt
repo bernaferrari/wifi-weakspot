@@ -14,7 +14,7 @@ enum class SignalQuality(
 ) {
     Excellent(-55, "Excellent", "Excellent signal", "Everything should feel fast here."),
     Good(-67, "Good", "Good signal", "Video calls and streaming should be smooth."),
-    Fair(-75, "Fair", "Okay signal", "Browsing works, but calls and games may stutter."),
+    Fair(-75, "Okay", "Okay signal", "Browsing works, but calls and games may stutter."),
     Weak(-82, "Weak", "Weak spot", "Expect buffering and dropouts. Move closer to the router or add a mesh point."),
     DeadZone(Int.MIN_VALUE, "Dead zone", "Dead zone", "The connection barely reaches. This spot needs another access point.");
 
@@ -25,6 +25,12 @@ enum class SignalQuality(
 
     companion object {
         fun of(rssi: Int): SignalQuality = entries.first { rssi >= it.minRssi }
+
+        /**
+         * A 0–100 score where bigger is better, like a battery level: -50 dBm or stronger is 100,
+         * each dB below that costs two points, so -64 is 72 and -89 is 22.
+         */
+        fun score(rssi: Int): Int = (2 * (rssi + 100)).coerceIn(0, 100)
 
         /** Maps -95..-35 dBm onto 0..1 for meters and gauges. */
         fun fraction(rssi: Int): Float = ((rssi + 95) / 60f).coerceIn(0f, 1f)

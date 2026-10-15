@@ -1,117 +1,121 @@
-@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package com.pulsewave.app.feature.history
 
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.saveable.rememberSaveable
-import com.pulsewave.app.core.tools.decodePortScan
-import androidx.compose.foundation.shape.CircleShape
-import kotlinx.coroutines.launch
-import com.pulsewave.app.core.designsystem.PulseWaveShapes
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Devices
+import androidx.compose.material.icons.rounded.Dns
+import androidx.compose.material.icons.rounded.NetworkPing
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.Terminal
+import androidx.compose.material.icons.rounded.WifiFind
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import org.koin.compose.koinInject
+import androidx.compose.ui.unit.min
+import androidx.graphics.shapes.RoundedPolygon
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pulsewave.app.core.database.dao.PulseWaveDao
-import kotlinx.coroutines.flow.map
+import com.pulsewave.app.core.designsystem.LocalReduceMotion
+import com.pulsewave.app.core.designsystem.component.EmptyStateWithIllustration
+import com.pulsewave.app.core.designsystem.component.HistoryIllustration
+import com.pulsewave.app.core.designsystem.component.ShapeIcon
+import com.pulsewave.app.core.designsystem.component.segmentedShape
+import com.pulsewave.app.core.designsystem.component.polygon
+import com.pulsewave.app.core.designsystem.signalColors
+import com.pulsewave.app.core.router.LinkVerdict
+import com.pulsewave.app.core.util.fixed
+import com.pulsewave.app.core.wifi.SignalQuality
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import org.koin.compose.koinInject
 
-data class HistoryItem(
-    val id: Long,
-    val type: String,
-    val title: String,
-    val subtitle: String,
-    val timestamp: String,
-    val timestampMillis: Long,
-    val details: String = ""
-)
+private class HistoryData(val entries: List<HistoryEntry>, val routerTests: List<RouterTestPoint>)
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Router test verdicts borrow the signal palette and shapes: more lobes, better Wi-Fi. */
+internal val LinkVerdict.quality: SignalQuality
+    get() = when (this) {
+        LinkVerdict.Great -> SignalQuality.Excellent
+        LinkVerdict.Good -> SignalQuality.Good
+        LinkVerdict.Slow -> SignalQuality.Weak
+        LinkVerdict.Unreliable -> SignalQuality.DeadZone
+    }
+
 @Composable
 fun HistoryScreen(
     modifier: Modifier = Modifier,
-    dao: PulseWaveDao = org.koin.compose.koinInject(),
+    dao: PulseWaveDao = koinInject(),
     onBack: (() -> Unit)? = null
 ) {
-    var selectedTab by rememberSaveable { mutableStateOf(0) }
-    var selectedItem by remember { mutableStateOf<HistoryItem?>(null) }
-    val tabs = listOf("Wi-Fi", "LAN", "Tools", "Speed")
+    val data by remember(dao) {
+        combine(dao.getRecentWifiScans(), dao.getAllLanDevices(), dao.getToolHistory(), dao.getSpeedTestHistory()) { scans, devices, tools, speed ->
+            HistoryData(buildHistory(scans, devices, tools, speed), routerTests(speed))
+        }.flowOn(Dispatchers.Default)
+    }.collectAsStateWithLifecycle(initialValue = null)
+
+    var filterName by rememberSaveable { mutableStateOf<String?>(null) }
+    val filter = filterName?.let { name -> HistoryKind.entries.firstOrNull { it.name == name } }
+    var selectedKey by rememberSaveable { mutableStateOf<String?>(null) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    
-    val wifiHistory by remember(dao) {
-        dao.getRecentWifiScans().map { scans -> 
-            scans.map { 
-                HistoryItem(it.id, "WiFi", it.ssid.ifBlank { "Hidden" }, "${it.bssid} · ${it.rssi} dBm", formatDate(it.timestamp), it.timestamp, "Network: ${it.ssid.ifBlank { "Hidden" }}\nAccess point: ${it.bssid}\nObserved: ${formatDate(it.timestamp)}\nSignal: ${it.rssi} dBm\nFrequency: ${it.frequency} MHz\nWidth: ${it.channelWidth} MHz\nSecurity: ${it.security}")
-            } 
-        }
-    }.collectAsStateWithLifecycle(initialValue = emptyList())
-        
-    val lanHistory by remember(dao) {
-        dao.getAllLanDevices().map { devices ->
-            devices.map {
-                HistoryItem(it.ipAddress.hashCode().toLong(), "LAN", it.customName ?: it.hostname ?: it.ipAddress, it.ipAddress, formatDate(it.lastSeen), it.lastSeen, "Address: ${it.ipAddress}\nName: ${it.customName ?: it.hostname ?: "Unknown"}\nMAC: ${it.macAddress ?: "Unavailable"}\nVendor: ${it.vendor ?: "Unknown"}\nObserved: ${formatDate(it.lastSeen)}\nReachability at last scan: ${if (it.isOnline) "Replied" else "Unconfirmed"}")
-            }
-        }
-    }.collectAsStateWithLifecycle(initialValue = emptyList())
-        
-    val toolHistory by remember(dao) {
-        dao.getToolHistory().map { results ->
-            results.map {
-                HistoryItem(it.id, "Tools", "${it.toolType} ${it.target}", if(it.isSuccess) "Completed · Tap to inspect" else "Failed · Tap to inspect", formatDate(it.timestamp), it.timestamp, if (it.toolType == "PORT_SCAN") decodePortScan(it.resultJson).joinToString("\n") { port -> "TCP ${port.first}: ${port.second}" }.ifEmpty { "No open ports found among the tested common TCP ports." } else it.resultJson)
-            }
-        }
-    }.collectAsStateWithLifecycle(initialValue = emptyList())
-
-    val speedHistory by remember(dao) {
-        dao.getSpeedTestHistory().map { results ->
-            results.map {
-                val upload = if (it.uploadMbps < 0f) "Not measured" else "%.1f Mbps".format(it.uploadMbps)
-                val prefix = com.pulsewave.app.feature.linktest.LinkTestViewModel.ROUTER_PREFIX
-                if (it.serverName.startsWith(prefix)) {
-                    val router = it.serverName.removePrefix(prefix)
-                    val response = if (it.pingMs < 0f) "No reply" else "%.1f ms".format(it.pingMs)
-                    HistoryItem(it.id, "Speed",
-                        if (it.uploadMbps < 0f) "Wi-Fi test · $response" else "%.0f Mbps to router".format(it.uploadMbps),
-                        "Router $router · $response", formatDate(it.timestamp), it.timestamp,
-                        "Wi-Fi speed test (phone to router)\nRouter: $router\nObserved: ${formatDate(it.timestamp)}\nUpload to router: $upload\nResponse time: $response\nSteadiness: %.1f ms".format(it.jitterMs))
-                } else {
-                    val download = "%.1f".format(it.downloadMbps)
-                    HistoryItem(it.id, "Speed", "${download} Mbps download", it.serverName, formatDate(it.timestamp), it.timestamp,
-                        "Server: ${it.serverName}\nObserved: ${formatDate(it.timestamp)}\nDownload: $download Mbps\nUpload: $upload\nHTTP latency: %.1f ms\nHTTP latency variation: %.1f ms".format(it.pingMs, it.jitterMs))
-                }
-            }
-        }
-    }.collectAsStateWithLifecycle(initialValue = emptyList())
-
-    val combinedHistory = remember(selectedTab, wifiHistory, lanHistory, toolHistory, speedHistory) {
-        val all = when (selectedTab) {
-            0 -> wifiHistory
-            1 -> lanHistory
-            2 -> toolHistory
-            3 -> speedHistory
-            else -> emptyList()
-        }
-        all.sortedByDescending { it.timestampMillis }
-    }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -127,145 +131,392 @@ fun HistoryScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.background
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            // Expressive Tab Row with pill-style indicator
-            PrimaryTabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = MaterialTheme.colorScheme.background,
-                divider = {}
-            ) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = { 
-                            Text(
-                                title, 
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = if(selectedTab == index) FontWeight.Bold else FontWeight.Normal
-                            ) 
-                        }
+        val loaded = data ?: return@Scaffold
+        if (loaded.entries.isEmpty()) {
+            Box(Modifier.padding(padding).fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+                EmptyStateWithIllustration(
+                    illustration = { HistoryIllustration() },
+                    title = "Nothing saved yet",
+                    subtitle = "Wi-Fi speed tests, network scans and tool results show up here, so you can see how your Wi-Fi changes over time."
+                )
+            }
+            return@Scaffold
+        }
+        val kinds = HistoryKind.entries.filter { kind -> loaded.entries.any { it.kind == kind } }
+        val visible = if (filter == null) loaded.entries else loaded.entries.filter { it.kind == filter }
+        val days = visible.groupBy { dayLabel(it.timestamp) }
+        val showTrend = loaded.routerTests.isNotEmpty() && (filter == null || filter == HistoryKind.Speed)
+
+        LazyColumn(
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = padding.calculateTopPadding() + 8.dp,
+                bottom = padding.calculateBottomPadding() + 32.dp
+            ),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            if (showTrend) {
+                item(key = "trend") {
+                    RouterTrendCard(
+                        points = loaded.routerTests,
+                        onClick = { selectedKey = loaded.entries.firstOrNull { it.kind == HistoryKind.Speed && it.verdict != null }?.key },
+                        modifier = Modifier.animateItem().padding(bottom = 16.dp)
                     )
                 }
             }
-
-            // Content
-            LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                if (combinedHistory.isEmpty()) {
-                    item {
-                        AnimatedEmptyHistoryState()
-                    }
-                } else {
-                    itemsIndexed(combinedHistory, key = { _, item -> "${item.type}-${item.id}" }) { index, item ->
-                        HistoryCard(item = item, onClick = { selectedItem = item })
-                    }
+            if (kinds.size > 1) {
+                item(key = "filters") {
+                    KindFilters(kinds, filter, onSelect = { filterName = it?.name }, modifier = Modifier.animateItem().padding(bottom = 8.dp))
+                }
+            }
+            days.forEach { (day, entries) ->
+                item(key = "day-$day") {
+                    Text(
+                        day,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.animateItem().padding(start = 8.dp, top = 16.dp, bottom = 8.dp)
+                    )
+                }
+                itemsIndexed(entries, key = { _, entry -> entry.key }) { index, entry ->
+                    HistoryRow(
+                        entry = entry,
+                        shape = segmentedShape(index, entries.size),
+                        onClick = { selectedKey = entry.key },
+                        modifier = Modifier.animateItem().padding(top = if (index == 0) 0.dp else 2.dp)
+                    )
                 }
             }
         }
+
+        loaded.entries.firstOrNull { it.key == selectedKey }?.let { entry ->
+            HistoryDetailSheet(entry, onDismiss = { selectedKey = null })
+        }
     }
-    selectedItem?.let { item ->
-        AlertDialog(
-            onDismissRequest = { selectedItem = null },
-            title = { Text(item.title) },
-            text = {
-                SelectionContainer {
-                    Column(Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(item.timestamp, style = MaterialTheme.typography.labelLarge)
-                        Text(item.details.ifEmpty { item.subtitle }, style = MaterialTheme.typography.bodyMedium)
-                        Text("This is a saved observation. Run a new test to check the current connection.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
+}
+
+@Composable
+private fun KindFilters(kinds: List<HistoryKind>, selected: HistoryKind?, onSelect: (HistoryKind?) -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        (listOf<HistoryKind?>(null) + kinds).forEach { kind ->
+            val isSelected = kind == selected
+            FilterChip(
+                selected = isSelected,
+                onClick = { onSelect(kind) },
+                label = { Text(kind?.label ?: "All") },
+                leadingIcon = if (isSelected) {
+                    { Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
+                } else null
+            )
+        }
+    }
+}
+
+private class EntryLook(val icon: ImageVector, val shape: RoundedPolygon, val container: Color, val content: Color)
+
+@Composable
+private fun HistoryEntry.look(): EntryLook {
+    val scheme = MaterialTheme.colorScheme
+    return when (kind) {
+        HistoryKind.Speed -> {
+            val quality = verdict?.quality
+            val colors = quality?.let { signalColors(it) }
+            EntryLook(Icons.Rounded.Speed, quality?.polygon() ?: MaterialShapes.Cookie9Sided, colors?.container ?: scheme.primaryContainer, colors?.onContainer ?: scheme.onPrimaryContainer)
+        }
+        HistoryKind.Scan -> EntryLook(Icons.Rounded.WifiFind, MaterialShapes.Sunny, scheme.primaryContainer, scheme.onPrimaryContainer)
+        HistoryKind.Devices -> EntryLook(Icons.Rounded.Devices, MaterialShapes.Clover4Leaf, scheme.secondaryContainer, scheme.onSecondaryContainer)
+        HistoryKind.Tool -> EntryLook(
+            when (toolType) {
+                "PING" -> Icons.Rounded.NetworkPing
+                "DNS" -> Icons.Rounded.Dns
+                "PORT_SCAN" -> Icons.Rounded.Shield
+                else -> Icons.Rounded.Terminal
             },
-            confirmButton = { TextButton(onClick = { selectedItem = null }) { Text("Done") } }
+            MaterialShapes.Square, scheme.tertiaryContainer, scheme.onTertiaryContainer
         )
     }
 }
 
 @Composable
-fun AnimatedEmptyHistoryState() {
-    com.pulsewave.app.core.designsystem.component.EmptyStateWithIllustration(
-        illustration = { com.pulsewave.app.core.designsystem.component.HistoryIllustration() },
-        title = "Nothing saved yet",
-        subtitle = "Scans, speed tests and tool results are saved here automatically."
-    )
+private fun EntryIcon(entry: HistoryEntry, size: Dp) {
+    val look = entry.look()
+    ShapeIcon(look.icon, look.shape, look.container, look.content, size = size, iconSize = size * 0.48f)
 }
 
 @Composable
-fun HistoryCard(item: HistoryItem, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
-    Card(
+private fun HistoryRow(entry: HistoryEntry, shape: Shape, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
         onClick = onClick,
-        shape = PulseWaveShapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        modifier = modifier
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            Modifier.padding(start = 16.dp, end = 20.dp, top = 14.dp, bottom = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            val iconContainerColor = when (item.type) {
-                "WiFi" -> MaterialTheme.colorScheme.primaryContainer
-                "LAN" -> MaterialTheme.colorScheme.secondaryContainer
-                else -> MaterialTheme.colorScheme.tertiaryContainer
+            EntryIcon(entry, 44.dp)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(entry.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    entry.summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
-            val iconTint = when (item.type) {
-                "WiFi" -> MaterialTheme.colorScheme.onPrimaryContainer
-                "LAN" -> MaterialTheme.colorScheme.onSecondaryContainer
-                else -> MaterialTheme.colorScheme.onTertiaryContainer
+            Text(
+                timeOfDay(entry.timestamp),
+                style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+fun VerdictBadge(verdict: LinkVerdict) {
+    val colors = signalColors(verdict.quality)
+    Surface(shape = RoundedCornerShape(50), color = colors.container, contentColor = colors.onContainer) {
+        Text(
+            verdict.headline.removeSuffix(" here"),
+            style = MaterialTheme.typography.labelLarge,
+            maxLines = 1,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+        )
+    }
+}
+
+@Composable
+private fun RouterTrendCard(points: List<RouterTestPoint>, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val latest = points.last()
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text("Speed to your router", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        momentLabel(latest.timestamp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                VerdictBadge(latest.verdict)
             }
-            
-            Surface(
-                shape = PulseWaveShapes.medium,
-                color = iconContainerColor,
-                modifier = Modifier.size(52.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        when (item.type) {
-                            "WiFi" -> Icons.Default.Search
-                            "LAN" -> Icons.AutoMirrored.Filled.List
-                            "Speed" -> Icons.Default.PlayArrow
-                            else -> Icons.Default.Build
-                        },
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = iconTint
+            Row(verticalAlignment = Alignment.Bottom) {
+                val (value, unit) = when {
+                    latest.uploadMbps != null -> latest.uploadMbps.fixed(0) to "Mbps"
+                    latest.responseMs != null -> latest.responseMs.fixed(0) to "ms"
+                    else -> "No reply" to ""
+                }
+                Text(
+                    value,
+                    style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = "tnum"),
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (unit.isNotEmpty()) {
+                    Text(
+                        unit,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 6.dp, bottom = 8.dp)
                     )
                 }
             }
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            if (points.size >= 2) {
+                RouterTrendBars(points.takeLast(MaxTrendBars), Modifier.fillMaxWidth().height(88.dp))
+            }
+            Text(trendInsight(points), style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+internal const val MaxTrendBars = 16
+
+/** One bar per router test, oldest on the left; the latest one is fully opaque. */
+@Composable
+fun RouterTrendBars(points: List<RouterTestPoint>, modifier: Modifier = Modifier) {
+    val colors = points.map { signalColors(it.verdict.quality).accent }
+    val missing = MaterialTheme.colorScheme.outlineVariant
+    val reduceMotion = LocalReduceMotion.current
+    val grow = remember { Animatable(if (reduceMotion) 1f else 0f) }
+    val growSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
+    LaunchedEffect(Unit) { grow.animateTo(1f, growSpec) }
+    val peak = points.mapNotNull { it.uploadMbps }.maxOrNull()?.coerceAtLeast(1f) ?: 1f
+    val description = "Last ${points.size} router tests: " + points.joinToString { it.uploadMbps?.let { mbps -> "${mbps.fixed(0)} Mbps" } ?: "no reply" }
+    Canvas(modifier.semantics { contentDescription = description }) {
+        // At least a week's worth of slots, so two tests don't become two giant slabs.
+        val slots = points.size.coerceAtLeast(7)
+        val slot = size.width / slots
+        val barWidth = min(36.dp, (slot * 0.6f).toDp()).toPx()
+        val radius = CornerRadius(barWidth / 2, barWidth / 2)
+        // Oldest on the left, filling toward the right as tests accumulate.
+        val first = 0
+        points.forEachIndexed { index, point ->
+            val fraction = point.uploadMbps?.let { (it / peak).coerceIn(0.06f, 1f) } ?: 0.06f
+            val height = (size.height * fraction * grow.value).coerceAtLeast(barWidth.coerceAtMost(size.height * 0.06f))
+            val latest = index == points.lastIndex
+            drawRoundRect(
+                color = if (point.uploadMbps == null) missing else colors[index].copy(alpha = if (latest) 1f else 0.45f),
+                topLeft = Offset((first + index) * slot + (slot - barWidth) / 2, size.height - height),
+                size = Size(barWidth, height),
+                cornerRadius = radius
+            )
+        }
+    }
+}
+
+@Composable
+private fun HistoryDetailSheet(entry: HistoryEntry, onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        LazyColumn(
+            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            item(key = "header") {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(bottom = 20.dp)
+                ) {
+                    EntryIcon(entry, 56.dp)
+                    Column(Modifier.weight(1f)) {
+                        Text(entry.title, style = MaterialTheme.typography.headlineSmall)
+                        Text(momentLabel(entry.timestamp), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            if (entry.metrics.isNotEmpty()) {
+                item(key = "metrics") {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 12.dp)) {
+                        entry.metrics.forEach { MetricTile(it, Modifier.weight(1f)) }
+                    }
+                }
+            }
+            entry.note?.let { note ->
+                item(key = "note") {
+                    val colors = entry.verdict?.let { signalColors(it.quality) }
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = colors?.container ?: MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = colors?.onContainer ?: MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            entry.verdict?.let { Text(it.headline, style = MaterialTheme.typography.titleMedium) }
+                            Text(note, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            }
+            if (entry.facts.isNotEmpty()) {
+                item(key = "facts") {
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                    ) {
+                        Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                            entry.facts.forEachIndexed { index, (label, value) ->
+                                if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                                Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(
+                                        value,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (entry.lines.isNotEmpty()) {
+                entry.linesTitle?.let { title ->
+                    item(key = "lines-title") {
+                        Text(
+                            title,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 6.dp)
+                        )
+                    }
+                }
+                itemsIndexed(entry.lines) { index, line -> DetailLine(line, segmentedShape(index, entry.lines.size, outer = 20.dp, inner = 4.dp)) }
+            }
+            item(key = "footer") {
                 Text(
-                    item.title,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    item.subtitle,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis,
+                    "A saved result. Run it again to see how things are right now.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 8.dp, top = 16.dp)
                 )
             }
-            Spacer(Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    item.timestamp,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
+        }
+    }
+}
+
+@Composable
+private fun MetricTile(metric: HistoryMetric, modifier: Modifier = Modifier) {
+    Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = modifier) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(metric.value, style = MaterialTheme.typography.titleLarge.copy(fontFeatureSettings = "tnum"), fontWeight = FontWeight.SemiBold, maxLines = 1)
+                if (metric.unit.isNotEmpty()) {
+                    Text(
+                        metric.unit,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        modifier = Modifier.padding(start = 2.dp, bottom = 3.dp)
+                    )
+                }
+            }
+            Text(metric.label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+@Composable
+private fun DetailLine(line: HistoryLine, shape: Shape) {
+    Surface(shape = shape, color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            line.rssi?.let { rssi ->
+                val quality = SignalQuality.of(rssi)
+                val colors = signalColors(quality)
+                Box(Modifier.size(24.dp).clip(quality.polygon().toShape()).background(colors.accent))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(line.title, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                line.supporting?.takeIf { it.isNotBlank() }?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            line.trailing?.let {
+                Text(it, style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

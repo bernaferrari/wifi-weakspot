@@ -1,45 +1,62 @@
-@file:OptIn(ExperimentalMaterial3Api::class, androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package com.pulsewave.app.feature.lan
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.pulsewave.app.core.designsystem.PulseWaveAlpha
-import com.pulsewave.app.core.designsystem.LocalReduceMotion
-import com.pulsewave.app.core.designsystem.animateAccessibleFloat
-import com.pulsewave.app.core.designsystem.PulseWaveShapes
-import com.pulsewave.app.core.designsystem.component.LinearWavyProgressIndicator
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pulsewave.app.core.designsystem.component.EmptyStateWithIllustration
+import com.pulsewave.app.core.designsystem.component.LanDeviceIllustration
+import com.pulsewave.app.core.designsystem.component.segmentedShape
 import com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback
+import com.pulsewave.app.core.lan.DeviceIdentity
+import com.pulsewave.app.core.lan.DeviceKind
+import com.pulsewave.app.core.lan.identify
 import com.pulsewave.app.core.model.lan.LanDevice
 import org.koin.compose.viewmodel.koinViewModel
 
-import kotlinx.coroutines.launch
+private class ShownDevice(val device: LanDevice, val identity: DeviceIdentity)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LanScreen(
     modifier: Modifier = Modifier,
@@ -47,296 +64,223 @@ fun LanScreen(
     onDeviceClick: (String) -> Unit = {},
     onBack: (() -> Unit)? = null
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val known by viewModel.known.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val status by viewModel.status.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val haptics = rememberPulseWaveHapticFeedback()
 
-    LaunchedEffect(Unit) {
-        viewModel.startScan()
-    }
+    LaunchedEffect(Unit) { viewModel.startScan() }
 
-    val devices = when (val state = uiState) {
-        is LanUiState.Success -> state.devices
-        else -> emptyList()
-    }
     val isScanning = uiState is LanUiState.Scanning
-
-    val infiniteTransition = rememberInfiniteTransition(label = "Rotation")
-    val rotation by infiniteTransition.animateAccessibleFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "Rotation"
-    )
-
-    val pulseScale by infiniteTransition.animateAccessibleFloat(
-        initialValue = 1f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse"
-    )
+    val devices = (uiState as? LanUiState.Success)?.devices ?: known
+    val gateway = status.gateway.takeIf { it.isNotBlank() }
+    val phoneIp = status.ipAddress.takeIf { it.isNotBlank() }
+    val shown = remember(devices, gateway, phoneIp) {
+        devices.map { ShownDevice(it, it.identify(gateway, phoneIp)) }
+            .sortedWith(compareBy<ShownDevice> { it.identity.kind.ordinal }.thenBy { it.identity.kind == DeviceKind.Unknown }.thenBy { it.identity.name.lowercase() })
+    }
+    val home = shown.filter { it.identity.kind == DeviceKind.Router || it.identity.kind == DeviceKind.ThisPhone }
+    // Devices that answered but shared nothing about themselves fold away under one row.
+    val quiet = shown.filter { it.identity.kind == DeviceKind.Unknown && it.device.customName == null && it.device.announcedName == null && it.device.hostname == null && it.device.vendor == null }
+    val others = shown - home.toSet() - quiet.toSet()
+    var showQuiet by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text("Devices") },
-                subtitle = { Text("Everything connected to your Wi-Fi") },
+                subtitle = {
+                    Text(
+                        when {
+                            isScanning && shown.isEmpty() -> "Looking for devices…"
+                            shown.isEmpty() -> "Everything connected to your Wi-Fi"
+                            status.ssid.isNotBlank() -> "${shown.size} on ${status.ssid}"
+                            else -> "${shown.size} on your network"
+                        }
+                    )
+                },
                 scrollBehavior = scrollBehavior,
                 navigationIcon = {
                     if (onBack != null) {
-                        IconButton(onClick = {
-                            haptics.light()
-                            onBack()
-                        }) {
+                        IconButton(onClick = { haptics.light(); onBack() }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     }
                 },
                 actions = {
-                    IconButton(
-                        onClick = {
-                            haptics.click()
-                            if (isScanning) viewModel.stopScan() else viewModel.startScan()
-                        }
-                    ) {
+                    IconButton(onClick = { haptics.click(); if (isScanning) viewModel.stopScan() else viewModel.startScan() }) {
                         Icon(
-                            Icons.Default.Refresh,
-                            contentDescription = if (isScanning) "Cancel scan" else "Scan",
-                            modifier = if (isScanning) Modifier.rotate(rotation) else Modifier
+                            if (isScanning) Icons.Rounded.Close else Icons.Rounded.Refresh,
+                            contentDescription = if (isScanning) "Stop looking" else "Look again"
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
             )
         }
     ) { padding ->
         PullToRefreshBox(
-            // The header card shows progress; the pull indicator would overlap it.
+            // The progress row below shows the scan; the pull indicator would duplicate it.
             isRefreshing = false,
-            onRefresh = {
-                haptics.click()
-                viewModel.startScan()
-            },
+            onRefresh = { haptics.click(); viewModel.startScan() },
             modifier = Modifier.padding(padding)
         ) {
             LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 32.dp),
+                modifier = Modifier.fillMaxSize()
             ) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = PulseWaveShapes.extraLarge,
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Box(
-                        modifier = Modifier.background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primaryContainer,
-                                    MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = PulseWaveAlpha.strong)
-                                )
-                            )
-                        )
-                    ) {
-                        Icon(
-                            Icons.Default.DevicesOther,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .size(140.dp)
-                                .offset(x = 40.dp, y = 40.dp)
-                                .rotate(-15f),
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = PulseWaveAlpha.subtle)
-                        )
-
-                        Column(
-                            modifier = Modifier.padding(24.dp).fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        "Your network",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = PulseWaveAlpha.strong)
-                                    )
-                                    Text(
-                                        when {
-                                            isScanning -> "Looking for devices…"
-                                            devices.isEmpty() -> "No devices yet"
-                                            devices.size == 1 -> "1 device"
-                                            else -> "${devices.size} devices"
-                                        },
-                                        style = MaterialTheme.typography.titleLarge,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-
-                                if (devices.isNotEmpty()) Surface(
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.surface.copy(alpha = PulseWaveAlpha.light),
-                                    modifier = Modifier.scale(if (isScanning) pulseScale else 1f)
-                                ) {
-                                    Text(
-                                        "${devices.size}",
-                                        style = MaterialTheme.typography.headlineMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
-                                    )
-                                }
-                            }
-
-                            Spacer(Modifier.height(20.dp))
-
-                            if (isScanning) {
-                                LinearWavyProgressIndicator(
-                                    progress = { 1f },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(Modifier.height(8.dp))
-                                Text(
-                                    "Checking every address on your network",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            } else {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        Icons.Default.TouchApp,
-                                        null,
-                                        modifier = Modifier.size(16.dp),
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = PulseWaveAlpha.strong)
-                                    )
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(
-                                        "Pull down or tap refresh to look again",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = PulseWaveAlpha.strong)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (uiState is LanUiState.Error) {
-                item {
-                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
-                        Column(Modifier.padding(20.dp)) {
-                            Text("Couldn't look for devices", style = MaterialTheme.typography.titleMedium)
-                            Text((uiState as LanUiState.Error).message)
-                            TextButton(onClick = { viewModel.startScan() }) { Text("Retry") }
-                        }
-                    }
-                }
-            } else if (devices.isEmpty() && !isScanning) {
-                item {
-                    com.pulsewave.app.core.designsystem.component.EmptyStateWithIllustration(
-                        illustration = { com.pulsewave.app.core.designsystem.component.LanDeviceIllustration() },
-                        title = if (uiState is LanUiState.Cancelled) "Scan cancelled" else "No devices discovered",
-                        subtitle = "Discovery checks ping and three common TCP ports. Devices that block all probes may not appear."
+                item(key = "status") {
+                    ScanStatus(
+                        scanning = isScanning,
+                        progress = progress,
+                        modifier = Modifier.animateItem().padding(bottom = 8.dp)
                     )
                 }
-            }
-
-            itemsIndexed(devices, key = { _, device -> device.ipAddress }) { index, device ->
-                DeviceCard(
-                    device = device,
-                    onClick = {
-                        haptics.click()
-                        onDeviceClick(device.ipAddress)
-                    },
-                    modifier = Modifier
+                val error = uiState as? LanUiState.Error
+                when {
+                    error != null && shown.isEmpty() -> item(key = "error") {
+                        ProblemCard("Couldn't look for devices", error.message, onRetry = viewModel::startScan)
+                    }
+                    shown.isEmpty() && !isScanning -> item(key = "empty") {
+                        EmptyStateWithIllustration(
+                            illustration = { LanDeviceIllustration() },
+                            title = if (uiState is LanUiState.Cancelled) "Stopped looking" else "No devices found",
+                            subtitle = "Some devices stay quiet when asked. Try again in a moment, or check that this phone is on your home Wi-Fi.",
+                            modifier = Modifier.padding(top = 32.dp)
+                        )
+                    }
+                }
+                deviceGroup("Your network", home, isScanning, onDeviceClick = { haptics.click(); onDeviceClick(it) })
+                deviceGroup(
+                    if (others.isEmpty()) null else "Other devices · ${others.size}",
+                    others,
+                    isScanning,
+                    onDeviceClick = { haptics.click(); onDeviceClick(it) }
                 )
+                if (quiet.isNotEmpty()) {
+                    item(key = "quiet-toggle") {
+                        QuietToggle(
+                            count = quiet.size,
+                            expanded = showQuiet,
+                            onToggle = { haptics.light(); showQuiet = !showQuiet },
+                            modifier = Modifier.animateItem().padding(top = 16.dp)
+                        )
+                    }
+                    if (showQuiet) deviceGroup(null, quiet, isScanning, onDeviceClick = { haptics.click(); onDeviceClick(it) })
+                }
+                if (shown.isNotEmpty()) {
+                    item(key = "footer") {
+                        Text(
+                            "Some devices hide from scans, so a missing one may still be connected.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.animateItem().padding(start = 8.dp, end = 8.dp, top = 20.dp)
+                        )
+                    }
+                }
             }
         }
+    }
+}
+
+private fun LazyListScope.deviceGroup(title: String?, devices: List<ShownDevice>, scanning: Boolean, onDeviceClick: (String) -> Unit) {
+    if (devices.isEmpty()) return
+    title?.let {
+        item(key = "title-${devices.first().device.ipAddress}") {
+            Text(
+                it,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.animateItem().padding(start = 8.dp, top = 16.dp, bottom = 8.dp)
+            )
+        }
+    }
+    itemsIndexed(devices, key = { _, shown -> shown.device.ipAddress }) { index, shown ->
+        DeviceRow(
+            shown = shown,
+            stale = scanning,
+            onClick = { onDeviceClick(shown.device.ipAddress) },
+            modifier = Modifier.animateItem().padding(top = if (index == 0) 0.dp else 2.dp),
+            shape = segmentedShape(index, devices.size)
+        )
+    }
+}
+
+@Composable
+private fun QuietToggle(count: Int, expanded: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        onClick = onToggle,
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        modifier = modifier.fillMaxWidth().padding(bottom = if (expanded) 8.dp else 0.dp)
+    ) {
+        Row(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(if (count == 1) "1 quiet device" else "$count quiet devices", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "They answered, but didn't say what they are. Tap one to name it.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                contentDescription = if (expanded) "Hide" else "Show"
+            )
         }
     }
 }
 
 @Composable
-fun DeviceCard(device: LanDevice, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.98f else 1f,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
-        label = "pressScale"
-    )
+private fun ScanStatus(scanning: Boolean, progress: Float, modifier: Modifier = Modifier) {
+    if (!scanning) return
+    Column(modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        LinearWavyProgressIndicator(progress = { progress.coerceIn(0.02f, 1f) }, modifier = Modifier.fillMaxWidth())
+        Text(
+            "Asking every address on your network · ${(progress * 100).toInt()}%",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
 
-    Card(
-        onClick = onClick,
-        interactionSource = interactionSource,
-        shape = PulseWaveShapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        modifier = modifier.scale(scale)
-    ) {
+@Composable
+private fun DeviceRow(shown: ShownDevice, stale: Boolean, onClick: () -> Unit, shape: androidx.compose.ui.graphics.Shape, modifier: Modifier = Modifier) {
+    val quiet = !shown.device.isOnline
+    Surface(onClick = onClick, shape = shape, color = MaterialTheme.colorScheme.surfaceContainer, modifier = modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            Modifier.padding(start = 16.dp, end = 20.dp, top = 14.dp, bottom = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Surface(
-                shape = PulseWaveShapes.medium,
-                color = if (device.isOnline)
-                    MaterialTheme.colorScheme.primaryContainer
-                else
-                    MaterialTheme.colorScheme.errorContainer,
-                modifier = Modifier.size(56.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        if (device.isOnline) Icons.Default.Smartphone else Icons.Default.Close,
-                        contentDescription = null,
-                        tint = if (device.isOnline)
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        else
-                            MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            DeviceIcon(shown.identity.kind, dimmed = quiet || stale)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(shown.identity.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    device.displayName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    device.ipAddress,
+                    if (quiet) "${shown.identity.detail} · didn't answer" else shown.identity.detail,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-                Text(if (device.isOnline) "Replied to this scan" else "Cached neighbor · reachability unconfirmed", style = MaterialTheme.typography.labelSmall)
-                device.macAddress?.let {
-                    Text(
-                        it,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                }
             }
-            Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        }
+    }
+}
+
+@Composable
+private fun ProblemCard(title: String, message: String, onRetry: () -> Unit) {
+    Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(message, style = MaterialTheme.typography.bodyMedium)
+            Button(onClick = onRetry, shapes = ButtonDefaults.shapes()) { Text("Try again") }
         }
     }
 }

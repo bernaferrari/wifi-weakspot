@@ -28,6 +28,12 @@ android {
         compose = true
     }
 
+    // src/main/kotlin is platform-free and shared with the web demo;
+    // Android-only implementations live in src/androidMain/kotlin.
+    sourceSets.getByName("main") {
+        kotlin.srcDir("src/androidMain/kotlin")
+    }
+
 }
 
 room {
@@ -44,7 +50,9 @@ dependencies {
     implementation(compose.components.uiToolingPreview)
     implementation(libs.material.icons.extended)
 
-    implementation(libs.navigation.compose)
+    implementation(libs.navigation3.runtime)
+    implementation(libs.navigation3.ui)
+    implementation(libs.lifecycle.viewmodel.navigation3)
     implementation(libs.lifecycle.runtime.compose)
 
     implementation(libs.okhttp)

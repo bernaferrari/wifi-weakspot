@@ -29,6 +29,7 @@ class SurveyViewModel(
 ) : ViewModel(), KoinComponent {
     private val stepCounter: StepCounter by inject()
     private val orientationProvider: OrientationProvider by inject()
+    private val networkStatus: com.pulsewave.app.core.domain.NetworkStatusRepository by inject()
 
     enum class SurveyMode { AUTO_SAMPLE, MANUAL_ANCHOR }
 
@@ -41,6 +42,10 @@ class SurveyViewModel(
     private val projectPoints = _currentProjectId.flatMapLatest { id ->
         if (id == null) flowOf(emptyList()) else dao.getPointsForProject(id)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    /** Floors that already hold readings, plus the one being viewed: what the floor buttons show. */
+    val floorsInUse = combine(projectPoints, _selectedFloor) { points, floor ->
+        (points.map { it.floorId } + floor + 1).distinct().sorted()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, listOf(1))
     val projectPointCount = projectPoints.map { it.size }
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
     val currentPoints = combine(projectPoints, _selectedFloor) { points, floor ->
@@ -89,11 +94,11 @@ class SurveyViewModel(
                 if (request.generation != contextGeneration) continue
                 _isSampling.value = true
                 try {
-                    val requestedAt = System.currentTimeMillis()
+                    val requestedAt = com.pulsewave.app.core.util.nowMillis()
                     val scanned = wifiScanner.awaitNextScan()
                     if (request.generation != contextGeneration) continue
                     val measurement = scanned?.let {
-                        freshSurveyMeasurement(it, request.targetBssid, requestedAt, System.currentTimeMillis())
+                        freshSurveyMeasurement(it, request.targetBssid, requestedAt, com.pulsewave.app.core.util.nowMillis())
                     }
                     if (measurement == null) {
                         _message.value = if (scanned == null) {
@@ -117,12 +122,12 @@ class SurveyViewModel(
                             x = position.x, y = position.y, rssi = measurement.rssi,
                             ssid = measurement.ssid, bssid = measurement.bssid, timestamp = measurement.timestamp
                         ))
-                        _message.value = "Saved ${measurement.rssi} dBm for ${measurement.ssid.ifBlank { "Hidden network" }}"
+                        // The new spot on the map is the confirmation; no snackbar over the toolbar.
                     }
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (_: Exception) {
-                    _message.value = "Could not save this measurement. Your existing points are safe."
+                    _message.value = "Couldn't save that reading. Your other readings are safe."
                 } finally {
                     _isSampling.value = false
                 }
@@ -133,10 +138,23 @@ class SurveyViewModel(
     fun dismissMessage() { _message.value = null }
     fun reportMessage(message: String) { _message.value = message }
 
-    fun createProject(name: String) {
+    /**
+     * One tap from "Create a map": named "Home" (then "Home 2"…) and already measuring the
+     * Wi-Fi this phone is on, so the first thing people do is tap where they stand.
+     */
+    fun createMap() {
+        viewModelScope.launch {
+            val taken = projects.value.map { it.name }.toSet()
+            val name = generateSequence(1) { it + 1 }.map { if (it == 1) "Home" else "Home $it" }.first { it !in taken }
+            val status = runCatching { networkStatus.getCurrentNetworkStatus().first() }.getOrNull()
+            createProject(name, target = status?.takeIf { it.isConnected && it.bssid.isNotBlank() }?.let { it.ssid to it.bssid })
+        }
+    }
+
+    fun createProject(name: String, target: Pair<String, String>? = null) {
         if (name.isBlank()) return
         if (_isUpdatingProject.value) {
-            _message.value = "Wait for the project update to finish."
+            _message.value = "One moment, still saving the map."
             return
         }
         _isUpdatingProject.value = true
@@ -145,19 +163,28 @@ class SurveyViewModel(
         viewModelScope.launch {
             try {
                 projectWrites.withLock {
-                    val now = System.currentTimeMillis()
+                    val now = com.pulsewave.app.core.util.nowMillis()
                     val id = dao.insertSurveyProject(SurveyProjectEntity(
-                        name = name.trim(), description = null, imagePath = null, createdAt = now, updatedAt = now
+                        name = name.trim(), description = null, imagePath = null, createdAt = now, updatedAt = now,
+                        targetSsid = target?.first, targetBssid = target?.second
                     ))
                     activateProject(id)
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                _message.value = "Could not create this project. Try again."
+                _message.value = "Could not create the map. Try again."
             } finally {
                 _isUpdatingProject.value = false
             }
+        }
+    }
+
+    fun renameProject(name: String) {
+        val project = currentProject.value ?: return
+        if (name.isBlank() || name == project.name) return
+        mutateProject(project.id, "Could not rename the map. Try again.") { persisted ->
+            dao.updateSurveyProject(persisted.copy(name = name.trim(), updatedAt = com.pulsewave.app.core.util.nowMillis()))
         }
     }
 
@@ -168,7 +195,7 @@ class SurveyViewModel(
         viewModelScope.launch {
             try {
                 projectWrites.withLock {
-                    dao.markSurveyProjectUsed(project.id, System.currentTimeMillis())
+                    dao.markSurveyProjectUsed(project.id, com.pulsewave.app.core.util.nowMillis())
                 }
             }
             catch (_: Exception) { _message.value = "Could not remember the selected project." }
@@ -205,7 +232,7 @@ class SurveyViewModel(
     /** A project mutation invalidates samples before its asynchronous database write begins. */
     private fun mutateProject(projectId: Long, errorMessage: String, action: suspend (SurveyProjectEntity) -> Unit) {
         if (_isUpdatingProject.value) {
-            _message.value = "Wait for the project update to finish."
+            _message.value = "One moment, still saving the map."
             return
         }
         _isUpdatingProject.value = true
@@ -231,9 +258,9 @@ class SurveyViewModel(
     fun selectTarget(network: WifiNetwork) {
         val project = currentProject.value ?: return
         if (project.targetBssid.equals(network.bssid, ignoreCase = true)) return
-        mutateProject(project.id, "Could not change the access point. Try again.") { persisted ->
+        mutateProject(project.id, "Could not switch networks. Try again.") { persisted ->
             dao.replaceSurveyTarget(persisted.copy(
-                targetSsid = network.ssid, targetBssid = network.bssid, updatedAt = System.currentTimeMillis()
+                targetSsid = network.ssid, targetBssid = network.bssid, updatedAt = com.pulsewave.app.core.util.nowMillis()
             ))
             if (_currentProjectId.value == project.id) resetPosition()
         }
@@ -247,7 +274,7 @@ class SurveyViewModel(
         mutateProject(project.id, "Could not save map settings.") { persisted ->
             dao.updateSurveyProject(persisted.copy(
                 widthMeters = widthMeters, heightMeters = heightMeters, stepLengthMeters = stepLengthMeters,
-                mapTopBearingDegrees = mapTopBearingDegrees, updatedAt = System.currentTimeMillis()
+                mapTopBearingDegrees = mapTopBearingDegrees, updatedAt = com.pulsewave.app.core.util.nowMillis()
             ))
         }
     }
@@ -255,7 +282,7 @@ class SurveyViewModel(
     fun setFloorplan(path: String?, onReplaced: (String?) -> Unit = {}) {
         val project = currentProject.value ?: return
         mutateProject(project.id, "Could not save the floorplan.") { persisted ->
-            dao.updateSurveyProject(persisted.copy(imagePath = path, updatedAt = System.currentTimeMillis()))
+            dao.updateSurveyProject(persisted.copy(imagePath = path, updatedAt = com.pulsewave.app.core.util.nowMillis()))
             onReplaced(persisted.imagePath)
         }
     }
@@ -277,9 +304,13 @@ class SurveyViewModel(
         sampleRequests.trySend(SampleRequest(project.id, _selectedFloor.value, target, position, contextGeneration, automatic))
     }
 
+    fun deletePoint(point: com.pulsewave.app.core.database.entities.SurveyPointEntity) {
+        mutateProject(point.projectId, "Couldn't remove that reading.") { dao.deleteSurveyPoint(point.id) }
+    }
+
     fun undoLastPoint() {
         val last = currentPoints.value.lastOrNull() ?: return
-        mutateProject(last.projectId, "Could not remove this point.") { dao.deleteSurveyPoint(last.id) }
+        mutateProject(last.projectId, "Couldn't remove that reading.") { dao.deleteSurveyPoint(last.id) }
     }
 
     fun deleteProject(project: SurveyProjectEntity, onDeleted: (String?) -> Unit = {}) {
@@ -289,8 +320,9 @@ class SurveyViewModel(
         }
     }
 
+    /** Read live by the walking loop, so it can change mid-walk. */
     fun setSurveyMode(mode: SurveyMode) {
-        if (!_isRecording.value) _surveyMode.value = mode
+        _surveyMode.value = mode
     }
 
     fun toggleRecording() {
@@ -331,7 +363,7 @@ class SurveyViewModel(
                         project.widthMeters, project.heightMeters, project.mapTopBearingDegrees)
                     _currentPosition.value = position
                     _ghostPath.value = (_ghostPath.value + (position.x to position.y)).takeLast(100)
-                    val now = System.currentTimeMillis()
+                    val now = com.pulsewave.app.core.util.nowMillis()
                     if (_surveyMode.value == SurveyMode.AUTO_SAMPLE && now - lastAutoSampleAt >= 30_000) {
                         lastAutoSampleAt = now
                         addPoint(position.x, position.y, automatic = true)
@@ -385,7 +417,7 @@ class SurveyViewModel(
                 points.forEach { p -> csv += listOf(p.timestamp, p.x, p.y, p.rssi, csvField(p.ssid ?: ""),
                     csvField(p.bssid ?: ""), p.floorId, project.widthMeters, project.heightMeters, project.mapTopBearingDegrees).joinToString(",") }
                 val safeName = project.name.replace(Regex("[^A-Za-z0-9._-]+"), "_")
-                exportManager.exportToCsv(csv, "Survey_${safeName}_${System.currentTimeMillis()}")
+                exportManager.exportToCsv(csv, "Survey_${safeName}_${com.pulsewave.app.core.util.nowMillis()}")
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) { _message.value = "Could not export this project. Try again." }

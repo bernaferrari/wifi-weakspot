@@ -1,20 +1,64 @@
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+
 package com.pulsewave.app.feature.lan
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.NetworkPing
+import androidx.compose.material.icons.rounded.OpenInBrowser
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeFlexibleTopAppBar
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import java.text.DateFormat
-import java.util.Date
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pulsewave.app.core.designsystem.component.segmentedShape
+import com.pulsewave.app.core.lan.DeviceKind
+import com.pulsewave.app.core.lan.identify
+import com.pulsewave.app.core.platform.PlatformActions
+import com.pulsewave.app.feature.history.momentLabel
+import org.koin.compose.koinInject
 
-@OptIn(ExperimentalMaterial3Api::class)
+private val WebPorts = setOf(80, 443, 8080, 8443)
+
 @Composable
 fun LanDeviceDetailScreen(
     ip: String,
@@ -24,11 +68,14 @@ fun LanDeviceDetailScreen(
     modifier: Modifier = Modifier,
     viewModel: LanDeviceDetailViewModel = org.koin.compose.viewmodel.koinViewModel()
 ) {
-    val device by viewModel.device.collectAsState()
-    val scanTime by viewModel.portScanTime.collectAsState()
-    val error by viewModel.error.collectAsState()
+    val device by viewModel.device.collectAsStateWithLifecycle()
+    val scanTime by viewModel.portScanTime.collectAsStateWithLifecycle()
+    val ports by viewModel.ports.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val status by viewModel.status.collectAsStateWithLifecycle()
+    val platform: PlatformActions = koinInject()
     var showRename by remember { mutableStateOf(false) }
-    var name by remember { mutableStateOf("") }
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(ip) { viewModel.loadDevice(ip) }
     DisposableEffect(lifecycle, ip) {
@@ -38,59 +85,161 @@ fun LanDeviceDetailScreen(
         lifecycle.addObserver(observer)
         onDispose { lifecycle.removeObserver(observer) }
     }
-    Scaffold(topBar = {
-        TopAppBar(title = { Text(device?.displayName ?: ip) }, navigationIcon = {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
-        })
-    }) { padding ->
-        LazyColumn(modifier.padding(padding).fillMaxSize(), contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            val current = device
-            if (current == null) {
-                item { CircularProgressIndicator() }
-            } else {
-                item {
-                    Card(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(current.displayName, style = MaterialTheme.typography.headlineSmall)
-                            Text(if (current.lastSeen == 0L) "Device not in scan history" else if (current.isOnline)
-                                "Replied to last scan" else "Cached neighbor · reachability unconfirmed")
-                            Text("IP: ${current.ipAddress}")
-                            Text("MAC: ${current.macAddress ?: "Unavailable"}")
-                            current.vendor?.let { Text("Vendor: $it") }
-                            if (current.lastSeen > 0L) Text("Last discovered: ${DateFormat.getDateTimeInstance().format(Date(current.lastSeen))}")
-                        }
-                    }
-                }
-                item {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(onClick = { onPing(ip) }, modifier = Modifier.weight(1f)) { Text("Ping") }
-                        FilledTonalButton(onClick = { onPortScan(ip) }, modifier = Modifier.weight(1f)) { Text("Scan ports") }
-                    }
-                }
-                item {
-                    OutlinedButton(onClick = { name = current.customName.orEmpty(); showRename = true }, enabled = current.lastSeen > 0L) { Text("Rename device") }
-                    error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                }
-                item {
-                    Card(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Last common-port scan", style = MaterialTheme.typography.titleMedium)
-                            if (scanTime == null) Text("Not scanned. Run a port scan to check common TCP services.")
-                            else {
-                                Text(DateFormat.getDateTimeInstance().format(Date(scanTime!!)))
-                                Text(if (current.openPorts.isEmpty()) "No open ports found among the common ports tested."
-                                    else "Open TCP ports: ${current.openPorts.joinToString()}")
-                                Text("A failed connection can mean a closed, filtered, or unreachable port.", style = MaterialTheme.typography.bodySmall)
-                            }
+    val current = device
+    val identity = current?.identify(status.gateway.takeIf { it.isNotBlank() }, status.ipAddress.takeIf { it.isNotBlank() })
+    val scanned = current != null && current.lastSeen > 0L
+
+    Scaffold(
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            LargeFlexibleTopAppBar(
+                title = { Text(identity?.name ?: ip) },
+                subtitle = { Text(identity?.detail ?: ip) },
+                scrollBehavior = scrollBehavior,
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+                actions = {
+                    if (scanned) IconButton(onClick = { showRename = true }) { Icon(Icons.Rounded.Edit, "Rename") }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            )
+        }
+    ) { padding ->
+        if (current == null || identity == null) return@Scaffold
+        val webPage = identity.kind == DeviceKind.Router || ports.any { it.first in WebPorts }
+        LazyColumn(
+            Modifier.padding(padding).fillMaxSize(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 32.dp)
+        ) {
+            item(key = "hero") {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.padding(start = 8.dp, bottom = 20.dp)
+                ) {
+                    DeviceIcon(identity.kind, size = 64.dp, dimmed = !current.isOnline)
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            when {
+                                !scanned -> "Not found in a scan yet"
+                                current.isOnline -> "Answered the last scan"
+                                else -> "Seen on the network, but didn't answer"
+                            },
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        if (scanned) {
+                            Text(momentLabel(current.lastSeen), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
             }
+            item(key = "actions") {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                    Button(onClick = { onPing(ip) }, shapes = ButtonDefaults.shapes(), modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Rounded.NetworkPing, null, Modifier.size(ButtonDefaults.IconSize))
+                        Text("Ping", Modifier.padding(start = ButtonDefaults.IconSpacing))
+                    }
+                    FilledTonalButton(onClick = { onPortScan(ip) }, shapes = ButtonDefaults.shapes(), modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Rounded.Shield, null, Modifier.size(ButtonDefaults.IconSize))
+                        Text("Check ports", Modifier.padding(start = ButtonDefaults.IconSpacing))
+                    }
+                }
+            }
+            if (webPage) {
+                item(key = "web") {
+                    FilledTonalButton(
+                        onClick = { platform.openUrl(if (ports.any { it.first == 443 } && ports.none { it.first == 80 }) "https://$ip" else "http://$ip") },
+                        shapes = ButtonDefaults.shapes(),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    ) {
+                        Icon(Icons.Rounded.OpenInBrowser, null, Modifier.size(ButtonDefaults.IconSize))
+                        Text(
+                            if (identity.kind == DeviceKind.Router) "Open router settings" else "Open its web page",
+                            Modifier.padding(start = ButtonDefaults.IconSpacing)
+                        )
+                    }
+                }
+            }
+            error?.let { message ->
+                item(key = "error") { Text(message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(8.dp)) }
+            }
+
+            val facts = listOfNotNull(
+                "Address" to current.ipAddress,
+                current.vendor?.let { "Maker" to it },
+                current.hostname?.let { "Network name" to it },
+                "Hardware address" to (current.macAddress ?: "Hidden by Android"),
+                current.customName?.let { "Your name for it" to it }
+            )
+            item(key = "facts-title") { SectionTitle("Details") }
+            itemsIndexed(facts, key = { _, fact -> "fact-${fact.first}" }) { index, (label, value) ->
+                FactRow(label, value, segmentedShape(index, facts.size, outer = 20.dp, inner = 4.dp), Modifier.padding(top = if (index == 0) 0.dp else 2.dp))
+            }
+
+            item(key = "ports-title") { SectionTitle("Open ports") }
+            if (scanTime == null) {
+                item(key = "ports-none") {
+                    Note("Not checked yet. \"Check ports\" looks for common services like web pages, file sharing and printers.")
+                }
+            } else if (ports.isEmpty()) {
+                item(key = "ports-closed") { Note("None of the common ports were open when checked ${momentLabel(scanTime!!).replaceFirstChar { it.lowercase() }}.") }
+            } else {
+                itemsIndexed(ports, key = { _, port -> "port-${port.first}" }) { index, (port, service) ->
+                    FactRow(service, "TCP $port", segmentedShape(index, ports.size, outer = 20.dp, inner = 4.dp), Modifier.padding(top = if (index == 0) 0.dp else 2.dp))
+                }
+                item(key = "ports-when") { Note("Checked ${momentLabel(scanTime!!).replaceFirstChar { it.lowercase() }}.") }
+            }
         }
     }
-    if (showRename) AlertDialog(onDismissRequest = { showRename = false }, title = { Text("Rename device") },
-        text = { OutlinedTextField(value = name, onValueChange = { name = it.take(80) }, label = { Text("Device name") }, supportingText = { Text("Leave blank to use the discovered name.") }, singleLine = true) },
-        confirmButton = { TextButton(onClick = { viewModel.rename(name); showRename = false }) { Text("Save") } },
-        dismissButton = { TextButton(onClick = { showRename = false }) { Text("Cancel") } })
+    if (showRename && current != null) {
+        var name by remember { mutableStateOf(current.customName.orEmpty()) }
+        AlertDialog(
+            onDismissRequest = { showRename = false },
+            title = { Text("Rename device") },
+            text = {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it.take(80) },
+                    label = { Text("Name") },
+                    placeholder = { Text(identity?.name.orEmpty()) },
+                    supportingText = { Text("Leave empty to use the name PulseWave found.") },
+                    singleLine = true
+                )
+            },
+            confirmButton = { TextButton(onClick = { viewModel.rename(name); showRename = false }) { Text("Save") } },
+            dismissButton = { TextButton(onClick = { showRename = false }) { Text("Cancel") } }
+        )
+    }
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 8.dp, top = 20.dp, bottom = 8.dp)
+    )
+}
+
+@Composable
+private fun Note(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+    )
+}
+
+@Composable
+private fun FactRow(label: String, value: String, shape: androidx.compose.ui.graphics.Shape, modifier: Modifier = Modifier) {
+    Surface(shape = shape, color = MaterialTheme.colorScheme.surfaceContainer, modifier = modifier.fillMaxWidth()) {
+        Row(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
+        }
+    }
 }

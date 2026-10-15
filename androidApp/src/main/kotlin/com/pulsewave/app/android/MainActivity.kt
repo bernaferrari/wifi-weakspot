@@ -12,7 +12,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.enableEdgeToEdge(window)
         setContent {
-            App()
+            com.pulsewave.app.AndroidApp()
         }
     }
 }

@@ -2,6 +2,12 @@
 
 package com.pulsewave.app.feature.linktest
 
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.foundation.horizontalScroll
+import com.pulsewave.app.core.util.fixed
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -78,8 +84,8 @@ private fun LinkVerdict.quality() = when (this) {
     LinkVerdict.Unreliable -> SignalQuality.DeadZone
 }
 
-private fun formatMbps(mbps: Double): String = if (mbps >= 100) "%.0f".format(mbps) else "%.1f".format(mbps)
-private fun formatMs(ms: Float): String = if (!ms.isFinite()) "—" else if (ms >= 10) "%.0f".format(ms) else "%.1f".format(ms)
+private fun formatMbps(mbps: Double): String = if (mbps >= 100) "${mbps.fixed(0)}" else "${mbps.fixed(1)}"
+private fun formatMs(ms: Float): String = if (!ms.isFinite()) "—" else if (ms >= 10) "${ms.fixed(0)}" else "${ms.fixed(1)}"
 
 @Composable
 fun LinkTestScreen(
@@ -90,6 +96,9 @@ fun LinkTestScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val status by viewModel.status.collectAsStateWithLifecycle()
+    val history by viewModel.history.collectAsStateWithLifecycle()
+    val savedRooms by viewModel.savedRooms.collectAsStateWithLifecycle()
+    val taggedRoom by viewModel.taggedRoom.collectAsStateWithLifecycle()
     val haptics = rememberPulseWaveHapticFeedback()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -123,33 +132,51 @@ fun LinkTestScreen(
                 val stageFade = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
                 val stageScale = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
                 AnimatedContent(
-                    targetState = state::class,
+                    // Each phase renders its own snapshot, so the leaving stage never flashes the
+                    // next state's content; ping → upload stays one continuous ring.
+                    targetState = state,
+                    contentKey = ::phaseOf,
                     transitionSpec = { (fadeIn(stageFade) + scaleIn(stageScale, initialScale = 0.9f)) togetherWith fadeOut(stageFade) },
                     label = "linkStage"
-                ) { _ ->
-                    when (val s = state) {
+                ) { stage ->
+                    when (val s = stage) {
                         LinkTestState.Idle, is LinkTestState.Failed -> StartButton(
                             enabled = status.isConnected,
                             onClick = { haptics.heavy(); viewModel.start() }
                         )
                         is LinkTestState.Pinging -> ProgressStage(
                             progress = s.progress * 0.5f,
-                            value = s.latestMs?.let(::formatMs) ?: "…",
+                            value = s.latestMs,
                             unit = "ms",
-                            label = "Checking response time"
+                            label = "Checking response time",
+                            format = ::formatMs
                         )
                         is LinkTestState.Uploading -> ProgressStage(
                             progress = 0.5f + s.progress * 0.5f,
-                            value = if (s.mbps > 0) formatMbps(s.mbps) else "…",
+                            value = s.mbps.toFloat().takeIf { it > 0f },
                             unit = "Mbps",
-                            label = "Sending data to your router"
+                            label = "Sending data to your router",
+                            format = { formatMbps(it.toDouble()) }
                         )
                         is LinkTestState.Done -> ResultStage(s.result)
                     }
                 }
             }
 
-            when (val s = state) {
+            // The text under the stage eases in with it, instead of popping.
+            val below = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+            val belowSlide = MaterialTheme.motionScheme.defaultSpatialSpec<androidx.compose.ui.unit.IntOffset>()
+            AnimatedContent(
+                targetState = state,
+                contentKey = ::phaseOf,
+                transitionSpec = {
+                    (fadeIn(below) + androidx.compose.animation.slideInVertically(belowSlide) { it / 12 }) togetherWith fadeOut(below) using
+                        androidx.compose.animation.SizeTransform(clip = false)
+                },
+                label = "linkDetails"
+            ) { stage ->
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            when (val s = stage) {
                 is LinkTestState.Done -> {
                     Text(s.result.verdict.headline, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
                     Text(
@@ -158,6 +185,16 @@ fun LinkTestScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
+                    // Compares with earlier tests once this one is saved; silent on a first run.
+                    if (history.size >= 2) {
+                        Text(
+                            com.pulsewave.app.feature.history.trendInsight(history),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    RoomTagger(savedRooms, taggedRoom, onTag = { haptics.click(); viewModel.tagRoom(it) })
                     ResultTiles(s.result)
                     Button(
                         onClick = { haptics.click(); viewModel.start() },
@@ -171,7 +208,12 @@ fun LinkTestScreen(
                 is LinkTestState.Failed -> {
                     Text(s.message, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
                 }
-                LinkTestState.Idle -> IdleInfo(status)
+                LinkTestState.Idle -> {
+                    IdleInfo(status)
+                    if (history.isNotEmpty()) LastTestCard(history)
+                }
+            }
+            }
             }
 
             Text(
@@ -218,7 +260,9 @@ private fun StartButton(enabled: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ProgressStage(progress: Float, value: String, unit: String, label: String) {
+private fun ProgressStage(progress: Float, value: Float?, unit: String, label: String, format: (Float) -> String) {
+    // Readings glide to each new value instead of jumping digit by digit.
+    val shown by animateFloatAsState(value ?: 0f, MaterialTheme.motionScheme.slowEffectsSpec(), label = "linkValue")
     val stroke = with(LocalDensity.current) { Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round) }
     val animated by animateFloatAsState(progress, MaterialTheme.motionScheme.defaultEffectsSpec(), label = "linkProgress")
     Box(contentAlignment = Alignment.Center, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) {
@@ -231,7 +275,7 @@ private fun ProgressStage(progress: Float, value: String, unit: String, label: S
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    value,
+                    if (value == null) "…" else format(shown),
                     style = MaterialTheme.typography.displayLarge.copy(fontFeatureSettings = "tnum"),
                     fontWeight = FontWeight.Black
                 )
@@ -245,11 +289,16 @@ private fun ProgressStage(progress: Float, value: String, unit: String, label: S
 @Composable
 private fun ResultStage(result: LinkTestResult) {
     val colors = signalColors(result.verdict.quality())
+    // The final number counts up once, so the result lands rather than appears.
+    val target = (result.uploadMbps ?: result.latency.medianMs.toDouble()).toFloat()
+    val count = androidx.compose.runtime.remember(result) { androidx.compose.animation.core.Animatable(0f) }
+    val countSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
+    LaunchedEffect(result) { count.animateTo(target, countSpec) }
     SignalMorphBlob(quality = result.verdict.quality(), color = colors.container, size = 248.dp, spinning = false) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             if (result.uploadMbps != null) {
                 Text(
-                    formatMbps(result.uploadMbps),
+                    formatMbps(count.value.toDouble()),
                     style = MaterialTheme.typography.displayLarge.copy(fontFeatureSettings = "tnum"),
                     fontWeight = FontWeight.Black,
                     color = colors.onContainer
@@ -257,7 +306,7 @@ private fun ResultStage(result: LinkTestResult) {
                 Text("Mbps to router", style = MaterialTheme.typography.titleMedium, color = colors.onContainer)
             } else {
                 Text(
-                    formatMs(result.latency.medianMs),
+                    formatMs(count.value),
                     style = MaterialTheme.typography.displayLarge.copy(fontFeatureSettings = "tnum"),
                     fontWeight = FontWeight.Black,
                     color = colors.onContainer
@@ -276,7 +325,7 @@ private fun ResultTiles(result: LinkTestResult) {
             StatTile(
                 "Steadiness",
                 "±${formatMs(result.latency.jitterMs)} ms",
-                if (result.latency.lossPercent > 0) "%.0f%% replies lost".format(result.latency.lossPercent) else "No replies lost",
+                if (result.latency.lossPercent > 0) "${result.latency.lossPercent.fixed(0)}% replies lost" else "No replies lost",
                 Modifier.weight(1f)
             )
         }
@@ -284,7 +333,7 @@ private fun ResultTiles(result: LinkTestResult) {
             StatTile(
                 "Link rate",
                 if (result.rxLinkMbps > 0 && result.txLinkMbps > 0) "${result.rxLinkMbps} / ${result.txLinkMbps}" else "—",
-                "Mbps down / up, as negotiated",
+                "Mbps down / up",
                 Modifier.weight(1f)
             )
             StatTile("Signal", "${result.rssi} dBm", bandLabel(result.frequency), Modifier.weight(1f))
@@ -303,7 +352,8 @@ private fun StatTile(label: String, value: String, detail: String, modifier: Mod
             Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(4.dp))
             Text(value, style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"), fontWeight = FontWeight.Bold)
-            Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // One line each, so tiles in a row always match in height.
+            Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         }
     }
 }
@@ -327,4 +377,77 @@ private fun IdleInfo(status: NetworkStatus) {
             textAlign = TextAlign.Center
         )
     }
+}
+
+/** What a returning person wants first: how it went last time, and whether that's normal. */
+@Composable
+private fun LastTestCard(points: List<com.pulsewave.app.feature.history.RouterTestPoint>) {
+    val last = points.last()
+    Surface(
+        shape = PulseWaveShapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+    ) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Last time", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        last.uploadMbps?.let { "${formatMbps(it.toDouble())} Mbps" } ?: "No reply",
+                        style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum")
+                    )
+                    Text(
+                        listOfNotNull(
+                            com.pulsewave.app.feature.history.momentLabel(last.timestamp),
+                            last.responseMs?.let { "${formatMs(it)} ms" },
+                            last.rssi?.let { "$it\u00A0dBm" }
+                        ).joinToString(" · "),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                com.pulsewave.app.feature.history.VerdictBadge(last.verdict)
+            }
+            if (points.size >= 2) {
+                com.pulsewave.app.feature.history.RouterTrendBars(
+                    points.takeLast(com.pulsewave.app.feature.history.MaxTrendBars),
+                    Modifier.fillMaxWidth().height(64.dp)
+                )
+            }
+        }
+    }
+}
+
+/** "Where are you?" so results can be compared room by room. Saved rooms come first. */
+@Composable
+private fun RoomTagger(saved: List<String>, tagged: String?, onTag: (String) -> Unit) {
+    val options = (saved + com.pulsewave.app.core.rooms.RoomSuggestions).distinctBy { it.lowercase() }.take(10)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            if (tagged == null) "Where are you?" else "Saved to $tagged. Test other rooms to compare.",
+            style = MaterialTheme.typography.titleSmall,
+            color = if (tagged == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            options.forEach { room ->
+                val selected = tagged.equals(room, ignoreCase = true)
+                FilterChip(
+                    selected = selected,
+                    onClick = { onTag(room) },
+                    label = { Text(room) },
+                    leadingIcon = if (selected) {
+                        { Icon(Icons.Rounded.Check, null, Modifier.size(FilterChipDefaults.IconSize)) }
+                    } else null
+                )
+            }
+        }
+    }
+}
+
+/** Idle (or failed), running, or done: the only changes worth animating. */
+private fun phaseOf(state: LinkTestState): Int = when (state) {
+    LinkTestState.Idle, is LinkTestState.Failed -> 0
+    is LinkTestState.Pinging, is LinkTestState.Uploading -> 1
+    is LinkTestState.Done -> 2
 }

@@ -72,19 +72,10 @@ fun WifiDetailScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            SignalMorphBlob(quality = quality, color = colors.container, size = 96.dp, spinning = false) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        "${network.rssi}",
-                        style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
-                        fontWeight = FontWeight.Black,
-                        color = colors.onContainer
-                    )
-                    Text("dBm", style = MaterialTheme.typography.labelSmall, color = colors.onContainer)
-                }
-            }
+            // Same gauge as the list row, larger: shape and fill show the level, the score sits inside.
+            com.pulsewave.app.core.designsystem.component.WifiBadge(network.rssi, size = 88.dp)
             Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     network.ssid.ifEmpty { "Hidden network" },
                     style = MaterialTheme.typography.headlineSmall,
@@ -93,7 +84,7 @@ fun WifiDetailScreen(
                 )
                 Text(quality.headline, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 Text(
-                    "Seen ${relativeTime(network.timestamp)}",
+                    "${network.rssi} dBm · seen ${relativeTime(network.timestamp)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -119,7 +110,7 @@ fun WifiDetailScreen(
             ) {
                 Icon(Icons.AutoMirrored.Rounded.ShowChart, null)
                 Spacer(Modifier.width(8.dp))
-                Text("Watch its signal", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
+                Text("Watch", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
             }
             FilledTonalIconButton(
                 onClick = onToggleFavorite,

@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -44,11 +46,58 @@ sealed interface LinkTestState {
 class LinkTestViewModel(
     networkStatusRepository: NetworkStatusRepository,
     private val probe: RouterProbe,
-    private val dao: PulseWaveDao
+    private val dao: PulseWaveDao,
+    private val rooms: com.pulsewave.app.core.rooms.RoomCheckRepository
 ) : ViewModel() {
+
+    /** Rooms already saved in Walk, offered first when tagging a result. */
+    val savedRooms: StateFlow<List<String>> = rooms.readings
+        .map { readings -> readings.sortedByDescending { it.timestamp }.map { it.name } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val _taggedRoom = MutableStateFlow<String?>(null)
+    val taggedRoom: StateFlow<String?> = _taggedRoom.asStateFlow()
+
+    /**
+     * Files the latest result under a room: History shows it, and the room's Walk spot gains the
+     * speed (or is created from this test), so rooms can be compared by what people feel.
+     */
+    fun tagRoom(name: String) {
+        val result = (_state.value as? LinkTestState.Done)?.result ?: return
+        val room = name.trim().ifEmpty { return }
+        _taggedRoom.value = room
+        viewModelScope.launch {
+            runCatching { dao.tagLatestSpeedTest(room) }
+            val current = status.value
+            val existing = rooms.readings.first().firstOrNull { it.name.equals(room, ignoreCase = true) }
+            val speed = result.uploadMbps?.toFloat()
+            val routerMs = result.latency.medianMs.takeIf { it.isFinite() }
+            // A test in a saved room is a fresh measurement there: refresh its signal and time too.
+            val reading = existing?.let {
+                if (result.rssi !in -100..-1) it.copy(speedMbps = speed, routerMs = routerMs ?: it.routerMs)
+                else it.copy(
+                    speedMbps = speed, routerMs = routerMs ?: it.routerMs, averageRssi = result.rssi,
+                    minRssi = minOf(it.minRssi, result.rssi), frequencyMhz = result.frequency,
+                    timestamp = com.pulsewave.app.core.util.nowMillis()
+                )
+            }
+                ?: com.pulsewave.app.core.rooms.RoomReading(
+                    id = com.pulsewave.app.core.util.randomId(), name = room,
+                    averageRssi = result.rssi, minRssi = result.rssi, linkSpeedMbps = result.txLinkMbps,
+                    frequencyMhz = result.frequency, ssid = current.ssid, bssid = current.bssid,
+                    samples = 1, timestamp = com.pulsewave.app.core.util.nowMillis(), routerMs = routerMs, speedMbps = speed
+                ).takeIf { result.rssi in -100..-1 }
+            reading?.let { runCatching { rooms.save(it) } }
+        }
+    }
 
     val status: StateFlow<NetworkStatus> = networkStatusRepository.getCurrentNetworkStatus(refreshIntervalMs = 2_000)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NetworkStatus.Disconnected)
+
+    /** Earlier router tests, oldest first, for "last time" and "your usual". */
+    val history: StateFlow<List<com.pulsewave.app.feature.history.RouterTestPoint>> = dao.getSpeedTestHistory()
+        .map { com.pulsewave.app.feature.history.routerTests(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _state = MutableStateFlow<LinkTestState>(LinkTestState.Idle)
     val state: StateFlow<LinkTestState> = _state.asStateFlow()
@@ -56,6 +105,7 @@ class LinkTestViewModel(
 
     fun start() {
         if (job?.isActive == true) return
+        _taggedRoom.value = null
         job = viewModelScope.launch {
             val current = status.value
             val gateway = current.gateway
@@ -102,12 +152,16 @@ class LinkTestViewModel(
                 runCatching {
                     dao.insertSpeedTest(
                         SpeedTestResultEntity(
-                            timestamp = System.currentTimeMillis(),
+                            timestamp = com.pulsewave.app.core.util.nowMillis(),
                             downloadMbps = -1f,
                             uploadMbps = upload?.toFloat() ?: -1f,
                             pingMs = latency.medianMs.takeIf { it.isFinite() } ?: -1f,
                             jitterMs = latency.jitterMs.takeIf { it.isFinite() } ?: -1f,
-                            serverName = "$ROUTER_PREFIX$gateway"
+                            serverName = "$ROUTER_PREFIX$gateway",
+                            rssi = current.rssi.takeIf { it in -100..-1 },
+                            frequencyMhz = current.frequency.takeIf { it > 0 },
+                            ssid = current.ssid.takeIf { it.isNotBlank() },
+                            lossPercent = latency.lossPercent
                         )
                     )
                 }

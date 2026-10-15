@@ -16,8 +16,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.*
 
 class AnalyzeViewModel(
     private val wifiScanner: WifiScanner,
@@ -68,16 +66,23 @@ class AnalyzeViewModel(
                 val observations = signalHistory.record(results)
                 if (observations.isEmpty()) return@collect
                 _history.value = signalHistory.snapshot()
-                persistScanResults(observations)
+                // History keeps one snapshot a minute, so live scanning doesn't flood it.
+                val now = com.pulsewave.app.core.util.nowMillis()
+                if (now - lastSnapshotAt >= SNAPSHOT_INTERVAL_MS) {
+                    lastSnapshotAt = now
+                    persistScanResults(results, now)
+                }
             }
         }
     }
 
-    private suspend fun persistScanResults(results: List<WifiNetwork>) {
-        withContext(Dispatchers.IO) {
+    private var lastSnapshotAt = 0L
+
+    private suspend fun persistScanResults(results: List<WifiNetwork>, savedAt: Long) {
+        withContext(Dispatchers.Default) {
             val rows = results.map { network ->
                 com.pulsewave.app.core.database.entities.WifiScanResultEntity(
-                    timestamp = network.timestamp,
+                    timestamp = savedAt,
                     ssid = network.ssid,
                     bssid = network.bssid,
                     rssi = network.rssi,
@@ -88,7 +93,7 @@ class AnalyzeViewModel(
             }
             try {
                 dao.insertWifiScans(rows)
-                dao.trimWifiScans(keep = 500)
+                dao.trimWifiScans(keep = 3_000)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -127,7 +132,7 @@ class AnalyzeViewModel(
             val summary = buildString {
                 appendLine("PulseWave WiFi Scan Report")
                 appendLine("=========================")
-                appendLine("Time: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}")
+                appendLine("Time: ${com.pulsewave.app.feature.history.formatDate(com.pulsewave.app.core.util.nowMillis())}")
                 appendLine("Total Networks: ${networks.size}")
                 appendLine()
                 appendLine("Networks:")
@@ -140,7 +145,7 @@ class AnalyzeViewModel(
         }
     }
 
-    private fun timestamp(): String = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
+    private fun timestamp(): String = com.pulsewave.app.feature.history.fileTimestamp()
 }
 
 private fun WifiNetwork.toExportData() = WifiExportData(
@@ -165,3 +170,5 @@ sealed interface AnalyzeUiState {
         val throttleState: com.pulsewave.app.core.wifi.ThrottleState = com.pulsewave.app.core.wifi.ThrottleState.Unknown
     ) : AnalyzeUiState
 }
+
+private const val SNAPSHOT_INTERVAL_MS = 60_000L

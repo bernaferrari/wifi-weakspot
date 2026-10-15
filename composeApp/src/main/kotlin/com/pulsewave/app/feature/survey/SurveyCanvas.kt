@@ -18,10 +18,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.pulsewave.app.core.designsystem.animateAccessibleFloat
 import com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback
-import java.io.File
 
 @Composable
 fun SurveyCanvas(
@@ -66,10 +64,15 @@ fun SurveyCanvas(
     val haptics = rememberPulseWaveHapticFeedback()
 
     Box(modifier = modifier) {
-        if (imagePath != null) AsyncImage(
-            model = File(imagePath), contentDescription = "Project floorplan",
+        val platform: com.pulsewave.app.core.platform.PlatformActions = org.koin.compose.koinInject()
+        val floorplan = remember(imagePath) { imagePath?.let(platform::loadImage) }
+        if (floorplan != null) androidx.compose.foundation.Image(
+            bitmap = floorplan, contentDescription = "Project floorplan",
             contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize()
         )
+        // Same palette and thresholds as every other signal reading in the app.
+        val heatColors = com.pulsewave.app.core.wifi.SignalQuality.entries.associateWith { com.pulsewave.app.core.designsystem.signalColors(it).accent }
+        val signalColor: (Int) -> Color = { rssi -> heatColors.getValue(com.pulsewave.app.core.wifi.SignalQuality.of(rssi)) }
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
@@ -166,9 +169,8 @@ fun SurveyCanvas(
                 )
             }
 
-            // 3. Draw Live Path Snake (Connecting lines)
-            // A) Official Points Path
-            if (points.size > 1) {
+            // 3. While walking, the trail of readings shows the route; at rest the dots stand alone.
+            if (isRecording && points.size > 1) {
                 val path = androidx.compose.ui.graphics.Path()
                 path.moveTo(points.first().x * width, points.first().y * height)
 
@@ -259,7 +261,7 @@ fun SurveyCanvas(
 
                 if (isRecording) {
                 // Heading Arrow - rotate points manually around center
-                val rad = Math.toRadians(heading.toDouble())
+                val rad = heading.toDouble() * kotlin.math.PI / 180.0
                 val cos = kotlin.math.cos(rad).toFloat()
                 val sin = kotlin.math.sin(rad).toFloat()
 
@@ -293,10 +295,3 @@ fun SurveyCanvas(
     }
 }
 
-private fun signalColor(rssi: Int): Color = when {
-    rssi > -50 -> Color(0xFF00C853)
-    rssi > -60 -> Color(0xFF64DD17)
-    rssi > -70 -> Color(0xFFFFD600)
-    rssi > -80 -> Color(0xFFFF9100)
-    else -> Color(0xFFFF1744)
-}
