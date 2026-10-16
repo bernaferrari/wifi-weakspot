@@ -54,6 +54,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,6 +67,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pulsewave.app.core.datastore.SettingsRepository
@@ -102,7 +105,6 @@ fun OverviewScreen(
     val latestSpeed by viewModel.latestSpeedTest.collectAsStateWithLifecycle()
     val knownDevices by viewModel.knownDevices.collectAsStateWithLifecycle()
     val savedTests by viewModel.savedTests.collectAsStateWithLifecycle()
-    val rooms by viewModel.rooms.collectAsStateWithLifecycle()
     val nearby by viewModel.nearby.collectAsStateWithLifecycle()
     val permissionGate: PermissionGate = koinInject()
     val permissions by permissionGate.state.collectAsStateWithLifecycle()
@@ -112,6 +114,7 @@ fun OverviewScreen(
     val scope = rememberCoroutineScope()
     val platform: com.pulsewave.app.core.platform.PlatformActions = org.koin.compose.koinInject()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    var showConnectionDetail by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -129,17 +132,19 @@ fun OverviewScreen(
                 bottom = padding.calculateBottomPadding() + 32.dp
             ),
             primary = {
-            item(key = "rooms") {
-                FindWeakSpotsCard(rooms = rooms, onClick = { haptics.click(); onNavigateToRooms() })
-            }
             item(key = "hero") {
                 ConnectionHero(
                     status = status,
                     wifiEnabled = radios.wifiEnabled,
                     onOpenWifiSettings = {
                         platform.openWifiSettings()
-                    }
+                    },
+                    onClick = { haptics.click(); showConnectionDetail = true }
                 )
+            }
+            // Fresh, live information first; the rooms check is an invitation underneath.
+            item(key = "rooms") {
+                FindWeakSpotsCard(onClick = { haptics.click(); onNavigateToRooms() })
             }
 
             val needsPermission = !permissions.canScanWifi
@@ -232,16 +237,43 @@ fun OverviewScreen(
             }
         )
     }
+
+    if (showConnectionDetail && status.hasSignalMeasurement) {
+        // Prefer the scan entry (it knows width and security); fall back to the live link.
+        val network = nearby.firstOrNull { it.bssid.equals(status.bssid, ignoreCase = true) }?.copy(rssi = status.rssi)
+            ?: com.pulsewave.app.core.wifi.WifiNetwork(status.ssid, status.bssid, status.rssi, status.frequency, 20, status.security, "", com.pulsewave.app.core.util.nowMillis())
+        val favorites by settings.favoriteBssids.collectAsState(initial = emptySet())
+        androidx.compose.material3.ModalBottomSheet(
+            onDismissRequest = { showConnectionDetail = false },
+            sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ) {
+            com.pulsewave.app.feature.analyze.WifiDetailScreen(
+                network = network,
+                onBack = { showConnectionDetail = false },
+                isFavorite = network.bssid in favorites,
+                onToggleFavorite = { scope.launch { settings.toggleFavorite(network.bssid) } },
+                onShare = {
+                    platform.share(
+                        "${network.ssid}\n${network.rssi} dBm · Ch ${com.pulsewave.app.core.wifi.frequencyToChannel(network.frequency)} · ${com.pulsewave.app.core.wifi.bandLabel(network.frequency)}",
+                        "Share network"
+                    )
+                }
+            )
+        }
+    }
 }
 
 @Composable
-private fun ConnectionHero(status: NetworkStatus, wifiEnabled: Boolean, onOpenWifiSettings: () -> Unit) {
+private fun ConnectionHero(status: NetworkStatus, wifiEnabled: Boolean, onOpenWifiSettings: () -> Unit, onClick: () -> Unit) {
     val quality = if (status.hasSignalMeasurement) SignalQuality.of(status.rssi) else null
     val colors = signalColors(quality ?: SignalQuality.DeadZone)
     val scheme = MaterialTheme.colorScheme
+    // Tapping the live card opens everything about this connection, like any network in the list.
     Card(
+        onClick = onClick,
+        enabled = quality != null,
         shape = PulseWaveShapes.extraExtraLarge,
-        colors = CardDefaults.cardColors(containerColor = scheme.surfaceContainerLow)
+        colors = CardDefaults.cardColors(containerColor = scheme.surfaceContainerLow, disabledContainerColor = scheme.surfaceContainerLow, disabledContentColor = scheme.onSurface)
     ) {
         Column(Modifier.fillMaxWidth().padding(24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -262,7 +294,10 @@ private fun ConnectionHero(status: NetworkStatus, wifiEnabled: Boolean, onOpenWi
                             else -> "Not on Wi-Fi"
                         },
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        // One line always: long verdicts shrink a little instead of wrapping.
+                        maxLines = 1,
+                        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 18.sp, maxFontSize = MaterialTheme.typography.headlineSmall.fontSize)
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
@@ -339,8 +374,9 @@ private fun SetupCard(
     }
 }
 
+/** An entry point, not a report: saved readings go stale, so Home only invites a fresh check. */
 @Composable
-private fun FindWeakSpotsCard(rooms: CoverageSummary, onClick: () -> Unit) {
+private fun FindWeakSpotsCard(onClick: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     Card(
         onClick = onClick,
@@ -350,29 +386,15 @@ private fun FindWeakSpotsCard(rooms: CoverageSummary, onClick: () -> Unit) {
         Row(Modifier.fillMaxWidth().padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Find weak spots", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text(
-                    when (rooms.rankedRooms.size) {
-                        0 -> "Find the rooms where your Wi-Fi gets weak."
-                        1 -> "1 saved room · ${rooms.headline}"
-                        else -> "${rooms.rankedRooms.size} saved rooms · ${rooms.headline}"
-                    },
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(Modifier.height(6.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        if (rooms.rankedRooms.isEmpty()) "Check your home" else "Review and recheck",
-                        style = MaterialTheme.typography.labelLarge
-                    )
+                Text("See which rooms are weak.", style = MaterialTheme.typography.bodyLarge)
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                    Text("Check your rooms", style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.width(6.dp))
                     Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, Modifier.size(18.dp))
                 }
             }
             Spacer(Modifier.width(16.dp))
-            ShapeIcon(
-                Icons.Rounded.TravelExplore, MaterialShapes.SoftBurst,
-                scheme.tertiary, scheme.onTertiary, size = 88.dp, iconSize = 40.dp
-            )
+            ShapeIcon(Icons.Rounded.TravelExplore, MaterialShapes.SoftBurst, scheme.tertiary, scheme.onTertiary, size = 72.dp, iconSize = 34.dp)
         }
     }
 }

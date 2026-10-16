@@ -12,11 +12,11 @@ enum class SignalQuality(
     val headline: String,
     val explanation: String
 ) {
-    Excellent(-55, "Excellent", "Excellent signal", "Strong signal from your router."),
-    Good(-67, "Good", "Good signal", "Solid signal for calls and video."),
-    Fair(-75, "Okay", "Okay signal", "Usable. Moving closer to the router helps."),
-    Weak(-82, "Weak", "Weak spot", "Low signal. Things may get slow here."),
-    DeadZone(Int.MIN_VALUE, "Dead zone", "Dead zone", "Barely any signal reaches here.");
+    Excellent(-55, "Excellent", "Excellent signal", "Great for anything."),
+    Good(-67, "Good", "Good signal", "Fine for video calls and streaming."),
+    Fair(-75, "Okay", "Okay signal", "Fine for browsing, calls may stutter."),
+    Weak(-82, "Weak", "Weak spot", "Expect slow pages and dropped calls."),
+    DeadZone(Int.MIN_VALUE, "Dead zone", "Dead zone", "Wi-Fi barely works here.");
 
     /** Bars to draw, 0-4. */
     val bars: Int get() = 4 - ordinal

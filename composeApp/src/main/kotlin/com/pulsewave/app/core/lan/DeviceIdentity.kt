@@ -127,7 +127,7 @@ fun LanDevice.identify(gateway: String?, phoneIp: String?): DeviceIdentity {
     val detail = listOfNotNull(
         // This phone's own name ("Galaxy S25") is the most useful detail it has.
         announcedName?.takeIf { kind == DeviceKind.ThisPhone && customName == null },
-        kind.label.takeIf { kind != DeviceKind.Unknown && !name.contains(kind.label, ignoreCase = true) && kind != DeviceKind.ThisPhone },
+        // The kind already shows as the row's icon, so the line keeps to maker and address.
         makerName?.takeIf { !name.contains(it, ignoreCase = true) },
         ipAddress
     ).joinToString(" · ")

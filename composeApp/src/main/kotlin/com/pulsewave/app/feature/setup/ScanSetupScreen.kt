@@ -113,6 +113,7 @@ fun ScanSetupScreen(
     var showRoot by remember { mutableStateOf(false) }
 
     var wasUnlimited by remember { mutableStateOf(status.isUnlimited) }
+    val startedLimited = remember { !status.isUnlimited }
     LaunchedEffect(status.isUnlimited) {
         if (status.isUnlimited && !wasUnlimited) haptics.success()
         wasUnlimited = status.isUnlimited
@@ -124,7 +125,6 @@ fun ScanSetupScreen(
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text("Faster scans") },
-                subtitle = { Text("Make network lists update live") },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") }
                 },
@@ -143,7 +143,8 @@ fun ScanSetupScreen(
         ) {
             item { StatusHero(status) }
 
-            if (status.throttlingApplies && status.canDisableThrottling && !status.rootScanning) {
+            // Steps show while there's something to do, and stay (ticked) if you finished them just now.
+            if (startedLimited && status.throttlingApplies && status.canDisableThrottling && !status.rootScanning) {
                 item {
                     SetupStep(
                         number = 1,
@@ -236,7 +237,7 @@ fun ScanSetupScreen(
 
             item {
                 Text(
-                    "Android limits how often apps may scan to save battery. Turning the limit off only affects scan frequency; PulseWave never changes it for you.",
+                    "Android limits scans to save battery. PulseWave never changes this for you.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)

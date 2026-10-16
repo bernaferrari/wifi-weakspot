@@ -119,11 +119,10 @@ fun NearbySummaryCard(
         }
     }
     val detail = when {
-        band == null -> "Tap to see channels and signal for each one."
-        best != null && best.channelNumber != channel ->
-            "Your channel $channel is shared with $sharing other${if (sharing == 1) "" else "s"}. Channel ${best.channelNumber} looks clearer."
-        sharing == 0 -> "Your channel $channel has no neighbors on it."
-        else -> "Your channel $channel is shared with $sharing other${if (sharing == 1) "" else "s"}, but it's still the clearest choice."
+        band == null -> "See channels and signal for each one."
+        best != null && best.channelNumber != channel -> "Channel ${best.channelNumber} looks clearer than yours."
+        sharing == 0 -> "Your channel $channel has it to itself."
+        else -> "Your channel $channel is still the clearest."
     }
     Card(
         onClick = onClick,

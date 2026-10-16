@@ -116,9 +116,8 @@ fun SurveyScreen(
                 title = {
                     Column {
                         Text(project?.name ?: "Floor plan", maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(
+                        if (project != null) Text(
                             when {
-                                project == null -> "Map Wi-Fi room by room"
                                 !hasTarget -> "Pick the Wi-Fi to measure"
                                 else -> listOfNotNull(
                                     project?.targetSsid?.ifBlank { "Hidden network" },
@@ -318,7 +317,7 @@ fun AnimatedEmptyState(onCreateProject: () -> Unit) {
         Text("Map your home", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Place signal readings on a floor plan to see coverage room by room. Import a photo of your plan or use a blank grid.",
+            "See your Wi-Fi on a map of your home. Use a photo of your plan or a blank grid.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center

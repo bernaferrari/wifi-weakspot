@@ -30,7 +30,7 @@ class CoverageTest {
     fun summaryRanksWeakestFirstAndExplainsHighBandDrop() {
         val summary = coverageSummary(listOf(spot("Office", -50), spot("Garage", -85), spot("Bedroom", -78)))
         assertEquals(listOf("Garage", "Bedroom", "Office"), summary.rankedRooms.map { it.name })
-        assertEquals("2 weak spots found", summary.headline)
+        assertEquals("Weak Wi-Fi in 2 rooms", summary.headline)
         assertTrue(summary.tips.first().contains("Garage"))
         assertTrue(summary.tips.any { it.contains("35 dB") })
     }

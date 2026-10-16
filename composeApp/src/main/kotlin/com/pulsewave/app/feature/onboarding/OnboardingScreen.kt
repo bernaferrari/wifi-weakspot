@@ -19,11 +19,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material.icons.rounded.Radar
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Wifi
+import androidx.compose.material.icons.rounded.MeetingRoom
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -109,7 +109,7 @@ private fun PrivacyNote() {
         Icon(Icons.Rounded.Shield, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.width(12.dp))
         Text(
-            "Android asks for location to list nearby networks. No GPS location is saved. Scan and spot history stay on this device; network tools contact the targets you choose.",
+            "Android calls this location access. PulseWave never saves where you are, and your results stay on this phone.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -141,10 +141,10 @@ private fun WelcomePage() {
         }
     }
     val colors = signalColors(quality)
-    SignalMorphBlob(quality = quality, color = colors.container, size = 200.dp) {
-        Icon(Icons.Rounded.Wifi, null, Modifier.size(80.dp), tint = colors.onContainer)
+    SignalMorphBlob(quality = quality, color = colors.container, size = 168.dp) {
+        Icon(Icons.Rounded.Wifi, null, Modifier.size(68.dp), tint = colors.onContainer)
     }
-    Spacer(Modifier.height(28.dp))
+    Spacer(Modifier.height(24.dp))
     Text(
         "Find bad Wi-Fi\nat home",
         style = MaterialTheme.typography.displaySmall,
@@ -154,7 +154,7 @@ private fun WelcomePage() {
     )
     Spacer(Modifier.height(12.dp))
     Text(
-        "PulseWave shows how strong your Wi-Fi is, where it drops, and what to do about it.",
+        "See where it drops and how to fix it.",
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center
@@ -162,12 +162,12 @@ private fun WelcomePage() {
     Spacer(Modifier.height(28.dp))
     Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
         val scheme = MaterialTheme.colorScheme
-        FeatureRow(Icons.AutoMirrored.Rounded.DirectionsWalk, MaterialShapes.SoftBurst, scheme.tertiaryContainer, scheme.onTertiaryContainer,
-            "Check every room", "See which rooms have weak Wi-Fi.")
+        FeatureRow(Icons.Rounded.MeetingRoom, MaterialShapes.SoftBurst, scheme.tertiaryContainer, scheme.onTertiaryContainer,
+            "Check every room", "Find the rooms where it drops.")
         FeatureRow(Icons.Rounded.Speed, MaterialShapes.Sunny, scheme.primaryContainer, scheme.onPrimaryContainer,
-            "Check your router", "Measure response time and missed replies locally.")
+            "Check your router", "See how quickly it answers.")
         FeatureRow(com.pulsewave.app.core.designsystem.component.NetworksIcons.Filled, MaterialShapes.Cookie7Sided, scheme.secondaryContainer, scheme.onSecondaryContainer,
-            "See every network", "Pick a clearer channel for your router.")
+            "See nearby networks", "Pick a clearer channel.")
     }
 }
 

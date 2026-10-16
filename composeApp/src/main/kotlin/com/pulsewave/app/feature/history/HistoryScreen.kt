@@ -457,14 +457,6 @@ private fun HistoryDetailSheet(entry: HistoryEntry, onDismiss: () -> Unit) {
                 }
                 itemsIndexed(entry.lines) { index, line -> DetailLine(line, segmentedShape(index, entry.lines.size, outer = 20.dp, inner = 4.dp)) }
             }
-            item(key = "footer") {
-                Text(
-                    "A saved result. Run it again to see how things are right now.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 8.dp, top = 16.dp)
-                )
-            }
         }
     }
 }

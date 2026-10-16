@@ -23,7 +23,7 @@ class DeviceIdentityTest {
         val identity = id(device("192.168.1.31", host = "living-room-tv.lan", vendor = "Samsung Electronics Co.,Ltd"))
         assertEquals("Living room TV", identity.name)
         assertEquals(DeviceKind.Tv, identity.kind)
-        assertEquals("TV or streamer · Samsung · 192.168.1.31", identity.detail)
+        assertEquals("Samsung · 192.168.1.31", identity.detail)
     }
 
     @Test fun unknownChipMakerReadsAsSmartHome() {

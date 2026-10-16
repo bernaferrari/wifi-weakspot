@@ -274,7 +274,18 @@ private fun NetworksContent(
     }
     LaunchedEffect(band) { selected = null }
     var detail by remember { mutableStateOf<WifiNetwork?>(null) }
-    val inBand = remember(networks, band) { networks.filter { band.contains(it.frequency) }.sortedByDescending { it.rssi } }
+    // Your own connection leads the list; everything else is strongest first.
+    // Rows hold their places between scans (see settledOrder), so taps land where you aim.
+    val lastOrder = remember(band) { arrayOf(emptyList<String>()) }
+    val inBand = remember(networks, band, connected.bssid) {
+        settledOrder(
+            lastOrder[0],
+            networks.filter { band.contains(it.frequency) },
+            id = { it.bssid },
+            strength = { it.rssi },
+            pinned = { connected.isConnected && it.bssid.equals(connected.bssid, ignoreCase = true) }
+        ).also { lastOrder[0] = it.map { n -> n.bssid } }
+    }
 
     val wide = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.width.let {
         with(androidx.compose.ui.platform.LocalDensity.current) { it.toDp() }
@@ -368,6 +379,7 @@ private fun NetworksContent(
         }
     }
 
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val padding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 32.dp)
         if (maxWidth >= 840.dp) {
@@ -376,7 +388,7 @@ private fun NetworksContent(
                 LazyColumn(Modifier.weight(1f), contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap), content = list)
             }
         } else {
-            LazyColumn(Modifier.fillMaxSize(), contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+            LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
                 controls()
                 list()
             }
@@ -395,7 +407,11 @@ private fun NetworksContent(
                 onBack = { detail = null },
                 isFavorite = network.bssid in favorites,
                 onToggleFavorite = { scope.launch { settings.toggleFavorite(network.bssid) } },
-                onTrack = { selected = network; showHistory = true; detail = null },
+                onTrack = {
+                    selected = network; showHistory = true; detail = null
+                    // Bring the graph into view; it lives at the top of the list.
+                    scope.launch { listState.animateScrollToItem(0) }
+                },
                 onShare = {
                     val text = buildString {
                         appendLine(network.ssid.ifEmpty { "Hidden network" })
@@ -487,7 +503,7 @@ private fun ChannelAdvice(networks: List<WifiNetwork>, band: FrequencyBand, conn
                 ". Channel ${best.channelNumber} looks clearer; you can switch in your router's settings."
         best != null -> "Channel ${best.channelNumber} is the clearest on ${band.label.replace(" ", "\u00A0")} right now."
         band == FrequencyBand.BAND_2_4 -> null
-        else -> "On ${band.label}, walls block neighbors quickly, so signal strength matters more than overlap."
+        else -> "On ${band.label}, walls block neighbors, so signal matters more than overlap."
     } ?: return
     Card(
         shape = PulseWaveShapes.large,

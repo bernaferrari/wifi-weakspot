@@ -79,9 +79,9 @@ internal data class PingSummary(val replies: List<Float?>, val local: Boolean) {
     val explanation: String = when {
         average == null -> if (local) "It may be off, asleep, or set to ignore pings." else "It may be down, or it ignores pings. Websites often do."
         lost > 0 -> "$lost of ${replies.size} replies went missing. On Wi-Fi that usually means a weak spot or interference."
-        !steady -> "Some replies took much longer than others. Busy Wi-Fi or a weaker spot can cause that; try again closer to the router."
-        local -> "Round trip from this phone to that device over your Wi-Fi."
-        else -> "Round trip from this phone, through your router, to that server and back."
+        !steady -> "Some replies were much slower. Try again closer to the router."
+        local -> "Time to reach it and back, over your Wi-Fi."
+        else -> "Time to reach it and back, through your router."
     }
 
     companion object {
@@ -182,7 +182,7 @@ fun PingResultContent(target: String, lines: List<String>, onRetry: () -> Unit, 
             ResultHero(
                 value = summary.average?.let { it.fixed(if (it < 10f) 1 else 0) } ?: "—",
                 unit = if (summary.average != null) "ms" else "",
-                label = "Average reply from $target · ${summary.answered.size} of ${summary.replies.size} answered",
+                label = "$target · ${summary.answered.size} of ${summary.replies.size} replied",
                 quality = summary.quality,
                 headline = summary.headline,
                 explanation = summary.explanation
@@ -256,7 +256,7 @@ fun DnsResultContent(query: String, lines: List<String>, onRetry: () -> Unit, on
                 quality = if (records.isEmpty()) SignalQuality.DeadZone else SignalQuality.Excellent,
                 headline = if (records.isEmpty()) "Couldn't find it" else "Found it",
                 explanation = if (records.isEmpty()) error ?: "Check the spelling, or try again; the name may not exist."
-                else "Your phone knows where to reach $query. If a site still won't load, the problem is past this step."
+                else "Your phone can find $query."
             )
         }
         if (records.isNotEmpty()) {
@@ -279,8 +279,8 @@ fun PortsResultContent(host: String, ports: List<Pair<Int, String>>, onRetry: ()
                 label = "Common services on $host",
                 quality = if (ports.isEmpty()) SignalQuality.Good else SignalQuality.Excellent,
                 headline = if (ports.isEmpty()) "Nothing open" else "It offers ${ports.size} service${if (ports.size == 1) "" else "s"}",
-                explanation = if (ports.isEmpty()) "None of the common ports answered. The device may be locked down, asleep, or not there."
-                else "Open ports are services the device offers on your network, like a settings page or file sharing."
+                explanation = if (ports.isEmpty()) "No common service answered."
+                else "Things like a settings page or file sharing."
             )
         }
         if (web != null) {

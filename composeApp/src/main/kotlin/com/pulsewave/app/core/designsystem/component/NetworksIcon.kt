@@ -15,17 +15,17 @@ import androidx.compose.ui.unit.dp
  */
 object NetworksIcons {
     private fun PathBuilder.tall() {
-        moveTo(2.5f, 19.5f); curveTo(4.5f, 19.5f, 5.5f, 5f, 8.5f, 5f); curveTo(11.5f, 5f, 12.5f, 19.5f, 14.5f, 19.5f)
+        moveTo(2.5f, 20f); curveTo(4.5f, 20f, 5.5f, 5f, 8.5f, 5f); curveTo(11.5f, 5f, 12.5f, 20f, 14.5f, 20f)
     }
     private fun PathBuilder.short() {
-        moveTo(9.5f, 19.5f); curveTo(11.5f, 19.5f, 12.8f, 10f, 15.5f, 10f); curveTo(18.2f, 10f, 19.5f, 19.5f, 21.5f, 19.5f)
+        moveTo(9.5f, 20f); curveTo(11.5f, 20f, 12.8f, 10f, 15.5f, 10f); curveTo(18.2f, 10f, 19.5f, 20f, 21.5f, 20f)
     }
 
     val Outlined: ImageVector by lazy {
         ImageVector.Builder("Networks.Outlined", 24.dp, 24.dp, 24f, 24f).apply {
             path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) { tall() }
             path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) { short() }
-            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round) { moveTo(2f, 20.5f); lineTo(22f, 20.5f) }
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round) { moveTo(2f, 20f); lineTo(22f, 20f) }
         }.build()
     }
 
@@ -33,7 +33,7 @@ object NetworksIcons {
         ImageVector.Builder("Networks.Filled", 24.dp, 24.dp, 24f, 24f).apply {
             path(fill = SolidColor(Color.Black), fillAlpha = 0.55f) { short(); close() }
             path(fill = SolidColor(Color.Black)) { tall(); close() }
-            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round) { moveTo(2f, 20.5f); lineTo(22f, 20.5f) }
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round) { moveTo(2f, 20f); lineTo(22f, 20f) }
         }.build()
     }
 }
@@ -79,28 +79,38 @@ object RouterGaugeIcon {
     }
 
     private fun build(fraction: Float): ImageVector {
-        val cx = 12f; val cy = 13.5f; val r = 8.5f
-        // The dial spans 240°, open at the bottom; angles are clockwise from the right, y down.
+        val cx = 12f; val cy = 13f; val r = 9f
+        // The dial spans 240°, open at the bottom; angles run clockwise from the right, y down.
         val start = 150f; val sweep = 240f
         fun point(deg: Float, radius: Float): Pair<Float, Float> {
             val rad = deg * kotlin.math.PI / 180.0
             return (cx + radius * kotlin.math.cos(rad)).toFloat() to (cy + radius * kotlin.math.sin(rad)).toFloat()
         }
+        val angle = start + sweep * fraction
         val (sx, sy) = point(start, r)
         val (ex, ey) = point(start + sweep, r)
-        val (nx, ny) = point(start + sweep * fraction, r - 3f)
+        val (px, py) = point(angle, r)
+        // A tapered needle that stops well short of the dial, so the two never touch.
+        val (tx, ty) = point(angle, 5.4f)
+        val (lx, ly) = point(angle - 90f, 1.6f)
+        val (rx, ry) = point(angle + 90f, 1.6f)
         return ImageVector.Builder("RouterGauge.$fraction", 24.dp, 24.dp, 24f, 24f).apply {
-            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2.2f, strokeLineCap = StrokeCap.Round) {
+            // Faint full track, then the solid reading on top of it.
+            path(stroke = SolidColor(Color.Black), strokeAlpha = 0.35f, strokeLineWidth = 2.2f, strokeLineCap = StrokeCap.Round) {
                 moveTo(sx, sy)
                 arcTo(r, r, 0f, isMoreThanHalf = true, isPositiveArc = true, x1 = ex, y1 = ey)
             }
-            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2.4f, strokeLineCap = StrokeCap.Round) {
-                moveTo(cx, cy); lineTo(nx, ny)
+            if (fraction > 0.02f) path(stroke = SolidColor(Color.Black), strokeLineWidth = 2.2f, strokeLineCap = StrokeCap.Round) {
+                moveTo(sx, sy)
+                arcTo(r, r, 0f, isMoreThanHalf = sweep * fraction > 180f, isPositiveArc = true, x1 = px, y1 = py)
             }
             path(fill = SolidColor(Color.Black)) {
-                moveTo(cx + 2.2f, cy)
-                arcTo(2.2f, 2.2f, 0f, isMoreThanHalf = true, isPositiveArc = true, x1 = cx - 2.2f, y1 = cy)
-                arcTo(2.2f, 2.2f, 0f, isMoreThanHalf = true, isPositiveArc = true, x1 = cx + 2.2f, y1 = cy)
+                moveTo(lx, ly); lineTo(tx, ty); lineTo(rx, ry); close()
+            }
+            path(fill = SolidColor(Color.Black)) {
+                moveTo(cx + 2f, cy)
+                arcTo(2f, 2f, 0f, isMoreThanHalf = true, isPositiveArc = true, x1 = cx - 2f, y1 = cy)
+                arcTo(2f, 2f, 0f, isMoreThanHalf = true, isPositiveArc = true, x1 = cx + 2f, y1 = cy)
                 close()
             }
         }.build()

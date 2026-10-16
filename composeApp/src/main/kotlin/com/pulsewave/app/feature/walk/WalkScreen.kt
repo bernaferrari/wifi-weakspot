@@ -274,6 +274,16 @@ fun WalkScreen(
                             })
                         }
                     }
+                    if (!walking && spots.rankedRooms.isEmpty()) {
+                        item(key = "empty") {
+                            Text(
+                                "Save a reading in each room to compare them.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
                     if (!walking) {
                         item(key = "floorplan") {
                             // An action, not another saved room: a plain button sets it apart from the list.
@@ -290,7 +300,7 @@ fun WalkScreen(
     }
 
     saving?.let { name ->
-        LaunchedEffect(name) { snackbar.showSnackbar("Checking $name · keep still for 4 seconds") }
+        LaunchedEffect(name) { snackbar.showSnackbar("Checking $name… keep still") }
     }
     openedSpot?.let { key ->
         val history = spots.history.filter { it.spotKey == key }.sortedByDescending { it.timestamp }
@@ -298,6 +308,14 @@ fun WalkScreen(
             readings = history, saving = saving != null,
             canRecheck = live.hasSignalMeasurement && com.pulsewave.app.core.rooms.roomNetworkKey(live.ssid, live.bssid) == history.first().networkKey,
             onRecheck = { viewModel.saveSpot(history.first().name) },
+            onRemove = {
+                openedSpot = null
+                history.forEach(viewModel::delete)
+                scope.launch {
+                    val result = snackbar.showSnackbar("Removed ${history.first().name}", actionLabel = "Undo", duration = SnackbarDuration.Short)
+                    if (result == SnackbarResult.ActionPerformed) history.forEach(viewModel::restore)
+                }
+            },
             onDismiss = { openedSpot = null }
         )
     }
@@ -518,22 +536,6 @@ private fun SavedSpots(spots: CoverageSummary, onOpen: (RoomReading) -> Unit, on
                 }
             }
         }
-        if (spots.tips.isNotEmpty()) {
-            Spacer(Modifier.height(12.dp))
-            Card(
-                shape = PulseWaveShapes.large,
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
-            ) {
-                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.Lightbulb, null)
-                        Spacer(Modifier.width(12.dp))
-                        Text(if (spots.weakRooms.isEmpty()) "Good to know" else "How to fix weak spots", style = MaterialTheme.typography.titleMedium)
-                    }
-                    spots.tips.forEach { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                }
-            }
-        }
     }
 }
 
@@ -622,12 +624,16 @@ private fun WalkSummarySheet(summary: WalkSummary, samples: List<WalkSample>, on
             Text(summary.headline, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
             WalkTimeline(samples, Modifier.fillMaxWidth().height(64.dp), maxBars = samples.size.coerceIn(20, 90), fullSession = true)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SummaryTile("Strongest", summary.bestRssi?.toString() ?: "—", "dBm", Modifier.weight(1f))
-                SummaryTile("Weakest", summary.worstRssi?.toString() ?: "—", "dBm", Modifier.weight(1f))
+                SummaryTile("Strongest", Modifier.weight(1f)) {
+                    summary.bestRssi?.let { com.pulsewave.app.core.designsystem.component.WifiBadge(it, size = 44.dp) } ?: SummaryValue("—")
+                }
+                SummaryTile("Weakest", Modifier.weight(1f)) {
+                    summary.worstRssi?.let { com.pulsewave.app.core.designsystem.component.WifiBadge(it, size = 44.dp) } ?: SummaryValue("—")
+                }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SummaryTile("Weak signal", "${(summary.weakShare * 100).fixed(0)}", "% of walk", Modifier.weight(1f))
-                SummaryTile("Router", summary.medianRouterMs?.let { "${it.fixed(0)}" } ?: "—", "ms typical", Modifier.weight(1f))
+                SummaryTile("Weak", Modifier.weight(1f)) { SummaryValue("${(summary.weakShare * 100).fixed(0)}%") }
+                SummaryTile("Router", Modifier.weight(1f)) { SummaryValue(summary.medianRouterMs?.let { "${it.fixed(0)} ms" } ?: "—") }
             }
             Text(
                 when {
@@ -649,16 +655,19 @@ private fun WalkSummarySheet(summary: WalkSummary, samples: List<WalkSample>, on
 }
 
 @Composable
-private fun SummaryTile(label: String, value: String, unit: String, modifier: Modifier = Modifier) {
+private fun SummaryTile(label: String, modifier: Modifier = Modifier, value: @Composable () -> Unit) {
     Card(shape = PulseWaveShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), modifier = modifier) {
-        Column(Modifier.padding(16.dp)) {
-            Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(value, style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = "tnum"), fontWeight = FontWeight.Bold)
-                Text(" $unit", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 4.dp))
-            }
+        // One fixed height, so badges and numbers sit on the same line in every tile.
+        Row(Modifier.fillMaxWidth().height(76.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            value()
         }
     }
+}
+
+@Composable
+private fun SummaryValue(text: String) {
+    Text(text, style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"), fontWeight = FontWeight.Bold)
 }
 
 private fun spotIcon(name: String): ImageVector {

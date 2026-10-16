@@ -1,5 +1,8 @@
 package com.pulsewave.app.feature.history
 
+import com.pulsewave.app.core.lan.identify
+import com.pulsewave.app.feature.lan.toDevice
+
 import com.pulsewave.app.core.database.entities.LanDeviceEntity
 import com.pulsewave.app.core.database.entities.SpeedTestResultEntity
 import com.pulsewave.app.core.database.entities.ToolResultEntity
@@ -14,7 +17,7 @@ import com.pulsewave.app.core.wifi.bandLabel
 import com.pulsewave.app.feature.linktest.LinkTestViewModel
 
 enum class HistoryKind(val label: String) {
-    Speed("Connection checks"),
+    Speed("Router checks"),
     Scan("Scans"),
     Tool("Tools"),
     Devices("Devices")
@@ -162,8 +165,8 @@ private fun speedEntry(test: SpeedTestResultEntity): HistoryEntry {
         verdict = verdict,
         metrics = listOfNotNull(
             response?.let { HistoryMetric(it.fixed(if (it < 10f) 1 else 0), "ms", "Response") },
-            test.jitterMs.takeIf { response != null && it >= 0f }?.let { HistoryMetric(it.fixed(1), "ms", "Jitter") },
-            test.rssi?.let { HistoryMetric("$it", "dBm", "Signal") }
+            test.jitterMs.takeIf { response != null && it >= 0f }?.let { HistoryMetric("±" + it.fixed(1), "ms", "Variation") },
+            test.lossPercent?.let { HistoryMetric(it.fixed(0), "%", "Lost") }
         ),
         facts = listOfNotNull(
             test.room?.let { "Room" to it },
@@ -171,9 +174,8 @@ private fun speedEntry(test: SpeedTestResultEntity): HistoryEntry {
             "Router" to router,
             test.frequencyMhz?.let { "Band" to bandLabel(it) },
             test.rssi?.let { "Signal" to signalText(it) },
-            test.lossPercent?.let { "Lost replies" to "${it.fixed(0)}%" }
         ),
-        note = verdict.explanation + if (test.uploadMbps >= 0f) " Earlier sender-rate estimates are hidden because delivery to the router was not verified." else ""
+        note = verdict.explanation
     )
 }
 
@@ -217,7 +219,8 @@ private fun scanEntry(rows: List<WifiScanResultEntity>): HistoryEntry {
 private fun devicesEntry(rows: List<LanDeviceEntity>): HistoryEntry {
     // Named devices first, so the summary reads "MacBook, iPad, TV" rather than addresses.
     val named = rows.sortedWith(compareBy<LanDeviceEntity> { (it.customName ?: it.announcedName ?: it.hostname) == null }.thenBy { it.ipAddress.split('.').lastOrNull()?.toIntOrNull() ?: 0 })
-    fun LanDeviceEntity.label() = customName ?: announcedName ?: hostname ?: vendor ?: ipAddress
+    // The same friendly names as the Devices screen ("Living room TV", not "living-room-tv").
+    fun LanDeviceEntity.label() = toDevice().identify(null, null).name
     return HistoryEntry(
         key = "devices-${rows.maxOf { it.lastSeen }}",
         kind = HistoryKind.Devices,

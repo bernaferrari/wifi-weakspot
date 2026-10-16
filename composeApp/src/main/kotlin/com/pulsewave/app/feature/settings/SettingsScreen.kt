@@ -182,12 +182,12 @@ fun SettingsScreen(
 
             // Background Monitoring Section
             item {
-                SettingsSection("Background") {
+                SettingsSection("Alerts") {
                     // Main toggle
                     SettingsToggle(
                         icon = Icons.Default.Radar,
                         title = "Background alerts",
-                        subtitle = "Tell me when nearby Wi-Fi changes",
+                        subtitle = "When nearby Wi-Fi changes",
                         checked = isMonitoring,
                         onCheckedChange = { enabled ->
                             haptics.click()

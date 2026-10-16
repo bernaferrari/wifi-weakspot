@@ -140,7 +140,12 @@ class WalkViewModel(
                     initial.frequency, initial.ssid, initial.bssid, clock())!!
                 repository.save(reading)
                 val previous = readings.value.filter { it.spotKey == reading.spotKey && it.id != reading.id }.maxByOrNull { it.timestamp }
-                _message.value = "Saved $trimmed · ${spotComparison(reading, previous)}"
+                _message.value = when {
+                    previous == null -> "Saved $trimmed"
+                    reading.averageRssi - previous.averageRssi >= 4 -> "Saved $trimmed · better than last time"
+                    reading.averageRssi - previous.averageRssi <= -4 -> "Saved $trimmed · worse than last time"
+                    else -> "Saved $trimmed · same as last time"
+                }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { _message.value = "Couldn't save a stable reading. Keep still on the same Wi-Fi and try again." }
             finally { _saving.value = null }

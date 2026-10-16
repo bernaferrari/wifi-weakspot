@@ -89,8 +89,14 @@ fun ToolsScreen(
     }
 
     var inputText by remember(initialTarget) { mutableStateOf(initialTarget) }
+    // Opened with a target and a check (e.g. "Check ports" on a device): just run it, once.
+    var autoRan by androidx.compose.runtime.saveable.rememberSaveable(initialTarget, initialTool) { mutableStateOf(false) }
     LaunchedEffect(initialTarget, initialTool) {
         if (initialTarget.isNotBlank()) viewModel.reset()
+        if (initialTarget.isNotBlank() && initialTool != null && !autoRan) {
+            autoRan = true
+            viewModel.startTool(initialTool, initialTarget)
+        }
     }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -272,14 +278,6 @@ fun ToolsHomeContent(
             }
         }
 
-        initialTool?.let { type ->
-            val toolId = when (type) { ToolType.PING -> "ping"; ToolType.DNS -> "dns"; ToolType.PORT_SCAN -> "portscan" }
-            tools.find { it.id == toolId }?.let { requested ->
-                Button(onClick = { onToolSelect(requested) }, enabled = hasInput, shapes = ButtonDefaults.shapes(), modifier = Modifier.fillMaxWidth()) {
-                    Text("Run ${requested.name} on $inputText")
-                }
-            }
-        }
 
         // The checks as plain questions, in one rounded group.
         Text("Check", style = MaterialTheme.typography.titleSmall, color = scheme.primary, modifier = Modifier.padding(start = 8.dp, top = 8.dp))

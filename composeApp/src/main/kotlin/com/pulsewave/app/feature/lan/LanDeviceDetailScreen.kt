@@ -94,7 +94,7 @@ fun LanDeviceDetailScreen(
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text(identity?.name ?: ip) },
-                subtitle = { Text(identity?.detail ?: ip) },
+                subtitle = { Text(identity?.kind?.takeIf { it != com.pulsewave.app.core.lan.DeviceKind.Unknown }?.label ?: ip) },
                 scrollBehavior = scrollBehavior,
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
                 actions = {
@@ -181,7 +181,7 @@ fun LanDeviceDetailScreen(
             item(key = "ports-title") { SectionTitle("Open ports") }
             if (scanTime == null) {
                 item(key = "ports-none") {
-                    Note("Not checked yet. \"Check ports\" looks for common services like web pages, file sharing and printers.")
+                    Note("Not checked yet.")
                 }
             } else if (ports.isEmpty()) {
                 item(key = "ports-closed") { Note("None of the common ports were open when checked ${momentLabel(scanTime!!).replaceFirstChar { it.lowercase() }}.") }

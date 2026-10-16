@@ -56,7 +56,8 @@ fun WifiDetailScreen(
     modifier: Modifier = Modifier,
     isFavorite: Boolean = false,
     onToggleFavorite: () -> Unit = {},
-    onTrack: () -> Unit = {},
+    /** Null hides "Watch", for places that can't show the live graph. */
+    onTrack: (() -> Unit)? = null,
     onShare: () -> Unit = {}
 ) {
     val quality = SignalQuality.of(network.rssi)
@@ -82,7 +83,7 @@ fun WifiDetailScreen(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(quality.headline, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(quality.headline, style = MaterialTheme.typography.titleMedium, color = colors.accent)
                 Text(
                     "${network.rssi} dBm · seen ${relativeTime(network.timestamp)}",
                     style = MaterialTheme.typography.bodySmall,
@@ -103,7 +104,7 @@ fun WifiDetailScreen(
         }
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(
+            if (onTrack != null) Button(
                 onClick = onTrack,
                 shapes = ButtonDefaults.shapes(),
                 modifier = Modifier.weight(1f).heightIn(min = ButtonDefaults.MediumContainerHeight)
@@ -111,7 +112,7 @@ fun WifiDetailScreen(
                 Icon(Icons.AutoMirrored.Rounded.ShowChart, null)
                 Spacer(Modifier.width(8.dp))
                 Text("Watch", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
-            }
+            } else Spacer(Modifier.weight(1f))
             FilledTonalIconButton(
                 onClick = onToggleFavorite,
                 shapes = IconButtonDefaults.shapes(),

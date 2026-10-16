@@ -54,26 +54,26 @@ private fun DrawScope.baseline(color: Color) =
     drawLine(color, Offset(0f, size.height - 1.dp.toPx()), Offset(size.width, size.height - 1.dp.toPx()), 1.dp.toPx())
 
 private val Items = listOf(
-    GuideItem("Taller is stronger", "Height is signal strength. Readings drift a little between scans, so treat them as a guide.") { c, line ->
+    GuideItem("Taller is stronger", "Height is signal strength.") { c, line ->
         baseline(line); hill(4.dp.toPx(), size.width * 0.45f, size.height * 0.85f, c[0]); hill(size.width * 0.55f, size.width - 4.dp.toPx(), size.height * 0.4f, c[1])
     },
-    GuideItem("Overlap means sharing", "Hills that overlap share airtime and slow each other down. On 2.4 GHz, channels 1, 6 and 11 don't overlap.") { c, line ->
+    GuideItem("Overlap means sharing", "Overlapping networks slow each other down. On 2.4 GHz, 1, 6 and 11 never overlap.") { c, line ->
         baseline(line); hill(4.dp.toPx(), size.width * 0.65f, size.height * 0.7f, c[0]); hill(size.width * 0.35f, size.width - 4.dp.toPx(), size.height * 0.6f, c[2])
     },
-    GuideItem("Wider uses more spectrum", "Wide networks are faster but bump into more neighbors.") { c, line ->
+    GuideItem("Wider uses more spectrum", "Faster, but bumps into more neighbors.") { c, line ->
         baseline(line); hill(size.width * 0.05f, size.width * 0.3f, size.height * 0.7f, c[1]); hill(size.width * 0.38f, size.width * 0.97f, size.height * 0.7f, c[3])
     },
-    GuideItem("+1 is the same router", "Guest and hidden networks from your router share its radio, so they share one hill.") { c, line ->
+    GuideItem("+1 is the same router", "Guest networks on your router share its hill.") { c, line ->
         baseline(line); hill(size.width * 0.15f, size.width * 0.85f, size.height * 0.55f, c[0])
         drawRoundRect(c[0].copy(alpha = 0.3f), Offset(size.width * 0.3f, 0f), Size(size.width * 0.4f, size.height * 0.32f), CornerRadius(6.dp.toPx()))
     },
-    GuideItem("Green is calm, red is crowded", "The strip under 2.4 GHz shows where many routers overlap. Tap it to see the counts.") { c, _ ->
+    GuideItem("Green is calm, red is crowded", "The strip under 2.4 GHz shows overlap. Tap it for counts.") { c, _ ->
         drawRoundRect(
             androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(Color(0xFF4CAF50), Color(0xFFFFC107), Color(0xFFE53935), Color(0xFF4CAF50))),
             Offset(0f, size.height / 2 - 4.dp.toPx()), Size(size.width, 8.dp.toPx()), CornerRadius(4.dp.toPx())
         )
     },
-    GuideItem("Flat lines are steady", "In Signal over time, a jumpy line means the link comes and goes.") { c, line ->
+    GuideItem("Flat lines are steady", "A jumpy line means the link comes and goes.") { c, line ->
         baseline(line)
         drawLine(c[1], Offset(0f, size.height * 0.3f), Offset(size.width, size.height * 0.3f), 2.dp.toPx(), cap = StrokeCap.Round)
         val zig = Path().apply {
@@ -82,7 +82,7 @@ private val Items = listOf(
         }
         drawPath(zig, c[2], style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
     },
-    GuideItem("Tap to highlight", "Tap a hill, a line or a row to highlight one network. Tap it again to clear. Press and slide to move between them.") { c, line ->
+    GuideItem("Tap to highlight", "Tap a hill or row to highlight it. Press and slide to scrub.") { c, line ->
         baseline(line); hill(4.dp.toPx(), size.width * 0.55f, size.height * 0.5f, line, fill = false); hill(size.width * 0.35f, size.width - 4.dp.toPx(), size.height * 0.85f, c[0])
     }
 )
@@ -100,7 +100,7 @@ fun ChartGuideSheet(onDismiss: () -> Unit) {
             itemsIndexed(Items) { index, item ->
                 Surface(shape = segmentedShape(index, Items.size, outer = 24.dp, inner = 6.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest) {
+                        Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceContainerHighest) {
                             Canvas(Modifier.padding(8.dp).size(width = 64.dp, height = 40.dp)) { item.draw(this, colors, line) }
                         }
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {

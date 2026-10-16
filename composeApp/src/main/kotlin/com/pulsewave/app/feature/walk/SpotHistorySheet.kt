@@ -1,55 +1,130 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
 
 package com.pulsewave.app.feature.walk
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.pulsewave.app.core.designsystem.component.WifiBadge
+import com.pulsewave.app.core.designsystem.signalColors
 import com.pulsewave.app.core.rooms.RoomReading
-import com.pulsewave.app.core.rooms.spotComparison
 import com.pulsewave.app.core.util.relativeTime
+import com.pulsewave.app.core.wifi.SignalQuality
 import com.pulsewave.app.core.wifi.bandLabel
 
-/** Persistent before/after readings for one named spot on one network. */
+/** One saved room: how it is now, how it changed, and the checks before. Newest reading first. */
 @Composable
-fun SpotHistorySheet(readings: List<RoomReading>, saving: Boolean, canRecheck: Boolean, onRecheck: () -> Unit, onDismiss: () -> Unit) {
+fun SpotHistorySheet(
+    readings: List<RoomReading>,
+    saving: Boolean,
+    canRecheck: Boolean,
+    onRecheck: () -> Unit,
+    onRemove: () -> Unit,
+    onDismiss: () -> Unit
+) {
     val current = readings.first()
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden, enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded))) {
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    val previous = readings.getOrNull(1)
+    val scheme = MaterialTheme.colorScheme
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden, enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded))
+    ) {
+        Column(
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            item {
-                Text(current.name, style = MaterialTheme.typography.headlineSmall)
-                Text(current.ssid.ifBlank { current.bssid }, style = MaterialTheme.typography.bodyMedium)
-            }
-            item {
-                Text(spotComparison(current, readings.getOrNull(1)), style = MaterialTheme.typography.titleMedium)
-                Text("Stand in the same place, hold the phone the same way, and recheck after trying one change. Different bands, access points, and traffic can affect the comparison.",
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            item {
-                Button(onClick = onRecheck, enabled = !saving && canRecheck, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text(if (saving) "Hold still · taking fresh readings…" else "Recheck this spot")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                WifiBadge(current.averageRssi, size = 72.dp)
+                Spacer(Modifier.width(16.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(current.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Saved ${relativeTime(current.timestamp)}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = scheme.onSurfaceVariant
+                    )
                 }
             }
-            if (!canRecheck) item {
-                Text("Connect to this network and allow signal readings before rechecking.",
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            // What the signal there means in practice, plus how it moved since the last check.
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(current.quality.explanation, style = MaterialTheme.typography.titleMedium, color = signalColors(current.quality).accent)
+                // One practical idea when it's weak, nothing when it's fine.
+                if (current.quality.isProblem) Text(
+                    "Try moving the router higher, more central, or closer to this room.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = scheme.onSurfaceVariant
+                )
+                if (previous != null) {
+                    val delta = current.averageRssi - previous.averageRssi
+                    Text(
+                        when {
+                            delta >= 4 -> "Better than last time"
+                            delta <= -4 -> "Worse than last time"
+                            else -> "Same as last time"
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = scheme.onSurfaceVariant
+                    )
+                }
             }
-            item { Text("Reading history", style = MaterialTheme.typography.titleSmall) }
-            items(readings, key = { it.id }) { reading ->
-                ListItem(
-                    supportingContent = {
-                        Text("${relativeTime(reading.timestamp)} · ${bandLabel(reading.frequencyMhz)} · ${reading.samples} samples\nAccess point ${reading.bssid}")
+
+            if (readings.size >= 2) {
+                Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+                    Text("Earlier checks", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
+                    val earlier = readings.drop(1)
+                    earlier.forEachIndexed { index, reading ->
+                        SegmentedListItem(
+                            onClick = {},
+                            enabled = false,
+                            shapes = ListItemDefaults.segmentedShapes(index = index, count = earlier.size),
+                            colors = ListItemDefaults.colors(containerColor = scheme.surfaceContainerHigh, disabledContentColor = scheme.onSurface),
+                            leadingContent = { WifiBadge(reading.averageRssi, size = 36.dp) },
+                            supportingContent = { Text("${relativeTime(reading.timestamp)} · ${bandLabel(reading.frequencyMhz)}") }
+                        ) { Text(reading.quality.headline) }
                     }
-                ) { Text("${reading.averageRssi} dBm · ${reading.quality.label}") }
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(
+                        onClick = onRemove,
+                        shapes = ButtonDefaults.shapes(),
+                        modifier = Modifier.weight(1f).heightIn(min = ButtonDefaults.MediumContainerHeight)
+                    ) {
+                        Icon(Icons.Rounded.DeleteOutline, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Remove", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight), maxLines = 1)
+                    }
+                    Button(
+                        onClick = onRecheck,
+                        enabled = !saving && canRecheck,
+                        shapes = ButtonDefaults.shapes(),
+                        modifier = Modifier.weight(1f).heightIn(min = ButtonDefaults.MediumContainerHeight)
+                    ) {
+                        Icon(Icons.Rounded.Refresh, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(if (saving) "Checking…" else "Recheck", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight), maxLines = 1)
+                    }
+                }
+                if (!canRecheck) Text(
+                    "Connect to ${current.ssid.ifBlank { "the same Wi-Fi" }} to check again.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.onSurfaceVariant,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
             }
         }
     }
 }
+

@@ -12,17 +12,13 @@ data class CoverageSummary(
     val tips: List<String>,
     val history: List<RoomReading> = emptyList()
 ) {
+    /** A summary of what was checked, never a claim about where the phone is right now. */
     val headline: String get() = when {
-        rankedRooms.isEmpty() -> "No spots saved yet"
-        // Okay-but-not-good spots get honest wording; "good" is reserved for good signal.
-        weakRooms.isEmpty() && rankedRooms.size == 1 && rankedRooms.first().quality == com.pulsewave.app.core.wifi.SignalQuality.Fair ->
-            "${rankedRooms.first().name} is okay"
-        weakRooms.isEmpty() && rankedRooms.size == 1 -> "${rankedRooms.first().name} looks good"
-        weakRooms.isEmpty() && rankedRooms.any { it.quality == com.pulsewave.app.core.wifi.SignalQuality.Fair } ->
-            "No weak spots; ${rankedRooms.first().name} is the weakest"
-        weakRooms.isEmpty() -> "All ${rankedRooms.size} spots look good"
-        weakRooms.size == 1 -> "1 weak spot: ${weakRooms.first().name}"
-        else -> "${weakRooms.size} weak spots found"
+        rankedRooms.isEmpty() -> "No rooms checked yet"
+        weakRooms.size == 1 -> "Weak Wi-Fi in ${weakRooms.first().name}"
+        weakRooms.size > 1 -> "Weak Wi-Fi in ${weakRooms.size} rooms"
+        rankedRooms.size == 1 -> "1 room checked, none weak"
+        else -> "${rankedRooms.size} rooms checked, none weak"
     }
 }
 
