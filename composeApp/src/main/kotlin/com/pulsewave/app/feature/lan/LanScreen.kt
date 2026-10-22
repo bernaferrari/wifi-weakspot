@@ -152,7 +152,7 @@ fun LanScreen(
                         EmptyStateWithIllustration(
                             illustration = { LanDeviceIllustration() },
                             title = if (uiState is LanUiState.Cancelled) "Stopped looking" else "No devices found",
-                            subtitle = "Some devices stay quiet when asked. Try again in a moment, or check that this phone is on your home Wi-Fi.",
+                            subtitle = "Some devices stay quiet when asked. Try again in a moment, or check that this device is on your home Wi-Fi.",
                             modifier = Modifier.padding(top = 32.dp)
                         )
                     }

@@ -58,15 +58,15 @@ fun AboutScreen(onBack: () -> Unit) {
                     Text("Version 1.0", Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
                 }
 
-                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(top = 32.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(top = 24.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ActionCard(
-                        title = "View on GitHub", body = "Open source · Apache 2.0", icon = Icons.Rounded.Code,
+                        title = "GitHub", body = "Open source · Apache 2.0", icon = Icons.Rounded.Code,
                         container = scheme.primaryContainer, content = scheme.onPrimaryContainer, badge = MaterialShapes.Cookie9Sided.toShape(),
                         shape = RoundedCornerShape(topStart = 32.dp, bottomStart = 32.dp, topEnd = 12.dp, bottomEnd = 12.dp),
                         onClick = { platform.openUrl(RepositoryUrl) }, modifier = Modifier.weight(1f)
                     )
                     ActionCard(
-                        title = "Send feedback", body = "Ideas and bug reports", icon = Icons.Rounded.Email,
+                        title = "Feedback", body = "Ideas and bug reports", icon = Icons.Rounded.Email,
                         container = scheme.secondaryContainer, content = scheme.onSecondaryContainer, badge = MaterialShapes.Clover4Leaf.toShape(),
                         shape = RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp, topEnd = 32.dp, bottomEnd = 32.dp),
                         onClick = { platform.openUrl("mailto:$FeedbackEmail?subject=WiFi%20Weakspot") }, modifier = Modifier.weight(1f)
@@ -74,14 +74,14 @@ fun AboutScreen(onBack: () -> Unit) {
                 }
 
                 Text(
-                    "Elsewhere", Modifier.fillMaxWidth().padding(start = 8.dp, top = 28.dp, bottom = 8.dp),
+                    "Elsewhere", Modifier.fillMaxWidth().padding(start = 8.dp, top = 24.dp, bottom = 8.dp),
                     style = MaterialTheme.typography.titleSmall, color = scheme.primary
                 )
                 Elsewhere(onOpen = platform::openUrl)
 
-                Column(Modifier.padding(top = 28.dp, start = 16.dp, end = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.padding(top = 24.dp, start = 16.dp, end = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Outlined.VerifiedUser, null, Modifier.size(20.dp), tint = scheme.onSurfaceVariant)
-                    Text("Your results never leave this phone.", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    Text("Your results never leave this device.", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, textAlign = TextAlign.Center)
                 }
             }
         }
@@ -94,7 +94,7 @@ private fun ActionCard(
     title: String, body: String, icon: ImageVector, container: Color, content: Color,
     badge: Shape, shape: Shape, onClick: () -> Unit, modifier: Modifier = Modifier
 ) {
-    Surface(onClick = onClick, shape = shape, color = container, contentColor = content, modifier = modifier.fillMaxHeight().heightIn(min = 152.dp)) {
+    Surface(onClick = onClick, shape = shape, color = container, contentColor = content, modifier = modifier.fillMaxHeight()) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.Top) {
                 Box(Modifier.size(48.dp).clip(badge).background(content), contentAlignment = Alignment.Center) {
@@ -103,7 +103,7 @@ private fun ActionCard(
                 Spacer(Modifier.weight(1f))
                 Icon(Icons.AutoMirrored.Filled.OpenInNew, null, Modifier.size(18.dp), tint = content.copy(alpha = 0.7f))
             }
-            Text(title, Modifier.padding(top = 16.dp), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(title, Modifier.padding(top = 8.dp), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(body, style = MaterialTheme.typography.bodySmall, color = content.copy(alpha = 0.8f), maxLines = 2)
         }
     }

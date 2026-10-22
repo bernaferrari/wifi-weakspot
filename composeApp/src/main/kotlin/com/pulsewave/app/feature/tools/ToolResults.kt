@@ -256,7 +256,7 @@ fun DnsResultContent(query: String, lines: List<String>, onRetry: () -> Unit, on
                 quality = if (records.isEmpty()) SignalQuality.DeadZone else SignalQuality.Excellent,
                 headline = if (records.isEmpty()) "Couldn't find it" else "Found it",
                 explanation = if (records.isEmpty()) error ?: "Check the spelling, or try again; the name may not exist."
-                else "Your phone can find $query."
+                else "Your device can find $query."
             )
         }
         if (records.isNotEmpty()) {

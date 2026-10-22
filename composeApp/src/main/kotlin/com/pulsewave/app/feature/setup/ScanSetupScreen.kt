@@ -213,7 +213,7 @@ fun ScanSetupScreen(
                             TextButton(onClick = { showRoot = !showRoot }) {
                                 Icon(Icons.Rounded.Terminal, null, Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text(if (showRoot) "Hide root option" else "Rooted phone? Use root instead")
+                                Text(if (showRoot) "Hide root option" else "Rooted device? Use root instead")
                             }
                         }
                         AnimatedVisibility(showRoot || status.rootScanning) {
@@ -253,7 +253,7 @@ private fun StatusHero(status: ScanSetupStatus) {
     val colors = signalColors(if (good) SignalQuality.Excellent else SignalQuality.Fair)
     val (title, body) = when {
         status.rootScanning -> "Unlimited scans with root" to "WiFi\u00A0Weakspot asks the system to scan, which Android never limits."
-        good && !status.throttlingApplies -> "No scan limit on this phone" to "This Android version lets WiFi\u00A0Weakspot scan as often as it needs."
+        good && !status.throttlingApplies -> "No scan limit on this device" to "This Android version lets WiFi\u00A0Weakspot scan as often as it needs."
         good -> "Unlimited scans are on" to "Nearby networks and channel graphs refresh every few seconds."
         !status.canDisableThrottling -> "Scans are limited" to "Android 9 allows 4 scans every 2 minutes and can't turn this off. WiFi\u00A0Weakspot reuses recent results in between."
         status.developerOptionsEnabled -> "Scans are limited" to "Android allows only 4 scans every 2 minutes, so lists lag as you move. One switch removes the limit."
@@ -348,7 +348,7 @@ private fun RootCard(
             ShapeIcon(Icons.Rounded.Terminal, MaterialShapes.Clover8Leaf, scheme.tertiary, scheme.onTertiary, size = 44.dp)
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(if (status.rootScanning) "Using root" else "Your phone is rooted", style = MaterialTheme.typography.titleMedium)
+                Text(if (status.rootScanning) "Using root" else "Your device is rooted", style = MaterialTheme.typography.titleMedium)
                 Text(
                     when {
                         status.rootScanning -> "Scans go through the system shell, so there's nothing to change in Developer options."

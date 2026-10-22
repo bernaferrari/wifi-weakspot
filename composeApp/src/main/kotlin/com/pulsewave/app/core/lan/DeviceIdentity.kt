@@ -5,7 +5,7 @@ import com.pulsewave.app.core.model.lan.LanDevice
 /** What a device most likely is, guessed from its name and maker. */
 enum class DeviceKind(val label: String) {
     Router("Router"),
-    ThisPhone("This phone"),
+    ThisPhone("This device"),
     Phone("Phone or tablet"),
     Computer("Computer"),
     Tv("TV or streamer"),
@@ -117,7 +117,7 @@ fun LanDevice.identify(gateway: String?, phoneIp: String?): DeviceIdentity {
     val name = customName?.takeIf { it.isNotBlank() }
         ?: when (kind) {
             DeviceKind.Router -> "Your router"
-            DeviceKind.ThisPhone -> "This phone"
+            DeviceKind.ThisPhone -> "This device"
             else -> null
         }
         ?: announcedName?.takeIf { it.isNotBlank() }

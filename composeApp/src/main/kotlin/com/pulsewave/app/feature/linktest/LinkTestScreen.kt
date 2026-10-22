@@ -317,7 +317,7 @@ private fun Stat(label: String, value: String, modifier: Modifier = Modifier) {
 @Composable
 private fun IdleInfo(status: NetworkStatus) {
     Text(
-        if (status.isConnected) "Keep the phone still for a few seconds." else "Connect to your Wi-Fi to start.",
+        if (status.isConnected) "Keep your device still for a few seconds." else "Connect to your Wi-Fi to start.",
         style = MaterialTheme.typography.titleMedium,
         textAlign = TextAlign.Center
     )

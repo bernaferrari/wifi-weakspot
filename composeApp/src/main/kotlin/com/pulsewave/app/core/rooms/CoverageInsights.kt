@@ -32,13 +32,13 @@ fun coverageSummary(readings: List<RoomReading>): CoverageSummary {
     val tips = buildList {
         val highBandWeak = weak.firstOrNull { it.frequencyMhz >= 5000 }
         if (highBandWeak != null) {
-            add("In ${highBandWeak.name} your phone used ${bandLabel(highBandWeak.frequencyMhz)}, which carries less far through walls. If your router can split bands, 2.4 GHz may hold on better there.")
+            add("In ${highBandWeak.name} your device used ${bandLabel(highBandWeak.frequencyMhz)}, which carries less far through walls. If your router can split bands, 2.4 GHz may hold on better there.")
         }
         if (best != null && worst != null && best !== worst && best.averageRssi - worst.averageRssi >= 20 && weak.isNotEmpty()) {
             add("Signal drops ${best.averageRssi - worst.averageRssi} dB from ${best.name} to ${worst.name}. Try a more central, raised router position, then recheck the same spots to see whether it helps.")
         }
         if (accessPoints > 1) {
-            add("Your phone used $accessPoints access points across these rooms, which may reflect different bands or access points. This alone does not confirm reliable roaming.")
+            add("Your device used $accessPoints access points across these rooms, which may reflect different bands or access points. This alone does not confirm reliable roaming.")
         }
         if (weak.isNotEmpty()) {
             add("Keep the router in the open, off the floor, and away from microwaves, mirrors, and fish tanks.")

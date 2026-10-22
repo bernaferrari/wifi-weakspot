@@ -110,7 +110,7 @@ private fun PrivacyNote() {
         Icon(Icons.Rounded.Shield, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.width(12.dp))
         Text(
-            "Android calls this location access. WiFi\u00A0Weakspot never saves where you are, and your results stay on this phone.",
+            "Android calls this location access. WiFi\u00A0Weakspot never saves where you are, and your results stay on this device.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

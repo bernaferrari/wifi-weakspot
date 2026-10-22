@@ -239,7 +239,7 @@ fun WalkScreen(
                             when {
                                 saving != null -> "Checking $saving… keep still"
                                 quality != null -> live.ssid.ifBlank { "Connected Wi-Fi" }
-                                live.isConnected -> "Your phone is connected, but no signal reading is available yet."
+                                live.isConnected -> "Your device is connected, but no signal reading is available yet."
                                 else -> "Connect to the Wi-Fi you want to check."
                             },
                             style = MaterialTheme.typography.bodyMedium,
