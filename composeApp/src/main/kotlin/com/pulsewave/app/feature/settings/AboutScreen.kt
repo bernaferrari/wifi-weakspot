@@ -58,17 +58,17 @@ fun AboutScreen(onBack: () -> Unit) {
                     Text("Version 1.0", Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
                 }
 
-                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(top = 24.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(top = 24.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                     ActionCard(
                         title = "GitHub", body = "Open source · Apache 2.0", icon = Icons.Rounded.Code,
                         container = scheme.primaryContainer, content = scheme.onPrimaryContainer, badge = MaterialShapes.Cookie9Sided.toShape(),
-                        shape = RoundedCornerShape(topStart = 32.dp, bottomStart = 32.dp, topEnd = 12.dp, bottomEnd = 12.dp),
+                        shape = RoundedCornerShape(topStart = 32.dp, bottomStart = 32.dp, topEnd = 8.dp, bottomEnd = 8.dp),
                         onClick = { platform.openUrl(RepositoryUrl) }, modifier = Modifier.weight(1f)
                     )
                     ActionCard(
                         title = "Feedback", body = "Ideas and bug reports", icon = Icons.Rounded.Email,
                         container = scheme.secondaryContainer, content = scheme.onSecondaryContainer, badge = MaterialShapes.Clover4Leaf.toShape(),
-                        shape = RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp, topEnd = 32.dp, bottomEnd = 32.dp),
+                        shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 32.dp, bottomEnd = 32.dp),
                         onClick = { platform.openUrl("mailto:$FeedbackEmail?subject=WiFi%20Weakspot") }, modifier = Modifier.weight(1f)
                     )
                 }
