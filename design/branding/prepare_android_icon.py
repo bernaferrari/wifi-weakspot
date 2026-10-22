@@ -17,7 +17,8 @@ scale = 248 / math.hypot(width, height)
 mark = mark.resize((round(width * scale), round(height * scale)), Image.Resampling.LANCZOS)
 fg = Image.new('RGBA', (432, 432))
 fg.alpha_composite(mark, ((432-mark.width)//2, (432-mark.height)//2))
-bg = Image.new('RGBA', (432, 432), '#031344')
+bg = Image.open(HERE / 'weak-spot-background-source.png').convert('RGBA').resize((432, 432), Image.Resampling.LANCZOS)
+bg.save(RES / 'drawable-nodpi/ic_launcher_background_art.png')
 fg.save(RES / 'drawable-nodpi/ic_launcher_foreground_art.png')
 fg.save(HERE / 'weak-spot-android-foreground.png')
 bg.save(HERE / 'weak-spot-android-background.png')
@@ -51,5 +52,10 @@ for index, shape in enumerate(['circle','squircle','square']):
     sheet.paste(tile,(index*320+32,40),mask)
     ImageDraw.Draw(sheet).text((index*320+32,310),shape,fill='#17213a')
 sheet.save(HERE / 'weak-spot-android-mask-preview.png')
+# Browser icons use the same launcher artwork, with embedded sizes for older browsers.
+web = HERE.parents[1] / 'webDemo/src/wasmJsMain/resources'
+launcher = Image.open(RES / 'mipmap-xxxhdpi/ic_launcher.png').convert('RGBA')
+launcher.resize((32, 32), Image.Resampling.LANCZOS).save(web / 'favicon.png')
+launcher.save(web / 'favicon.ico', sizes=[(16, 16), (32, 32), (48, 48)])
 assert math.hypot(mark.width/8, mark.height/8) <= 31.2
 print(f'432px / 108dp layers; mark {mark.width/4:.2f} × {mark.height/4:.2f}dp; safe-circle radius <31.2dp')
