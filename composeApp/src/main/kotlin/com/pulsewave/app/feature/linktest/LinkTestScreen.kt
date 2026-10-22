@@ -24,6 +24,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -124,94 +125,106 @@ fun LinkTestScreen(
             )
         }
     ) { padding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Box(Modifier.fillMaxWidth().heightIn(min = 300.dp), contentAlignment = Alignment.Center) {
-                val stageFade = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
-                val stageScale = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            // Keep the stage at the screen's vertical midpoint before scrolling. Deriving its
+            // space from the viewport also accommodates system insets and the expanded app bar.
+            val expandedTopPadding = padding.calculateTopPadding() - with(LocalDensity.current) {
+                scrollBehavior.state.heightOffset.toDp()
+            }
+            val stageHeight = (maxHeight - expandedTopPadding * 2 - 16.dp)
+                .coerceAtLeast(300.dp)
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(padding)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Box(Modifier.fillMaxWidth().height(stageHeight), contentAlignment = Alignment.Center) {
+                    val stageFade = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+                    val stageScale = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+                    AnimatedContent(
+                        // Each phase renders its own snapshot, so the leaving stage never flashes the
+                        // next state's content; ping → upload stays one continuous ring.
+                        targetState = state,
+                        contentKey = ::phaseOf,
+                        transitionSpec = { (fadeIn(stageFade) + scaleIn(stageScale, initialScale = 0.9f)) togetherWith fadeOut(stageFade) },
+                        label = "linkStage"
+                    ) { stage ->
+                        when (val s = stage) {
+                            LinkTestState.Idle, is LinkTestState.Failed -> StartButton(
+                                enabled = status.isConnected,
+                                onClick = { haptics.heavy(); viewModel.start() }
+                            )
+                            is LinkTestState.Pinging -> ProgressStage(
+                                progress = s.progress,
+                                value = s.latestMs,
+                                unit = "ms",
+                                label = "Checking response time",
+                                format = ::formatMs
+                            )
+                            is LinkTestState.Done -> ResultStage(s.result)
+                        }
+                    }
+                }
+
+                // The text under the stage eases in with it, instead of popping.
+                val below = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+                val belowSlide = MaterialTheme.motionScheme.defaultSpatialSpec<androidx.compose.ui.unit.IntOffset>()
                 AnimatedContent(
-                    // Each phase renders its own snapshot, so the leaving stage never flashes the
-                    // next state's content; ping → upload stays one continuous ring.
                     targetState = state,
                     contentKey = ::phaseOf,
-                    transitionSpec = { (fadeIn(stageFade) + scaleIn(stageScale, initialScale = 0.9f)) togetherWith fadeOut(stageFade) },
-                    label = "linkStage"
+                    transitionSpec = {
+                        (fadeIn(below) + androidx.compose.animation.slideInVertically(belowSlide) { it / 12 }) togetherWith fadeOut(below) using
+                            androidx.compose.animation.SizeTransform(clip = false)
+                    },
+                    label = "linkDetails"
                 ) { stage ->
-                    when (val s = stage) {
-                        LinkTestState.Idle, is LinkTestState.Failed -> StartButton(
-                            enabled = status.isConnected,
-                            onClick = { haptics.heavy(); viewModel.start() }
-                        )
-                        is LinkTestState.Pinging -> ProgressStage(
-                            progress = s.progress,
-                            value = s.latestMs,
-                            unit = "ms",
-                            label = "Checking response time",
-                            format = ::formatMs
-                        )
-                        is LinkTestState.Done -> ResultStage(s.result)
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                when (val s = stage) {
+                    is LinkTestState.Done -> {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(s.result.verdict.headline, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+                            // One supporting line: how it compares with before, or what it means on a first run.
+                            Text(
+                                if (history.size >= 2) com.pulsewave.app.feature.history.trendInsight(history) else s.result.verdict.explanation,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        ResultTiles(s.result, Modifier.padding(top = 8.dp))
+                        if (s.result.savedId != null) RoomTagger(savedRooms, taggedRoom, onTag = { haptics.click(); viewModel.tagRoom(it) })
+                        Button(
+                            onClick = { haptics.click(); viewModel.start() },
+                            shapes = ButtonDefaults.shapes(),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = ButtonDefaults.MediumContainerHeight)
+                        ) { Text("Test again", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight)) }
+                    }
+                    is LinkTestState.Pinging -> {
+                        OutlinedButton(onClick = { haptics.light(); viewModel.cancel() }, shapes = ButtonDefaults.shapes()) { Text("Cancel") }
+                    }
+                    is LinkTestState.Failed -> {
+                        Text(s.message, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+                    }
+                    LinkTestState.Idle -> {
+                        IdleInfo(status)
+                        if (history.isNotEmpty()) LastTestCard(history, onClick = onOpenHistory)
                     }
                 }
-            }
+                }
+                }
 
-            // The text under the stage eases in with it, instead of popping.
-            val below = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
-            val belowSlide = MaterialTheme.motionScheme.defaultSpatialSpec<androidx.compose.ui.unit.IntOffset>()
-            AnimatedContent(
-                targetState = state,
-                contentKey = ::phaseOf,
-                transitionSpec = {
-                    (fadeIn(below) + androidx.compose.animation.slideInVertically(belowSlide) { it / 12 }) togetherWith fadeOut(below) using
-                        androidx.compose.animation.SizeTransform(clip = false)
-                },
-                label = "linkDetails"
-            ) { stage ->
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            when (val s = stage) {
-                is LinkTestState.Done -> {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(s.result.verdict.headline, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
-                        // One supporting line: how it compares with before, or what it means on a first run.
-                        Text(
-                            if (history.size >= 2) com.pulsewave.app.feature.history.trendInsight(history) else s.result.verdict.explanation,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    ResultTiles(s.result, Modifier.padding(top = 8.dp))
-                    if (s.result.savedId != null) RoomTagger(savedRooms, taggedRoom, onTag = { haptics.click(); viewModel.tagRoom(it) })
-                    Button(
-                        onClick = { haptics.click(); viewModel.start() },
-                        shapes = ButtonDefaults.shapes(),
-                        modifier = Modifier.fillMaxWidth().heightIn(min = ButtonDefaults.MediumContainerHeight)
-                    ) { Text("Test again", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight)) }
+                message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                TextButton(
+                    onClick = onOpenInternetTest,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                ) {
+                    Icon(Icons.Rounded.Public, null, Modifier.size(18.dp))
+                    Text("  Test internet speed instead")
                 }
-                is LinkTestState.Pinging -> {
-                    OutlinedButton(onClick = { haptics.light(); viewModel.cancel() }, shapes = ButtonDefaults.shapes()) { Text("Cancel") }
-                }
-                is LinkTestState.Failed -> {
-                    Text(s.message, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
-                }
-                LinkTestState.Idle -> {
-                    IdleInfo(status)
-                    if (history.isNotEmpty()) LastTestCard(history, onClick = onOpenHistory)
-                }
-            }
-            }
-            }
-
-            message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            TextButton(onClick = onOpenInternetTest) {
-                Icon(Icons.Rounded.Public, null, Modifier.size(18.dp))
-                Text("  Test internet speed instead")
             }
         }
     }

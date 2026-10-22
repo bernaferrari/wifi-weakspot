@@ -46,14 +46,3 @@ Signal strength is not internet speed. The percentage uses a fixed scale from âˆ
 Coverage colors between readings are estimates, not measurements of every point. Channel overlap does not measure actual network traffic, and a quieter-looking channel does not guarantee faster Wi-Fi. Some routers and devices ignore discovery requests or pings.
 
 Android permissions and scan limits affect which networks appear and how often readings refresh. Device discovery may be unavailable through a VPN. Unrelated Wi-Fi networks with identical names can still share room history.
-
-## Built with
-
-Kotlin, Compose Multiplatform, and Material 3 Expressive. Navigation 3 handles navigation; Room and DataStore keep local records. The Kotlin/Wasm browser demo uses the shared interface with simulated network services.
-
-```text
-composeApp/src/main/kotlin   Shared screens, models, charts, and repositories
-composeApp/src/androidMain   Android Wi-Fi, sensors, discovery, and storage
-androidApp/                 Android application shell
-webDemo/                    Browser demo with simulated Wi-Fi
-```

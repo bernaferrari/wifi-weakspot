@@ -21,7 +21,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Radar
-import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material.icons.rounded.MeetingRoom
@@ -106,15 +105,12 @@ fun OnboardingScreen(
 /** Why Android will ask about location, said before the system dialog appears. */
 @Composable
 private fun PrivacyNote() {
-    Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Rounded.Shield, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.width(12.dp))
-        Text(
-            "Android calls this location access. WiFi\u00A0Weakspot never saves where you are, and your results stay on this device.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    Text(
+        "Android calls this location access. This app never saves where you are, and your results stay on this device.",
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
 }
 
 @Composable
