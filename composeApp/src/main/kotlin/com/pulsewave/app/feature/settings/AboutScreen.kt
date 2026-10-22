@@ -4,66 +4,134 @@ package com.pulsewave.app.feature.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.rounded.Code
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.Straighten
+import androidx.compose.material.icons.rounded.Email
+import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.pulsewave.app.core.designsystem.component.ShapeIcon
 import com.pulsewave.app.core.designsystem.component.SignalMorphBlob
+import com.pulsewave.app.core.designsystem.component.SocialLogos
 import com.pulsewave.app.core.wifi.SignalQuality
+import org.koin.compose.koinInject
 
-/** Who made it and what it promises, in four lines rather than four paragraphs. */
+private const val RepositoryUrl = "https://github.com/bernaferrari/wifi-weakspot"
+private const val FeedbackEmail = "bernaferrari2@gmail.com"
+
+/** The app, the code, a way to reach the author, and the author's other places. */
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
+    val platform: com.pulsewave.app.core.platform.PlatformActions = koinInject()
     val scheme = MaterialTheme.colorScheme
     Scaffold(topBar = {
         TopAppBar(title = {}, navigationIcon = {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
         })
     }) { padding ->
-        Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            SignalMorphBlob(quality = SignalQuality.Excellent, color = scheme.primaryContainer, size = 120.dp) {
-                Icon(Icons.Rounded.Wifi, null, Modifier.size(52.dp), tint = scheme.onPrimaryContainer)
-            }
-            Spacer(Modifier.height(20.dp))
-            Text("WiFi\u00A0Weakspot", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            Text("Version 1.0", style = MaterialTheme.typography.bodyLarge, color = scheme.onSurfaceVariant)
-            Spacer(Modifier.height(32.dp))
+        Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
+            Column(
+                Modifier.widthIn(max = 600.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 40.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                SignalMorphBlob(quality = SignalQuality.Excellent, color = scheme.primaryContainer, size = 140.dp) {
+                    Icon(Icons.Rounded.Wifi, null, Modifier.size(60.dp), tint = scheme.onPrimaryContainer)
+                }
+                Text("WiFi Weakspot", Modifier.padding(top = 20.dp), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                Text("Find bad Wi-Fi at home", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.titleMedium, color = scheme.onSurfaceVariant)
+                Surface(shape = CircleShape, color = scheme.surfaceContainerHighest, modifier = Modifier.padding(top = 16.dp)) {
+                    Text("Version 1.0", Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
+                }
 
-            val rows = listOf(
-                AboutRow(Icons.Rounded.Lock, MaterialShapes.Cookie6Sided, "Private", "Your results never leave this phone."),
-                AboutRow(Icons.Rounded.Straighten, MaterialShapes.Sunny, "Honest numbers", "Signal and distance are estimates. Walls change everything."),
-                AboutRow(Icons.Rounded.Code, MaterialShapes.Cookie9Sided, "Open source", "Apache License 2.0"),
-                AboutRow(Icons.Rounded.Favorite, MaterialShapes.Clover4Leaf, "Built with", "Kotlin, Compose and Material 3 Expressive")
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
-                rows.forEachIndexed { index, row ->
-                    SegmentedListItem(
-                        onClick = {},
-                        enabled = false,
-                        shapes = ListItemDefaults.segmentedShapes(index = index, count = rows.size),
-                        colors = ListItemDefaults.colors(containerColor = scheme.surfaceContainerLow, disabledContainerColor = scheme.surfaceContainerLow, disabledContentColor = scheme.onSurface),
-                        leadingContent = { ShapeIcon(row.icon, row.shape, scheme.secondaryContainer, scheme.onSecondaryContainer, size = 40.dp, iconSize = 20.dp) },
-                        supportingContent = { Text(row.body) }
-                    ) { Text(row.title, style = MaterialTheme.typography.titleMedium) }
+                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(top = 32.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ActionCard(
+                        title = "View on GitHub", body = "Open source · Apache 2.0", icon = Icons.Rounded.Code,
+                        container = scheme.primaryContainer, content = scheme.onPrimaryContainer, badge = MaterialShapes.Cookie9Sided.toShape(),
+                        shape = RoundedCornerShape(topStart = 32.dp, bottomStart = 32.dp, topEnd = 12.dp, bottomEnd = 12.dp),
+                        onClick = { platform.openUrl(RepositoryUrl) }, modifier = Modifier.weight(1f)
+                    )
+                    ActionCard(
+                        title = "Send feedback", body = "Ideas and bug reports", icon = Icons.Rounded.Email,
+                        container = scheme.secondaryContainer, content = scheme.onSecondaryContainer, badge = MaterialShapes.Clover4Leaf.toShape(),
+                        shape = RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp, topEnd = 32.dp, bottomEnd = 32.dp),
+                        onClick = { platform.openUrl("mailto:$FeedbackEmail?subject=WiFi%20Weakspot") }, modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Text(
+                    "Elsewhere", Modifier.fillMaxWidth().padding(start = 8.dp, top = 28.dp, bottom = 8.dp),
+                    style = MaterialTheme.typography.titleSmall, color = scheme.primary
+                )
+                Elsewhere(onOpen = platform::openUrl)
+
+                Column(Modifier.padding(top = 28.dp, start = 16.dp, end = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Outlined.VerifiedUser, null, Modifier.size(20.dp), tint = scheme.onSurfaceVariant)
+                    Text("Your results never leave this phone.", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, textAlign = TextAlign.Center)
                 }
             }
         }
     }
 }
 
-private class AboutRow(val icon: ImageVector, val shape: androidx.graphics.shapes.RoundedPolygon, val title: String, val body: String)
+/** A bold card for one of the two things people come here for, its icon on an Expressive shape. */
+@Composable
+private fun ActionCard(
+    title: String, body: String, icon: ImageVector, container: Color, content: Color,
+    badge: Shape, shape: Shape, onClick: () -> Unit, modifier: Modifier = Modifier
+) {
+    Surface(onClick = onClick, shape = shape, color = container, contentColor = content, modifier = modifier.fillMaxHeight().heightIn(min = 152.dp)) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Box(Modifier.size(48.dp).clip(badge).background(content), contentAlignment = Alignment.Center) {
+                    Icon(icon, null, Modifier.size(22.dp), tint = container)
+                }
+                Spacer(Modifier.weight(1f))
+                Icon(Icons.AutoMirrored.Filled.OpenInNew, null, Modifier.size(18.dp), tint = content.copy(alpha = 0.7f))
+            }
+            Text(title, Modifier.padding(top = 16.dp), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(body, style = MaterialTheme.typography.bodySmall, color = content.copy(alpha = 0.8f), maxLines = 2)
+        }
+    }
+}
+
+/** The author's profiles as one connected group: round outer ends, tight inner joins. */
+@Composable
+private fun Elsewhere(onOpen: (String) -> Unit) {
+    val links = listOf(
+        Triple("GitHub", "https://github.com/bernaferrari", SocialLogos.GitHub),
+        Triple("X", "https://x.com/bernaferrari", SocialLogos.X),
+        Triple("Reddit", "https://www.reddit.com/user/bernaferrari", SocialLogos.Reddit),
+        Triple("LinkedIn", "https://www.linkedin.com/in/bernaferrari", SocialLogos.LinkedIn)
+    )
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        links.forEachIndexed { index, (label, url, logo) ->
+            val shape = when (index) {
+                0 -> RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp, topEnd = 8.dp, bottomEnd = 8.dp)
+                links.lastIndex -> RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 28.dp, bottomEnd = 28.dp)
+                else -> RoundedCornerShape(8.dp)
+            }
+            Surface(
+                onClick = { onOpen(url) }, shape = shape,
+                color = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.weight(1f).heightIn(min = 56.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) { Icon(logo, contentDescription = label, modifier = Modifier.size(24.dp)) }
+            }
+        }
+    }
+}
