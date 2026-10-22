@@ -53,11 +53,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pulsewave.app.core.designsystem.component.segmentedShape
 import com.pulsewave.app.core.lan.DeviceKind
 import com.pulsewave.app.core.lan.identify
+import com.pulsewave.app.core.lan.deviceWebUrl
 import com.pulsewave.app.core.platform.PlatformActions
 import com.pulsewave.app.feature.history.momentLabel
 import org.koin.compose.koinInject
-
-private val WebPorts = setOf(80, 443, 8080, 8443)
 
 @Composable
 fun LanDeviceDetailScreen(
@@ -108,7 +107,7 @@ fun LanDeviceDetailScreen(
         }
     ) { padding ->
         if (current == null || identity == null) return@Scaffold
-        val webPage = identity.kind == DeviceKind.Router || ports.any { it.first in WebPorts }
+        val webPage = deviceWebUrl(ip, ports.map { it.first }, router = identity.kind == DeviceKind.Router)
         LazyColumn(
             Modifier.padding(padding).fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 32.dp)
@@ -147,10 +146,10 @@ fun LanDeviceDetailScreen(
                     }
                 }
             }
-            if (webPage) {
+            if (webPage != null) {
                 item(key = "web") {
                     FilledTonalButton(
-                        onClick = { platform.openUrl(if (ports.any { it.first == 443 } && ports.none { it.first == 80 }) "https://$ip" else "http://$ip") },
+                        onClick = { platform.openUrl(webPage) },
                         shapes = ButtonDefaults.shapes(),
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                     ) {
@@ -204,7 +203,7 @@ fun LanDeviceDetailScreen(
                     onValueChange = { name = it.take(80) },
                     label = { Text("Name") },
                     placeholder = { Text(identity?.name.orEmpty()) },
-                    supportingText = { Text("Leave empty to use the name PulseWave found.") },
+                    supportingText = { Text("Leave empty to use the name WiFi\u00A0Weakspot found.") },
                     singleLine = true
                 )
             },

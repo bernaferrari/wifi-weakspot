@@ -10,8 +10,6 @@ import com.pulsewave.app.core.platform.PlatformActions
 import com.pulsewave.app.core.platform.PlatformTheme
 import com.pulsewave.app.core.root.RootAccess
 import com.pulsewave.app.core.router.RouterProbe
-import com.pulsewave.app.core.sensors.OrientationProvider
-import com.pulsewave.app.core.sensors.StepCounter
 import com.pulsewave.app.core.tools.DnsClient
 import com.pulsewave.app.core.tools.PingClient
 import com.pulsewave.app.core.tools.PortScanner
@@ -40,8 +38,6 @@ val webModule = module {
     factory<RouterProbe> { SimulatedRouterProbe() }
 
     single<ExportManager> { ClipboardExportManager() }
-    single<StepCounter> { NoSteps }
-    single<OrientationProvider> { NoCompass }
     single<BackgroundMonitor> { SimulatedBackgroundMonitor() }
 
     single<PlatformActions> { WebPlatformActions() }

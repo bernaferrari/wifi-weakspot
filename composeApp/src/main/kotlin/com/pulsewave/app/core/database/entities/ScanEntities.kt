@@ -1,6 +1,7 @@
 package com.pulsewave.app.core.database.entities
 
 import androidx.room.Entity
+import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "wifi_scan_results")
@@ -16,9 +17,9 @@ data class WifiScanResultEntity(
     val vendor: String? = null
 )
 
-@Entity(tableName = "lan_devices")
+@Entity(tableName = "lan_devices", primaryKeys = ["networkKey", "ipAddress"])
 data class LanDeviceEntity(
-    @PrimaryKey val ipAddress: String,
+    val ipAddress: String,
     val macAddress: String?,
     val hostname: String?,
     val vendor: String?,
@@ -30,5 +31,7 @@ data class LanDeviceEntity(
     val announcedName: String? = null,
     val model: String? = null,
     /** Comma-separated mDNS service types. */
-    val services: String? = null
+    val services: String? = null,
+    /** Empty for legacy records whose connection identity was never captured. */
+    @ColumnInfo(defaultValue = "''") val networkKey: String = ""
 )

@@ -57,13 +57,13 @@ private val Items = listOf(
     GuideItem("Taller is stronger", "Height is signal strength.") { c, line ->
         baseline(line); hill(4.dp.toPx(), size.width * 0.45f, size.height * 0.85f, c[0]); hill(size.width * 0.55f, size.width - 4.dp.toPx(), size.height * 0.4f, c[1])
     },
-    GuideItem("Overlap means sharing", "Overlapping networks slow each other down. On 2.4 GHz, 1, 6 and 11 never overlap.") { c, line ->
+    GuideItem("Overlap means sharing", "Overlapping networks share spectrum and can compete for airtime.") { c, line ->
         baseline(line); hill(4.dp.toPx(), size.width * 0.65f, size.height * 0.7f, c[0]); hill(size.width * 0.35f, size.width - 4.dp.toPx(), size.height * 0.6f, c[2])
     },
-    GuideItem("Wider uses more spectrum", "Faster, but bumps into more neighbors.") { c, line ->
+    GuideItem("Wider uses more spectrum", "A wider channel occupies more spectrum and can overlap more neighbors.") { c, line ->
         baseline(line); hill(size.width * 0.05f, size.width * 0.3f, size.height * 0.7f, c[1]); hill(size.width * 0.38f, size.width * 0.97f, size.height * 0.7f, c[3])
     },
-    GuideItem("+1 is the same router", "Guest networks on your router share its hill.") { c, line ->
+    GuideItem("+1 is the same router", "Names that appear to come from the same radio share a hill.") { c, line ->
         baseline(line); hill(size.width * 0.15f, size.width * 0.85f, size.height * 0.55f, c[0])
         drawRoundRect(c[0].copy(alpha = 0.3f), Offset(size.width * 0.3f, 0f), Size(size.width * 0.4f, size.height * 0.32f), CornerRadius(6.dp.toPx()))
     },
@@ -73,7 +73,7 @@ private val Items = listOf(
             Offset(0f, size.height / 2 - 4.dp.toPx()), Size(size.width, 8.dp.toPx()), CornerRadius(4.dp.toPx())
         )
     },
-    GuideItem("Flat lines are steady", "A jumpy line means the link comes and goes.") { c, line ->
+    GuideItem("Flat lines are steady", "A jumpy line shows changing signal strength. Tap it, then slide to read individual observations.") { c, line ->
         baseline(line)
         drawLine(c[1], Offset(0f, size.height * 0.3f), Offset(size.width, size.height * 0.3f), 2.dp.toPx(), cap = StrokeCap.Round)
         val zig = Path().apply {
@@ -82,7 +82,7 @@ private val Items = listOf(
         }
         drawPath(zig, c[2], style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
     },
-    GuideItem("Tap to highlight", "Tap a hill or row to highlight it. Press and slide to scrub.") { c, line ->
+    GuideItem("Tap to highlight", "Tap a hill or row to highlight it. Drag horizontally across the chart to explore.") { c, line ->
         baseline(line); hill(4.dp.toPx(), size.width * 0.55f, size.height * 0.5f, line, fill = false); hill(size.width * 0.35f, size.width - 4.dp.toPx(), size.height * 0.85f, c[0])
     }
 )

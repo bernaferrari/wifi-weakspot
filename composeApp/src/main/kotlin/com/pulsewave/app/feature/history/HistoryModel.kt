@@ -18,6 +18,7 @@ import com.pulsewave.app.feature.linktest.LinkTestViewModel
 
 enum class HistoryKind(val label: String) {
     Speed("Router checks"),
+    Internet("Internet tests"),
     Scan("Scans"),
     Tool("Tools"),
     Devices("Devices")
@@ -62,7 +63,9 @@ fun buildHistory(
 ): List<HistoryEntry> = buildList {
     speedTests.forEach { add(speedEntry(it)) }
     addAll(withoutRepeats(sessions(scans) { it.timestamp }.map(::scanEntry)))
-    sessions(devices) { it.lastSeen }.forEach { add(devicesEntry(it)) }
+    devices.groupBy { it.networkKey }.values.forEach { networkDevices ->
+        sessions(networkDevices) { it.lastSeen }.forEach { add(devicesEntry(it)) }
+    }
     tools.forEach { add(toolEntry(it)) }
 }.sortedByDescending { it.timestamp }
 
@@ -137,7 +140,7 @@ private fun speedEntry(test: SpeedTestResultEntity): HistoryEntry {
     if (!test.isRouterTest) {
         return HistoryEntry(
             key = "speed-${test.id}",
-            kind = HistoryKind.Speed,
+            kind = HistoryKind.Internet,
             timestamp = test.timestamp,
             title = "${test.downloadMbps.fixed(0)} Mbps download",
             summary = test.serverName,
@@ -222,7 +225,7 @@ private fun devicesEntry(rows: List<LanDeviceEntity>): HistoryEntry {
     // The same friendly names as the Devices screen ("Living room TV", not "living-room-tv").
     fun LanDeviceEntity.label() = toDevice().identify(null, null).name
     return HistoryEntry(
-        key = "devices-${rows.maxOf { it.lastSeen }}",
+        key = "devices-${rows.first().networkKey}-${rows.maxOf { it.lastSeen }}",
         kind = HistoryKind.Devices,
         timestamp = rows.maxOf { it.lastSeen },
         title = if (rows.size == 1) "1 device found" else "${rows.size} devices found",

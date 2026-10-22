@@ -14,7 +14,10 @@ data class NetworkStatus(
     /** IPv4 default gateway of the Wi-Fi link, usually the router. */
     val gateway: String = "",
     val txLinkSpeed: Int = 0,
-    val rxLinkSpeed: Int = 0
+    val rxLinkSpeed: Int = 0,
+    /** Time of a direct platform link read; 0 for cached callbacks or unknown age.
+     * Android does not expose when the radio last measured this RSSI. */
+    val sampledAtMillis: Long = 0
 ) {
     val hasSignalMeasurement: Boolean get() = isConnected && rssi in -100..-1
     companion object {

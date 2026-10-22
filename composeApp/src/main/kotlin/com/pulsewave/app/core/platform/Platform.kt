@@ -29,6 +29,8 @@ interface PlatformActions {
     /** Deletes a file the app owns, such as a replaced floor plan. */
     fun deleteOwnedFile(path: String)
     fun openUrl(url: String)
+    /** Shares a picture, such as the floor-plan heatmap, through the system share sheet. */
+    fun shareImage(image: ImageBitmap, title: String)
 }
 
 /** Look-and-feel hooks that only the platform can answer. */
@@ -50,7 +52,6 @@ interface PlatformTheme {
 class PermissionLaunchers(
     val scan: ((granted: Boolean) -> Unit) -> Unit = { it(true) },
     val notifications: ((granted: Boolean) -> Unit) -> Unit = { it(true) },
-    val activityRecognition: ((granted: Boolean) -> Unit) -> Unit = { it(true) },
     /** Opens an image picker; the callback receives an app-owned path or null. */
     val pickFloorplan: (destinationId: Long, (path: String?) -> Unit) -> Unit = { _, done -> done(null) }
 )

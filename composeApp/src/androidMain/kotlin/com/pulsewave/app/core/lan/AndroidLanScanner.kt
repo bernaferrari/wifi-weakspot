@@ -49,7 +49,13 @@ class AndroidLanScanner(
 
     override suspend fun scanSubnet(subnet: String?): LanScanResult = withContext(Dispatchers.IO) {
         val local = localIpv4()
-        check(local != null) { "Connect to Wi-Fi or Ethernet before scanning local devices." }
+        check(local != null) {
+            val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val capabilities = connectivity.activeNetwork?.let(connectivity::getNetworkCapabilities)
+            if (capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true) {
+                "Device discovery isn't available through this VPN connection. Check whether your VPN allows local-network access, or try again when it is disconnected."
+            } else "Connect to Wi-Fi or Ethernet before scanning local devices."
+        }
         val hosts = if (local != null) {
             hostsOnLink(local.first, local.second).filter { it != local.first }
         } else {

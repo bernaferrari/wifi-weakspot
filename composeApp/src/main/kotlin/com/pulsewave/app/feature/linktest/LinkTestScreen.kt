@@ -2,6 +2,11 @@
 
 package com.pulsewave.app.feature.linktest
 
+import androidx.compose.material.icons.outlined.AddLocationAlt
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FilterChip
@@ -28,6 +33,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -375,28 +381,18 @@ private fun LastTestCard(points: List<com.pulsewave.app.feature.history.RouterTe
 /** "Where are you?" so results can be compared room by room. Saved rooms come first. */
 @Composable
 private fun RoomTagger(saved: List<String>, tagged: String?, onTag: (String) -> Unit) {
-    val options = (saved + com.pulsewave.app.core.rooms.RoomSuggestions).distinctBy { it.lowercase() }.take(10)
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            if (tagged == null) "Where are you?" else "Saved to $tagged",
-            style = MaterialTheme.typography.titleSmall,
-            color = if (tagged == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(horizontal = 4.dp)
-        )
-        Row(Modifier.fillMaxWidth().bleed().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            options.forEach { room ->
-                val selected = tagged.equals(room, ignoreCase = true)
-                FilterChip(
-                    selected = selected,
-                    onClick = { onTag(room) },
-                    label = { Text(room) },
-                    leadingIcon = if (selected) {
-                        { Icon(Icons.Rounded.Check, null, Modifier.size(FilterChipDefaults.IconSize)) }
-                    } else null
-                )
-            }
-        }
+    // The same "Where are you?" tiles as Rooms, behind one button, so the result screen stays calm.
+    var picking by rememberSaveable { mutableStateOf(false) }
+    FilledTonalButton(onClick = { picking = true }, shapes = ButtonDefaults.shapes()) {
+        Icon(if (tagged == null) Icons.Outlined.AddLocationAlt else Icons.Rounded.Check, null, Modifier.size(ButtonDefaults.IconSize))
+        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+        Text(if (tagged == null) "Which room is this?" else "Saved to $tagged")
     }
+    if (picking) com.pulsewave.app.feature.walk.RoomPickerSheet(
+        existing = saved,
+        onSave = { room -> picking = false; onTag(room) },
+        onDismiss = { picking = false }
+    )
 }
 
 /** Idle (or failed), running, or done: the only changes worth animating. */

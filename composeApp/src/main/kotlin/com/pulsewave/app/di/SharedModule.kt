@@ -25,7 +25,7 @@ val sharedModule = module {
     factoryOf(::SurveyViewModel)
     factoryOf(::OverviewViewModel)
     factoryOf(::LanDeviceDetailViewModel)
-    factory { WalkViewModel(get(), get(), get()) }
+    factory { WalkViewModel(get(), get()) }
 
     single { SettingsRepository(get()) }
     single { RoomCheckRepository(get()) }

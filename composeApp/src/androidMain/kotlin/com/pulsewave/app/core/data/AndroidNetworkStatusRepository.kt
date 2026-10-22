@@ -38,9 +38,13 @@ class AndroidNetworkStatusRepository(
             .build()
 
         val tracker = WifiConnectionTracker<Network, WifiInfo, LinkProperties>()
-        fun publish() {
-            val state = tracker.current()?.second
-            trySend(mapWifiInfo(state?.info, state?.link, state?.validated ?: false))
+        fun publish(sampledAtMillis: Long = 0) {
+            val current = tracker.current()
+            val state = current?.second
+            // On older Android versions link callbacks may precede capabilities.
+            // An available connection with no info yet is not a confirmed disconnect.
+            if (current != null && state?.info == null) return
+            trySend(mapWifiInfo(state?.info, state?.link, state?.validated ?: false, sampledAtMillis))
         }
         val handleAvailable: (Network) -> Unit = { network ->
             tracker.available(network)
@@ -96,7 +100,7 @@ class AndroidNetworkStatusRepository(
             // A callback may select a new connection while the platform reads above run.
             if (tracker.refresh(selection, network, info, link,
                     capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) ?: false)) {
-                publish()
+                publish(com.pulsewave.app.core.util.nowMillis())
             }
         }
         refreshSelectedWifi()
@@ -147,7 +151,7 @@ class AndroidNetworkStatusRepository(
         val (network, capabilities) = findPhysicalWifi() ?: return NetworkStatus.Disconnected
         val link = connectivityManager.getLinkProperties(network)
         return mapWifiInfo(readWifiInfo(capabilities, link), link,
-            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED))
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED), com.pulsewave.app.core.util.nowMillis())
     }
 
     private fun readWifiInfo(capabilities: NetworkCapabilities, link: LinkProperties?, previous: WifiInfo? = null): WifiInfo? {
@@ -176,7 +180,7 @@ class AndroidNetworkStatusRepository(
         return if (matchesBssid || matchesIp) primary else perNetwork
     }
 
-    private fun mapWifiInfo(info: WifiInfo?, link: LinkProperties?, validated: Boolean = false): NetworkStatus {
+    private fun mapWifiInfo(info: WifiInfo?, link: LinkProperties?, validated: Boolean = false, sampledAtMillis: Long = 0): NetworkStatus {
         if (info == null) return NetworkStatus.Disconnected
 
         val ssidRaw = info.ssid?.trim('"')
@@ -199,6 +203,7 @@ class AndroidNetworkStatusRepository(
             isConnected = true,
             security = securityType(info),
             internetValidated = validated,
+            sampledAtMillis = sampledAtMillis,
             gateway = link?.routes
                 ?.firstOrNull { it.isDefaultRoute && it.gateway is Inet4Address }
                 ?.gateway?.hostAddress.orEmpty(),

@@ -1,46 +1,43 @@
 package com.pulsewave.app.feature.analyze
 
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.focusable
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.pulsewave.app.core.designsystem.signalColors
 import com.pulsewave.app.core.wifi.SignalQuality
 import com.pulsewave.app.core.wifi.WifiNetwork
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private const val MaxLines = 8
 
-/**
- * How steady each network has been across recent scans: a flat line is a stable link,
- * a jagged one drops in and out. Shows the strongest few plus whatever is selected.
- */
+/** Recent observations on a fixed signal scale. Horizontal drags inspect; vertical drags scroll. */
 @Composable
 fun SignalHistoryGraph(
     history: Map<String, List<Int>>,
@@ -50,152 +47,158 @@ fun SignalHistoryGraph(
     modifier: Modifier = Modifier,
     onNetworkSelected: ((WifiNetwork?) -> Unit)? = null
 ) {
-    val textMeasurer = rememberTextMeasurer()
-    val palette = rememberNetworkPalette(networks, connectedBssid)
-    val colorFor: (String) -> androidx.compose.ui.graphics.Color = palette::color
+    val display = com.pulsewave.app.core.designsystem.LocalSignalDisplay.current
+    val measurer = rememberTextMeasurer()
     val scheme = MaterialTheme.colorScheme
     val zones = SignalQuality.entries.associateWith { signalColors(it).container }
     val labelStyle = MaterialTheme.typography.labelSmall
     val nameStyle = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
-
-    // One line per radio: guest and hidden names would draw the same line again.
-    val leads = remember(networks, connectedBssid) { com.pulsewave.app.core.wifi.groupByRadio(networks, connectedBssid) }
-    @Suppress("NAME_SHADOWING")
-    val selectedNetwork = selectedNetwork?.let { pick -> leads.firstOrNull { group -> group.members.any { it.bssid == pick.bssid } }?.lead }
+    var snapshotNetworks by remember { mutableStateOf<List<WifiNetwork>?>(null) }
+    val displayNetworks = snapshotNetworks ?: networks
+    val palette = rememberNetworkPalette(displayNetworks, connectedBssid)
+    val leads = remember(displayNetworks, connectedBssid) { com.pulsewave.app.core.wifi.groupByRadio(displayNetworks, connectedBssid) }
+    val selected = selectedNetwork?.let { pick -> leads.firstOrNull { group -> group.members.any { it.bssid == pick.bssid } }?.lead }
+    // Freeze the observations while inspecting: a new scan must not move the value under a finger.
+    var snapshot by remember { mutableStateOf<Map<String, List<Int>>?>(null) }
+    var cursor by remember { mutableStateOf<Float?>(null) }
+    var inspectedBssid by remember { mutableStateOf<String?>(null) }
+    val readings = snapshot ?: history
     val shown = leads.map { it.lead }
-        .filter { (history[it.bssid]?.size ?: 0) > 0 }
-        .sortedWith(
-            compareByDescending<WifiNetwork> { it.bssid == selectedNetwork?.bssid }
-                .thenByDescending { connectedBssid != null && it.bssid.equals(connectedBssid, true) }
-                .thenByDescending { it.rssi }
-        )
+        .filter { !readings[it.bssid].isNullOrEmpty() }
+        .sortedWith(compareByDescending<WifiNetwork> { it.bssid == inspectedBssid || it.bssid == selected?.bssid }
+            .thenByDescending { it.bssid.equals(connectedBssid, true) }.thenByDescending { it.rssi })
         .take(MaxLines)
-    val samples = shown.maxOfOrNull { history[it.bssid]?.size ?: 0 } ?: 0
-    val haptics = com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback()
+    val samples = shown.maxOfOrNull { readings[it.bssid]?.size ?: 0 } ?: 0
     val density = androidx.compose.ui.platform.LocalDensity.current
-    var canvasSize by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
-    /** The line closest to the finger, measured at the finger's point in time. */
-    fun nearestLine(at: Offset): WifiNetwork? {
+    var canvasSize by remember { mutableStateOf(Size.Zero) }
+    val haptics = com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback()
+    val index = cursor?.let { (it * (samples - 1)).roundToInt().coerceIn(0, (samples - 1).coerceAtLeast(0)) }
+    val inspected = shown.firstOrNull { it.bssid == inspectedBssid }
+    val value = if (index != null && inspected != null) historyValueAt(readings[inspected.bssid].orEmpty(), index, samples) else null
+    fun inspect(at: Offset, chooseLine: Boolean) {
+        if (samples < 2) return
         val plot = timelinePlot(canvasSize.width, canvasSize.height, density)
-        return shown.minByOrNull { network ->
-            val values = history[network.bssid].orEmpty()
-            if (values.isEmpty()) Float.MAX_VALUE else {
-                val index = (((at.x - plot.left) / plot.width) * (samples - 1)).toInt().coerceIn(0, samples - 1)
-                val value = values.getOrNull(index - (samples - values.size)) ?: values.first()
-                abs(plot.bottom - plot.height * dbmToFraction(value.toFloat()) - at.y)
-            }
+        val fraction = ((at.x - plot.left) / plot.width.coerceAtLeast(1f)).coerceIn(0f, 1f)
+        val atIndex = (fraction * (samples - 1)).roundToInt()
+        if (snapshot == null) { snapshot = history; snapshotNetworks = networks }
+        if (chooseLine || inspectedBssid == null) {
+            val pick = shown.filter { historyValueAt(readings[it.bssid].orEmpty(), atIndex, samples) != null }
+                .minByOrNull { network ->
+                    val rssi = historyValueAt(readings[network.bssid].orEmpty(), atIndex, samples)!!
+                    abs(plot.bottom - plot.height * dbmToFraction(rssi.toFloat()) - at.y)
+                }
+            inspectedBssid = pick?.bssid
+            if (pick != null && pick.bssid != selected?.bssid) onNetworkSelected?.invoke(pick)
         }
+        if (atIndex != index) haptics.light()
+        cursor = fraction
+    }
+    val inspectLatest by rememberUpdatedState(::inspect)
+    fun inspectIndex(requested: Int): Boolean {
+        if (samples < 2) return false
+        if (snapshot == null) { snapshot = history; snapshotNetworks = networks }
+        if (inspectedBssid == null) inspectedBssid = selected?.bssid
+            ?: shown.firstOrNull { it.bssid.equals(connectedBssid, true) }?.bssid ?: shown.firstOrNull()?.bssid
+        cursor = requested.coerceIn(0, samples - 1) / (samples - 1f)
+        return true
     }
 
-    if (samples < 2) {
-        Box(modifier, contentAlignment = Alignment.Center) {
-            Text(
-                "Collecting readings… The lines appear after a couple of scans.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = scheme.onSurfaceVariant
-            )
-        }
-        return
-    }
-
-    Canvas(
-        modifier
-            .onSizeChanged { canvasSize = androidx.compose.ui.geometry.Size(it.width.toFloat(), it.height.toFloat()) }
-            .semantics {
-                contentDescription = "Signal over the last $samples scans for ${shown.size} networks."
+    Column(modifier) {
+        if (samples < 2) {
+            Box(Modifier.weight(1f).fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                Text("Collecting readings… The lines appear after a couple of scans.", style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
             }
-            .pointerInput(shown, history) {
-                detectTapGestures { tap -> onNetworkSelected?.invoke(nearestLine(tap)) }
+        } else Canvas(
+            Modifier.weight(1f).fillMaxWidth()
+                .onSizeChanged { canvasSize = Size(it.width.toFloat(), it.height.toFloat()) }
+                .semantics {
+                    contentDescription = "Signal history for ${shown.size} networks. Tap a line, drag horizontally, or use arrow keys to inspect readings."
+                    progressBarRangeInfo = ProgressBarRangeInfo((index ?: samples - 1).toFloat(), 0f..(samples - 1).toFloat(), (samples - 2).coerceAtLeast(0))
+                    setProgress { inspectIndex(it.roundToInt()) }
+                }
+                .onKeyEvent {
+                    if (it.type != KeyEventType.KeyDown) false else when (it.key) {
+                        Key.DirectionLeft -> inspectIndex((index ?: samples - 1) - 1)
+                        Key.DirectionRight -> inspectIndex((index ?: samples - 1) + 1)
+                        else -> false
+                    }
+                }
+                .focusable()
+                .pointerInput(Unit) { detectTapGestures { inspectLatest(it, true) } }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragStart = { inspectLatest(it, true) },
+                        onHorizontalDrag = { change, _ -> change.consume(); inspectLatest(change.position, false) }
+                    )
+                }
+        ) {
+            val plot = timelinePlot(size.width, size.height, this)
+            drawZones(plot, zones)
+            drawQualityLabels(plot, measurer, labelStyle.copy(color = scheme.onSurfaceVariant))
+            listOf("older" to plot.left, "latest" to plot.right).forEach { (label, x) ->
+                val layout = measurer.measure(label, labelStyle.copy(color = scheme.onSurfaceVariant))
+                drawText(layout, topLeft = Offset(if (label == "latest") x - layout.size.width else x, plot.bottom + 6.dp.toPx()))
             }
-            .pointerInput(shown, history) {
-                // Press and hold, then slide up and down to move between lines that sit close together.
-                var last: String? = null
-                detectDragGesturesAfterLongPress(onDragStart = { at ->
-                    last = null
-                    nearestLine(at)?.let { last = it.bssid; haptics.light(); onNetworkSelected?.invoke(it) }
-                }) { change, _ ->
-                    val pick = nearestLine(change.position) ?: return@detectDragGesturesAfterLongPress
-                    if (pick.bssid != last) { last = pick.bssid; haptics.light(); onNetworkSelected?.invoke(pick) }
+            val step = plot.width / (samples - 1)
+            val focus = inspectedBssid.takeIf { cursor != null } ?: selected?.bssid
+            val labels = mutableListOf<Rect>()
+            shown.reversed().forEach { network ->
+                val values = readings[network.bssid].orEmpty()
+                val offset = samples - values.size
+                val emphasized = network.bssid == focus || network.bssid.equals(connectedBssid, true)
+                val color = palette.color(network.bssid).copy(alpha = if (focus != null && network.bssid != focus) 0.25f else 1f)
+                fun point(i: Int) = Offset(plot.left + (i + offset) * step, plot.bottom - plot.height * dbmToFraction(values[i].toFloat()))
+                val path = Path().apply {
+                    moveTo(point(0).x, point(0).y)
+                    for (i in 1 until values.size) {
+                        val previous = point(i - 1); val current = point(i); val midX = (previous.x + current.x) / 2
+                        cubicTo(midX, previous.y, midX, current.y, current.x, current.y)
+                    }
+                }
+                drawPath(path, color, style = Stroke((if (emphasized) 3f else 2f).dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+                drawCircle(color, (if (emphasized) 5f else 3.5f).dp.toPx(), point(values.lastIndex))
+                if (index != null) historyValueAt(values, index, samples)?.let { rssi ->
+                    drawCircle(color, 5.dp.toPx(), Offset(plot.left + index * step, plot.bottom - plot.height * dbmToFraction(rssi.toFloat())))
                 }
             }
-    ) {
-        val plot = timelinePlot(size.width, size.height, this)
-        drawZones(plot, zones)
-        drawQualityLabels(plot, textMeasurer, labelStyle.copy(color = scheme.onSurfaceVariant.copy(alpha = 0.7f)))
-        listOf("older" to plot.left, "now" to plot.right).forEach { (label, x) ->
-            val layout = textMeasurer.measure(label, labelStyle.copy(color = scheme.onSurfaceVariant))
-            val left = if (label == "now") x - layout.size.width else x
-            drawText(layout, topLeft = Offset(left, plot.bottom + 6.dp.toPx()))
-        }
-
-        val step = plot.width / (samples - 1)
-        val dim = selectedNetwork != null
-        val labels = mutableListOf<Rect>()
-        // Draw back to front so the most important line sits on top.
-        shown.reversed().forEach { network ->
-            val values = history[network.bssid].orEmpty()
-            val offset = samples - values.size
-            val isYou = connectedBssid != null && network.bssid.equals(connectedBssid, true)
-            val emphasized = network.bssid == selectedNetwork?.bssid || isYou
-            val color = colorFor(network.bssid).copy(alpha = if (dim && network.bssid != selectedNetwork?.bssid) 0.25f else 1f)
-            fun point(i: Int) = Offset(
-                plot.left + (i + offset) * step,
-                plot.bottom - plot.height * dbmToFraction(values[i].toFloat())
-            )
-            val path = Path().apply {
-                val first = point(0)
-                moveTo(first.x, first.y)
-                for (i in 1 until values.size) {
-                    val previous = point(i - 1)
-                    val current = point(i)
-                    val midX = (previous.x + current.x) / 2
-                    cubicTo(midX, previous.y, midX, current.y, current.x, current.y)
-                }
+            if (index != null) {
+                val x = plot.left + index * step
+                drawLine(scheme.onSurface.copy(alpha = 0.65f), Offset(x, plot.top), Offset(x, plot.bottom), strokeWidth = 1.dp.toPx())
             }
-            if (emphasized) {
-                // A soft area under the lines that matter, fading to the floor.
-                val area = Path().apply {
-                    addPath(path)
-                    lineTo(point(values.lastIndex).x, plot.bottom)
-                    lineTo(point(0).x, plot.bottom)
-                    close()
-                }
-                val top = values.indices.minOf { point(it).y }
-                drawPath(area, androidx.compose.ui.graphics.Brush.verticalGradient(listOf(color.copy(alpha = 0.28f * color.alpha), color.copy(alpha = 0f)), startY = top, endY = plot.bottom))
+            shown.forEach { network ->
+                if (focus != null && network.bssid != focus) return@forEach
+                val values = readings[network.bssid].orEmpty()
+                val name = network.ssid.ifEmpty { "Hidden network" } + if (network.bssid.equals(connectedBssid, true)) " (you)" else ""
+                val layout = measurer.measure(name, nameStyle.copy(color = palette.color(network.bssid)), maxLines = 1,
+                    overflow = TextOverflow.Ellipsis, constraints = Constraints(maxWidth = (plot.width - 16.dp.toPx()).toInt().coerceAtLeast(1)))
+                val end = Offset(plot.right - layout.size.width / 2f - 8.dp.toPx(), plot.bottom - plot.height * dbmToFraction(values.last().toFloat()))
+                val bounds = Rect(plot.left + 4.dp.toPx(), 4.dp.toPx(), plot.right - 4.dp.toPx(), plot.bottom)
+                val above = chartLabelRect(end, Size(layout.size.width.toFloat(), layout.size.height.toFloat()), bounds, 6.dp.toPx())
+                val below = above.translate(0f, layout.size.height + 12.dp.toPx())
+                val rect = listOf(above, below).firstOrNull { it.bottom <= plot.bottom && labels.none { other -> other.overlaps(it) } } ?: return@forEach
+                labels += rect
+                drawRoundRect(scheme.surfaceContainerLow.copy(alpha = 0.92f), rect.topLeft - Offset(4.dp.toPx(), 1.dp.toPx()),
+                    Size(rect.width + 8.dp.toPx(), rect.height + 2.dp.toPx()), CornerRadius(6.dp.toPx()))
+                drawText(layout, topLeft = rect.topLeft)
             }
-            drawPath(path, color, style = Stroke((if (emphasized) 3f else 2f).dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
-            val end = point(values.lastIndex)
-            drawCircle(color, radius = (if (emphasized) 5f else 3.5f).dp.toPx(), center = end)
         }
-        // Names at the newest end, front to back, skipping collisions.
-        shown.forEach { network ->
-            val values = history[network.bssid].orEmpty()
-            val isYou = connectedBssid != null && network.bssid.equals(connectedBssid, true)
-            if (dim && network.bssid != selectedNetwork?.bssid && !isYou) return@forEach
-            val name = network.ssid.ifEmpty { "Hidden" }.let { if (it.length > 16) it.take(15) + "…" else it } +
-                if (isYou) " (you)" else ""
-            val layout = textMeasurer.measure(name, nameStyle.copy(color = colorFor(network.bssid)), maxLines = 1, overflow = TextOverflow.Clip)
-            val y = plot.bottom - plot.height * dbmToFraction(values.last().toFloat())
-            val above = Rect(
-                Offset(plot.right - layout.size.width - 10.dp.toPx(), y - layout.size.height - 6.dp.toPx()),
-                Size(layout.size.width.toFloat(), layout.size.height.toFloat())
-            )
-            // Prefer above the line end; fall back to below when another name is there.
-            val rect = listOf(above, above.translate(0f, layout.size.height + 12.dp.toPx()))
-                .firstOrNull { candidate -> labels.none { it.overlaps(candidate) } && candidate.top >= 0f && candidate.bottom <= size.height }
-                ?: return@forEach
-            labels += rect
-            drawRoundRect(
-                scheme.surfaceContainerLow.copy(alpha = 0.85f),
-                topLeft = rect.topLeft - Offset(4.dp.toPx(), 1.dp.toPx()),
-                size = Size(rect.width + 8.dp.toPx(), rect.height + 2.dp.toPx()),
-                cornerRadius = CornerRadius(6.dp.toPx())
-            )
-            drawText(layout, topLeft = rect.topLeft)
+        Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(inspected?.ssid?.ifBlank { "Hidden network" } ?: "Explore signal history", style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    when {
+                        index == null -> "Tap a line, then slide to compare readings"
+                        value == null -> "No reading at this point"
+                        else -> "${SignalQuality.of(value).label} · ${display.reading(value)} · Paused · " + if (index == samples - 1) "latest reading" else "${samples - 1 - index} reading${if (samples - 1 - index == 1) "" else "s"} back"
+                    },
+                    style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant
+                )
+            }
+            if (cursor != null) TextButton(onClick = { cursor = null; snapshot = null; snapshotNetworks = null; inspectedBssid = null; onNetworkSelected?.invoke(null) }) { Text("Live") }
         }
     }
 }
 
 private fun timelinePlot(width: Float, height: Float, density: Density): Rect = with(density) {
-    Rect(left = QualityGutter.toPx(), top = 12.dp.toPx(), right = width - 12.dp.toPx(), bottom = height - 26.dp.toPx())
+    Rect(QualityGutter.toPx(), 12.dp.toPx(), (width - 12.dp.toPx()).coerceAtLeast(QualityGutter.toPx() + 1f), (height - 26.dp.toPx()).coerceAtLeast(13.dp.toPx()))
 }

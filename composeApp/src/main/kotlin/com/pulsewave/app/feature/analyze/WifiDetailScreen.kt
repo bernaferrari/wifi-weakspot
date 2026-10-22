@@ -73,7 +73,7 @@ fun WifiDetailScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // Same gauge as the list row, larger: shape and fill show the level, the score sits inside.
+            // The same Wi-Fi symbol and quality shape as the network list.
             com.pulsewave.app.core.designsystem.component.WifiBadge(network.rssi, size = 88.dp)
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -95,10 +95,14 @@ fun WifiDetailScreen(
         Card(shape = PulseWaveShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
             Column(Modifier.padding(vertical = 8.dp)) {
                 Fact("Channel", "${frequencyToChannel(network.frequency)} · ${bandLabel(network.frequency)}")
-                Fact("Width", if (network.is80Plus80) "80 + 80 MHz" else "${network.channelWidth} MHz")
+                Fact("Width", when {
+                    network.channelWidth <= 0 -> "Not available"
+                    network.is80Plus80 -> "80 + 80 MHz"
+                    else -> "${network.channelWidth} MHz"
+                })
                 Fact("Security", when (security) { "" -> "Unknown"; "Open" -> "None (no password)"; else -> security })
                 getVendorName(network.bssid)?.let { Fact("Made by", it) }
-                Fact("Distance", formatDistance(estimateDistanceMeters(network.rssi, network.frequency)))
+                Fact("Distance estimate", formatDistance(estimateDistanceMeters(network.rssi, network.frequency)))
                 Fact("Address", network.bssid.uppercase())
             }
         }

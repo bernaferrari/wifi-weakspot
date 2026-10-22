@@ -67,7 +67,7 @@ internal data class PingSummary(val replies: List<Float?>, val local: Boolean) {
         average < (if (local) 80f else 200f) -> SignalQuality.Fair
         else -> SignalQuality.Weak
     }
-    /** Wi-Fi shows trouble as uneven replies before it shows slow ones. */
+    /** Reply variation can come from any part of the path, or the host itself. */
     val steady: Boolean = answered.size < 2 || (answered.max() - answered.min()) <= maxOf(5f, (average ?: 0f) * 0.8f)
     val headline: String = when (quality) {
         SignalQuality.DeadZone -> "Didn't answer"
@@ -78,10 +78,10 @@ internal data class PingSummary(val replies: List<Float?>, val local: Boolean) {
     }
     val explanation: String = when {
         average == null -> if (local) "It may be off, asleep, or set to ignore pings." else "It may be down, or it ignores pings. Websites often do."
-        lost > 0 -> "$lost of ${replies.size} replies went missing. On Wi-Fi that usually means a weak spot or interference."
-        !steady -> "Some replies were much slower. Try again closer to the router."
-        local -> "Time to reach it and back, over your Wi-Fi."
-        else -> "Time to reach it and back, through your router."
+        lost > 0 -> "$lost of ${replies.size} replies went missing. Compare a router check with an internet host to help locate the problem; this test alone cannot identify the cause."
+        !steady -> "Reply times varied. Compare a router check here and near the router, then test an internet host."
+        local -> "Time to reach this device and back. The device itself can affect the result."
+        else -> "Time to reach this host and back. Your connection, the route and the host all affect the result."
     }
 
     companion object {

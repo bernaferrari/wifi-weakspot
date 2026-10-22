@@ -7,10 +7,9 @@ import com.pulsewave.app.core.database.entities.SurveyPointEntity
 import com.pulsewave.app.core.database.entities.SurveyProjectEntity
 import com.pulsewave.app.core.export.ExportManager
 import com.pulsewave.app.core.export.csvField
-import com.pulsewave.app.core.sensors.OrientationProvider
-import com.pulsewave.app.core.sensors.StepCounter
 import com.pulsewave.app.core.wifi.WifiNetwork
 import com.pulsewave.app.core.wifi.WifiScanner
+import com.pulsewave.app.core.wifi.collectFreshLinkSamples
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -27,11 +26,9 @@ class SurveyViewModel(
     private val dao: PulseWaveDao,
     private val exportManager: ExportManager
 ) : ViewModel(), KoinComponent {
-    private val stepCounter: StepCounter by inject()
-    private val orientationProvider: OrientationProvider by inject()
     private val networkStatus: com.pulsewave.app.core.domain.NetworkStatusRepository by inject()
 
-    enum class SurveyMode { AUTO_SAMPLE, MANUAL_ANCHOR }
+
 
     val projects = dao.getAllProjects().stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     private val _currentProjectId = MutableStateFlow<Long?>(null)
@@ -54,31 +51,27 @@ class SurveyViewModel(
 
     val availableNetworks = wifiScanner.scanResults
     val isScanning = wifiScanner.isScanning
-    private val _surveyMode = MutableStateFlow(SurveyMode.MANUAL_ANCHOR)
-    val surveyMode = _surveyMode.asStateFlow()
-    private val _isRecording = MutableStateFlow(false)
-    val isRecording = _isRecording.asStateFlow()
-    private val _currentHeading = MutableStateFlow(0f)
-    val currentHeading = _currentHeading.asStateFlow()
     private val _currentPosition = MutableStateFlow<SurveyPosition?>(null)
     val currentPosition = _currentPosition.asStateFlow()
-    private val _ghostPath = MutableStateFlow<List<Pair<Float, Float>>>(emptyList())
-    val ghostPath = _ghostPath.asStateFlow()
     private val _isSampling = MutableStateFlow(false)
     val isSampling = _isSampling.asStateFlow()
+    /** How long the last successful reading took; the measuring pie fills over this. */
+    private val _expectedReadingMillis = MutableStateFlow(LinkReadingMillis)
+    val expectedReadingMillis = _expectedReadingMillis.asStateFlow()
+    /** True while a reading comes from the live link (known length); false while waiting on a scan. */
+    private val _readingIsTimed = MutableStateFlow(true)
+    val readingIsTimed = _readingIsTimed.asStateFlow()
     private val _message = MutableStateFlow<String?>(null)
     val message = _message.asStateFlow()
 
     private val _isUpdatingProject = MutableStateFlow(false)
     val isUpdatingProject = _isUpdatingProject.asStateFlow()
     private val projectWrites = Mutex()
-    private var sensorJob: Job? = null
     private var contextGeneration = 0L
-    private var lastAutoSampleAt = 0L
     private val sampleRequests = Channel<SampleRequest>(Channel.CONFLATED)
     private data class SampleRequest(
         val projectId: Long, val floorId: Int, val targetBssid: String,
-        val position: SurveyPosition, val generation: Long, val automatic: Boolean
+        val position: SurveyPosition, val generation: Long
     )
 
     init {
@@ -93,21 +86,42 @@ class SurveyViewModel(
             for (request in sampleRequests) {
                 if (request.generation != contextGeneration) continue
                 _isSampling.value = true
+                val startedAt = com.pulsewave.app.core.util.nowMillis()
                 try {
-                    val requestedAt = com.pulsewave.app.core.util.nowMillis()
-                    val scanned = wifiScanner.awaitNextScan()
+                    // Fast path: connected to the mapped access point, read the live link (about 1.5 s).
+                    val linkRequestedAt = com.pulsewave.app.core.util.nowMillis()
+                    // Only the live link has a known length; a scan for another Wi-Fi does not.
+                    // Skip updates where Android hides the access point's address; only a real sample counts.
+                    _readingIsTimed.value = kotlinx.coroutines.withTimeoutOrNull(700) {
+                        networkStatus.getCurrentNetworkStatus().first { !it.isConnected || it.sampledAtMillis > 0 }
+                    }?.let { it.hasSignalMeasurement && it.bssid.equals(request.targetBssid, ignoreCase = true) } ?: true
+                    val link = try {
+                        kotlinx.coroutines.withTimeoutOrNull(3_000) {
+                            collectFreshLinkSamples(networkStatus.getCurrentNetworkStatus(refreshIntervalMs = 500),
+                                request.targetBssid, linkRequestedAt, count = 3, minimumIntervalMs = 500)
+                        }?.let { linkSurveyMeasurement(it, request.targetBssid, com.pulsewave.app.core.util.nowMillis()) }
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (_: IllegalStateException) {
+                        null // Disconnected or roamed: only a scan of the selected AP can be used.
+                    }
                     if (request.generation != contextGeneration) continue
-                    val measurement = scanned?.let {
-                        freshSurveyMeasurement(it, request.targetBssid, requestedAt, com.pulsewave.app.core.util.nowMillis())
+                    if (link != null) _expectedReadingMillis.value = (com.pulsewave.app.core.util.nowMillis() - startedAt).toInt().coerceIn(800, 4_000)
+                    else _readingIsTimed.value = false
+                    val measurement = link ?: run {
+                        // Another access point: only a fresh scan can tell how strong it is here.
+                        val requestedAt = com.pulsewave.app.core.util.nowMillis()
+                        val scanned = wifiScanner.awaitNextScan()
+                        scanned?.let { freshSurveyMeasurement(it, request.targetBssid, requestedAt, com.pulsewave.app.core.util.nowMillis()) }
+                            .also { found ->
+                                if (found == null) _message.value = if (scanned == null) {
+                                    "Android is pausing scans. Stay here and try again in a moment."
+                                } else {
+                                    "That Wi-Fi didn't show up here. Nothing was saved."
+                                }
+                            }
                     }
-                    if (measurement == null) {
-                        _message.value = if (scanned == null) {
-                            "No fresh scan available. Stay at this location and try again after Android allows another scan."
-                        } else {
-                            "The selected access point was not observed in this scan. No point was saved."
-                        }
-                        continue
-                    }
+                    if (request.generation != contextGeneration || measurement == null) continue
                     projectWrites.withLock {
                         if (request.generation != contextGeneration) return@withLock
                         // The UI flow may still show the previous target immediately after a write.
@@ -116,7 +130,7 @@ class SurveyViewModel(
                             _message.value = "The project changed while scanning. No point was saved."
                             return@withLock
                         }
-                        val position = if (request.automatic) _currentPosition.value ?: request.position else request.position
+                        val position = request.position
                         dao.insertSurveyPoint(SurveyPointEntity(
                             projectId = request.projectId, floorId = request.floorId,
                             x = position.x, y = position.y, rssi = measurement.rssi,
@@ -147,7 +161,7 @@ class SurveyViewModel(
             val taken = projects.value.map { it.name }.toSet()
             val name = generateSequence(1) { it + 1 }.map { if (it == 1) "Home" else "Home $it" }.first { it !in taken }
             val status = runCatching { networkStatus.getCurrentNetworkStatus().first() }.getOrNull()
-            createProject(name, target = status?.takeIf { it.isConnected && it.bssid.isNotBlank() }?.let { it.ssid to it.bssid })
+            createProject(name, target = status?.takeIf { it.isConnected && it.bssid.isNotBlank() && it.bssid != "02:00:00:00:00:00" }?.let { it.ssid to it.bssid })
         }
     }
 
@@ -158,7 +172,6 @@ class SurveyViewModel(
             return
         }
         _isUpdatingProject.value = true
-        stopRecording()
         contextGeneration++
         viewModelScope.launch {
             try {
@@ -203,15 +216,24 @@ class SurveyViewModel(
     }
 
     private fun activateProject(id: Long?) {
-        stopRecording()
         contextGeneration++
         _currentProjectId.value = id
         _selectedFloor.value = 1
         resetPosition()
     }
 
+    fun floorReadingCount(floor: Int): Int = projectPoints.value.count { it.floorId == floor }
+
+    /** Removes every reading on one floor. An emptied floor other than 1 disappears from the buttons. */
+    fun deleteFloor(floor: Int) {
+        val project = currentProject.value ?: return
+        mutateProject(project.id, "Couldn't delete that floor. Try again.") { persisted ->
+            dao.deleteFloorPoints(persisted.id, floor)
+        }
+        if (_selectedFloor.value == floor) setFloor(1)
+    }
+
     fun setFloor(floor: Int) {
-        stopRecording()
         contextGeneration++
         _selectedFloor.value = floor
         resetPosition()
@@ -236,7 +258,6 @@ class SurveyViewModel(
             return
         }
         _isUpdatingProject.value = true
-        stopRecording()
         contextGeneration++
         viewModelScope.launch {
             try {
@@ -266,19 +287,6 @@ class SurveyViewModel(
         }
     }
 
-    fun configureMap(widthMeters: Float, heightMeters: Float, stepLengthMeters: Float, mapTopBearingDegrees: Float) {
-        val project = currentProject.value ?: return
-        if (!widthMeters.isFinite() || !heightMeters.isFinite() || !stepLengthMeters.isFinite() ||
-            widthMeters !in 1f..500f || heightMeters !in 1f..500f || stepLengthMeters !in 0.2f..1.5f ||
-            !mapTopBearingDegrees.isFinite() || mapTopBearingDegrees !in 0f..359.99f) return
-        mutateProject(project.id, "Could not save map settings.") { persisted ->
-            dao.updateSurveyProject(persisted.copy(
-                widthMeters = widthMeters, heightMeters = heightMeters, stepLengthMeters = stepLengthMeters,
-                mapTopBearingDegrees = mapTopBearingDegrees, updatedAt = com.pulsewave.app.core.util.nowMillis()
-            ))
-        }
-    }
-
     fun setFloorplan(path: String?, onReplaced: (String?) -> Unit = {}) {
         val project = currentProject.value ?: return
         mutateProject(project.id, "Could not save the floorplan.") { persisted ->
@@ -287,7 +295,7 @@ class SurveyViewModel(
         }
     }
 
-    fun addPoint(x: Float, y: Float, automatic: Boolean = false) {
+    fun addPoint(x: Float, y: Float) {
         if (_isUpdatingProject.value) {
             _message.value = "Wait for the project update before measuring."
             return
@@ -301,7 +309,7 @@ class SurveyViewModel(
         if (!x.isFinite() || !y.isFinite()) return
         val position = SurveyPosition(x, y).clamped()
         _currentPosition.value = position
-        sampleRequests.trySend(SampleRequest(project.id, _selectedFloor.value, target, position, contextGeneration, automatic))
+        sampleRequests.trySend(SampleRequest(project.id, _selectedFloor.value, target, position, contextGeneration))
     }
 
     fun deletePoint(point: com.pulsewave.app.core.database.entities.SurveyPointEntity) {
@@ -320,87 +328,13 @@ class SurveyViewModel(
         }
     }
 
-    /** Read live by the walking loop, so it can change mid-walk. */
-    fun setSurveyMode(mode: SurveyMode) {
-        _surveyMode.value = mode
-    }
-
-    fun toggleRecording() {
-        if (_isUpdatingProject.value) {
-            _message.value = "Wait for the project update before starting a walk."
-            return
-        }
-        if (_isRecording.value) { stopRecording(); return }
-        if (currentProject.value?.targetBssid == null) {
-            _message.value = "Choose an access point before starting a walk."
-            return
-        }
-        if (_currentPosition.value == null) {
-            _message.value = "Set your starting position by tapping the map or entering coordinates."
-            return
-        }
-        if (!stepCounter.isAvailable || !orientationProvider.isAvailable) {
-            _message.value = "This device cannot estimate a walking path. Use map taps or coordinates to measure manually."
-            return
-        }
-        _isRecording.value = true
-        _ghostPath.value = emptyList()
-        lastAutoSampleAt = 0L
-        startSensors()
-    }
-
-    private fun startSensors() {
-        stepCounter.startListening()
-        orientationProvider.startListening()
-        sensorJob?.cancel()
-        sensorJob = viewModelScope.launch {
-            launch { orientationProvider.azimuth.collect { _currentHeading.value = it } }
-            launch {
-                stepCounter.steps.collect {
-                    val project = currentProject.value ?: return@collect
-                    val previous = _currentPosition.value ?: return@collect
-                    val position = moveSurveyPosition(previous, _currentHeading.value, project.stepLengthMeters,
-                        project.widthMeters, project.heightMeters, project.mapTopBearingDegrees)
-                    _currentPosition.value = position
-                    _ghostPath.value = (_ghostPath.value + (position.x to position.y)).takeLast(100)
-                    val now = com.pulsewave.app.core.util.nowMillis()
-                    if (_surveyMode.value == SurveyMode.AUTO_SAMPLE && now - lastAutoSampleAt >= 30_000) {
-                        lastAutoSampleAt = now
-                        addPoint(position.x, position.y, automatic = true)
-                    }
-                }
-            }
-        }
-    }
-
-    /** A walk belongs to this visible screen; leaving it stops sensors and pending samples. */
+    /** Leaving the screen cancels a reading in flight, so it can't land on the wrong spot later. */
     fun onScreenStopped() {
-        stopRecording()
         contextGeneration++
-    }
-
-    fun stopRecording() {
-        if (sensorJob != null) {
-            sensorJob?.cancel()
-            sensorJob = null
-            stepCounter.stopListening()
-            orientationProvider.stopListening()
-        }
-        _isRecording.value = false
     }
 
     private fun resetPosition() {
         _currentPosition.value = null
-        _ghostPath.value = emptyList()
-    }
-
-    fun setStartPoint(x: Float, y: Float) { addPoint(x, y) }
-    fun correctCurrentPosition(x: Float, y: Float) {
-        if (x.isFinite() && y.isFinite()) _currentPosition.value = SurveyPosition(x, y).clamped()
-    }
-    fun addManualAnchor() {
-        val position = _currentPosition.value ?: return
-        addPoint(position.x, position.y)
     }
 
     fun exportProject() {
@@ -413,9 +347,9 @@ class SurveyViewModel(
                 } ?: return@launch
                 val (project, points) = snapshot
                 if (points.isEmpty()) { _message.value = "Save at least one measurement before exporting."; return@launch }
-                val csv = mutableListOf("Timestamp,X_Ratio,Y_Ratio,RSSI_dBm,SSID,BSSID,Floor_ID,Map_Width_m,Map_Height_m,Map_Top_Bearing_deg")
+                val csv = mutableListOf("Timestamp,X_Ratio,Y_Ratio,RSSI_dBm,SSID,BSSID,Floor_ID")
                 points.forEach { p -> csv += listOf(p.timestamp, p.x, p.y, p.rssi, csvField(p.ssid ?: ""),
-                    csvField(p.bssid ?: ""), p.floorId, project.widthMeters, project.heightMeters, project.mapTopBearingDegrees).joinToString(",") }
+                    csvField(p.bssid ?: ""), p.floorId).joinToString(",") }
                 val safeName = project.name.replace(Regex("[^A-Za-z0-9._-]+"), "_")
                 exportManager.exportToCsv(csv, "Survey_${safeName}_${com.pulsewave.app.core.util.nowMillis()}")
             } catch (cancelled: CancellationException) {
@@ -425,8 +359,8 @@ class SurveyViewModel(
     }
 
     override fun onCleared() {
-        stopRecording()
         sampleRequests.close()
         super.onCleared()
     }
+
 }

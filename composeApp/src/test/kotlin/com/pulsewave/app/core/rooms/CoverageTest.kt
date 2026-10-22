@@ -34,17 +34,4 @@ class CoverageTest {
         assertTrue(summary.tips.first().contains("Garage"))
         assertTrue(summary.tips.any { it.contains("35 dB") })
     }
-
-    @Test
-    fun walkSummaryCountsSeparateWeakStretches() {
-        val samples = listOf(-50, -85, -86, -60, -84, -55).mapIndexed { i, rssi -> WalkSample(i * 1000L, rssi, if (i % 2 == 0) 3f else 9f) }
-        val summary = summarizeWalk(samples)!!
-        assertEquals(2, summary.weakMoments)
-        assertEquals(-50, summary.bestRssi)
-        assertEquals(-86, summary.worstRssi)
-        assertEquals(0.6f, summary.weakShare, 0.001f)
-        assertEquals(5_000L, summary.durationMs)
-        assertEquals(6f, summary.medianRouterMs)
-        assertNull(summarizeWalk(emptyList()))
-    }
 }

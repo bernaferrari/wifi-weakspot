@@ -6,6 +6,8 @@ import com.pulsewave.app.core.database.dao.PulseWaveDao
 import com.pulsewave.app.core.database.entities.LanDeviceEntity
 import com.pulsewave.app.core.domain.NetworkStatusRepository
 import com.pulsewave.app.core.lan.LanScanner
+import com.pulsewave.app.core.lan.lanNetworkKey
+import com.pulsewave.app.core.lan.sameLanConnection
 import com.pulsewave.app.core.model.NetworkStatus
 import com.pulsewave.app.core.model.lan.LanDevice
 import com.pulsewave.app.core.util.nowMillis
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -30,7 +33,7 @@ sealed interface LanUiState {
 class LanViewModel(
     private val lanScanner: LanScanner,
     private val dao: PulseWaveDao,
-    networkStatusRepository: NetworkStatusRepository
+    private val networkStatusRepository: NetworkStatusRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LanUiState>(LanUiState.Idle)
@@ -44,17 +47,31 @@ class LanViewModel(
 
     /** Gateway and own address, so the router and this phone can be named. */
     val status: StateFlow<NetworkStatus> = networkStatusRepository.getCurrentNetworkStatus(refreshIntervalMs = 5_000)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NetworkStatus.Disconnected)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, NetworkStatus.Disconnected)
 
     private var scanJob: Job? = null
+    private var displayedConnection: NetworkStatus? = null
 
     init {
         viewModelScope.launch {
-            val saved = runCatching { dao.getAllLanDevices().first() }.getOrDefault(emptyList())
-            // Only the most recent scan; older sessions may describe a different network.
-            val latest = saved.maxOfOrNull { it.lastSeen } ?: return@launch
-            if (_known.value.isEmpty()) {
-                _known.value = saved.filter { latest - it.lastSeen <= 2 * 60_000L }.map { it.toDevice() }
+            status.collect { current ->
+                val previous = displayedConnection
+                if (previous != null && !sameLanConnection(previous, current)) {
+                    scanJob?.cancel()
+                    lanScanner.cancel()
+                    _uiState.value = LanUiState.Idle
+                    _known.value = emptyList()
+                }
+                displayedConnection = current
+                if (_uiState.value == LanUiState.Idle) {
+                    val key = lanNetworkKey(current)
+                    val saved = if (key == null) emptyList() else runCatching {
+                        dao.getAllLanDevices().first().filter { it.networkKey == key }
+                    }.getOrDefault(emptyList())
+                    val latest = saved.maxOfOrNull { it.lastSeen }
+                    _known.value = if (latest == null) emptyList() else saved
+                        .filter { latest - it.lastSeen <= 2 * 60_000L }.map { it.toDevice() }
+                }
             }
         }
     }
@@ -64,9 +81,16 @@ class LanViewModel(
         scanJob = viewModelScope.launch {
             _uiState.value = LanUiState.Scanning
             try {
+                val connection = networkStatusRepository.getCurrentNetworkStatus().first()
+                val key = lanNetworkKey(connection)
+                displayedConnection = connection
                 val result = lanScanner.scanSubnet()
+                check(sameLanConnection(connection, networkStatusRepository.getCurrentNetworkStatus().first())) {
+                    "The connection changed. Look again on this network."
+                }
                 val devices = result.devices.map { device ->
-                    val saved = dao.getLanDevice(device.ipAddress)
+                    val saved = key?.let { dao.getLanDevice(device.ipAddress, it) }
+                        ?.takeUnless { old -> old.macAddress != null && device.macAddress != null && !old.macAddress.equals(device.macAddress, ignoreCase = true) }
                     device.copy(
                         customName = saved?.customName,
                         isTrusted = saved?.isTrusted ?: false,
@@ -78,7 +102,7 @@ class LanViewModel(
                     )
                 }
                 val seenAt = nowMillis()
-                devices.forEach { device ->
+                if (key != null) devices.forEach { device ->
                     dao.insertLanDevice(
                         LanDeviceEntity(
                             ipAddress = device.ipAddress,
@@ -91,7 +115,8 @@ class LanViewModel(
                             customName = device.customName,
                             announcedName = device.announcedName,
                             model = device.model,
-                            services = device.services.joinToString(",").ifEmpty { null }
+                            services = device.services.joinToString(",").ifEmpty { null },
+                            networkKey = key
                         )
                     )
                 }

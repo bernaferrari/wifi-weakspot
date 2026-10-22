@@ -29,20 +29,23 @@ class SurveySamplingTest {
         assertNotNull(freshSurveyMeasurement(listOf(network("selected", timestamp = now - 2_000)), "selected", now, now))
     }
 
-    @Test fun stepMovementUsesPhysicalMapDimensions() {
-        val east = moveSurveyPosition(SurveyPosition(0.5f, 0.5f), 90f, 0.7f, 14f, 7f)
-        assertEquals(0.55f, east.x, 0.0001f)
-        assertEquals(0.5f, east.y, 0.0001f)
-        val north = moveSurveyPosition(SurveyPosition(0.5f, 0.5f), 0f, 0.7f, 14f, 7f)
-        assertEquals(0.5f, north.x, 0.0001f)
-        assertEquals(0.4f, north.y, 0.0001f)
-        assertEquals(0f, moveSurveyPosition(SurveyPosition(0f, 0f), 0f, 0.7f, 14f, 7f).y, 0f)
+    @Test fun liveLinkReadingNeedsTheMappedAccessPoint() {
+        fun status(bssid: String, rssi: Int, sampledAt: Long) = com.pulsewave.app.core.model.NetworkStatus(
+            "Home", bssid, 5180, 36, rssi, 400, "192.168.1.2", true, "WPA2", sampledAtMillis = sampledAt)
+        // Median of the matching readings; a single odd one doesn't move it.
+        assertEquals(-61, linkSurveyMeasurement(listOf(status("ap", -60, 1000), status("ap", -61, 1500), status("ap", -80, 2000)), "AP", 2000L)!!.rssi)
+        // Roamed to another access point: no reading from the link.
+        assertEquals(null, linkSurveyMeasurement(listOf(status("other", -50, 1000), status("other", -50, 1500)), "ap", 1500L))
     }
 
-    @Test fun mapBearingAlignsMovementWithRotatedFloorplan() {
-        // The floorplan's top points east: an eastward step moves upward on the map.
-        val position = moveSurveyPosition(SurveyPosition(0.5f, 0.5f), 90f, 0.7f, 14f, 7f, mapTopBearingDegrees = 90f)
-        assertEquals(0.5f, position.x, 0.0001f)
-        assertEquals(0.4f, position.y, 0.0001f)
+    @Test fun liveLinkRejectsRepeatedBurstAndMixedAccessPointReadings() {
+        fun status(time: Long, bssid: String = "ap") = com.pulsewave.app.core.model.NetworkStatus(
+            "Home", bssid, 5180, 36, -60, 400, "192.168.1.2", true, "WPA2", sampledAtMillis = time)
+        assertNull(linkSurveyMeasurement(listOf(status(1000), status(1000), status(1000)), "ap", 2000))
+        assertNull(linkSurveyMeasurement(listOf(status(1000), status(1001), status(1002)), "ap", 2000))
+        assertNull(linkSurveyMeasurement(listOf(status(1000), status(1500, "other"), status(2000)), "ap", 2000))
+        val result = linkSurveyMeasurement(listOf(status(1000), status(1500), status(2000)), "ap", 2100)
+        assertNotNull(result)
+        assertEquals(2000L, result!!.timestamp)
     }
 }

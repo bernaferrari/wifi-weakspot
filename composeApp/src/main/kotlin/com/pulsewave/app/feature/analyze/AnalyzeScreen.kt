@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -48,6 +49,7 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SignalWifi0Bar
 import androidx.compose.material.icons.rounded.SignalWifi4Bar
 import androidx.compose.material.icons.rounded.WaterfallChart
+import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.WifiFind
 import androidx.compose.material.icons.rounded.WifiOff
 import androidx.compose.material3.AlertDialog
@@ -90,6 +92,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -98,6 +103,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pulsewave.app.core.datastore.SettingsRepository
+import com.pulsewave.app.core.designsystem.LocalReduceMotion
 import com.pulsewave.app.core.designsystem.PulseWaveShapes
 import com.pulsewave.app.core.designsystem.component.ShapeIcon
 import com.pulsewave.app.core.designsystem.component.polygon
@@ -122,6 +128,11 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 
+/** Follow the connected radio until the person chooses a band, including a connection arriving later. */
+internal fun analyzerBand(connected: NetworkStatus, chosen: FrequencyBand?): FrequencyBand =
+    chosen ?: FrequencyBand.entries.firstOrNull { connected.isConnected && it.contains(connected.frequency) }
+        ?: FrequencyBand.BAND_2_4
+
 /** Unthrottled: near-live. Throttled: one scan every 30 s stays inside 4 per 2 minutes. */
 private fun throttleIntervalMs(state: ThrottleState): Long = when (state) {
     ThrottleState.Unlimited -> 4_000L
@@ -144,6 +155,7 @@ fun AnalyzeScreen(
     val radios = rememberRadioState()
     val platform: com.pulsewave.app.core.platform.PlatformActions = org.koin.compose.koinInject()
     val haptics = rememberPulseWaveHapticFeedback()
+    val reduceMotion = LocalReduceMotion.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val canScan = permissions.canScanWifi && radios.wifiEnabled && radios.locationEnabled
 
@@ -161,8 +173,8 @@ fun AnalyzeScreen(
     val networks = (uiState as? AnalyzeUiState.Success)?.networks.orEmpty()
     val isScanning = (uiState as? AnalyzeUiState.Success)?.isScanning == true || uiState is AnalyzeUiState.Loading
     // The band lives here so the collapsed top bar can switch it too.
-    val connectedBand = FrequencyBand.entries.firstOrNull { connected.isConnected && it.contains(connected.frequency) }
-    var band by rememberSaveable { mutableStateOf(connectedBand ?: FrequencyBand.BAND_2_4) }
+    var chosenBand by rememberSaveable { mutableStateOf<FrequencyBand?>(null) }
+    val band = analyzerBand(connected, chosenBand)
     val counts = remember(networks) { FrequencyBand.entries.associateWith { b -> networks.count { b.contains(it.frequency) } } }
     val collapsed by remember { androidx.compose.runtime.derivedStateOf { scrollBehavior.state.collapsedFraction > 0.6f } }
 
@@ -175,10 +187,10 @@ fun AnalyzeScreen(
                     // Scrolled down, the bands stay one tap away in the bar.
                     androidx.compose.animation.AnimatedVisibility(
                         visible = collapsed && canScan && networks.isNotEmpty(),
-                        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(initialScale = 0.9f),
-                        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut(targetScale = 0.9f)
+                        enter = if (reduceMotion) androidx.compose.animation.EnterTransition.None else androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(initialScale = 0.9f),
+                        exit = if (reduceMotion) androidx.compose.animation.ExitTransition.None else androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut(targetScale = 0.9f)
                     ) {
-                        CompactBandSelector(band) { haptics.light(); band = it }
+                        CompactBandSelector(band) { haptics.light(); chosenBand = it }
                     }
                     // Scanning is automatic; the only thing worth a button is lifting Android's limit.
                     if (canScan && throttle !is ThrottleState.Unlimited) {
@@ -196,12 +208,12 @@ fun AnalyzeScreen(
                 !permissions.canScanWifi -> CenteredMessage(
                     icon = Icons.Rounded.WifiFind,
                     title = "See the Wi-Fi around you",
-                    body = "Android only shares nearby network names with apps that have location access. PulseWave never records where you are.",
+                    body = "Android only shares nearby network names with apps that have location access. WiFi\u00A0Weakspot never records where you are.",
                     action = "Allow",
                     onAction = requestPermission
                 )
                 !radios.wifiEnabled -> CenteredMessage(Icons.Rounded.WifiOff, "Wi-Fi is off", "Turn on Wi-Fi to see nearby networks.", "Open Wi-Fi settings") { platform.openWifiSettings() }
-                !radios.locationEnabled -> CenteredMessage(Icons.Rounded.LocationOff, "Location is off", "Android needs Location on to list nearby Wi-Fi. PulseWave doesn't use GPS.", "Turn on Location") { platform.openLocationSettings() }
+                !radios.locationEnabled -> CenteredMessage(Icons.Rounded.LocationOff, "Location is off", "Android needs Location on to list nearby Wi-Fi. WiFi\u00A0Weakspot doesn't use GPS.", "Turn on Location") { platform.openLocationSettings() }
                 networks.isEmpty() && uiState !is AnalyzeUiState.Success -> {
                     if (uiState is AnalyzeUiState.Loading) {
                         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
@@ -227,7 +239,7 @@ fun AnalyzeScreen(
                     connected = connected,
                     band = band,
                     counts = counts,
-                    onBandChange = { haptics.light(); band = it }
+                    onBandChange = { haptics.light(); chosenBand = it }
                 )
             }
         }
@@ -263,9 +275,12 @@ private fun NetworksContent(
     counts: Map<FrequencyBand, Int>,
     onBandChange: (FrequencyBand) -> Unit
 ) {
+    val display = com.pulsewave.app.core.designsystem.LocalSignalDisplay.current
+    val reduceMotion = LocalReduceMotion.current
     val haptics = rememberPulseWaveHapticFeedback()
     var showHistory by rememberSaveable { mutableStateOf(false) }
     var showHelp by remember { mutableStateOf(false) }
+    var showExplorer by rememberSaveable { mutableStateOf(false) }
     var selected by remember { mutableStateOf<WifiNetwork?>(null) }
     // Tapping the highlighted network again clears it; null always clears.
     val toggle: (WifiNetwork?) -> Unit = { pick ->
@@ -299,16 +314,24 @@ private fun NetworksContent(
             Card(shape = PulseWaveShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
                 Column(Modifier.padding(vertical = 12.dp)) {
                     Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(if (showHistory) "Signal over time" else "Channels", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                        FilledTonalIconToggleButton(checked = !showHistory, onCheckedChange = { showHistory = false }, shapes = IconButtonDefaults.toggleableShapes()) {
-                            Icon(Icons.Rounded.WaterfallChart, "Channels")
+                        Text(if (showHistory) "Signal over time" else "Channels", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f), maxLines = 2)
+                        // Match the band selector's visible gap; each segment fills its 48 dp width.
+                        Row(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                                listOf(false to (Icons.Rounded.WaterfallChart to "Channels"), true to (Icons.AutoMirrored.Rounded.ShowChart to "Signal over time"))
+                                    .forEachIndexed { index, (history, look) ->
+                                        ToggleButton(
+                                            checked = showHistory == history,
+                                            onCheckedChange = { haptics.light(); showHistory = history },
+                                            shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes() else ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                                            contentPadding = PaddingValues(horizontal = 12.dp),
+                                            colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+                                            modifier = Modifier.size(48.dp)
+                                        ) { Icon(look.first, look.second, Modifier.size(20.dp)) }
+                                    }
                         }
-                        FilledTonalIconToggleButton(checked = showHistory, onCheckedChange = { showHistory = true }, shapes = IconButtonDefaults.toggleableShapes()) {
-                            Icon(Icons.AutoMirrored.Rounded.ShowChart, "Signal over time")
-                        }
-                        IconButton(onClick = { showHelp = true }) { Icon(Icons.Outlined.Info, "About this chart") }
+                        IconButton(onClick = { haptics.click(); showExplorer = true }) { Icon(Icons.Rounded.Fullscreen, if (showHistory) "Expand signal history" else "Expand channels") }
                     }
-                    Box(Modifier.fillMaxWidth().height(if (wide) 420.dp else 300.dp).padding(horizontal = 4.dp)) {
+                    Box(Modifier.fillMaxWidth().height(if (wide) 440.dp else 340.dp).padding(horizontal = 4.dp)) {
                         if (inBand.isEmpty()) {
                             Text(
                                 "No ${band.label} networks nearby.",
@@ -335,6 +358,21 @@ private fun NetworksContent(
                                 modifier = Modifier.fillMaxSize()
                             )
                         }
+                    }
+                    if (!showHistory) Row(
+                        Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(start = 20.dp, end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(selected?.ssid?.ifBlank { "Hidden network" } ?: "Explore channels", style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                selected?.let { "${SignalQuality.of(it.rssi).label} · ${display.reading(it.rssi)} · Ch ${frequencyToChannel(it.frequency)}" }
+                                    ?: "Tap a hill or slide across the chart",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        TextButton(onClick = { showHelp = true }) { Text("Guide") }
                     }
                 }
             }
@@ -364,7 +402,7 @@ private fun NetworksContent(
                 chartColor = palette.color(network.bssid),
                 onClick = { toggle(network) },
                 onDetails = { haptics.click(); detail = network },
-                modifier = Modifier.animateItem()
+                modifier = if (reduceMotion) Modifier else Modifier.animateItem()
             )
         }
         if (weak.isNotEmpty()) {
@@ -396,6 +434,16 @@ private fun NetworksContent(
     }
 
     if (showHelp) ChartGuideSheet { showHelp = false }
+    if (showExplorer) ChartExplorer(
+        allNetworks = networks,
+        band = band,
+        onBandChange = onBandChange,
+        connectedBssid = connected.bssid.takeIf { connected.isConnected },
+        connectedFrequency = connected.frequency.takeIf { connected.isConnected },
+        history = history,
+        showHistory = showHistory,
+        onDismiss = { showExplorer = false }
+    )
     detail?.let { network ->
         val settings: SettingsRepository = koinInject()
         val favorites by settings.favoriteBssids.collectAsState(initial = emptySet())
@@ -410,7 +458,9 @@ private fun NetworksContent(
                 onTrack = {
                     selected = network; showHistory = true; detail = null
                     // Bring the graph into view; it lives at the top of the list.
-                    scope.launch { listState.animateScrollToItem(0) }
+                    if (!wide) scope.launch {
+                        if (reduceMotion) listState.scrollToItem(0) else listState.animateScrollToItem(0)
+                    }
                 },
                 onShare = {
                     val text = buildString {
@@ -428,7 +478,7 @@ private fun NetworksContent(
 @Composable
 private fun BandSelector(band: FrequencyBand, counts: Map<FrequencyBand, Int>, onSelect: (FrequencyBand) -> Unit) {
     Row(
-        Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        Modifier.fillMaxWidth().padding(vertical = 6.dp).selectableGroup(),
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
     ) {
         FrequencyBand.entries.forEachIndexed { index, entry ->
@@ -440,6 +490,7 @@ private fun BandSelector(band: FrequencyBand, counts: Map<FrequencyBand, Int>, o
                     FrequencyBand.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
                     else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                 },
+                colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
                 modifier = Modifier.weight(1f).heightIn(min = 56.dp)
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -456,10 +507,8 @@ private fun BandSelector(band: FrequencyBand, counts: Map<FrequencyBand, Int>, o
 
 /** The band picker squeezed into the collapsed top bar: just "2.4 · 5 · 6". */
 @Composable
-private fun CompactBandSelector(band: FrequencyBand, onSelect: (FrequencyBand) -> Unit) {
-    // Narrow segments would otherwise be padded out to 48 dp each, opening gaps between them.
-    androidx.compose.runtime.CompositionLocalProvider(androidx.compose.material3.LocalMinimumInteractiveComponentSize provides 0.dp) {
-    Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+internal fun CompactBandSelector(band: FrequencyBand, onSelect: (FrequencyBand) -> Unit) {
+    Row(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
         FrequencyBand.entries.forEachIndexed { index, entry ->
             ToggleButton(
                 checked = band == entry,
@@ -473,10 +522,9 @@ private fun CompactBandSelector(band: FrequencyBand, onSelect: (FrequencyBand) -
                 // Same connected group as the full selector; unselected segments get a tone so they
                 // read as buttons against the app bar.
                 colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-                modifier = Modifier.height(40.dp).widthIn(min = 48.dp).semantics { contentDescription = entry.label }
+                modifier = Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp).semantics { contentDescription = entry.label }
             ) { Text(entry.label.removeSuffix(" GHz"), style = MaterialTheme.typography.labelLarge) }
         }
-    }
     }
 }
 
@@ -489,31 +537,25 @@ private fun ChannelAdvice(networks: List<WifiNetwork>, band: FrequencyBand, conn
     val scores = remember(competitors, band) {
         CongestionAnalyzer.analyze(competitors.filter { band.contains(it.frequency) }, band)
     }
-    val best = scores.firstOrNull { it.recommendation }
     val connectedHere = connected.isConnected && band.contains(connected.frequency)
-    val sharing = if (connectedHere) competitors.count {
-        band.contains(it.frequency) && frequencyToChannel(it.frequency) == connected.channel
-    } else 0
-    val message = when {
-        connectedHere && best != null && best.channelNumber == connected.channel ->
-            "Your network is already on channel ${connected.channel}, the clearest choice nearby."
-        connectedHere && best != null ->
-            "Your network is on channel ${connected.channel}" +
-                (if (sharing > 0) ", shared with $sharing other network${if (sharing == 1) "" else "s"}" else "") +
-                ". Channel ${best.channelNumber} looks clearer; you can switch in your router's settings."
-        best != null -> "Channel ${best.channelNumber} is the clearest on ${band.label.replace(" ", "\u00A0")} right now."
-        band == FrequencyBand.BAND_2_4 -> null
-        else -> "On ${band.label}, walls block neighbors, so signal matters more than overlap."
-    } ?: return
-    Card(
-        shape = PulseWaveShapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer, contentColor = MaterialTheme.colorScheme.onTertiaryContainer),
-        modifier = Modifier.padding(top = 6.dp)
+    val (channel, text) = channelHint(scores, connected.channel.takeIf { connectedHere }) ?: return
+    val scheme = MaterialTheme.colorScheme
+    // A small hint, sized to its words: useful, but not the point of the screen.
+    Surface(
+        shape = PulseWaveShapes.full,
+        color = scheme.tertiaryContainer,
+        contentColor = scheme.onTertiaryContainer,
+        modifier = Modifier.padding(top = 6.dp).clearAndSetSemantics { contentDescription = "$text: channel $channel" }
     ) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.Lightbulb, null)
-            Spacer(Modifier.width(16.dp))
-            Text(message, style = MaterialTheme.typography.bodyLarge)
+        Row(Modifier.padding(start = 6.dp, end = 16.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(32.dp).clip(MaterialShapes.Cookie9Sided.toShape()).background(scheme.onTertiaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("$channel", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = scheme.tertiaryContainer)
+            }
+            Spacer(Modifier.width(10.dp))
+            Text(text, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -542,8 +584,11 @@ private fun NetworkRow(
         onClick = onClick,
         shapes = ListItemDefaults.segmentedShapes(index = index, count = count),
         colors = ListItemDefaults.colors(containerColor = if (isSelected) scheme.secondaryContainer else scheme.surfaceContainer),
-        modifier = modifier,
-        // Like a battery icon: the reading sits inside a shape whose color and lobes say how good it is.
+        modifier = modifier.semantics {
+            selected = isSelected
+            stateDescription = if (isSelected) "Highlighted on the chart" else "Not highlighted on the chart"
+        },
+        // The Wi-Fi symbol shares the same quality scale as Home and Rooms.
         leadingContent = { com.pulsewave.app.core.designsystem.component.WifiBadge(network.rssi) },
         trailingContent = {
             IconButton(onClick = onDetails) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Details for ${network.ssid.ifEmpty { "hidden network" }}") }
@@ -557,8 +602,9 @@ private fun NetworkRow(
                 }
                 Text(
                     // Guest or hidden names on your own radio need no more than that.
-                    if (isYourRouter) "Also your router"
+                    if (isYourRouter) "${quality.label} · Also your router"
                     else listOfNotNull(
+                        quality.label,
                         "Ch ${frequencyToChannel(network.frequency)}",
                         if (network.channelWidth > 20) "${network.channelWidth} MHz" else null
                     ).joinToString(" · "),

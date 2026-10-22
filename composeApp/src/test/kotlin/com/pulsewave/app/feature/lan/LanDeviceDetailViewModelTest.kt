@@ -11,16 +11,20 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LanDeviceDetailViewModelTest {
+    private val key = "wifi:aa:bb:cc:dd:ee:01"
+    private val connection = com.pulsewave.app.core.model.NetworkStatus.Disconnected.copy(
+        isConnected = true, ssid = "Home", bssid = "aa:bb:cc:dd:ee:01", ipAddress = "192.168.1.2"
+    )
     private fun status() = mockk<com.pulsewave.app.core.domain.NetworkStatusRepository> {
-        every { getCurrentNetworkStatus(any()) } returns kotlinx.coroutines.flow.flowOf(com.pulsewave.app.core.model.NetworkStatus.Disconnected)
+        every { getCurrentNetworkStatus(any()) } returns kotlinx.coroutines.flow.flowOf(connection)
     }
 
     @Test fun missingDeviceNeverClaimsOnlineOrInventsPorts() = runTest {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
             val dao = mockk<PulseWaveDao>()
-            coEvery { dao.getLanDevice(any()) } returns null
-            coEvery { dao.getLatestPortScan(any()) } returns null
+            coEvery { dao.getLanDevice(any(), any()) } returns null
+            coEvery { dao.getLatestPortScan(any(), any()) } returns null
             val vm = LanDeviceDetailViewModel(dao, status())
             vm.loadDevice("192.168.1.4")
             advanceUntilIdle()
@@ -35,8 +39,8 @@ class LanDeviceDetailViewModelTest {
         try {
             val dao = mockk<PulseWaveDao>(relaxed = true)
             val ip = "192.168.1.4"
-            coEvery { dao.getLanDevice(ip) } returns LanDeviceEntity(ip, null, null, null, 10L, true)
-            coEvery { dao.getLatestPortScan(ip) } returns ToolResultEntity(timestamp = 20L, toolType = "PORT_SCAN", target = ip, resultJson = "8080:HTTP-Proxy", isSuccess = true)
+            coEvery { dao.getLanDevice(ip, key) } returns LanDeviceEntity(ip, null, null, null, 10L, true)
+            coEvery { dao.getLatestPortScan(ip, key) } returns ToolResultEntity(timestamp = 20L, toolType = "PORT_SCAN", target = ip, resultJson = "8080:HTTP-Proxy", isSuccess = true)
             val vm = LanDeviceDetailViewModel(dao, status())
             vm.loadDevice(ip)
             advanceUntilIdle()
@@ -44,7 +48,7 @@ class LanDeviceDetailViewModelTest {
             assertEquals(20L, vm.portScanTime.value)
             vm.rename(" Office printer ")
             advanceUntilIdle()
-            coVerify { dao.renameLanDevice(ip, "Office printer") }
+            coVerify { dao.renameLanDevice(ip, key, "Office printer") }
             assertEquals("Office printer", vm.device.value!!.displayName)
         } finally { Dispatchers.resetMain() }
     }

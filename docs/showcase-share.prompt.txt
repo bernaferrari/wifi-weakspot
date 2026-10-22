@@ -1,0 +1,23 @@
+Generated with the built-in image_gen tool.
+References: docs/screenshots/dark-home.png, docs/screenshots/dark-rooms.png, docs/screenshots/dark-networks.png, docs/hero-v2.png.
+
+Use case: ads-marketing.
+Asset type: a finished shareable product showcase image for the Android app WiFi Weakspot, companion to its approved README banner.
+Create ONE high-resolution LANDSCAPE 3:2 image, approximately 1800 x 1200. It must show THREE large actual app screenshots prominently and legibly inside elegant minimal Android phone frames. This is a premium launch graphic users can share, not a webpage mockup or a screenshot grid.
+
+INPUT ROLES:
+Image 1: actual Home screenshot, to place in the CENTER phone. Preserve its contents and all UI faithfully, including the green 100 signal badge, WiFi Weakspot title, pink Find weak spots card, purple network summary, and bottom navigation.
+Image 2: actual Rooms screenshot, to place in the LEFT phone. Preserve its contents and UI faithfully, including the green 96 meter, Kitchen 50, Bedroom 98, Office 100, and bottom Walk / Save room controls.
+Image 3: actual Networks screenshot, to place in the RIGHT phone. Preserve its contents and UI faithfully, including the 2.4 GHz selector, colorful channel peaks, pink channel advice, and bottom navigation.
+Image 4: approved brand banner, STYLE REFERENCE ONLY for midnight navy, electric cyan, fuchsia, amber-violet light, and immaculate confident white typography. Do not copy its large title-and-peaks layout; this is a screenshot-led companion.
+
+LAYOUT:
+A restrained header across the top, exact title "WiFi Weakspot" in large beautifully kerned modern bold white sans-serif. Directly below it, one smaller line exactly "See your Wi-Fi. Room by room."
+Below the header, three portrait phones dominate the entire composition, each occupying roughly a quarter of the canvas width. Center Home phone slightly taller and slightly higher than the others. Left and right phones almost straight-on with at most a very slight inward angle, so their screenshots remain easy to read. Very slim deep graphite hardware bezels, elegant rounded corners, no oversized device chrome, no notches or camera holes obscuring content. All three devices fully visible, with generous outer margins but NO giant empty space.
+Place a concise white or pale-lavender caption beneath each phone: LEFT "Check every room", CENTER "Your Wi-Fi at a glance", RIGHT "See every network". Carefully aligned baseline and spacing.
+The screens' actual UI must remain the main subject. No image overlays across screen contents, no invented widgets, no modified text, no combined or recreated UI.
+
+ART DIRECTION:
+Rich midnight navy backdrop, deeper behind text. Broad very soft electric-blue illumination behind the left side and magenta-violet illumination behind the right, with a controlled warm amber touch where they mix near the bottom. A barely visible sweeping soft signal contour in the background may tie the three phones together. Beautiful narrow cyan/pink edge lighting on the hardware; calm realistic shadows. Exceptional software launch presentation: expressive color and depth, precise typography, effortless readability. The result must feel richer and more memorable than a generic lineup of phones on a pale background. Avoid busy futuristic motifs or excessive neon glow. No extra decorative logo floating in front of the screenshots.
+
+CONSTRAINTS: faithfully preserve the THREE supplied screenshots as the displayed screen surfaces. No extra phones, no tiny thumbnails, no cropping out important screen areas, no fake iOS interface, no generic wallpaper replacing screens. No App Store badges, Google Play badges, prices, QR codes, URLs, review stars, marketing claims, watermarks, buttons, or text other than the specified title, subtitle, and three captions. Output one polished, coherent shareable image.

@@ -5,6 +5,18 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class CoverageTrustTest {
+    @Test fun redactedDisplayNamesCannotCreateAGlobalRoomIdentity() {
+        listOf("Your Wi-Fi", "Wi-Fi network", "<unknown ssid>", "Connected Wi-Fi").forEach { placeholder ->
+            assertNull(roomNetworkKey(placeholder, "02:00:00:00:00:00"))
+            assertEquals("ap:aa:bb:cc:dd:ee:01", roomNetworkKey(placeholder, "AA:BB:CC:DD:EE:01"))
+        }
+        assertNull(roomNetworkKey("\"<unknown ssid>\"", ""))
+    }
+
+    @Test fun knownMeshNameStillGroupsItsDistinctAccessPoints() {
+        assertEquals(roomNetworkKey("Home", "ap-one"), roomNetworkKey("Home", "ap-two"))
+    }
+
     private fun reading(id: String, ssid: String = "Home", time: Long = 1) =
         RoomReading(id, "Bedroom", -60, -62, 300, 5180, ssid, "ap-$ssid", 4, time)
 
@@ -16,11 +28,6 @@ class CoverageTrustTest {
     @Test fun differentHomesDoNotReplaceEachOther() {
         val history = listOf(reading("home")).upsert(reading("office", "Office"))
         assertEquals(2, history.size)
-    }
-
-    @Test fun invalidReadingsCannotProduceStrongWalkHeadline() {
-        val summary = summarizeWalk(listOf(WalkSample(0, -45, null), WalkSample(1000, 0, null), WalkSample(2000, -45, null)))!!
-        assertFalse(summary.headline.startsWith("Strong everywhere"))
     }
 
     @Test fun multipleAccessPointsDoNotProveWorkingRoaming() {
@@ -46,26 +53,4 @@ class CoverageTrustTest {
         assertTrue(history.forNetwork("", "02:00:00:00:00:00").isEmpty())
     }
 
-    @Test fun timeSharesIncludeOutagesAndUnavailableIntervals() {
-        val summary = summarizeWalk(listOf(
-            WalkSample(0, -50, 2f, routerReplyId = 1),
-            WalkSample(1000, null, null, connected = false),
-            WalkSample(5000, null, null),
-            WalkSample(6000, -50, 2f, routerReplyId = 1),
-            WalkSample(10000, -50, 8f, routerReplyId = 2)
-        ))!!
-        assertEquals(0.4f, summary.disconnectedShare, 0.001f)
-        assertEquals(0.1f, summary.unknownShare, 0.001f)
-        assertEquals(0f, summary.weakShare, 0.001f)
-        // One 2ms reply observed repeatedly must not outweigh the later 8ms reply.
-        assertEquals(5f, summary.medianRouterMs)
-    }
-
-    @Test fun entirelyMissingWalkNeverInventsRssi() {
-        val summary = summarizeWalk(listOf(WalkSample(0, null, null, false), WalkSample(4000, null, null, false)))!!
-        assertNull(summary.bestRssi)
-        assertNull(summary.worstRssi)
-        assertEquals(1f, summary.disconnectedShare, 0f)
-        assertTrue(summary.headline.contains("disconnected"))
-    }
 }

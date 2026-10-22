@@ -174,7 +174,7 @@ fun ScanSetupScreen(
                         number = 3,
                         shape = MaterialShapes.Cookie9Sided,
                         title = "Come back here",
-                        body = "PulseWave checks automatically when you return. You can switch throttling back on at any time.",
+                        body = "WiFi\u00A0Weakspot checks automatically when you return. You can switch throttling back on at any time.",
                         done = !status.throttlingEnabled,
                         enabled = true,
                         actionLabel = null,
@@ -237,7 +237,7 @@ fun ScanSetupScreen(
 
             item {
                 Text(
-                    "Android limits scans to save battery. PulseWave never changes this for you.",
+                    "Android limits scans to save battery. You can switch the limit back on anytime.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
@@ -252,10 +252,10 @@ private fun StatusHero(status: ScanSetupStatus) {
     val good = status.isUnlimited
     val colors = signalColors(if (good) SignalQuality.Excellent else SignalQuality.Fair)
     val (title, body) = when {
-        status.rootScanning -> "Unlimited scans with root" to "PulseWave asks the system to scan, which Android never limits."
-        good && !status.throttlingApplies -> "No scan limit on this phone" to "This Android version lets PulseWave scan as often as it needs."
+        status.rootScanning -> "Unlimited scans with root" to "WiFi\u00A0Weakspot asks the system to scan, which Android never limits."
+        good && !status.throttlingApplies -> "No scan limit on this phone" to "This Android version lets WiFi\u00A0Weakspot scan as often as it needs."
         good -> "Unlimited scans are on" to "Nearby networks and channel graphs refresh every few seconds."
-        !status.canDisableThrottling -> "Scans are limited" to "Android 9 allows 4 scans every 2 minutes and can't turn this off. PulseWave reuses recent results in between."
+        !status.canDisableThrottling -> "Scans are limited" to "Android 9 allows 4 scans every 2 minutes and can't turn this off. WiFi\u00A0Weakspot reuses recent results in between."
         status.developerOptionsEnabled -> "Scans are limited" to "Android allows only 4 scans every 2 minutes, so lists lag as you move. One switch removes the limit."
         else -> "Scans are limited" to "Android allows only 4 scans every 2 minutes, so lists lag as you move. Two quick steps remove the limit."
     }
@@ -352,9 +352,9 @@ private fun RootCard(
                 Text(
                     when {
                         status.rootScanning -> "Scans go through the system shell, so there's nothing to change in Developer options."
-                        rootState == RootState.Denied -> "Root access was denied. Allow PulseWave in your root manager and try again, or use Developer options below."
+                        rootState == RootState.Denied -> "Root access was denied. Allow WiFi\u00A0Weakspot in your root manager and try again, or use Developer options below."
                         status.isUnlimited -> "Scans are already unlimited. Root isn't needed."
-                        else -> "Skip Developer options and let PulseWave scan through root. Your root manager will ask once."
+                        else -> "Skip Developer options and let WiFi\u00A0Weakspot scan through root. Your root manager will ask once."
                     },
                     style = MaterialTheme.typography.bodyMedium
                 )

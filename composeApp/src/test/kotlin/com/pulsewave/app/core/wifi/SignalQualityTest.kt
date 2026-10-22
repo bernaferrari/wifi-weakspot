@@ -7,6 +7,22 @@ import org.junit.Test
 
 class SignalQualityTest {
     @Test
+    fun percentageUsesFixedEndpointsAndClamps() {
+        for ((rssi, percentage) in listOf(-100 to 0, -85 to 30, -80 to 40, -75 to 50, -67 to 66, -60 to 80, -50 to 100)) {
+            assertEquals(percentage, SignalQuality.percentage(rssi))
+        }
+        assertEquals(0, SignalQuality.percentage(Int.MIN_VALUE))
+        assertEquals(100, SignalQuality.percentage(Int.MAX_VALUE))
+    }
+
+    @Test
+    fun strongerSignalsNeverHaveLowerPercentages() {
+        for (rssi in -110..-20) {
+            assertTrue(SignalQuality.percentage(rssi + 1) >= SignalQuality.percentage(rssi))
+        }
+    }
+
+    @Test
     fun thresholdsAreInclusiveAtTheirFloor() {
         assertEquals(SignalQuality.Excellent, SignalQuality.of(-55))
         assertEquals(SignalQuality.Good, SignalQuality.of(-56))

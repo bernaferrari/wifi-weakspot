@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pulsewave.app.core.designsystem.component.WifiBadge
 import com.pulsewave.app.core.designsystem.signalColors
 import com.pulsewave.app.core.rooms.RoomReading
@@ -45,7 +46,7 @@ fun SpotHistorySheet(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 WifiBadge(current.averageRssi, size = 72.dp)
                 Spacer(Modifier.width(16.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(current.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                     Text(
                         "Saved ${relativeTime(current.timestamp)}",
@@ -57,7 +58,8 @@ fun SpotHistorySheet(
 
             // What the signal there means in practice, plus how it moved since the last check.
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(current.quality.explanation, style = MaterialTheme.typography.titleMedium, color = signalColors(current.quality).accent)
+                Text("${current.quality.headline} · ${current.averageRssi} dBm", style = MaterialTheme.typography.titleMedium, color = signalColors(current.quality).accent)
+                Text(current.quality.explanation, style = MaterialTheme.typography.bodyLarge)
                 // One practical idea when it's weak, nothing when it's fine.
                 if (current.quality.isProblem) Text(
                     "Try moving the router higher, more central, or closer to this room.",
@@ -87,7 +89,7 @@ fun SpotHistorySheet(
                             onClick = {},
                             enabled = false,
                             shapes = ListItemDefaults.segmentedShapes(index = index, count = earlier.size),
-                            colors = ListItemDefaults.colors(containerColor = scheme.surfaceContainerHigh, disabledContentColor = scheme.onSurface),
+                            colors = ListItemDefaults.colors(containerColor = scheme.surfaceContainerHigh, disabledContainerColor = scheme.surfaceContainerHigh, disabledContentColor = scheme.onSurface),
                             leadingContent = { WifiBadge(reading.averageRssi, size = 36.dp) },
                             supportingContent = { Text("${relativeTime(reading.timestamp)} · ${bandLabel(reading.frequencyMhz)}") }
                         ) { Text(reading.quality.headline) }
@@ -100,21 +102,25 @@ fun SpotHistorySheet(
                     OutlinedButton(
                         onClick = onRemove,
                         shapes = ButtonDefaults.shapes(),
+                        contentPadding = PaddingValues(horizontal = 12.dp),
                         modifier = Modifier.weight(1f).heightIn(min = ButtonDefaults.MediumContainerHeight)
                     ) {
                         Icon(Icons.Rounded.DeleteOutline, null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Remove", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight), maxLines = 1)
+                        Text("Remove", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight), maxLines = 1,
+                            autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight).fontSize))
                     }
                     Button(
                         onClick = onRecheck,
                         enabled = !saving && canRecheck,
                         shapes = ButtonDefaults.shapes(),
+                        contentPadding = PaddingValues(horizontal = 12.dp),
                         modifier = Modifier.weight(1f).heightIn(min = ButtonDefaults.MediumContainerHeight)
                     ) {
                         Icon(Icons.Rounded.Refresh, null)
                         Spacer(Modifier.width(8.dp))
-                        Text(if (saving) "Checking…" else "Recheck", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight), maxLines = 1)
+                        Text(if (saving) "Checking…" else "Recheck", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight), maxLines = 1,
+                            autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight).fontSize))
                     }
                 }
                 if (!canRecheck) Text(

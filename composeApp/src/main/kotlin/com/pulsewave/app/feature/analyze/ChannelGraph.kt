@@ -2,10 +2,13 @@ package com.pulsewave.app.feature.analyze
 
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -110,14 +113,37 @@ fun ChannelGraph(
     selectedNetwork: WifiNetwork? = null,
     connectedBssid: String? = null,
     modifier: Modifier = Modifier,
-    onNetworkSelected: ((WifiNetwork?) -> Unit)? = null
+    onNetworkSelected: ((WifiNetwork?) -> Unit)? = null,
+    /**
+     * Explore mode (the full-screen chart): drag or tap anywhere and a cursor snaps to the nearest
+     * channel; [onExplore] gets that channel and every network using it, strongest first.
+     */
+    onExplore: ((channel: Int, networks: List<WifiNetwork>) -> Unit)? = null,
+    initialChannel: Int? = null
 ) {
     val textMeasurer = rememberTextMeasurer()
+    val explore = onExplore != null
+    val channels = remember(selectedBand) { exploreChannels(selectedBand) }
+    var cursorChannel by androidx.compose.runtime.saveable.rememberSaveable(selectedBand) {
+        androidx.compose.runtime.mutableStateOf(initialChannel?.takeIf { c -> channels.any { it.first == c } } ?: channels[channels.size / 2].first)
+    }
+    val latestNetworks by androidx.compose.runtime.rememberUpdatedState(networks)
+    if (explore) LaunchedEffect(cursorChannel, networks) {
+        val center = channels.first { it.first == cursorChannel }.second
+        // Everything a 20 MHz router on this channel would share airtime with, not just networks
+        // centred on it: channel 4 overlaps both 2 and 6.
+        onExplore?.invoke(cursorChannel, latestNetworks.filter { n ->
+            occupiedFrequencySegments(n).any { center - 10 < it.upperMhz && center + 10 > it.lowerMhz }
+        }.sortedByDescending { it.rssi })
+    }
     val palette = rememberNetworkPalette(networks, connectedBssid)
     // One hill per radio: a router's guest and hidden names share its airtime, so they share its hill.
     val groups = remember(networks, connectedBssid) { groupByRadio(networks, connectedBssid) }
     val radios = remember(groups) { groups.map { it.lead } }
     val showCrowd = selectedBand == FrequencyBand.BAND_2_4 && radios.size >= 2
+    val latestRadios by androidx.compose.runtime.rememberUpdatedState(radios)
+    val latestShowCrowd by androidx.compose.runtime.rememberUpdatedState(showCrowd)
+    val selectLatest by androidx.compose.runtime.rememberUpdatedState(onNetworkSelected)
     // The crowd strip flips to exact counts (and back) when tapped.
     var crowdCounts by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
     val extraNames = remember(groups) { groups.associate { it.lead.bssid to it.extraNames } }
@@ -154,39 +180,65 @@ fun ChannelGraph(
                     busiest?.let { append(" Busiest channel ${it.key} with ${it.value.size}.") }
                 }
             }
-            .pointerInput(radios, selectedBand) {
+            .then(if (explore) Modifier.pointerInput(selectedBand) {
+                fun moveTo(x: Float) {
+                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, latestShowCrowd)
+                    val nearest = channels.minBy { kotlin.math.abs(plot.left + mapFreqToNormX(it.second.toFloat(), selectedBand) * plot.width - x) }.first
+                    if (nearest != cursorChannel) { cursorChannel = nearest; haptics.light() }
+                }
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    moveTo(down.position.x)
+                    do {
+                        val event = awaitPointerEvent()
+                        event.changes.forEach { if (it.pressed) { moveTo(it.position.x); it.consume() } }
+                    } while (event.changes.any { it.pressed })
+                }
+            } else Modifier)
+            .pointerInput(selectedBand, explore) {
+                if (explore) return@pointerInput
                 // Tapping the same spot again steps through overlapping hills, strongest first.
                 detectTapGestures { tap ->
-                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, showCrowd)
-                    if (showCrowd && tap.y > plot.bottom + 24.dp.toPx()) {
+                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, latestShowCrowd)
+                    if (latestShowCrowd && tap.y > plot.bottom + 24.dp.toPx()) {
                         haptics.light()
                         crowdCounts = !crowdCounts
                         return@detectTapGestures
                     }
-                    val here = networksAt(tap, radios, selectedBand, plot)
+                    val here = networksAt(tap, latestRadios, selectedBand, plot)
                     val current = here.indexOfFirst { it.bssid == latestFocus?.bssid }
-                    onNetworkSelected?.invoke(if (here.isEmpty()) null else here[(current + 1) % here.size])
+                    selectLatest?.invoke(if (here.isEmpty()) null else here[(current + 1) % here.size])
                 }
             }
-            .pointerInput(radios, selectedBand) {
-                // Press and hold, then slide: the focus follows your finger across the channels.
+            .pointerInput(selectedBand, explore) {
+                if (explore) return@pointerInput
+                // Horizontal scrubbing is immediate; vertical gestures remain available to the list.
                 var last: String? = null
                 fun scrub(at: Offset) {
-                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, showCrowd)
-                    val pick = networksAt(Offset(at.x, plot.bottom), radios, selectedBand, plot, anyHeight = true).firstOrNull() ?: return
+                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, latestShowCrowd)
+                    val pick = networksAt(Offset(at.x, plot.bottom), latestRadios, selectedBand, plot, anyHeight = true).firstOrNull() ?: return
                     if (pick.bssid != last) {
                         last = pick.bssid
                         haptics.light()
-                        onNetworkSelected?.invoke(pick)
+                        if (pick.bssid != latestFocus?.bssid) selectLatest?.invoke(pick)
                     }
                 }
-                detectDragGesturesAfterLongPress(onDragStart = { last = null; scrub(it) }) { change, _ -> scrub(change.position) }
+                detectHorizontalDragGestures(
+                    onDragStart = { last = null; scrub(it) },
+                    onHorizontalDrag = { change, _ -> change.consume(); scrub(change.position) }
+                )
             }
     ) {
-        val plot = plotRect(size.width, size.height, this, selectedBand, showCrowd)
+        val plot = plotRect(size.width, size.height, this, selectedBand, latestShowCrowd)
         drawZones(plot, zones)
         drawQualityLabels(plot, textMeasurer, labelStyle.copy(color = scheme.onSurfaceVariant.copy(alpha = 0.7f)))
-        drawChannelAxis(plot, selectedBand, textMeasurer, labelStyle, scheme.onSurfaceVariant, scheme.onSurface, scheme.outlineVariant)
+        val yourNetwork = connectedBssid?.let { bssid -> radios.firstOrNull { it.bssid.equals(bssid, ignoreCase = true) } }
+        drawChannelAxis(
+            plot, selectedBand, textMeasurer, labelStyle, scheme.onSurfaceVariant, scheme.onSurface, scheme.outlineVariant,
+            used = radios.map { frequencyToChannel(it.frequency) }.toSet(),
+            yours = yourNetwork?.let { frequencyToChannel(it.frequency) },
+            yourColor = yourNetwork?.let { palette.color(it.bssid) } ?: scheme.onSurface
+        )
         if (showCrowd) {
             drawCrowdRow(plot, radios, textMeasurer, labelStyle, crowdColors, crowdCounts)
         }
@@ -206,6 +258,20 @@ fun ChannelGraph(
                 drawHills(network, palette.color(network.bssid).copy(alpha = alpha), plot, selectedBand, grow.value, emphasized, quiet = !featured)
             }
 
+        if (explore) {
+            // The explore cursor: a line through the chosen channel, with its number on top.
+            val center = channels.first { it.first == cursorChannel }.second
+            val x = plot.left + mapFreqToNormX(center.toFloat(), selectedBand) * plot.width
+            drawLine(scheme.onSurface.copy(alpha = 0.7f), Offset(x, plot.top), Offset(x, plot.bottom), strokeWidth = 2.dp.toPx(), cap = StrokeCap.Round)
+            val tag = textMeasurer.measure("Ch $cursorChannel", peakStyle.copy(color = scheme.inverseOnSurface))
+            val w = tag.size.width + 16.dp.toPx()
+            val h = tag.size.height + 6.dp.toPx()
+            // Centred on its line; it may spill past the plot into the margins, just not off screen.
+            val left = (x - w / 2).coerceIn(0f, size.width - w)
+            drawRoundRect(scheme.inverseSurface, Offset(left, plot.top - h / 2), Size(w, h), CornerRadius(h / 2))
+            drawText(tag, topLeft = Offset(left + 8.dp.toPx(), plot.top - h / 2 + 3.dp.toPx()))
+        }
+
         // Labels: selected and connected first, then strongest, skipping any that would collide.
         // Unfocused, only a few strongest are named; the list's color dots identify the rest.
         val placed = mutableListOf<Rect>()
@@ -223,20 +289,23 @@ fun ChannelGraph(
             val extra = extraNames[network.bssid] ?: 0
             val name = network.ssid.ifEmpty { "Hidden" }.let { if (it.length > 16) it.take(15) + "…" else it } +
                 (if (isYou) " (you)" else "") + (if (extra > 0) " +$extra" else "")
-            val layout = textMeasurer.measure(name, peakStyle.copy(color = palette.color(network.bssid)), maxLines = 1, overflow = TextOverflow.Clip)
+            val layout = textMeasurer.measure(name, peakStyle.copy(color = palette.color(network.bssid)), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                constraints = Constraints(maxWidth = (plot.width - 16.dp.toPx()).toInt().coerceAtLeast(1)))
             val segment = occupiedFrequencySegments(network).first()
             val x = plot.left + mapFreqToNormX(segment.centerMhz.toFloat(), selectedBand) * plot.width
             val peakY = plot.bottom - plot.height * dbmToFraction(network.rssi.toFloat()) * grow.value
-            var rect = Rect(
-                Offset(
-                    (x - layout.size.width / 2f).coerceIn(plot.left, (plot.right - layout.size.width).coerceAtLeast(plot.left)),
-                    peakY - layout.size.height - 4.dp.toPx()
-                ),
-                Size(layout.size.width.toFloat(), layout.size.height.toFloat())
+            var rect = chartLabelRect(
+                Offset(x, peakY),
+                Size(layout.size.width.toFloat(), layout.size.height.toFloat()),
+                Rect(plot.left + 4.dp.toPx(), 4.dp.toPx(), plot.right - 4.dp.toPx(), plot.bottom),
+                4.dp.toPx()
             )
             // Nudge up once if the spot is taken; otherwise the list below still names it.
-            if (placed.any { it.overlaps(rect) }) rect = rect.translate(0f, -rect.height - 2.dp.toPx())
-            if (placed.any { it.overlaps(rect) } || rect.top < 0f) return@forEach
+            if (placed.any { it.overlaps(rect) }) {
+                rect = listOf(rect.translate(0f, -rect.height - 2.dp.toPx()), rect.translate(0f, rect.height + 6.dp.toPx()))
+                    .firstOrNull { candidate -> candidate.top >= 4.dp.toPx() && candidate.bottom <= plot.bottom && placed.none { it.overlaps(candidate) } }
+                    ?: return@forEach
+            }
             placed += rect
             if (!dimOthers && !isYou) unfocusedLabels++
             drawRoundRect(
@@ -348,19 +417,34 @@ private fun DrawScope.drawChannelAxis(
     style: TextStyle,
     quiet: Color,
     strong: Color,
-    grid: Color
+    grid: Color,
+    used: Set<Int> = emptySet(),
+    yours: Int? = null,
+    yourColor: Color = strong
 ) {
     drawLine(grid, Offset(plot.left, plot.bottom), Offset(plot.right, plot.bottom), strokeWidth = 1.dp.toPx())
     channelMarkers(band).forEach { (channel, freq) ->
         val x = plot.left + mapFreqToNormX(freq.toFloat(), band) * plot.width
-        // 1, 6 and 11 are the only 2.4 GHz channels that don't overlap each other.
-        val key = band == FrequencyBand.BAND_2_4 && channel in setOf(1, 6, 11)
+        // Bold means "a network sits here", and your own channel takes your network's colour,
+        // so the axis reads the same as the hills above it.
+        val color = when (channel) {
+            yours -> yourColor
+            in used -> strong
+            else -> quiet
+        }
         val layout = measurer.measure(
             "$channel",
-            style.copy(color = if (key) strong else quiet, fontWeight = if (key) FontWeight.Bold else FontWeight.Normal)
+            style.copy(color = color, fontWeight = if (channel == yours || channel in used) FontWeight.Bold else FontWeight.Normal)
         )
         drawText(layout, topLeft = Offset(x - layout.size.width / 2f, plot.bottom + 6.dp.toPx()))
     }
+}
+
+/** Every channel the explore cursor can stop on, with its centre frequency. */
+private fun exploreChannels(band: FrequencyBand): List<Pair<Int, Int>> = when (band) {
+    FrequencyBand.BAND_2_4 -> (1..13).map { it to 2407 + it * 5 }
+    FrequencyBand.BAND_5 -> (listOf(36, 40, 44, 48, 52, 56, 60, 64) + (100..144 step 4) + (149..165 step 4)).map { it to 5000 + it * 5 }
+    FrequencyBand.BAND_6 -> (1..233 step 4).map { it to 5950 + it * 5 }
 }
 
 private fun channelMarkers(band: FrequencyBand): List<Pair<Int, Int>> = when (band) {

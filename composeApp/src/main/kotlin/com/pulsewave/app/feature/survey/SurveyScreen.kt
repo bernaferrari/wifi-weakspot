@@ -2,6 +2,13 @@
 
 package com.pulsewave.app.feature.survey
 
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.material.icons.filled.NearMe
 import com.pulsewave.app.core.util.fixed
 
 import androidx.compose.foundation.layout.*
@@ -42,16 +49,16 @@ fun SurveyScreen(
     onBack: () -> Unit = {},
     viewModel: SurveyViewModel = koinViewModel()
 ) {
+    val display = com.pulsewave.app.core.designsystem.LocalSignalDisplay.current
     val projects by viewModel.projects.collectAsStateWithLifecycle()
     val project by viewModel.currentProject.collectAsStateWithLifecycle()
     val points by viewModel.currentPoints.collectAsStateWithLifecycle()
     val projectPointCount by viewModel.projectPointCount.collectAsStateWithLifecycle()
-    val isRecording by viewModel.isRecording.collectAsStateWithLifecycle()
-    val currentHeading by viewModel.currentHeading.collectAsStateWithLifecycle()
     val position by viewModel.currentPosition.collectAsStateWithLifecycle()
-    val surveyMode by viewModel.surveyMode.collectAsStateWithLifecycle()
-    val ghostPath by viewModel.ghostPath.collectAsStateWithLifecycle()
     val isSampling by viewModel.isSampling.collectAsStateWithLifecycle()
+    val expectedReadingMillis by viewModel.expectedReadingMillis.collectAsStateWithLifecycle()
+    val readingIsTimed by viewModel.readingIsTimed.collectAsStateWithLifecycle()
+    var deletingFloor by remember { mutableStateOf<Int?>(null) }
     val isUpdatingProject by viewModel.isUpdatingProject.collectAsStateWithLifecycle()
     val selectedFloor by viewModel.selectedFloor.collectAsStateWithLifecycle()
     val networks by viewModel.availableNetworks.collectAsStateWithLifecycle()
@@ -60,14 +67,14 @@ fun SurveyScreen(
     val platform: com.pulsewave.app.core.platform.PlatformActions = org.koin.compose.koinInject()
     val launchers = com.pulsewave.app.core.platform.LocalPermissionLaunchers.current
     val scope = rememberCoroutineScope()
+    val haptics = com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback()
+    val mapLayer = androidx.compose.ui.graphics.rememberGraphicsLayer()
     fun releaseOwnedFloorplan(path: String?) {
         if (path != null) platform.deleteOwnedFile(path)
     }
     val snackbar = remember { SnackbarHostState() }
     var showRename by remember { mutableStateOf(false) }
     var showNetworks by remember { mutableStateOf(false) }
-    var showMapSettings by remember { mutableStateOf(false) }
-    var showCoordinates by remember { mutableStateOf(false) }
     var showPoints by remember { mutableStateOf(false) }
     var projectsExpanded by remember { mutableStateOf(false) }
     var actionsExpanded by remember { mutableStateOf(false) }
@@ -101,12 +108,25 @@ fun SurveyScreen(
 
     val floors by viewModel.floorsInUse.collectAsStateWithLifecycle()
     val hasTarget = project?.targetBssid != null
-    val walkReady = hasTarget && position != null && !isUpdatingProject
-    val startWalk = {
-        launchers.activityRecognition { granted ->
-            if (granted) viewModel.toggleRecording()
-            else viewModel.reportMessage("Walking needs activity recognition. You can still tap spots on the map.")
-        }
+    val window = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
+    val shortLandscape = with(androidx.compose.ui.platform.LocalDensity.current) { window.width > window.height && window.height.toDp() < 480.dp }
+    val controls: @Composable (Modifier) -> Unit = { controlsModifier ->
+        SurveyToolbar(
+                canUndo = points.isNotEmpty() && !isSampling && !isUpdatingProject,
+                hasTarget = hasTarget,
+                // One instruction at a time; the map itself shows the result.
+                status = when {
+                    isSampling && !readingIsTimed -> "Scanning for ${project?.targetSsid ?: "this Wi-Fi"}… hold still"
+                    isSampling -> "Measuring… hold still"
+                    !hasTarget -> "Choose the Wi-Fi you want to map"
+                    points.isEmpty() -> "Tap the map where you're standing"
+                    else -> "Walk to another room and tap where you are"
+                },
+                onUndo = viewModel::undoLastPoint,
+                onReadings = { showPoints = true },
+                onChooseNetwork = { showNetworks = true; viewModel.refreshNetworks() },
+                modifier = controlsModifier
+            )
     }
 
     Scaffold(
@@ -133,6 +153,11 @@ fun SurveyScreen(
                 },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
                 actions = {
+                    // The finished map is worth sending: one tap shares it as a picture.
+                    if (points.isNotEmpty()) IconButton(onClick = {
+                        haptics.click()
+                        scope.launch { platform.shareImage(mapLayer.toImageBitmap(), "Share map") }
+                    }) { Icon(Icons.Default.Share, "Share map") }
                     if (project != null) Box {
                         IconButton(onClick = { actionsExpanded = true }, enabled = !isUpdatingProject) { Icon(Icons.Default.MoreVert, "Map options") }
                         DropdownMenu(expanded = actionsExpanded, onDismissRequest = { actionsExpanded = false }) {
@@ -148,12 +173,10 @@ fun SurveyScreen(
                             }
                             DropdownMenuItem(text = { Text("New map") }, leadingIcon = { Icon(Icons.Default.Add, null) }, onClick = { actionsExpanded = false; viewModel.createMap() })
                             DropdownMenuItem(text = { Text("Rename map") }, leadingIcon = { Icon(Icons.Default.Edit, null) }, onClick = { actionsExpanded = false; showRename = true })
-                            DropdownMenuItem(text = { Text("Wi-Fi to measure") }, leadingIcon = { Icon(Icons.Default.Router, null) }, onClick = { actionsExpanded = false; showNetworks = true; viewModel.refreshNetworks() }, enabled = !isRecording)
+                            DropdownMenuItem(text = { Text("Wi-Fi to measure") }, leadingIcon = { Icon(Icons.Default.Router, null) }, onClick = { actionsExpanded = false; showNetworks = true; viewModel.refreshNetworks() })
                             HorizontalDivider()
                             DropdownMenuItem(text = { Text(if (project?.imagePath == null) "Use a photo of your plan" else "Change the photo") }, leadingIcon = { Icon(Icons.Default.Image, null) }, onClick = { actionsExpanded = false; importFloorplan(project?.id) })
                             if (project?.imagePath != null) DropdownMenuItem(text = { Text("Remove the photo") }, leadingIcon = { Icon(Icons.Default.HideImage, null) }, onClick = { actionsExpanded = false; viewModel.setFloorplan(null, ::releaseOwnedFloorplan) })
-                            DropdownMenuItem(text = { Text("Size and direction") }, leadingIcon = { Icon(Icons.Default.Straighten, null) }, onClick = { actionsExpanded = false; showMapSettings = true })
-                            DropdownMenuItem(text = { Text("Add a reading by distance") }, leadingIcon = { Icon(Icons.Default.PinDrop, null) }, onClick = { actionsExpanded = false; showCoordinates = true })
                             DropdownMenuItem(text = { Text("Export readings (CSV)") }, leadingIcon = { Icon(Icons.Default.IosShare, null) }, onClick = { actionsExpanded = false; viewModel.exportProject() })
                             HorizontalDivider()
                             DropdownMenuItem(text = { Text("Delete this map") }, leadingIcon = { Icon(Icons.Default.DeleteOutline, null) }, onClick = { actionsExpanded = false; deletingProject = project })
@@ -162,7 +185,10 @@ fun SurveyScreen(
                 }
             )
         },
-        snackbarHost = { SnackbarHost(snackbar) }
+        snackbarHost = { SnackbarHost(snackbar) },
+        bottomBar = {
+            if (project != null && !shortLandscape) controls(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 12.dp, vertical = 12.dp))
+        }
     ) { padding ->
         if (projects.isEmpty() || project == null) {
             Box(Modifier.padding(padding).fillMaxSize()) {
@@ -170,62 +196,65 @@ fun SurveyScreen(
             }
             return@Scaffold
         }
-        Box(Modifier.padding(padding).fillMaxSize()) {
-            // The map is the screen; everything else floats on it.
+        Row(Modifier.padding(padding).fillMaxSize()) {
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+            // Controls occupy their own space, so they never obscure map readings.
             Box(
                 Modifier
                     .fillMaxSize()
-                    .padding(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 104.dp)
+                    .padding(start = 12.dp, end = 12.dp, top = 4.dp, bottom = 12.dp)
                     .clip(com.pulsewave.app.core.designsystem.PulseWaveShapes.extraLarge)
                     .background(MaterialTheme.colorScheme.surfaceContainer)
+                    // Recorded as it draws, so "Share map" captures exactly what's on screen.
+                    .drawWithContent {
+                        mapLayer.record { this@drawWithContent.drawContent() }
+                        drawLayer(mapLayer)
+                    }
             ) {
                 SurveyCanvas(
-                    points = points, onPointAdded = viewModel::setStartPoint,
-                    onPositionCorrected = viewModel::correctCurrentPosition,
-                    modifier = Modifier.fillMaxSize(), isRecording = isRecording,
-                    heading = currentHeading - (project?.mapTopBearingDegrees ?: 0f), ghostPath = ghostPath,
-                    livePosition = position, imagePath = project?.imagePath
+                    points = points, onPointAdded = viewModel::addPoint,
+                    modifier = Modifier.fillMaxSize(),
+                    canMeasure = !isSampling && !isUpdatingProject && hasTarget,
+                    livePosition = position.takeIf { isSampling }, imagePath = project?.imagePath,
+                    expectedReadingMillis = expectedReadingMillis,
+                    readingIsTimed = readingIsTimed
                 )
-                FloorButtons(
-                    floors = floors,
-                    selected = selectedFloor,
-                    onSelect = viewModel::setFloor,
-                    enabled = !isRecording && !isUpdatingProject,
-                    modifier = Modifier.align(Alignment.TopStart).padding(12.dp)
-                )
-                MapHint(
-                    text = when {
-                        isSampling -> "Measuring… hold still"
-                        !hasTarget -> "Pick the Wi-Fi to measure from the menu"
-                        isRecording -> "Your dot follows your steps. Drag it if it drifts."
-                        points.isEmpty() -> "Tap where you're standing"
-                        points.size < 3 -> "Move to another spot and tap it"
-                        else -> null
-                    },
-                    busy = isSampling,
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(12.dp)
-                )
+                // Floors on the left, legend on the right; with many floors the legend wraps below
+                // instead of colliding.
+                androidx.compose.foundation.layout.FlowRow(
+                    Modifier.align(Alignment.TopStart).fillMaxWidth().padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    itemVerticalAlignment = Alignment.CenterVertically
+                ) {
+                    FloorButtons(
+                        floors = floors,
+                        selected = selectedFloor,
+                        onSelect = viewModel::setFloor,
+                        enabled = !isUpdatingProject,
+                        onLongPress = { deletingFloor = it }
+                    )
+                    if (points.isNotEmpty()) SignalLegend()
+                }
             }
-            SurveyToolbar(
-                walking = isRecording,
-                autoMeasure = surveyMode == SurveyViewModel.SurveyMode.AUTO_SAMPLE,
-                canUndo = points.isNotEmpty() && !isSampling && !isUpdatingProject,
-                canWalk = walkReady,
-                canMeasure = !isSampling,
-                onUndo = viewModel::undoLastPoint,
-                onReadings = { showPoints = true },
-                onWalk = startWalk,
-                onWalkUnavailable = {
-                    viewModel.reportMessage(if (!hasTarget) "Pick the Wi-Fi to measure first, from the menu." else "Tap where you're standing first, then walk from there.")
-                },
-                onStop = viewModel::stopRecording,
-                onMeasure = viewModel::addManualAnchor,
-                onAutoMeasure = { viewModel.setSurveyMode(if (it) SurveyViewModel.SurveyMode.AUTO_SAMPLE else SurveyViewModel.SurveyMode.MANUAL_ANCHOR) },
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 20.dp)
-            )
+            }
+            if (shortLandscape) Box(Modifier.width(260.dp).fillMaxHeight().verticalScroll(rememberScrollState())) {
+                controls(Modifier.fillMaxWidth().padding(end = 12.dp, top = 4.dp, bottom = 12.dp))
+            }
         }
     }
 
+    deletingFloor?.let { floor ->
+        val name = if (floor == 0) "the basement" else "floor $floor"
+        val count = viewModel.floorReadingCount(floor)
+        AlertDialog(
+            onDismissRequest = { deletingFloor = null },
+            title = { Text("Delete ${name}?") },
+            text = { Text(if (count == 1) "Its 1 reading will be deleted." else "Its $count readings will be deleted.") },
+            confirmButton = { TextButton(onClick = { viewModel.deleteFloor(floor); deletingFloor = null }) { Text("Delete") } },
+            dismissButton = { TextButton(onClick = { deletingFloor = null }) { Text("Cancel") } }
+        )
+    }
     if (showRename) project?.let { current -> SurveyNameDialog(current.name, onDismiss = { showRename = false }) { name -> viewModel.renameProject(name); showRename = false } }
     if (showNetworks) AlertDialog(
         onDismissRequest = { showNetworks = false }, title = { Text("Which Wi-Fi to map?") },
@@ -263,12 +292,6 @@ fun SurveyScreen(
         confirmButton = { TextButton(onClick = { viewModel.deleteProject(item, ::releaseOwnedFloorplan); deletingProject = null }) { Text("Delete") } },
         dismissButton = { TextButton(onClick = { deletingProject = null }) { Text("Cancel") } }
     ) }
-    if (showMapSettings) project?.let { item -> SurveyMapSettingsDialog(item, onDismiss = { showMapSettings = false }) { width, height, step, bearing ->
-        viewModel.configureMap(width, height, step, bearing); showMapSettings = false
-    } }
-    if (showCoordinates) project?.let { item -> SurveyCoordinateDialog(item, position, onDismiss = { showCoordinates = false }) { x, y ->
-        viewModel.addPoint(x, y); showCoordinates = false
-    } }
     if (showPoints) ModalBottomSheet(onDismissRequest = { showPoints = false }, sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         val ranked = points.sortedBy { it.rssi }
         LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -294,7 +317,7 @@ fun SurveyScreen(
                     Row(Modifier.padding(start = 16.dp, top = 10.dp, bottom = 10.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         com.pulsewave.app.core.designsystem.component.ShapeIcon(Icons.Default.Wifi, quality.polygon(), colors.container, colors.onContainer, size = 40.dp)
                         Column(Modifier.weight(1f)) {
-                            Text("${quality.label} · ${point.rssi} dBm", style = MaterialTheme.typography.bodyLarge)
+                            Text("${quality.label} · ${display.reading(point.rssi)}", style = MaterialTheme.typography.bodyLarge)
                             Text(com.pulsewave.app.core.util.relativeTime(point.timestamp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         IconButton(onClick = { viewModel.deletePoint(point) }, enabled = !isUpdatingProject) { Icon(Icons.Default.DeleteOutline, "Remove this reading") }
@@ -339,7 +362,7 @@ private fun floorLabel(floor: Int) = if (floor == 0) "B" else "$floor"
 
 /** Floors as a connected button group on the map; "+" adds the next one up (then a basement). */
 @Composable
-private fun FloorButtons(floors: List<Int>, selected: Int, onSelect: (Int) -> Unit, enabled: Boolean, modifier: Modifier = Modifier) {
+private fun FloorButtons(floors: List<Int>, selected: Int, onSelect: (Int) -> Unit, enabled: Boolean, modifier: Modifier = Modifier, onLongPress: (Int) -> Unit = {}) {
     val next = ((1..3).firstOrNull { it !in floors }) ?: 0.takeIf { it !in floors }
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween), verticalAlignment = Alignment.CenterVertically) {
         floors.forEachIndexed { index, floor ->
@@ -349,7 +372,13 @@ private fun FloorButtons(floors: List<Int>, selected: Int, onSelect: (Int) -> Un
                 index == floors.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
                 else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
             }
-            val buttonModifier = Modifier.heightIn(min = 40.dp).semantics { contentDescription = if (floor == 0) "Basement" else "Floor $floor" }
+            // Long press a floor to delete its readings.
+            val buttonModifier = Modifier.heightIn(min = 40.dp)
+                .pointerInput(floor, enabled) { if (enabled) detectTapGestures(onLongPress = { onLongPress(floor) }) }
+                .semantics {
+                    contentDescription = if (floor == 0) "Basement" else "Floor $floor"
+                    onLongClick(label = "Delete this floor's readings") { onLongPress(floor); true }
+                }
             if (shapes == null) FilledTonalToggleButton(
                 checked = floor == selected,
                 onCheckedChange = { onSelect(floor) },
@@ -372,69 +401,40 @@ private fun FloorButtons(floors: List<Int>, selected: Int, onSelect: (Int) -> Un
     }
 }
 
-/** One short line on the map, only while it helps. */
+/** The legend uses the same blend and fixed dBm thresholds as the coverage field. */
 @Composable
-private fun MapHint(text: String?, busy: Boolean, modifier: Modifier = Modifier) {
-    androidx.compose.animation.AnimatedVisibility(
-        visible = text != null,
-        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
-        exit = androidx.compose.animation.fadeOut(),
-        modifier = modifier
-    ) {
-        var shown by remember { mutableStateOf(text.orEmpty()) }
-        if (text != null) shown = text
-        Surface(shape = com.pulsewave.app.core.designsystem.PulseWaveShapes.full, color = MaterialTheme.colorScheme.inverseSurface, contentColor = MaterialTheme.colorScheme.inverseOnSurface) {
-            Row(Modifier.padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (busy) LoadingIndicator(Modifier.size(20.dp), color = MaterialTheme.colorScheme.inversePrimary)
-                Text(shown, style = MaterialTheme.typography.labelLarge)
-            }
+private fun SignalLegend() {
+    val scheme = MaterialTheme.colorScheme
+    val heat = com.pulsewave.app.core.designsystem.signalHeatColors()
+    val colors = remember(heat) { signalGradient(heat).let { blend -> (0..12).map { blend(-90f + it * 40f / 12f) } } }
+    Surface(shape = com.pulsewave.app.core.designsystem.PulseWaveShapes.full, color = scheme.surfaceContainerHigh.copy(alpha = 0.92f)) {
+        Row(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Weak", style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+            Box(Modifier.size(64.dp, 8.dp).clip(com.pulsewave.app.core.designsystem.PulseWaveShapes.full).background(androidx.compose.ui.graphics.Brush.horizontalGradient(colors)))
+            Text("Strong", style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
         }
     }
 }
 
-/**
- * The expressive floating toolbar: quiet tools on the left, the main action as its FAB.
- * Idle, the FAB starts a walk; walking, it stops, and "Measure" takes the toolbar.
- */
+/** One clear next step, and the two things you might want after measuring. */
 @Composable
 private fun SurveyToolbar(
-    walking: Boolean,
-    autoMeasure: Boolean,
     canUndo: Boolean,
-    canWalk: Boolean,
-    canMeasure: Boolean,
+    hasTarget: Boolean,
+    status: String,
     onUndo: () -> Unit,
     onReadings: () -> Unit,
-    onWalk: () -> Unit,
-    onWalkUnavailable: () -> Unit,
-    onStop: () -> Unit,
-    onMeasure: () -> Unit,
-    onAutoMeasure: (Boolean) -> Unit,
+    onChooseNetwork: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    HorizontalFloatingToolbar(
-        expanded = true,
-        modifier = modifier,
-        floatingActionButton = {
-            FloatingToolbarDefaults.VibrantFloatingActionButton(onClick = { if (walking) onStop() else if (canWalk) onWalk() else onWalkUnavailable() }) {
-                Icon(
-                    if (walking) Icons.Default.Stop else Icons.AutoMirrored.Filled.DirectionsWalk,
-                    if (walking) "Stop walking" else "Walk and map"
-                )
+    Surface(modifier, shape = com.pulsewave.app.core.designsystem.PulseWaveShapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+        Row(Modifier.padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp).heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(status, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+            if (!hasTarget) Button(onClick = onChooseNetwork, shapes = ButtonDefaults.shapes()) { Text("Choose Wi-Fi") }
+            else {
+                IconButton(onClick = onUndo, enabled = canUndo) { Icon(Icons.AutoMirrored.Filled.Undo, "Undo last reading") }
+                IconButton(onClick = onReadings) { Icon(Icons.AutoMirrored.Filled.List, "All readings") }
             }
-        },
-        colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors()
-    ) {
-        if (walking) {
-            TextButton(onClick = onMeasure, enabled = canMeasure) {
-                Icon(Icons.Default.PinDrop, null, Modifier.size(20.dp)); Spacer(Modifier.width(6.dp)); Text("Measure")
-            }
-            IconToggleButton(checked = autoMeasure, onCheckedChange = onAutoMeasure) {
-                Icon(Icons.Default.Timer, if (autoMeasure) "Stop measuring every 30 seconds" else "Measure every 30 seconds")
-            }
-        } else {
-            IconButton(onClick = onUndo, enabled = canUndo) { Icon(Icons.AutoMirrored.Filled.Undo, "Undo the last reading") }
-            IconButton(onClick = onReadings) { Icon(Icons.AutoMirrored.Filled.List, "All readings") }
         }
     }
 }

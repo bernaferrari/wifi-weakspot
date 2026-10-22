@@ -76,6 +76,7 @@ import androidx.graphics.shapes.RoundedPolygon
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pulsewave.app.core.database.dao.PulseWaveDao
 import com.pulsewave.app.core.designsystem.LocalReduceMotion
+import com.pulsewave.app.core.designsystem.LocalSignalDisplay
 import com.pulsewave.app.core.designsystem.component.EmptyStateWithIllustration
 import com.pulsewave.app.core.designsystem.component.HistoryIllustration
 import com.pulsewave.app.core.designsystem.component.ShapeIcon
@@ -117,6 +118,7 @@ fun HistoryScreen(
     val filter = filterName?.let { name -> HistoryKind.entries.firstOrNull { it.name == name } }
     var selectedKey by rememberSaveable { mutableStateOf<String?>(null) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val reduceMotion = LocalReduceMotion.current
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -168,13 +170,13 @@ fun HistoryScreen(
                     RouterTrendCard(
                         points = loaded.routerTests,
                         onClick = { selectedKey = loaded.entries.firstOrNull { it.kind == HistoryKind.Speed && it.verdict != null }?.key },
-                        modifier = Modifier.animateItem().padding(bottom = 16.dp)
+                        modifier = (if (reduceMotion) Modifier else Modifier.animateItem()).padding(bottom = 16.dp)
                     )
                 }
             }
             if (kinds.size > 1) {
                 item(key = "filters") {
-                    KindFilters(kinds, filter, onSelect = { filterName = it?.name }, modifier = Modifier.animateItem().padding(bottom = 8.dp))
+                    KindFilters(kinds, filter, onSelect = { filterName = it?.name }, modifier = (if (reduceMotion) Modifier else Modifier.animateItem()).padding(bottom = 8.dp))
                 }
             }
             days.forEach { (day, entries) ->
@@ -183,7 +185,7 @@ fun HistoryScreen(
                         day,
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.animateItem().padding(start = 8.dp, top = 16.dp, bottom = 8.dp)
+                        modifier = (if (reduceMotion) Modifier else Modifier.animateItem()).padding(start = 8.dp, top = 16.dp, bottom = 8.dp)
                     )
                 }
                 itemsIndexed(entries, key = { _, entry -> entry.key }) { index, entry ->
@@ -191,7 +193,7 @@ fun HistoryScreen(
                         entry = entry,
                         shape = segmentedShape(index, entries.size),
                         onClick = { selectedKey = entry.key },
-                        modifier = Modifier.animateItem().padding(top = if (index == 0) 0.dp else 2.dp)
+                        modifier = (if (reduceMotion) Modifier else Modifier.animateItem()).padding(top = if (index == 0) 0.dp else 2.dp)
                     )
                 }
             }
@@ -229,7 +231,7 @@ private class EntryLook(val icon: ImageVector, val shape: RoundedPolygon, val co
 private fun HistoryEntry.look(): EntryLook {
     val scheme = MaterialTheme.colorScheme
     return when (kind) {
-        HistoryKind.Speed -> {
+        HistoryKind.Speed, HistoryKind.Internet -> {
             val quality = verdict?.quality
             val colors = quality?.let { signalColors(it) }
             EntryLook(Icons.Rounded.Speed, quality?.polygon() ?: MaterialShapes.Cookie9Sided, colors?.container ?: scheme.primaryContainer, colors?.onContainer ?: scheme.onPrimaryContainer)
@@ -352,7 +354,9 @@ fun RouterTrendBars(points: List<RouterTestPoint>, modifier: Modifier = Modifier
     val reduceMotion = LocalReduceMotion.current
     val grow = remember { Animatable(if (reduceMotion) 1f else 0f) }
     val growSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
-    LaunchedEffect(Unit) { grow.animateTo(1f, growSpec) }
+    LaunchedEffect(reduceMotion) {
+        if (reduceMotion) grow.snapTo(1f) else grow.animateTo(1f, growSpec)
+    }
     val peak = points.mapNotNull { it.responseMs }.maxOrNull()?.coerceAtLeast(1f) ?: 1f
     val description = "Last ${points.size} router tests: " + points.joinToString { it.responseMs?.let { ms -> "${ms.fixed(1)} ms" } ?: "no reply" }
     Canvas(modifier.semantics { contentDescription = description }) {
@@ -501,7 +505,7 @@ private fun DetailLine(line: HistoryLine, shape: Shape) {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
             }
-            line.trailing?.let {
+            (line.rssi?.let { LocalSignalDisplay.current.reading(it) } ?: line.trailing)?.let {
                 Text(it, style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }

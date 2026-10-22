@@ -56,7 +56,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 fun App() {
     val settingsRepository: SettingsRepository = koinInject()
     val hapticsEnabled by settingsRepository.hapticsEnabled.collectAsState(initial = true)
-    val showDbm by settingsRepository.showDbm.collectAsState(initial = false)
+    val signalDisplay by settingsRepository.signalDisplay.collectAsState(initial = com.pulsewave.app.core.wifi.SignalDisplay.Percentage)
     val permissionGate: PermissionGate = koinInject()
     val permissionState by permissionGate.state.collectAsState()
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -72,7 +72,7 @@ fun App() {
     PulseWaveTheme {
         CompositionLocalProvider(
             com.pulsewave.app.core.designsystem.LocalHapticsEnabled provides hapticsEnabled,
-            com.pulsewave.app.core.designsystem.LocalShowDbm provides showDbm
+            com.pulsewave.app.core.designsystem.LocalSignalDisplay provides signalDisplay
         ) {
             // Null while preferences load, so returning users never see the welcome flash by.
             val onboardingDone by remember(settingsRepository) {
@@ -121,7 +121,7 @@ fun PermissionRequiredScreen(
             Text("Allow access to nearby Wi-Fi", style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
             Spacer(Modifier.height(8.dp))
             Text(
-                "The floor plan map needs to see your router's signal. Android asks for location access for that; PulseWave never saves where you are.",
+                "The floor plan map needs to see your router's signal. Android asks for location access for that; WiFi\u00A0Weakspot never saves where you are.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

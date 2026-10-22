@@ -1,0 +1,20 @@
+Generated with the built-in image_gen tool. Reference: design/branding/weak-spot-icon-final.png.
+
+Use case: ads-marketing.
+Asset type: final GitHub README hero banner for the Android app WiFi Weakspot.
+Create ONE spectacular, beautifully art-directed WIDE 2:1 LANDSCAPE banner, at high resolution. A premium expressive software identity with the visual craft of an exceptional contemporary product launch. This is finished banner artwork, not a website mockup.
+
+Reference image role: the provided square app icon establishes the brand's two overlapping smooth Wi-Fi channel peaks and blue-cyan / pink-magenta / amber-violet color blend. Preserve that recognizable two-peak identity while composing a new expansive scene. Do NOT put the icon inside a square tile. Do NOT reproduce the source as a square image.
+
+Composition: on the LEFT 43%, a disciplined editorial typography block with generous margin and powerful clear hierarchy. Exact main title split into two lines:
+"WiFi"
+"Weakspot"
+Use an exquisite modern bold sans-serif, large and authoritative, bright soft white, precise kerning and tight clean leading. Below, one smaller line reading exactly:
+"Find your weak spots."
+Keep typography crisp, unobstructed, and highly legible at normal README width.
+
+On the RIGHT 57%, an oversized sculptural emblem of TWO overlapping Wi-Fi channel peaks: taller rounded bell-shaped peak on the left, shorter rounded bell-shaped peak on the right, elegant concave slopes flaring into a shared baseline. Luminous electric cyan to cobalt on the tall peak, saturated fuchsia to rose on the short peak, violet and a small controlled warm amber blend at their intersection. Broad smooth translucent satin color surfaces, confident optical volume, narrow precise edge light. The emblem should feel alive and expressive, almost like a physical sculpture made of colored light, but with immaculate simple silhouette and no glossy toy finish. A slight spatial sweep in their lower surfaces may give the composition flow, while the two distinct rounded signal peaks remain recognizable.
+
+Background: rich midnight navy almost black near the title, opening subtly to deep indigo around the sculpture. Very restrained wide soft ambient color illumination beneath the sculpture. One or two enormous barely visible curved signal contours can recede behind the right-hand mark to suggest wireless propagation, subordinate and sophisticated. Deep clean negative space, smooth gradients, no noisy texture. The composition feels balanced and intentional, not uniformly covered with effects. A small glint of warm amber at the overlap gives the eye a focal point; it must remain part of the material, not an extra dot or badge.
+
+Constraints: final wide landscape image, whole composition with comfortable margins. ONLY the exact title and subtitle specified, no other text. No phones, screenshots, device mockups, cards, button UI, badges, charts with axes, tiny labels, fake application interfaces, grid backgrounds, particles, sparkles, lightning bolts, Wi-Fi fan glyphs, medical heartbeat lines, ocean waves, sharp mountain summits, extra peaks, checkerboards, borders, watermarks, or rounded outer image corners. Avoid a generic AI technology poster: fewer forms, deliberate typography, premium restrained lighting, rich beautiful color. Strong at thumbnail size.

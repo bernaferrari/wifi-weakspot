@@ -4,6 +4,7 @@ package com.pulsewave.app.feature.onboarding
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Row
@@ -109,7 +110,7 @@ private fun PrivacyNote() {
         Icon(Icons.Rounded.Shield, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.width(12.dp))
         Text(
-            "Android calls this location access. PulseWave never saves where you are, and your results stay on this phone.",
+            "Android calls this location access. WiFi\u00A0Weakspot never saves where you are, and your results stay on this phone.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -145,13 +146,15 @@ private fun WelcomePage() {
         Icon(Icons.Rounded.Wifi, null, Modifier.size(68.dp), tint = colors.onContainer)
     }
     Spacer(Modifier.height(24.dp))
-    Text(
-        "Find bad Wi-Fi\nat home",
-        style = MaterialTheme.typography.displaySmall,
-        fontWeight = FontWeight.Bold,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.semantics { heading() }
-    )
+    BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Text(
+            "Find bad Wi\u2011Fi\nat home",
+            style = if (maxWidth < 320.dp) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.displaySmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.semantics { heading() }
+        )
+    }
     Spacer(Modifier.height(12.dp))
     Text(
         "See where it drops and how to fix it.",

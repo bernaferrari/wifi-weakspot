@@ -9,6 +9,7 @@ import com.pulsewave.app.core.model.NetworkStatus
 import com.pulsewave.app.core.rooms.CoverageSummary
 import com.pulsewave.app.core.rooms.RoomCheckRepository
 import com.pulsewave.app.core.rooms.coverageSummary
+import com.pulsewave.app.core.lan.lanNetworkKey
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -43,10 +44,11 @@ class OverviewViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     /** Devices from the most recent device scan, so the tile can say "15 devices". */
-    val knownDevices: StateFlow<Int?> = dao.getAllLanDevices()
-        .map { devices ->
-            val latest = devices.maxOfOrNull { it.lastSeen } ?: return@map null
-            devices.count { latest - it.lastSeen <= 2 * 60_000L }
+    val knownDevices: StateFlow<Int?> = combine(dao.getAllLanDevices(), networkStatus) { devices, status ->
+            val networkKey = lanNetworkKey(status) ?: return@combine null
+            val scoped = devices.filter { it.networkKey == networkKey }
+            val latest = scoped.maxOfOrNull { it.lastSeen } ?: return@combine null
+            scoped.count { latest - it.lastSeen <= 2 * 60_000L }
         }
         .catch { emitAll(flowOf(null)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)

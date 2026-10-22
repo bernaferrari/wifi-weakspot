@@ -28,8 +28,6 @@ import com.pulsewave.app.core.root.RootAccess
 import com.pulsewave.app.core.root.RootState
 import com.pulsewave.app.core.router.PingEvent
 import com.pulsewave.app.core.router.RouterProbe
-import com.pulsewave.app.core.sensors.OrientationProvider
-import com.pulsewave.app.core.sensors.StepCounter
 import com.pulsewave.app.core.tools.DnsClient
 import com.pulsewave.app.core.tools.PingClient
 import com.pulsewave.app.core.tools.PortScanner
@@ -109,7 +107,8 @@ class SimulatedNetworkStatus : NetworkStatusRepository {
                     internetValidated = true,
                     gateway = SimulatedHome.Gateway,
                     txLinkSpeed = rate,
-                    rxLinkSpeed = rate
+                    rxLinkSpeed = rate,
+                    sampledAtMillis = com.pulsewave.app.core.util.nowMillis()
                 )
             )
             delay(refreshIntervalMs.coerceAtLeast(500))
@@ -255,20 +254,6 @@ class SimulatedLanScanner : LanScanner {
     }
 
     override fun cancel() { _scanning.value = false }
-}
-
-object NoSteps : StepCounter {
-    override val isAvailable = false
-    override val steps: Flow<Int> = emptyFlow()
-    override fun startListening() = Unit
-    override fun stopListening() = Unit
-}
-
-object NoCompass : OrientationProvider {
-    override val isAvailable = false
-    override val azimuth: Flow<Float> = emptyFlow()
-    override fun startListening() = Unit
-    override fun stopListening() = Unit
 }
 
 /** Files can't be written from the browser; reports go to the clipboard instead. */

@@ -35,8 +35,8 @@ class InMemoryDao : PulseWaveDao {
     private val lan = MutableStateFlow(seed.devices)
     private val tools = MutableStateFlow(seed.tools)
     private val speed = MutableStateFlow(seed.speedTests)
-    private val projects = MutableStateFlow<List<SurveyProjectEntity>>(emptyList())
-    private val points = MutableStateFlow<List<SurveyPointEntity>>(emptyList())
+    private val projects = MutableStateFlow(listOf(seed.floorPlan))
+    private val points = MutableStateFlow(seed.floorPlanPoints)
     private var nextId = 10_000L
 
     override suspend fun insertWifiScan(result: WifiScanResultEntity) = insertWifiScans(listOf(result))
@@ -46,13 +46,13 @@ class InMemoryDao : PulseWaveDao {
     override fun getRecentWifiScans(): Flow<List<WifiScanResultEntity>> = scans.map { it.take(3000) }
 
     override suspend fun insertLanDevice(device: LanDeviceEntity) =
-        lan.update { list -> (list.filterNot { it.ipAddress == device.ipAddress } + device).sortedByDescending { it.lastSeen } }
+        lan.update { list -> (list.filterNot { it.ipAddress == device.ipAddress && it.networkKey == device.networkKey } + device).sortedByDescending { it.lastSeen } }
     override fun getAllLanDevices(): Flow<List<LanDeviceEntity>> = lan
-    override suspend fun getLanDevice(ip: String) = lan.value.firstOrNull { it.ipAddress == ip }
-    override suspend fun renameLanDevice(ip: String, name: String?) =
-        lan.update { list -> list.map { if (it.ipAddress == ip) it.copy(customName = name) else it } }
-    override suspend fun getLatestPortScan(host: String) =
-        tools.value.firstOrNull { it.target == host && it.toolType == "PORT_SCAN" && it.isSuccess }
+    override suspend fun getLanDevice(ip: String, networkKey: String) = lan.value.firstOrNull { it.ipAddress == ip && it.networkKey == networkKey }
+    override suspend fun renameLanDevice(ip: String, networkKey: String, name: String?) =
+        lan.update { list -> list.map { if (it.ipAddress == ip && it.networkKey == networkKey) it.copy(customName = name) else it } }
+    override suspend fun getLatestPortScan(host: String, networkKey: String) =
+        tools.value.firstOrNull { it.target == host && it.networkKey == networkKey && it.toolType == "PORT_SCAN" && it.isSuccess }
 
     override suspend fun insertToolResult(result: ToolResultEntity) = tools.update { listOf(result.copy(id = nextId++)) + it }
     override fun getToolHistory(): Flow<List<ToolResultEntity>> = tools
@@ -80,6 +80,8 @@ class InMemoryDao : PulseWaveDao {
     override suspend fun insertSurveyPoint(point: SurveyPointEntity) = points.update { it + point.copy(id = nextId++) }
     override fun getPointsForProject(projectId: Long): Flow<List<SurveyPointEntity>> = points.map { list -> list.filter { it.projectId == projectId } }
     override fun getAllPoints(): Flow<List<SurveyPointEntity>> = points
+    override suspend fun deleteFloorPoints(projectId: Long, floorId: Int) =
+        points.update { list -> list.filterNot { it.projectId == projectId && it.floorId == floorId } }
     override suspend fun deletePointsForProject(projectId: Long) = points.update { list -> list.filterNot { it.projectId == projectId } }
     override suspend fun deleteProject(project: SurveyProjectEntity) {
         deletePointsForProject(project.id)
@@ -119,13 +121,37 @@ private class SeedHistory {
         }
     }
 
+    /**
+     * A finished survey of a 12 x 8 m flat: router in the living room on the left, signal falling
+     * with distance and with each wall crossed, so the far bedroom ends up the weak spot.
+     */
+    val floorPlan = SurveyProjectEntity(
+        id = 1, name = "Home", description = null, imagePath = null, createdAt = ago(3, 2.0), updatedAt = ago(0, 1.0),
+        targetSsid = SimulatedHome.Ssid, targetBssid = SimulatedHome.Bssid, widthMeters = 12f, heightMeters = 8f
+    )
+    val floorPlanPoints: List<SurveyPointEntity> = buildList {
+        val routerX = 0.22f; val routerY = 0.62f
+        var id = 5_000L
+        val random = kotlin.random.Random(7)
+        for (row in 0 until 6) for (col in 0 until 5) {
+            // A loose grid with some wobble, the way people actually stop and measure.
+            val x = 0.10f + col * 0.20f + (random.nextFloat() - 0.5f) * 0.09f
+            val y = 0.09f + row * 0.165f + (random.nextFloat() - 0.5f) * 0.08f
+            val meters = kotlin.math.sqrt(((x - routerX) * 12f).let { it * it } + ((y - routerY) * 8f).let { it * it })
+            val walls = (if (x > 0.52f) 1 else 0) + (if (x > 0.52f && y < 0.42f) 1 else 0) + (if (x < 0.52f && y < 0.30f) 1 else 0)
+            val rssi = (-36f - 21f * kotlin.math.log10(1f + meters * 1.6f) - walls * 9f).toInt().coerceIn(-92, -35)
+            add(SurveyPointEntity(id = id++, projectId = 1, x = x, y = y, rssi = rssi, ssid = SimulatedHome.Ssid,
+                bssid = SimulatedHome.Bssid, timestamp = ago(0, 1.0) + id))
+        }
+    }
+
     val devices = listOf(
         Triple(SimulatedHome.Gateway, "router.lan", "TP-Link"),
         Triple(SimulatedHome.PhoneIp, "this-phone", "Google"),
         Triple("192.168.1.31", "living-room-tv", "Samsung"),
         Triple("192.168.1.40", "macbook", "Apple"),
         Triple("192.168.1.66", "echo-kitchen", "Amazon"),
-    ).map { (ip, name, vendor) -> LanDeviceEntity(ip, null, name, vendor, ago(1, 0.9), isOnline = true) }
+    ).map { (ip, name, vendor) -> LanDeviceEntity(ip, null, name, vendor, ago(1, 0.9), isOnline = true, networkKey = "wifi:${SimulatedHome.Bssid.lowercase()}") }
 
     val tools = listOf(
         ToolResultEntity(

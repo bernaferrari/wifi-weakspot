@@ -130,7 +130,7 @@ class AnalyzeViewModel(
     fun shareSummary(networks: List<WifiNetwork>) {
         viewModelScope.launch {
             val summary = buildString {
-                appendLine("PulseWave WiFi Scan Report")
+                appendLine("WiFi\u00A0Weakspot Scan Report")
                 appendLine("=========================")
                 appendLine("Time: ${com.pulsewave.app.feature.history.formatDate(com.pulsewave.app.core.util.nowMillis())}")
                 appendLine("Total Networks: ${networks.size}")

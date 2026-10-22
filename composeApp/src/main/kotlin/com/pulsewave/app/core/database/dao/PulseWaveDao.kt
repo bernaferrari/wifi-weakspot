@@ -33,14 +33,14 @@ interface PulseWaveDao {
     @Query("SELECT * FROM lan_devices ORDER BY lastSeen DESC")
     fun getAllLanDevices(): Flow<List<LanDeviceEntity>>
 
-    @Query("SELECT * FROM lan_devices WHERE ipAddress = :ip")
-    suspend fun getLanDevice(ip: String): LanDeviceEntity?
+    @Query("SELECT * FROM lan_devices WHERE ipAddress = :ip AND networkKey = :networkKey")
+    suspend fun getLanDevice(ip: String, networkKey: String): LanDeviceEntity?
 
-    @Query("UPDATE lan_devices SET customName = :name WHERE ipAddress = :ip")
-    suspend fun renameLanDevice(ip: String, name: String?)
+    @Query("UPDATE lan_devices SET customName = :name WHERE ipAddress = :ip AND networkKey = :networkKey")
+    suspend fun renameLanDevice(ip: String, networkKey: String, name: String?)
 
-    @Query("SELECT * FROM tool_results WHERE target = :host AND toolType = 'PORT_SCAN' AND isSuccess = 1 ORDER BY timestamp DESC LIMIT 1")
-    suspend fun getLatestPortScan(host: String): ToolResultEntity?
+    @Query("SELECT * FROM tool_results WHERE target = :host AND networkKey = :networkKey AND toolType = 'PORT_SCAN' AND isSuccess = 1 ORDER BY timestamp DESC LIMIT 1")
+    suspend fun getLatestPortScan(host: String, networkKey: String): ToolResultEntity?
 
     // Tool Results
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -89,6 +89,9 @@ interface PulseWaveDao {
 
     @Query("SELECT * FROM survey_points")
     fun getAllPoints(): Flow<List<SurveyPointEntity>>
+
+    @Query("DELETE FROM survey_points WHERE projectId = :projectId AND floorId = :floorId")
+    suspend fun deleteFloorPoints(projectId: Long, floorId: Int)
 
     @Query("DELETE FROM survey_points WHERE projectId = :projectId")
     suspend fun deletePointsForProject(projectId: Long)

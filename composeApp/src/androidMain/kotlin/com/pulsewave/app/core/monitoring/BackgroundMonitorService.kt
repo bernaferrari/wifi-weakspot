@@ -138,7 +138,7 @@ class BackgroundMonitorService : Service(), KoinComponent {
                     "Background Monitoring",
                     NotificationManager.IMPORTANCE_LOW
                 ).apply {
-                    description = "Shows when PulseWave is monitoring WiFi networks"
+                    description = "Shows when WiFi\u00A0Weakspot is monitoring WiFi networks"
                     setShowBadge(false)
                 }
             )
@@ -323,7 +323,7 @@ class BackgroundMonitorService : Service(), KoinComponent {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID_MONITORING)
-            .setContentTitle("PulseWave")
+            .setContentTitle("WiFi\u00A0Weakspot")
             .setContentText(text)
             .setContentIntent(PendingIntent.getActivity(this, 1, packageManager.getLaunchIntentForPackage(packageName), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
             .setSmallIcon(android.R.drawable.ic_menu_compass)

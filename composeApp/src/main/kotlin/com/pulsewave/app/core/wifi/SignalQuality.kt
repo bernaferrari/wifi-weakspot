@@ -12,11 +12,11 @@ enum class SignalQuality(
     val headline: String,
     val explanation: String
 ) {
-    Excellent(-55, "Excellent", "Excellent signal", "Great for anything."),
-    Good(-67, "Good", "Good signal", "Fine for video calls and streaming."),
-    Fair(-75, "Okay", "Okay signal", "Fine for browsing, calls may stutter."),
-    Weak(-82, "Weak", "Weak spot", "Expect slow pages and dropped calls."),
-    DeadZone(Int.MIN_VALUE, "Dead zone", "Dead zone", "Wi-Fi barely works here.");
+    Excellent(-55, "Excellent", "Excellent signal", "A strong connection to the router. Signal alone doesn’t measure internet speed."),
+    Good(-67, "Good", "Good signal", "A solid signal from the router."),
+    Fair(-75, "Okay", "Okay signal", "A usable signal, with less room for interference."),
+    Weak(-82, "Weak", "Weak spot", "A weak signal. Compare this spot with one closer to the router."),
+    DeadZone(Int.MIN_VALUE, "Dead zone", "Dead zone", "Very little signal reaches this spot.");
 
     /** Bars to draw, 0-4. */
     val bars: Int get() = 4 - ordinal
@@ -27,10 +27,11 @@ enum class SignalQuality(
         fun of(rssi: Int): SignalQuality = entries.first { rssi >= it.minRssi }
 
         /**
-         * A 0–100 score where bigger is better, like a battery level: -50 dBm or stronger is 100,
-         * each dB below that costs two points, so -64 is 72 and -89 is 22.
+         * Fixed signal-level scale: -100 dBm = 0%, -50 dBm = 100%.
+         * Matches the Windows WLAN signal-quality mapping, not a power or speed percentage.
+         * https://learn.microsoft.com/en-us/windows/win32/api/wlanapi/ns-wlanapi-wlan_realtime_connection_quality
          */
-        fun score(rssi: Int): Int = (2 * (rssi + 100)).coerceIn(0, 100)
+        fun percentage(rssi: Int): Int = 2 * (rssi.coerceIn(-100, -50) + 100)
 
         /** Maps -95..-35 dBm onto 0..1 for meters and gauges. */
         fun fraction(rssi: Int): Float = ((rssi + 95) / 60f).coerceIn(0f, 1f)

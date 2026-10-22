@@ -37,7 +37,6 @@ fun rememberAndroidPermissionLaunchers(): PermissionLaunchers {
         pending[0]?.invoke(granted)
     }
     val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { pending[1]?.invoke(it) }
-    val activity = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { pending[2]?.invoke(it) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         val done = floorplanCallback[0] ?: return@rememberLauncherForActivityResult
         if (uri == null) { done(null); return@rememberLauncherForActivityResult }
@@ -72,7 +71,7 @@ fun rememberAndroidPermissionLaunchers(): PermissionLaunchers {
         }
     }
 
-    return remember(scan, notifications, activity, picker) {
+    return remember(scan, notifications, picker) {
         PermissionLaunchers(
             scan = { onResult ->
                 pending[0] = onResult
@@ -82,10 +81,6 @@ fun rememberAndroidPermissionLaunchers(): PermissionLaunchers {
             notifications = { onResult ->
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) onResult(true)
                 else { pending[1] = onResult; notifications.launch(Manifest.permission.POST_NOTIFICATIONS) }
-            },
-            activityRecognition = { onResult ->
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) onResult(true)
-                else { pending[2] = onResult; activity.launch(Manifest.permission.ACTIVITY_RECOGNITION) }
             },
             pickFloorplan = { target, onPicked ->
                 floorplanTarget[0] = target

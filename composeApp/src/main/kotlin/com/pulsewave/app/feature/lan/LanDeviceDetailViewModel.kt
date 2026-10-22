@@ -6,17 +6,23 @@ import com.pulsewave.app.core.database.dao.PulseWaveDao
 import com.pulsewave.app.core.domain.NetworkStatusRepository
 import com.pulsewave.app.core.model.NetworkStatus
 import com.pulsewave.app.core.model.lan.LanDevice
+import com.pulsewave.app.core.lan.lanNetworkKey
+import com.pulsewave.app.core.lan.sameLanConnection
 import com.pulsewave.app.core.tools.decodePortScan
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class LanDeviceDetailViewModel(
     private val dao: PulseWaveDao,
-    networkStatusRepository: NetworkStatusRepository
+    private val networkStatusRepository: NetworkStatusRepository
 ) : ViewModel() {
     private val _device = MutableStateFlow<LanDevice?>(null)
     val device = _device.asStateFlow()
@@ -29,31 +35,70 @@ class LanDeviceDetailViewModel(
     val error = _error.asStateFlow()
 
     val status: StateFlow<NetworkStatus> = networkStatusRepository.getCurrentNetworkStatus(refreshIntervalMs = 10_000)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NetworkStatus.Disconnected)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, NetworkStatus.Disconnected)
+    private var loadedConnection: NetworkStatus? = null
+    private var loadJob: Job? = null
+    private var targetIp: String? = null
+
+    init {
+        viewModelScope.launch {
+            status.collect { current ->
+                val loaded = loadedConnection
+                if (loaded != null && !sameLanConnection(loaded, current)) targetIp?.let(::loadDevice)
+            }
+        }
+    }
 
     fun loadDevice(ip: String) {
-        viewModelScope.launch {
-            val entity = dao.getLanDevice(ip)
-            val scan = dao.getLatestPortScan(ip)
-            val ports = scan?.let { decodePortScan(it.resultJson) }.orEmpty()
-            _portScanTime.value = scan?.timestamp
-            _ports.value = ports
-            _device.value = entity?.toDevice(ports.map { it.first })
-                ?: LanDevice(ip, null, null, null, 0L, false, false, null, emptyList())
+        targetIp = ip
+        loadJob?.cancel()
+        _device.value = null
+        _ports.value = emptyList()
+        _portScanTime.value = null
+        loadJob = viewModelScope.launch {
+            try {
+                val connection = networkStatusRepository.getCurrentNetworkStatus().first()
+                loadedConnection = connection
+                val key = lanNetworkKey(connection)
+                val entity = key?.let { dao.getLanDevice(ip, it) }
+                val scan = key?.let { dao.getLatestPortScan(ip, it) }
+                if (!sameLanConnection(connection, networkStatusRepository.getCurrentNetworkStatus().first())) {
+                    _device.value = LanDevice(ip, null, null, null, 0L, false, false, null, emptyList())
+                    _error.value = "The connection changed. Open this device again on the new network."
+                    return@launch
+                }
+                val ports = scan?.let { decodePortScan(it.resultJson) }.orEmpty()
+                _portScanTime.value = scan?.timestamp
+                _ports.value = ports
+                _device.value = entity?.toDevice(ports.map { it.first })
+                    ?: LanDevice(ip, null, null, null, 0L, false, false, null, emptyList())
+                _error.value = null
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) {
+                _device.value = LanDevice(ip, null, null, null, 0L, false, false, null, emptyList())
+                _error.value = "Couldn't load saved details. Try opening this device again."
+            }
         }
     }
 
     fun rename(name: String) {
         val device = _device.value ?: return
+        val connection = loadedConnection ?: return
+        val key = lanNetworkKey(connection) ?: return
         viewModelScope.launch {
-            if (dao.getLanDevice(device.ipAddress) == null) {
-                _error.value = "Scan this device before saving a name."
-            } else {
-                val customName = name.trim().takeIf { it.isNotEmpty() }
-                dao.renameLanDevice(device.ipAddress, customName)
-                _device.value = device.copy(customName = customName)
-                _error.value = null
-            }
+            try {
+                if (!sameLanConnection(connection, networkStatusRepository.getCurrentNetworkStatus().first())) {
+                    _error.value = "The connection changed. Open this device again before renaming it."
+                } else if (dao.getLanDevice(device.ipAddress, key) == null) {
+                    _error.value = "Scan this device before saving a name."
+                } else {
+                    val customName = name.trim().takeIf { it.isNotEmpty() }
+                    dao.renameLanDevice(device.ipAddress, key, customName)
+                    _device.value = device.copy(customName = customName)
+                    _error.value = null
+                }
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { _error.value = "Couldn't save this name. Try again." }
         }
     }
 }

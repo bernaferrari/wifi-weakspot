@@ -9,6 +9,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HistoryModelTest {
+    @Test fun internetTestsHaveTheirOwnFilterAndNeverEnterRouterTrends() {
+        val internet = SpeedTestResultEntity(timestamp = 1, downloadMbps = 200f, uploadMbps = 40f,
+            pingMs = 20f, jitterMs = 2f, serverName = "Internet test")
+        val entry = buildHistory(emptyList(), emptyList(), emptyList(), listOf(internet)).single()
+        assertEquals(HistoryKind.Internet, entry.kind)
+        assertTrue(routerTests(listOf(internet)).isEmpty())
+    }
+
     private fun scan(time: Long, ssid: String, bssid: String, rssi: Int, freq: Int = 5180) =
         WifiScanResultEntity(timestamp = time, ssid = ssid, bssid = bssid, rssi = rssi, frequency = freq, channelWidth = 80, security = "WPA2")
 

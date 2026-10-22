@@ -14,8 +14,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 val LocalReduceMotion = staticCompositionLocalOf { false }
 val LocalHapticsEnabled = staticCompositionLocalOf { true }
 
-/** True when the person chose raw dBm over the 0–100 score in Settings. */
-val LocalShowDbm = staticCompositionLocalOf { false }
+val LocalSignalDisplay = staticCompositionLocalOf { com.pulsewave.app.core.wifi.SignalDisplay.Percentage }
 
 /** Decorative loops stop completely when motion is reduced. */
 @Composable

@@ -63,7 +63,8 @@ fun summarizeRoom(
 /** A stable network scope. Unknown SSIDs fall back to the access point, never a global bucket. */
 fun roomNetworkKey(ssid: String, bssid: String): String? {
     val name = ssid.trim().removeSurrounding("\"")
-    if (name.isNotBlank() && !name.equals("<unknown ssid>", true)) return "ssid:$name"
+    val unknownNames = setOf("<unknown ssid>", "Your Wi-Fi", "Wi-Fi network", "Connected Wi-Fi")
+    if (name.isNotBlank() && unknownNames.none { it.equals(name, ignoreCase = true) }) return "ssid:$name"
     return bssid.lowercase().takeIf { it.isNotBlank() && it != "02:00:00:00:00:00" }?.let { "ap:$it" }
 }
 
@@ -88,6 +89,11 @@ class RoomCheckRepository(private val dataStore: DataStore<Preferences>) {
     }
 
     suspend fun save(reading: RoomReading) = update { it.upsert(reading) }
+
+    suspend fun saveAll(readings: List<RoomReading>) = update { current -> readings.fold(current) { list, reading -> list.upsert(reading) } }
+
+    /** Remove the room's whole history in one write, so an older check cannot reappear. */
+    suspend fun deleteSpot(spotKey: String) = update { list -> list.filterNot { it.spotKey == spotKey } }
 
     suspend fun delete(id: String) = update { list -> list.filterNot { it.id == id } }
 

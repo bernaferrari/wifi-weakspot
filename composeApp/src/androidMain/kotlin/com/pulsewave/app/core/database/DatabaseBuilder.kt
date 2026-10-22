@@ -12,7 +12,7 @@ fun getDatabaseBuilder(context: Context): RoomDatabase.Builder<PulseWaveDatabase
     return Room.databaseBuilder<PulseWaveDatabase>(
         context = context,
         name = dbFile.absolutePath
-    ).addMigrations(SURVEY_TARGET_MIGRATION, SPEED_TEST_CONTEXT_MIGRATION, DEVICE_ANNOUNCEMENT_MIGRATION, SPEED_TEST_ROOM_MIGRATION)
+    ).addMigrations(SURVEY_TARGET_MIGRATION, SPEED_TEST_CONTEXT_MIGRATION, DEVICE_ANNOUNCEMENT_MIGRATION, SPEED_TEST_ROOM_MIGRATION, LAN_NETWORK_IDENTITY_MIGRATION)
 }
 
 /** Preserve v1 projects and points; legacy maps require choosing a target before new samples. */
@@ -50,5 +50,28 @@ val DEVICE_ANNOUNCEMENT_MIGRATION = object : Migration(3, 4) {
 val SPEED_TEST_ROOM_MIGRATION = object : Migration(4, 5) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL("ALTER TABLE speed_test_results ADD COLUMN room TEXT")
+    }
+}
+
+/** Keep old device history, without assigning its names or trust to an unidentified network. */
+val LAN_NETWORK_IDENTITY_MIGRATION = object : Migration(5, 6) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("""
+            CREATE TABLE lan_devices_scoped (
+                ipAddress TEXT NOT NULL, macAddress TEXT, hostname TEXT, vendor TEXT,
+                lastSeen INTEGER NOT NULL, isOnline INTEGER NOT NULL, isTrusted INTEGER NOT NULL,
+                customName TEXT, announcedName TEXT, model TEXT, services TEXT,
+                networkKey TEXT NOT NULL DEFAULT '', PRIMARY KEY(networkKey, ipAddress)
+            )
+        """.trimIndent())
+        connection.execSQL("""
+            INSERT INTO lan_devices_scoped (ipAddress, macAddress, hostname, vendor, lastSeen,
+                isOnline, isTrusted, customName, announcedName, model, services, networkKey)
+            SELECT ipAddress, macAddress, hostname, vendor, lastSeen, isOnline, isTrusted,
+                customName, announcedName, model, services, '' FROM lan_devices
+        """.trimIndent())
+        connection.execSQL("DROP TABLE lan_devices")
+        connection.execSQL("ALTER TABLE lan_devices_scoped RENAME TO lan_devices")
+        connection.execSQL("ALTER TABLE tool_results ADD COLUMN networkKey TEXT")
     }
 }

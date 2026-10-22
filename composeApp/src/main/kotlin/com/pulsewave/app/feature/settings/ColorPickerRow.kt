@@ -1,5 +1,6 @@
 package com.pulsewave.app.feature.settings
 
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.heightIn
@@ -29,7 +30,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Wallpaper
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -61,9 +62,9 @@ import kotlin.math.sin
 /** A color choice for the app: the wallpaper's colors, or a seed the theme is built from. */
 data class PaletteOption(val name: String, val seed: Long?, val preview: List<Color>)
 
-/** Seed colors ordered warm to cool; the first is PulseWave's own. */
+/** Seed colors ordered warm to cool; the first is the app's own. */
 val SeedPalettes = listOf(
-    "PulseWave" to 0xFF3F51B5,
+    "Indigo" to 0xFF3F51B5,
     "Orange" to 0xFFFF5722,
     "Amber" to 0xFFFFC107,
     "Green" to 0xFF4CAF50,
@@ -98,13 +99,13 @@ fun ColorPickerRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Wallpaper colors come first, marked with a small picture icon.
+            // Wallpaper colors come first, marked with a sparkle.
             if (wallpaper != null) PaletteSwatch(
                 colors = wallpaper,
                 selected = wallpaperChosen,
                 label = "Wallpaper colors",
                 size = 44.dp,
-                icon = Icons.Rounded.Wallpaper,
+                icon = Icons.Rounded.AutoAwesome,
                 onClick = onWallpaper
             )
             SeedPalettes.forEach { (name, seed) ->
@@ -182,6 +183,10 @@ fun PaletteSwatch(
             .background(brush),
         contentAlignment = Alignment.Center
     ) {
-        if (icon != null) Icon(icon, null, Modifier.size(size * 0.45f).rotate(-rotation), tint = Color.White)
+        // A sparkle on the wallpaper swatch: "colours picked for you", in whichever tone stands out.
+        if (icon != null) Icon(
+            icon, null, Modifier.size(size * 0.42f).rotate(-rotation),
+            tint = if (colors.first().luminance() > 0.5f) Color.Black.copy(alpha = 0.75f) else Color.White
+        )
     }
 }

@@ -2,6 +2,10 @@
 
 package com.pulsewave.app.feature.settings
 
+import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.BrightnessAuto
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.runtime.setValue
@@ -57,7 +61,7 @@ fun SettingsScreen(
     val darkMode by settingsRepository.isDarkMode.collectAsState(initial = null)
     val reduceMotion by settingsRepository.reduceMotion.collectAsState(initial = false)
     val hapticsEnabled by settingsRepository.hapticsEnabled.collectAsState(initial = true)
-    val showDbm by settingsRepository.showDbm.collectAsState(initial = false)
+    val signalDisplay by settingsRepository.signalDisplay.collectAsState(initial = com.pulsewave.app.core.wifi.SignalDisplay.Percentage)
     val permissionGate: com.pulsewave.app.core.permissions.PermissionGate = koinInject()
     val permissionState by permissionGate.state.collectAsState()
     val scope = rememberCoroutineScope()
@@ -97,19 +101,22 @@ fun SettingsScreen(
             contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Power Tools Section
-            item {
-                SettingsSection("Scanning") {
-                    val scanSetup = com.pulsewave.app.feature.setup.rememberScanSetupStatus()
-                    SettingsRow(
+            // Only while there's something to do: Android still limits scans, or root is in use.
+            item(key = "scanning") {
+                val scanSetup = com.pulsewave.app.feature.setup.rememberScanSetupStatus()
+                if (!scanSetup.isUnlimited || scanSetup.rootScanning) SettingsSection("Scanning") {
+                    // Shows the real state. Only Developer options (or root) can change it, so the
+                    // switch opens the short guide rather than pretending to flip it.
+                    SettingsToggle(
                         icon = Icons.Default.Bolt,
                         title = "Faster scans",
                         subtitle = when {
                             scanSetup.rootScanning -> "Unlimited, using root"
-                            scanSetup.isUnlimited -> "Unlimited scanning is on"
-                            else -> "Limited to 4 scans every 2 minutes"
+                            scanSetup.isUnlimited -> "Networks refresh every few seconds"
+                            else -> "Android allows 4 scans every 2 minutes"
                         },
-                        onClick = {
+                        checked = scanSetup.isUnlimited,
+                        onCheckedChange = {
                             haptics.click()
                             onNavigateToScanSetup()
                         }
@@ -120,12 +127,16 @@ fun SettingsScreen(
             // Appearance Section
             item {
                 SettingsSection("Appearance") {
-                    val themes = listOf("System" to null, "Light" to false, "Dark" to true)
+                    val themes = listOf(
+                        Triple("Auto", null, Icons.Rounded.BrightnessAuto),
+                        Triple("Light", false, Icons.Rounded.LightMode),
+                        Triple("Dark", true, Icons.Rounded.DarkMode)
+                    )
                     Row(
                         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                     ) {
-                        themes.forEachIndexed { index, (label, value) ->
+                        themes.forEachIndexed { index, (label, value, icon) ->
                             ToggleButton(
                                 checked = darkMode == value,
                                 onCheckedChange = { haptics.light(); scope.launch { settingsRepository.setDarkMode(value) } },
@@ -135,7 +146,11 @@ fun SettingsScreen(
                                     else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                                 },
                                 modifier = Modifier.weight(1f)
-                            ) { Text(label) }
+                            ) {
+                                Icon(icon, null, Modifier.size(ToggleButtonDefaults.IconSize))
+                                Spacer(Modifier.width(ToggleButtonDefaults.IconSpacing))
+                                Text(label, maxLines = 1)
+                            }
                         }
                     }
                     val platformTheme: com.pulsewave.app.core.platform.PlatformTheme = org.koin.compose.koinInject()
@@ -152,21 +167,24 @@ fun SettingsScreen(
                             }
                         }
                     )
-                    // Score (0–100, bigger is better) or the raw dBm reading, everywhere in the app.
-                    Row(
-                        Modifier.fillMaxWidth().padding(start = 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Show signal as", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                        Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
-                            listOf("0–100" to false, "dBm" to true).forEachIndexed { index, (label, value) ->
+                    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Show signal as", style = MaterialTheme.typography.bodyLarge)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                            val displays = com.pulsewave.app.core.wifi.SignalDisplay.entries
+                            displays.forEachIndexed { index, display ->
                                 ToggleButton(
-                                    checked = showDbm == value,
-                                    onCheckedChange = { haptics.light(); scope.launch { settingsRepository.setShowDbm(value) } },
-                                    shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes() else ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                ) { Text(label) }
+                                    checked = signalDisplay == display,
+                                    onCheckedChange = { haptics.light(); scope.launch { settingsRepository.setSignalDisplay(display) } },
+                                    shapes = when (index) {
+                                        0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                        displays.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                ) { Text(display.label) }
                             }
                         }
+                        Text("Signal strength on a fixed scale. Higher is stronger.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -270,7 +288,7 @@ fun SettingsScreen(
                 SettingsSection("About") {
                     SettingsRow(
                         icon = Icons.Default.Info,
-                        title = "About PulseWave",
+                        title = "About WiFi\u00A0Weakspot",
                         subtitle = "Version 1.0.0",
                         onClick = {
                             haptics.click()

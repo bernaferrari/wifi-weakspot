@@ -6,6 +6,7 @@ import com.pulsewave.app.feature.history.quality
 import com.pulsewave.app.core.util.fixed
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -120,7 +121,7 @@ fun OverviewScreen(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             MediumFlexibleTopAppBar(
-                title = { Text("PulseWave") },
+                title = { Text("WiFi\u00A0Weakspot") },
                 scrollBehavior = scrollBehavior
             )
         }
@@ -155,9 +156,9 @@ fun OverviewScreen(
                         icon = if (needsPermission) Icons.Rounded.WifiFind else Icons.Rounded.LocationOn,
                         title = if (needsPermission) "See every network around you" else "Turn on Location",
                         body = if (needsPermission) {
-                            "Android shares nearby Wi-Fi names only with apps that have location access. PulseWave never records where you are."
+                            "Android shares nearby Wi-Fi names only with apps that have location access. WiFi\u00A0Weakspot never records where you are."
                         } else {
-                            "Android needs Location on to list nearby Wi-Fi. PulseWave doesn't use GPS."
+                            "Android needs Location on to list nearby Wi-Fi. WiFi\u00A0Weakspot doesn't use GPS."
                         },
                         action = if (needsPermission) "Allow" else "Turn on",
                         onAction = {
@@ -206,11 +207,11 @@ fun OverviewScreen(
                         QuickTileSpec(
                             "Router check",
                             latestSpeed?.pingMs?.takeIf { it >= 0f }?.let { "${it.fixed(1)} ms last time" }
-                                ?: "Response and missed replies",
+                                ?: "Response time",
                             routerGauge?.icon ?: Icons.Rounded.Speed, MaterialShapes.Sunny,
                             routerGauge?.colors?.container ?: scheme.primaryContainer, routerGauge?.colors?.onContainer ?: scheme.onPrimaryContainer, onNavigateToSpeedTest
                         ),
-                        QuickTileSpec("Devices", knownDevices?.let { if (it == 1) "1 device" else "$it devices" } ?: "Who's connected", Icons.Rounded.Devices, MaterialShapes.Clover8Leaf, scheme.tertiaryContainer, scheme.onTertiaryContainer, onNavigateToLan),
+                        QuickTileSpec("Devices", knownDevices?.let { "$it found last scan" } ?: "Who's connected", Icons.Rounded.Devices, MaterialShapes.Clover8Leaf, scheme.tertiaryContainer, scheme.onTertiaryContainer, onNavigateToLan),
                         QuickTileSpec("Test a website", "Ping, DNS, ports", com.pulsewave.app.core.designsystem.component.SiteCheckIcon.Filled, MaterialShapes.Cookie6Sided, scheme.secondaryContainer, scheme.onSecondaryContainer, onNavigateToDiagnose),
                         QuickTileSpec("History", when (savedTests) { 0 -> "Past results"; 1 -> "1 check"; else -> "$savedTests checks" }, Icons.Rounded.History, MaterialShapes.Puffy, scheme.surfaceContainerHighest, scheme.onSurface, onNavigateToHistory)
                     )
@@ -239,9 +240,7 @@ fun OverviewScreen(
     }
 
     if (showConnectionDetail && status.hasSignalMeasurement) {
-        // Prefer the scan entry (it knows width and security); fall back to the live link.
-        val network = nearby.firstOrNull { it.bssid.equals(status.bssid, ignoreCase = true) }?.copy(rssi = status.rssi)
-            ?: com.pulsewave.app.core.wifi.WifiNetwork(status.ssid, status.bssid, status.rssi, status.frequency, 20, status.security, "", com.pulsewave.app.core.util.nowMillis())
+        val network = connectionDetails(status, nearby, com.pulsewave.app.core.util.nowMillis())
         val favorites by settings.favoriteBssids.collectAsState(initial = emptySet())
         androidx.compose.material3.ModalBottomSheet(
             onDismissRequest = { showConnectionDetail = false },
@@ -276,50 +275,53 @@ private fun ConnectionHero(status: NetworkStatus, wifiEnabled: Boolean, onOpenWi
         colors = CardDefaults.cardColors(containerColor = scheme.surfaceContainerLow, disabledContainerColor = scheme.surfaceContainerLow, disabledContentColor = scheme.onSurface)
     ) {
         Column(Modifier.fillMaxWidth().padding(24.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // The same gauge as every list: shape and fill show the level, the score sits inside.
-                if (quality != null) {
-                    com.pulsewave.app.core.designsystem.component.WifiBadge(status.rssi, size = 116.dp)
-                } else {
-                    SignalMorphBlob(quality = null, color = scheme.surfaceContainerHighest, size = 116.dp, spinning = false) {
-                        Icon(Icons.Rounded.WifiOff, null, Modifier.size(40.dp), tint = scheme.onSurfaceVariant)
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val badgeSize = if (maxWidth < 300.dp) 88.dp else 116.dp
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // The same Wi-Fi symbol and quality colors as the network and room lists.
+                    if (quality != null) {
+                        com.pulsewave.app.core.designsystem.component.WifiBadge(status.rssi, size = badgeSize)
+                    } else {
+                        SignalMorphBlob(quality = null, color = scheme.surfaceContainerHighest, size = badgeSize, spinning = false) {
+                            Icon(Icons.Rounded.WifiOff, null, Modifier.size(40.dp), tint = scheme.onSurfaceVariant)
+                        }
                     }
-                }
-                Spacer(Modifier.width(20.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        when {
-                            quality != null -> quality.headline
-                            !wifiEnabled -> "Wi-Fi is off"
-                            else -> "Not on Wi-Fi"
-                        },
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        // One line always: long verdicts shrink a little instead of wrapping.
-                        maxLines = 1,
-                        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 18.sp, maxFontSize = MaterialTheme.typography.headlineSmall.fontSize)
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        if (status.isConnected) status.ssid else "Connect to the network you want to check",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = scheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    if (status.isConnected) {
-                        Spacer(Modifier.height(8.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = CircleShape,
-                                color = if (status.internetValidated) signalColors(SignalQuality.Excellent).accent else scheme.error,
-                                modifier = Modifier.size(8.dp)
-                            ) {}
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                if (status.internetValidated) "Online" else "No internet access",
-                                style = MaterialTheme.typography.labelLarge
-                            )
+                    Spacer(Modifier.width(20.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            when {
+                                quality != null -> quality.headline
+                                status.isConnected -> "Signal unavailable"
+                                !wifiEnabled -> "Wi-Fi is off"
+                                else -> "Not on Wi-Fi"
+                            },
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2,
+                            autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 18.sp, maxFontSize = MaterialTheme.typography.headlineSmall.fontSize)
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            if (status.isConnected) status.ssid else "Connect to the network you want to check",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = scheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (status.isConnected) {
+                            Spacer(Modifier.height(8.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = if (status.internetValidated) signalColors(SignalQuality.Excellent).accent else scheme.error,
+                                    modifier = Modifier.size(8.dp)
+                                ) {}
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    if (status.internetValidated) "Online" else "Internet not confirmed",
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
                         }
                     }
                 }

@@ -1,0 +1,34 @@
+Generated with the built-in image_gen tool.
+References: docs/screenshots/dark-rooms.png, docs/screenshots/dark-networks.png, design/branding/weak-spot-icon-final.png.
+
+Use case: ads-marketing.
+Create ONE exceptionally refined, expressive but restrained premium software launch graphic for WiFi Weakspot. Landscape 3:2, high resolution. This is a second, improved share-image proposal. The previous concept was too busy: three phones, glowing neon outlines, huge background waves, shiny stage floor. Replace that approach with confident editorial design, TWO larger readable screenshots, exquisite typography and spacious composition. The image should feel considered, calm, distinctive, and expensive, not a gamer poster.
+
+REFERENCE ROLES:
+Image 1 is the ACTUAL Rooms screen. Reproduce it faithfully as the LEFT of the TWO phone screens on the right-hand side. Preserve its green 96 signal meter, saved-room list with Kitchen 50, Bedroom 98, Office 100, bottom buttons and navigation. Do not invent or rearrange the UI.
+Image 2 is the ACTUAL Networks screen. Reproduce it faithfully as the RIGHT phone screen. Preserve its band selector, colorful overlapping channel graph and pink channel advice. No invented UI.
+Image 3 is the brand app icon. Use its blue/cyan and pink/magenta overlapping channel peaks only as subtle brand inspiration and as a small carefully placed brand mark. Do not turn it into giant scenery or neon tubes.
+
+COMPOSITION:
+Left approximately 32% of the canvas: a beautifully typeset editorial column.
+Small brand identity at top left: a small two-peak mark next to the exact words "WiFi Weakspot", modern semibold white type, precise spacing.
+Below, the main headline in very large, beautifully kerned bold white sans-serif on THREE deliberate lines:
+"Find the"
+"weak spots."
+"Fix your Wi-Fi."
+This is the visual headline, not more branding.
+Below, restrained smaller pale lavender copy on two lines, exactly:
+"Check every room."
+"Find a clearer channel."
+No other copy in the left column. Use generous leading and clear separation between brand, headline and supporting text. No pills, feature icons, badges or ornamental rules.
+
+Right approximately 64%: TWO beautifully presented tall portrait Android phone screens, large enough for actual UI details to read. Each screen occupies about 25% of overall image width, around 75% of image height. Slim matte graphite device edges, nearly invisible bezels, clean rounded corners, no notches and no camera holes covering screenshot contents. Both phones upright and front-facing, no perspective distortion. Rooms screen slightly higher; Networks screen slightly lower to create a subtle visual rhythm. Keep a proper gap between them; do not overlap their screen contents. No glowing borders. No oversized glass frames. Screens are sharply in focus with clean faithful typography and original colors.
+Under the Rooms device, exact caption "Know which rooms are weak".
+Under the Networks device, exact caption "See what shares your channel".
+Captions small, elegant, bright enough to read.
+
+BACKGROUND AND FINISH:
+Deep midnight navy with a broad quiet transition into soft indigo behind the phones. A very subtle blue ambient light beneath the Rooms phone and a very subtle rose-violet ambient light beneath the Networks phone. Matte environment, minimal grounding shadows, absolutely no mirror floor or shiny stage. One restrained broad sweep of translucent blue-violet color may sit very low behind the devices to echo the signal-peak brand, without competing with the screens. Keep the headline area almost uniformly dark for readability. Rich expressive color lives primarily in the app interfaces. Impeccable margins, deliberate alignment, confident negative space. The devices and typography form one coherent design, not pasted objects.
+
+QUALITY CONSTRAINTS:
+Two supplied screenshots must remain the authentic main subjects, faithfully preserved. No third phone, no Home screen, no stock Wi-Fi glyph, no huge brand waves, no neon rim lights, no starbursts, no particle clouds, no glowing floor line, no sci-fi tunnel, no excessive bloom, no flashy holographic material, no extra feature cards, no fake UI, no badges, no prices, no stars, no QR codes, no URL, no watermark. Only the exact text specified above. All devices and captions fully inside the image with comfortable margins. Final polished marketing image, not a web page or a presentation slide.

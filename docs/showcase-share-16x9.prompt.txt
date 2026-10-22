@@ -1,0 +1,27 @@
+Generated with the built-in image_gen tool; final export normalized to exactly 1920x1080 using sips.
+References: docs/showcase-share-v2.png, docs/screenshots/dark-rooms.png and docs/screenshots/dark-networks.png (latest versions available October 16, 2026).
+
+Edit the supplied marketing image into a final WIDE 16:9 landscape composition, ideally 1920x1080. Preserve its successful premium dark editorial style, brand identity, exact marketing copy, two upright phone presentation, quiet navy/indigo background and restrained blue-violet signal-wave accents. Make only the requested layout and screenshot updates, with meticulous finish.
+
+INPUT ROLES:
+Image 1 = EDIT TARGET: previous 3:2 WiFi Weakspot marketing composition. Preserve this art direction, not its old aspect ratio or its outdated phone screen contents.
+Image 2 = EXACT UPDATED ROOMS SCREEN to replace the entire display of the first (left) phone. It has a green 98 meter, Kitchen 52, Bedroom 98, Office 100, and bottom controls "Record walk" with a pink recording dot and "Save room". Preserve the exact supplied UI, including its spacing, shapes and text. Do not reuse the old 96/50 screen or the old "Walk" button.
+Image 3 = EXACT UPDATED NETWORKS SCREEN to replace the entire display of the second (right) phone. It has updated Channels view controls (including the expand icon), the larger channel chart with Linksys00412, Casa da Ana, DIRECT-HP Print... and Starlink labels, a COMPACT pink "1 Clearest channel" pill beneath the graph, and the Home Wi-Fi row with 78 at the bottom. The old wide pink advice paragraph is GONE. Preserve this new UI faithfully, not the old screen in image 1.
+
+LAYOUT CHANGE IS ESSENTIAL:
+Expand to exactly 16:9, not 3:2. Use the extra width to create an unmistakable generous EMPTY GUTTER between the text column and the first phone. The last period in "Fix your Wi-Fi." must have at least 8% of the full canvas width of completely clear breathing room before the nearest phone edge. No letters or text shadows touching or visually crowding the phone.
+Suggested layout on 1920x1080: outer margins around 80px; left text ends by x=730; first phone starts at x=930 or later. Two large upright phones occupy the right half, each approximately 370px wide and 800px tall, with a comfortable gap and all device edges inside the canvas. Do not squash the portrait screenshots to fit. Keep their natural proportions. Slight vertical stagger as in the previous image. Maintain legible screenshots with thin matte graphite hardware frames, no screen overlap, no cropped controls.
+
+TYPOGRAPHY — keep exact copy, elegant scale and spacing:
+Small brand at upper left, two colorful overlapping signal peaks next to "WiFi Weakspot".
+Large main headline on THREE lines:
+"Find the"
+"weak spots."
+"Fix your Wi-Fi."
+Below it, two quieter pale-lavender lines:
+"Check every room."
+"Find a clearer channel."
+Beneath first phone: "Know which rooms are weak"
+Beneath second phone: "See what shares your channel"
+
+Keep the beautiful original blue-pink peak brand mark, white headline, clean typography and subtle luminous material. Wide clean midnight background, subdued curved blue-violet backdrop near the bottom only, almost uniform dark area behind text. No extra visual clutter, no neon phone borders or mirror floor, no new phones, no new UI, no extra badges, no added copy, no watermarks, no rounded outer image corners. This is a faithful polished revision of the previous composition, with substantially better text-to-phone separation and the exact newest app screens.

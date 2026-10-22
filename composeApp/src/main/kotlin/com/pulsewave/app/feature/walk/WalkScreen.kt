@@ -10,7 +10,6 @@ import androidx.compose.foundation.background
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.SwipeToDismissBox
-import com.pulsewave.app.core.util.twoDigits
 
 import com.pulsewave.app.core.util.fixed
 
@@ -111,9 +110,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -121,23 +119,21 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pulsewave.app.core.designsystem.PulseWaveShapes
 import com.pulsewave.app.core.designsystem.component.ShapeIcon
 import com.pulsewave.app.core.designsystem.component.SignalMorphBlob
 import com.pulsewave.app.core.designsystem.component.polygon
-import com.pulsewave.app.core.designsystem.component.WalkTimeline
 import com.pulsewave.app.core.designsystem.rememberPulseWaveHapticFeedback
 import com.pulsewave.app.core.designsystem.signalColors
 import com.pulsewave.app.core.rooms.CoverageSummary
 import com.pulsewave.app.core.rooms.RoomReading
 import com.pulsewave.app.core.rooms.RoomSuggestions
-import com.pulsewave.app.core.rooms.WalkSample
 import com.pulsewave.app.core.rooms.networkKey
 import com.pulsewave.app.core.rooms.spotKey
 import com.pulsewave.app.core.rooms.spotComparison
-import com.pulsewave.app.core.rooms.WalkSummary
 import com.pulsewave.app.core.util.relativeTime
 import com.pulsewave.app.core.wifi.SignalQuality
 import com.pulsewave.app.core.wifi.bandLabel
@@ -150,8 +146,6 @@ fun WalkScreen(
     viewModel: WalkViewModel = koinViewModel()
 ) {
     val live by viewModel.live.collectAsStateWithLifecycle()
-    val session by viewModel.session.collectAsStateWithLifecycle()
-    val finished by viewModel.finished.collectAsStateWithLifecycle()
     val spots by viewModel.spots.collectAsStateWithLifecycle()
     val saving by viewModel.saving.collectAsStateWithLifecycle()
     val choices by viewModel.networkChoices.collectAsStateWithLifecycle()
@@ -163,9 +157,7 @@ fun WalkScreen(
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var pinning by rememberSaveable { mutableStateOf(false) }
     val platform: com.pulsewave.app.core.platform.PlatformActions = org.koin.compose.koinInject()
-    val walking = session != null
-    val onWalkNetwork = session?.networkKey?.let { it == com.pulsewave.app.core.rooms.roomNetworkKey(live.ssid, live.bssid) } ?: true
-    val quality = if (live.hasSignalMeasurement && onWalkNetwork) SignalQuality.of(live.rssi) else null
+    val quality = if (live.hasSignalMeasurement) SignalQuality.of(live.rssi) else null
 
     LaunchedEffect(message) {
         message?.let {
@@ -175,11 +167,10 @@ fun WalkScreen(
             viewModel.dismissMessage()
         }
     }
-    // Feel the signal: a tick when it improves, a buzz when you walk into a weak spot.
+    // Feel the signal while moving between rooms: a tick when it improves, a buzz on a weak spot.
     var lastQuality by remember { mutableStateOf(quality) }
-    LaunchedEffect(quality, live.isConnected, walking) {
+    LaunchedEffect(quality) {
         val previous = lastQuality
-        if (walking && previous != null && (!live.isConnected || !onWalkNetwork)) haptics.error()
         if (previous != null && quality != null && quality != previous) {
             if (quality.isProblem && !previous.isProblem) haptics.error()
             else if (quality.ordinal < previous.ordinal) haptics.light()
@@ -194,65 +185,72 @@ fun WalkScreen(
             Surface(color = MaterialTheme.colorScheme.surface) {
                 // With a navigation rail there's no bottom bar to absorb the system gesture area.
                 Box(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
-                    when {
-                        walking -> WalkingControls(
-                            onPin = { if (saving == null) { haptics.click(); pinning = true } },
-                            onFinish = { haptics.heavy(); viewModel.finishWalk() }
-                        )
-                        quality == null -> FilledTonalButton(
-                            onClick = { platform.openWifiSettings() },
-                            shapes = ButtonDefaults.shapes()
-                        ) { Text("Open Wi-Fi settings") }
-                        else -> RoomControls(
-                            enabled = saving == null,
-                            onWalk = { haptics.heavy(); viewModel.startWalk() },
-                            onSave = { haptics.click(); pinning = true }
-                        )
-                    }
+                    if (quality == null) FilledTonalButton(
+                        onClick = { platform.openWifiSettings() },
+                        shapes = ButtonDefaults.shapes()
+                    ) { Text("Open Wi-Fi settings") }
+                    else RoomControls(
+                        enabled = saving == null,
+                        saving = saving != null,
+                        onMap = { haptics.click(); onOpenFloorPlan() },
+                        onSave = { haptics.click(); pinning = true }
+                    )
                 }
             }
         },
         topBar = {
             androidx.compose.material3.TopAppBar(
                 title = { Text("Rooms") },
-                subtitle = { if (walking) Text("Walking · keep the app open") }
+                colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    scrolledContainerColor = androidx.compose.ui.graphics.Color.Transparent
+                )
             )
         }
     ) { padding ->
         val connectedKey = com.pulsewave.app.core.rooms.roomNetworkKey(live.ssid, live.bssid)
         // Only worth showing once rooms were saved on some other Wi-Fi too.
-        val showNetworks = !walking && choices.any { it.networkKey != connectedKey }
-        val hasList = walking || spots.rankedRooms.isNotEmpty()
-        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
-            // The meter stays put and only the rooms under it scroll. Once there are rooms to list,
-            // the meter gives them room; until then it gets most of the screen.
-            val stageHeight = (maxHeight * if (hasList) 0.42f else 0.62f).coerceIn(180.dp, 420.dp)
-            Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-                FinderStage(rssi = live.rssi.takeIf { live.hasSignalMeasurement && onWalkNetwork }, active = walking, height = stageHeight)
-                val fade = MaterialTheme.motionScheme.fastEffectsSpec<Float>()
-                AnimatedContent(quality, transitionSpec = { fadeIn(fade) togetherWith fadeOut(fade) }, label = "finderHeadline") { q ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                        Text(q?.headline ?: if (!onWalkNetwork) "Return to your starting Wi-Fi" else "Connect to your Wi-Fi", style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-                        if (!walking && q == null) Text(
-                            "Rooms are measured on the Wi-Fi your phone is connected to.",
-                            style = MaterialTheme.typography.bodyLarge,
+        val showNetworks = choices.any { it.networkKey != connectedKey }
+        val hasList = spots.rankedRooms.isNotEmpty()
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())) {
+            // Draw below the transparent app bar; the whole page scrolls on short screens.
+            // Anything under the meter (rooms or the network chips) gets room; an empty screen gives the meter most of it.
+            val stageHeight = ((maxHeight - padding.calculateTopPadding()) * if (hasList || showNetworks) 0.42f else 0.62f).coerceIn(180.dp, 420.dp)
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item(key = "live-signal") {
+                    FinderStage(rssi = live.rssi.takeIf { live.hasSignalMeasurement }, height = stageHeight)
+                }
+                item(key = "signal-label") {
+                    Column(
+                        Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            quality?.headline ?: if (live.isConnected) "Signal unavailable" else "Connect to your Wi-Fi",
+                            style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center
+                        )
+                        Text(
+                            when {
+                                saving != null -> "Checking $saving… keep still"
+                                quality != null -> live.ssid.ifBlank { "Connected Wi-Fi" }
+                                live.isConnected -> "Your phone is connected, but no signal reading is available yet."
+                                else -> "Connect to the Wi-Fi you want to check."
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                     }
                 }
-                LazyColumn(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    if (walking) {
-                        item(key = "walking") { WalkingStats(session!!) }
-                    }
                     if (showNetworks) {
                         item(key = "networks") {
-                            Row(Modifier.fillMaxWidth().bleed().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 if (connectedKey != null) FilterChip(selected = selectedNetwork == connectedKey,
                                     onClick = { viewModel.selectNetwork(null) }, label = { Text(live.ssid) })
                                 choices.filter { it.networkKey != connectedKey }.forEach { choice ->
@@ -263,45 +261,35 @@ fun WalkScreen(
                             }
                         }
                     }
-                    if (!walking && spots.rankedRooms.isNotEmpty()) {
+                    if (hasList) {
                         item(key = "spots") {
+                            Box(Modifier.padding(horizontal = 16.dp)) {
                             SavedSpots(spots, onOpen = { openedSpot = it.spotKey }, onDelete = { spot ->
-                                viewModel.delete(spot)
+                                val history = spots.history.filter { it.spotKey == spot.spotKey }
+                                viewModel.deleteSpot(spot)
                                 scope.launch {
-                                    val result = snackbar.showSnackbar("Removed latest reading for ${spot.name}", actionLabel = "Undo", duration = SnackbarDuration.Short)
-                                    if (result == SnackbarResult.ActionPerformed) viewModel.restore(spot)
+                                    val result = snackbar.showSnackbar("Removed ${spot.name}", actionLabel = "Undo", duration = SnackbarDuration.Short)
+                                    if (result == SnackbarResult.ActionPerformed) viewModel.restoreSpot(history)
                                 }
                             })
+                            }
                         }
-                    }
-                    if (!walking && spots.rankedRooms.isEmpty()) {
+                    } else {
                         item(key = "empty") {
+                            // The two ways in, in one sentence: a quick reading per room, or the whole home.
                             Text(
-                                "Save a reading in each room to compare them.",
+                                "Stand in a room and save a reading. Check another room to find where the signal gets weaker.",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 24.dp)
                             )
                         }
                     }
-                    if (!walking) {
-                        item(key = "floorplan") {
-                            // An action, not another saved room: a plain button sets it apart from the list.
-                            TextButton(onClick = onOpenFloorPlan, shapes = ButtonDefaults.shapes()) {
-                                Icon(Icons.Rounded.Map, null, Modifier.size(ButtonDefaults.IconSize))
-                                Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-                                Text("Map it on a floor plan")
-                            }
-                        }
-                    }
-                }
             }
         }
     }
 
-    saving?.let { name ->
-        LaunchedEffect(name) { snackbar.showSnackbar("Checking $name… keep still") }
-    }
     openedSpot?.let { key ->
         val history = spots.history.filter { it.spotKey == key }.sortedByDescending { it.timestamp }
         if (history.isNotEmpty()) SpotHistorySheet(
@@ -310,30 +298,28 @@ fun WalkScreen(
             onRecheck = { viewModel.saveSpot(history.first().name) },
             onRemove = {
                 openedSpot = null
-                history.forEach(viewModel::delete)
+                viewModel.deleteSpot(history.first())
                 scope.launch {
                     val result = snackbar.showSnackbar("Removed ${history.first().name}", actionLabel = "Undo", duration = SnackbarDuration.Short)
-                    if (result == SnackbarResult.ActionPerformed) history.forEach(viewModel::restore)
+                    if (result == SnackbarResult.ActionPerformed) viewModel.restoreSpot(history)
                 }
             },
             onDismiss = { openedSpot = null }
         )
     }
     if (pinning) {
-        PinSpotSheet(
+        RoomPickerSheet(
             existing = spots.rankedRooms.map { it.name },
             onSave = { name -> pinning = false; haptics.click(); viewModel.saveSpot(name) },
             onDismiss = { pinning = false }
         )
     }
-    finished?.let { (summary, samples) ->
-        WalkSummarySheet(summary, samples, onDone = viewModel::dismissSummary, onAgain = { viewModel.dismissSummary(); viewModel.startWalk() })
-    }
 }
 
 /** A shape that grows with signal, with ripples that quicken as it gets stronger. */
 @Composable
-private fun FinderStage(rssi: Int?, active: Boolean, height: androidx.compose.ui.unit.Dp) {
+private fun FinderStage(rssi: Int?, height: androidx.compose.ui.unit.Dp) {
+    val display = com.pulsewave.app.core.designsystem.LocalSignalDisplay.current
     val quality = rssi?.let(SignalQuality::of)
     val fraction = rssi?.let(SignalQuality::fraction) ?: 0f
     val colors = signalColors(quality ?: SignalQuality.DeadZone)
@@ -365,9 +351,8 @@ private fun FinderStage(rssi: Int?, active: Boolean, height: androidx.compose.ui
     val rings = 1 + (quality?.bars ?: 0).coerceAtMost(3)
     val ringColor = colors.accent
     Box(
-        Modifier.fillMaxWidth().height(height).semantics(mergeDescendants = true) {
-            liveRegion = LiveRegionMode.Polite
-            contentDescription = quality?.let { "$rssi dBm, ${it.headline}" } ?: "No Wi-Fi signal"
+        Modifier.fillMaxWidth().height(height).clearAndSetSemantics {
+            contentDescription = quality?.let { "${display.reading(rssi!!)}, ${it.headline}" } ?: "No Wi-Fi signal"
         },
         contentAlignment = Alignment.Center
     ) {
@@ -377,7 +362,9 @@ private fun FinderStage(rssi: Int?, active: Boolean, height: androidx.compose.ui
                 // Rings start hidden behind the shape and emerge from its edge, easing out as they fade.
                 val start = blobSize.toPx() * 0.3f
                 val edge = blobSize.toPx() / 2
-                val reach = minOf(size.width / 2, size.height * 0.62f)
+                // Wide windows (tablets, unfolded phones) would send rings far past the title;
+                // there the meter's own height sets the reach.
+                val reach = if (size.width > size.height * 1.2f) size.height * 0.6f else maxOf(size.width / 2, size.height * 0.75f)
                 val end = edge + (reach - edge).coerceAtLeast(0f) * lerp(0.45f, 1f, strength)
                 val peak = lerp(0.18f, 0.5f, strength)
                 val stroke = lerp(1.5f, 4f, strength).dp.toPx()
@@ -390,7 +377,7 @@ private fun FinderStage(rssi: Int?, active: Boolean, height: androidx.compose.ui
                 }
             }
         }
-        // The same gauge as everywhere else, just bigger: its fill and shape track the signal live.
+        // A consistent Wi-Fi symbol inside the same quality shape used in every list.
         if (rssi != null) {
             com.pulsewave.app.core.designsystem.component.WifiBadge(rssi, size = blobSize)
         } else {
@@ -402,41 +389,33 @@ private fun FinderStage(rssi: Int?, active: Boolean, height: androidx.compose.ui
 }
 
 @Composable
-private fun WalkingStats(session: WalkSession) {
-    Card(shape = PulseWaveShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            val seconds = (session.samples.lastOrNull()?.elapsedMs ?: 0L) / 1000
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                StatPill(Icons.Rounded.Timer, "${seconds / 60}:${(seconds % 60).twoDigits()}")
-                session.latestRouterMs?.let { StatPill(Icons.Rounded.Router, "Router ${it.fixed(0)} ms") }
-            }
-            WalkTimeline(session.samples, Modifier.fillMaxWidth().height(64.dp))
-        }
-    }
-}
-
-@Composable
-private fun RoomControls(enabled: Boolean, onWalk: () -> Unit, onSave: () -> Unit) {
+private fun RoomControls(enabled: Boolean, saving: Boolean, onMap: () -> Unit, onSave: () -> Unit) {
+    // Two ways to measure: a quick named reading, or the whole home on a map.
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         FilledTonalButton(
-            onClick = onWalk,
+            onClick = onMap,
             enabled = enabled,
             shapes = ButtonDefaults.shapes(),
+            contentPadding = PaddingValues(horizontal = 12.dp),
             modifier = Modifier.weight(1f).heightIn(min = ButtonDefaults.MediumContainerHeight)
         ) {
-            Icon(Icons.AutoMirrored.Rounded.DirectionsWalk, null)
+            Icon(Icons.Rounded.Map, null)
             Spacer(Modifier.width(8.dp))
-            Text("Walk", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight), maxLines = 1)
+            Text("Map home", style = MaterialTheme.typography.titleMedium, maxLines = 1,
+                autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = MaterialTheme.typography.titleMedium.fontSize))
         }
         Button(
             onClick = onSave,
             enabled = enabled,
             shapes = ButtonDefaults.shapes(),
+            contentPadding = PaddingValues(horizontal = 12.dp),
             modifier = Modifier.weight(1f).heightIn(min = ButtonDefaults.MediumContainerHeight)
         ) {
-            Icon(Icons.Outlined.AddLocationAlt, null)
+            if (saving) androidx.compose.material3.LoadingIndicator(Modifier.size(24.dp))
+            else Icon(Icons.Outlined.AddLocationAlt, null)
             Spacer(Modifier.width(8.dp))
-            Text("Save room", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight), maxLines = 1)
+            Text(if (saving) "Checking…" else "Save room", style = MaterialTheme.typography.titleMedium, maxLines = 1,
+                autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = MaterialTheme.typography.titleMedium.fontSize))
         }
     }
 }
@@ -453,42 +432,8 @@ private fun shortChange(current: RoomReading, previous: RoomReading?): String? {
 }
 
 @Composable
-private fun WalkingControls(onPin: () -> Unit, onFinish: () -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        FilledTonalButton(
-            onClick = onPin,
-            shapes = ButtonDefaults.shapes(),
-            modifier = Modifier.weight(1f).heightIn(min = ButtonDefaults.MediumContainerHeight)
-        ) {
-            Icon(Icons.Outlined.AddLocationAlt, null)
-            Spacer(Modifier.width(8.dp))
-            Text("Save room", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
-        }
-        Button(
-            onClick = onFinish,
-            shapes = ButtonDefaults.shapes(),
-            modifier = Modifier.weight(1f).heightIn(min = ButtonDefaults.MediumContainerHeight)
-        ) {
-            Icon(Icons.Rounded.Stop, null)
-            Spacer(Modifier.width(8.dp))
-            Text("Finish", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
-        }
-    }
-}
-
-@Composable
-private fun StatPill(icon: ImageVector, text: String) {
-    Surface(shape = PulseWaveShapes.full, color = MaterialTheme.colorScheme.surfaceContainerHighest) {
-        Row(Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(6.dp))
-            Text(text, style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"))
-        }
-    }
-}
-
-@Composable
 private fun SavedSpots(spots: CoverageSummary, onOpen: (RoomReading) -> Unit, onDelete: (RoomReading) -> Unit) {
+    val display = com.pulsewave.app.core.designsystem.LocalSignalDisplay.current
     Column(Modifier.fillMaxWidth().animateContentSize(MaterialTheme.motionScheme.defaultSpatialSpec())) {
         Text(
             "Saved rooms",
@@ -506,7 +451,8 @@ private fun SavedSpots(spots: CoverageSummary, onOpen: (RoomReading) -> Unit, on
                         enableDismissFromStartToEnd = false,
                         onDismiss = { onDelete(spot) },
                         backgroundContent = {
-                            Box(
+                            // Only while swiping; at rest the red would peek out around the rounded corners.
+                            if (dismiss.dismissDirection == SwipeToDismissBoxValue.EndToStart) Box(
                                 Modifier.fillMaxSize().clip(ListItemDefaults.segmentedShapes(index = index, count = spots.rankedRooms.size).shape)
                                     .background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 24.dp),
                                 contentAlignment = Alignment.CenterEnd
@@ -515,15 +461,20 @@ private fun SavedSpots(spots: CoverageSummary, onOpen: (RoomReading) -> Unit, on
                     ) {
                         SegmentedListItem(
                             modifier = Modifier.semantics {
-                                contentDescription = "${spot.name}, ${spot.quality.label} signal, ${spot.averageRssi} dBm. Review readings and recheck this spot."
+                                contentDescription = "${spot.name}, ${spot.quality.label} signal, ${display.reading(spot.averageRssi)}. Review readings and recheck this spot."
                             },
                             onClick = { onOpen(spot) },
                             shapes = ListItemDefaults.segmentedShapes(index = index, count = spots.rankedRooms.size),
                             colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-                            leadingContent = { com.pulsewave.app.core.designsystem.component.WifiBadge(spot.averageRssi) },
+                            leadingContent = {
+                                Box(Modifier.clearAndSetSemantics { }) {
+                                    com.pulsewave.app.core.designsystem.component.WifiBadge(spot.averageRssi)
+                                }
+                            },
                             supportingContent = {
                                 Text(
                                     listOfNotNull(
+                                        spot.quality.label,
                                         shortChange(spot, spots.history.filter { it.spotKey == spot.spotKey && it.id != spot.id }.maxByOrNull { it.timestamp }),
                                         relativeTime(spot.timestamp)
                                     ).joinToString(" · "),
@@ -536,155 +487,5 @@ private fun SavedSpots(spots: CoverageSummary, onOpen: (RoomReading) -> Unit, on
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun PinSpotSheet(existing: List<String>, onSave: (String) -> Unit, onDismiss: () -> Unit) {
-    var name by rememberSaveable { mutableStateOf("") }
-    val scheme = MaterialTheme.colorScheme
-    val saved = existing.map { it.lowercase() }.toSet()
-    val places = (existing + RoomSuggestions).distinctBy { it.lowercase() }
-    // A different soft shape per place keeps the grid playful without needing colour coding.
-    val shapes = listOf(MaterialShapes.Cookie4Sided, MaterialShapes.Clover4Leaf, MaterialShapes.Sunny, MaterialShapes.Pill, MaterialShapes.Cookie6Sided, MaterialShapes.Puffy)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        Column(
-            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 24.dp).navigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text("Where are you?", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 8.dp, bottom = 8.dp))
-            places.chunked(3).forEachIndexed { row, chunk ->
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    chunk.forEachIndexed { col, place ->
-                        val isSaved = place.lowercase() in saved
-                        Surface(
-                            onClick = { onSave(place) },
-                            shape = PulseWaveShapes.large,
-                            color = if (isSaved) scheme.secondaryContainer else scheme.surfaceContainerHigh,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Column(
-                                Modifier.padding(vertical = 14.dp, horizontal = 4.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                ShapeIcon(
-                                    spotIcon(place),
-                                    shapes[(row * 3 + col) % shapes.size],
-                                    containerColor = if (isSaved) scheme.secondary else scheme.primaryContainer,
-                                    contentColor = if (isSaved) scheme.onSecondary else scheme.onPrimaryContainer,
-                                    size = 44.dp
-                                )
-                                Text(place, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
-                            }
-                        }
-                    }
-                    repeat(3 - chunk.size) { Spacer(Modifier.weight(1f)) }
-                }
-            }
-            Spacer(Modifier.height(8.dp))
-            androidx.compose.material3.TextField(
-                value = name,
-                onValueChange = { name = it.take(40) },
-                placeholder = { Text("Somewhere else") },
-                singleLine = true,
-                shape = PulseWaveShapes.full,
-                colors = androidx.compose.material3.TextFieldDefaults.colors(
-                    focusedContainerColor = scheme.surfaceContainerHigh,
-                    unfocusedContainerColor = scheme.surfaceContainerHigh,
-                    focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-                    unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
-                ),
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { if (name.isNotBlank()) onSave(name) }),
-                trailingIcon = {
-                    if (name.isNotBlank()) androidx.compose.material3.FilledIconButton(onClick = { onSave(name) }, modifier = Modifier.padding(end = 4.dp)) {
-                        Icon(Icons.Rounded.Check, "Save")
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun WalkSummarySheet(summary: WalkSummary, samples: List<WalkSample>, onDone: () -> Unit, onAgain: () -> Unit) {
-    val worst = if (summary.hadDisconnection) SignalQuality.DeadZone else summary.floor
-    val colors = signalColors(worst ?: SignalQuality.DeadZone)
-    ModalBottomSheet(onDismissRequest = onDone, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        Column(
-            Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp).navigationBarsPadding(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            SignalMorphBlob(quality = worst, color = colors.container, size = 120.dp, spinning = false) {
-                Icon(Icons.AutoMirrored.Rounded.DirectionsWalk, null, Modifier.size(48.dp), tint = colors.onContainer)
-            }
-            Text(summary.headline, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
-            WalkTimeline(samples, Modifier.fillMaxWidth().height(64.dp), maxBars = samples.size.coerceIn(20, 90), fullSession = true)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SummaryTile("Strongest", Modifier.weight(1f)) {
-                    summary.bestRssi?.let { com.pulsewave.app.core.designsystem.component.WifiBadge(it, size = 44.dp) } ?: SummaryValue("—")
-                }
-                SummaryTile("Weakest", Modifier.weight(1f)) {
-                    summary.worstRssi?.let { com.pulsewave.app.core.designsystem.component.WifiBadge(it, size = 44.dp) } ?: SummaryValue("—")
-                }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SummaryTile("Weak", Modifier.weight(1f)) { SummaryValue("${(summary.weakShare * 100).fixed(0)}%") }
-                SummaryTile("Router", Modifier.weight(1f)) { SummaryValue(summary.medianRouterMs?.let { "${it.fixed(0)} ms" } ?: "—") }
-            }
-            Text(
-                when {
-                    summary.hadDisconnection -> "Wi-Fi dropped for ${(summary.disconnectedShare * 100).fixed(0)}% of the walk. Go back there and save that room."
-                    summary.hadUnavailableReading -> "No signal reading for ${(summary.unknownShare * 100).fixed(0)}% of the walk. Try walking again."
-                    summary.weakMoments == 0 -> "Signal stayed good the whole way."
-                    else -> "Go back to the weak stretches and save those rooms, so you can compare after moving the router."
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            Button(onClick = onDone, shapes = ButtonDefaults.shapes(), modifier = Modifier.fillMaxWidth().heightIn(min = ButtonDefaults.MediumContainerHeight)) {
-                Text("Done", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
-            }
-            TextButton(onClick = onAgain) { Text("Walk again") }
-        }
-    }
-}
-
-@Composable
-private fun SummaryTile(label: String, modifier: Modifier = Modifier, value: @Composable () -> Unit) {
-    Card(shape = PulseWaveShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), modifier = modifier) {
-        // One fixed height, so badges and numbers sit on the same line in every tile.
-        Row(Modifier.fillMaxWidth().height(76.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-            value()
-        }
-    }
-}
-
-@Composable
-private fun SummaryValue(text: String) {
-    Text(text, style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"), fontWeight = FontWeight.Bold)
-}
-
-private fun spotIcon(name: String): ImageVector {
-    val n = name.lowercase()
-    return when {
-        "kitchen" in n -> Icons.Rounded.Kitchen
-        "bed" in n -> Icons.Rounded.Bed
-        "living" in n || "lounge" in n || "family" in n -> Icons.Rounded.Weekend
-        "bath" in n || "toilet" in n -> Icons.Rounded.Bathtub
-        "office" in n || "study" in n || "desk" in n -> Icons.Rounded.Computer
-        "kid" in n || "nursery" in n -> Icons.Rounded.ChildCare
-        "dining" in n -> Icons.Rounded.DinnerDining
-        "hall" in n || "entr" in n -> Icons.Rounded.DoorFront
-        "garage" in n -> Icons.Rounded.Garage
-        "basement" in n || "attic" in n || "stair" in n -> Icons.Rounded.Stairs
-        "balcony" in n || "terrace" in n || "patio" in n -> Icons.Rounded.Balcony
-        "garden" in n || "yard" in n -> Icons.Rounded.Yard
-        else -> Icons.Rounded.MeetingRoom
     }
 }

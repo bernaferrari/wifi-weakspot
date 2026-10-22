@@ -5,18 +5,23 @@ import com.pulsewave.app.core.util.fixed
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pulsewave.app.core.tools.*
+import com.pulsewave.app.core.domain.NetworkStatusRepository
+import com.pulsewave.app.core.lan.lanNetworkKey
+import com.pulsewave.app.core.lan.sameLanConnection
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ToolsViewModel(
     private val pingClient: PingClient,
     private val dnsClient: DnsClient,
     private val portScanner: PortScanner,
-    private val dao: com.pulsewave.app.core.database.dao.PulseWaveDao
+    private val dao: com.pulsewave.app.core.database.dao.PulseWaveDao,
+    private val networkStatusRepository: NetworkStatusRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ToolsUiState>(ToolsUiState.Home)
@@ -102,7 +107,11 @@ class ToolsViewModel(
     }
 
     private suspend fun runPortScan(host: String) {
+        val connection = networkStatusRepository.getCurrentNetworkStatus().first()
         val result = portScanner.scanCommonPorts(host)
+        check(sameLanConnection(connection, networkStatusRepository.getCurrentNetworkStatus().first())) {
+            "The connection changed. Run this check again on the new network."
+        }
         val pairs = result.ports.filter { it.status == com.pulsewave.app.core.model.tools.PortStatus.OPEN }.map { it.port to (it.service ?: "unknown") }
 
         // Save to DB
@@ -112,7 +121,8 @@ class ToolsViewModel(
                 toolType = "PORT_SCAN",
                 target = host,
                 resultJson = encodePortScan(pairs),
-                isSuccess = true
+                isSuccess = true,
+                networkKey = lanNetworkKey(connection)
             )
         )
         _uiState.value = ToolsUiState.PortScanResult(host, pairs)

@@ -97,7 +97,7 @@ fun LanScreen(
                     Text(
                         when {
                             isScanning && shown.isEmpty() -> "Looking for devices…"
-                            shown.isEmpty() -> "Everything connected to your Wi-Fi"
+                            shown.isEmpty() -> "Find devices on your Wi-Fi"
                             status.ssid.isNotBlank() -> "${shown.size} on ${status.ssid}"
                             else -> "${shown.size} on your network"
                         }
@@ -145,7 +145,7 @@ fun LanScreen(
                 }
                 val error = uiState as? LanUiState.Error
                 when {
-                    error != null && shown.isEmpty() -> item(key = "error") {
+                    error != null -> item(key = "error") {
                         ProblemCard("Couldn't look for devices", error.message, onRetry = viewModel::startScan)
                     }
                     shown.isEmpty() && !isScanning -> item(key = "empty") {
@@ -244,7 +244,7 @@ private fun ScanStatus(scanning: Boolean, progress: Float, modifier: Modifier = 
     Column(modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         LinearWavyProgressIndicator(progress = { progress.coerceIn(0.02f, 1f) }, modifier = Modifier.fillMaxWidth())
         Text(
-            "Asking every address on your network · ${(progress * 100).toInt()}%",
+            "Checking local addresses · ${(progress * 100).toInt()}%",
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

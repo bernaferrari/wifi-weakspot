@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModelStore
 import com.pulsewave.app.core.database.dao.PulseWaveDao
 import com.pulsewave.app.core.database.entities.SurveyPointEntity
 import com.pulsewave.app.core.database.entities.SurveyProjectEntity
-import com.pulsewave.app.core.sensors.StepCounter
-import com.pulsewave.app.core.sensors.OrientationProvider
 import com.pulsewave.app.core.export.ExportManager
 import com.pulsewave.app.core.wifi.WifiNetwork
 import com.pulsewave.app.core.wifi.WifiScanner
@@ -29,9 +27,10 @@ class SurveyViewModelTest {
     private val store = ViewModelStore()
     private val dao = mockk<PulseWaveDao>()
     private val scanner = mockk<WifiScanner>()
-    private val steps = mockk<StepCounter>(relaxed = true)
-    private val orientation = mockk<OrientationProvider>(relaxed = true)
     private val exports = mockk<ExportManager>(relaxed = true)
+    private val link = mockk<com.pulsewave.app.core.domain.NetworkStatusRepository>().also {
+        every { it.getCurrentNetworkStatus(any()) } returns kotlinx.coroutines.flow.flowOf(com.pulsewave.app.core.model.NetworkStatus.Disconnected)
+    }
     private val projects = MutableStateFlow(listOf(project(1), project(2)))
     private val points = MutableStateFlow<List<SurveyPointEntity>>(emptyList())
     private lateinit var model: SurveyViewModel
@@ -43,13 +42,9 @@ class SurveyViewModelTest {
 
     @Before fun setup() {
         Dispatchers.setMain(StandardTestDispatcher())
-        every { steps.isAvailable } returns true
-        every { orientation.isAvailable } returns true
-        every { steps.steps } returns kotlinx.coroutines.flow.MutableSharedFlow()
-        every { orientation.azimuth } returns MutableStateFlow(0f)
         startKoin { modules(module {
-            single<StepCounter> { steps }
-            single<OrientationProvider> { orientation }
+            // Not on the mapped access point: readings take the scan path these tests cover.
+            single<com.pulsewave.app.core.domain.NetworkStatusRepository> { link }
         }) }
         every { dao.getAllProjects() } returns projects
         every { dao.getPointsForProject(any()) } answers {
@@ -65,6 +60,10 @@ class SurveyViewModelTest {
         coEvery { dao.deleteSurveyPoint(any()) } coAnswers {
             val id = firstArg<Long>()
             points.value = points.value.filterNot { it.id == id }
+        }
+        coEvery { dao.deleteFloorPoints(any(), any()) } coAnswers {
+            val projectId = firstArg<Long>(); val floor = secondArg<Int>()
+            points.value = points.value.filterNot { it.projectId == projectId && it.floorId == floor }
         }
         coEvery { dao.markSurveyProjectUsed(any(), any()) } coAnswers {
             val id = firstArg<Long>()
@@ -99,13 +98,24 @@ class SurveyViewModelTest {
         assertEquals(0.25f, points.value.single().y, 0f)
     }
 
+    @Test fun creatingMapDoesNotLockTargetToAndroidRedactedBssid() = runTest {
+        every { link.getCurrentNetworkStatus(any()) } returns kotlinx.coroutines.flow.flowOf(
+            com.pulsewave.app.core.model.NetworkStatus("Your Wi-Fi", "02:00:00:00:00:00",
+                5180, 36, -50, 400, "192.168.1.2", true, ""))
+        coEvery { dao.insertSurveyProject(any()) } returns 3L
+        runCurrent()
+        model.createMap()
+        runCurrent()
+        coVerify(exactly = 1) { dao.insertSurveyProject(match { it.targetBssid == null && it.targetSsid == null }) }
+    }
+
     @Test fun noFreshScanDoesNotSaveCachedResultsOrInventPoorSignal() = runTest {
         coEvery { scanner.awaitNextScan(any()) } returns null
         runCurrent()
         model.addPoint(0.5f, 0.5f)
         runCurrent()
         assertTrue(points.value.isEmpty())
-        assertTrue(model.message.value!!.contains("No fresh scan"))
+        assertTrue(model.message.value!!.contains("pausing scans"))
         coVerify(exactly = 0) { dao.insertSurveyPoint(any()) }
     }
 
@@ -115,7 +125,7 @@ class SurveyViewModelTest {
         model.addPoint(0.5f, 0.5f)
         runCurrent()
         assertTrue(points.value.isEmpty())
-        assertTrue(model.message.value!!.contains("selected access point"))
+        assertTrue(model.message.value!!.contains("didn't show up"))
     }
 
     @Test fun selectedRadioIsSavedWithItsRealObservationTime() = runTest {
@@ -168,7 +178,6 @@ class SurveyViewModelTest {
         reply.complete(listOf(network()))
         runCurrent()
         assertTrue(points.value.isEmpty())
-        assertFalse(model.isRecording.value)
     }
 
     @Test fun targetChangeAtomicallyClearsEveryFloorAndPersistsSelectedRadio() = runTest {
@@ -194,44 +203,6 @@ class SurveyViewModelTest {
         model.undoLastPoint()
         runCurrent()
         assertEquals(listOf(2L), points.value.map { it.id })
-    }
-
-    @Test fun sensorlessDevicesKeepManualMappingAvailableWithoutPretendingToRecord() = runTest {
-        every { steps.isAvailable } returns false
-        runCurrent()
-        model.addPoint(0.5f, 0.5f)
-        runCurrent()
-        model.toggleRecording()
-        runCurrent()
-        assertFalse(model.isRecording.value)
-        assertTrue(model.message.value!!.contains("measure manually"))
-        verify(exactly = 0) { steps.startListening() }
-    }
-
-    @Test fun leavingScreenUnregistersBothSensorsAndStopsWalking() = runTest {
-        runCurrent()
-        model.addPoint(0.5f, 0.5f)
-        runCurrent()
-        model.toggleRecording()
-        runCurrent()
-        assertTrue(model.isRecording.value)
-        model.onScreenStopped()
-        runCurrent()
-        assertFalse(model.isRecording.value)
-        verify(exactly = 1) { steps.startListening() }
-        verify(exactly = 1) { steps.stopListening() }
-        verify(exactly = 1) { orientation.stopListening() }
-    }
-
-    @Test fun clearingViewModelUnregistersSensorsEvenWithoutExplicitStop() = runTest {
-        runCurrent()
-        model.addPoint(0.5f, 0.5f)
-        runCurrent()
-        model.toggleRecording()
-        runCurrent()
-        store.clear()
-        verify(exactly = 1) { steps.stopListening() }
-        verify(exactly = 1) { orientation.stopListening() }
     }
 
     @Test fun lastSelectedProjectReopensAfterViewModelRecreation() = runTest {
@@ -295,5 +266,20 @@ class SurveyViewModelTest {
         assertEquals("replacement", model.currentProject.value?.targetBssid)
         assertEquals("/new.png", model.currentProject.value?.imagePath)
         coVerify(exactly = 0) { dao.updateSurveyProject(any()) }
+    }
+
+    @Test fun deletingAFloorKeepsTheOtherFloorsAndReturnsToFloorOne() = runTest {
+        runCurrent()
+        points.value = listOf(
+            SurveyPointEntity(1, 1, 0.2f, 0.2f, -50, "Home", "selected", floorId = 1, timestamp = 1),
+            SurveyPointEntity(2, 1, 0.4f, 0.4f, -60, "Home", "selected", floorId = 2, timestamp = 2)
+        )
+        model.setFloor(2)
+        runCurrent()
+        assertEquals(1, model.floorReadingCount(2))
+        model.deleteFloor(2)
+        runCurrent()
+        assertEquals(listOf(1), points.value.map { it.floorId })
+        assertEquals(1, model.selectedFloor.value)
     }
 }

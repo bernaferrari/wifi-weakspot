@@ -12,10 +12,6 @@ import com.pulsewave.app.core.lan.LanScanner
 import com.pulsewave.app.core.monitoring.BackgroundMonitorManager
 import com.pulsewave.app.core.permissions.AndroidPermissionGate
 import com.pulsewave.app.core.permissions.PermissionGate
-import com.pulsewave.app.core.sensors.AndroidOrientationProvider
-import com.pulsewave.app.core.sensors.AndroidStepCounter
-import com.pulsewave.app.core.sensors.OrientationProvider
-import com.pulsewave.app.core.sensors.StepCounter
 import com.pulsewave.app.core.tools.AndroidDnsClient
 import com.pulsewave.app.core.tools.AndroidPingClient
 import com.pulsewave.app.core.tools.AndroidPortScanner
@@ -62,8 +58,6 @@ val appModule = module {
     single { AndroidPermissionGate(androidContext()) } bind PermissionGate::class
     single { AndroidExportManager(androidContext()) } bind ExportManager::class
     single<NetworkStatusRepository> { AndroidNetworkStatusRepository(androidContext()) }
-    single<StepCounter> { AndroidStepCounter(androidContext()) }
-    single<OrientationProvider> { AndroidOrientationProvider(androidContext()) }
 
     // Background Monitoring
     single { BackgroundMonitorManager(androidContext()) } bind com.pulsewave.app.core.monitoring.BackgroundMonitor::class

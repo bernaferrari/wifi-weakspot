@@ -115,7 +115,7 @@ class AndroidExportManager(
             putExtra(Intent.EXTRA_TEXT, text)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        context.startActivity(Intent.createChooser(intent, "Share PulseWave Report").apply {
+        context.startActivity(Intent.createChooser(intent, "Share WiFi\u00A0Weakspot Report").apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         })
     }

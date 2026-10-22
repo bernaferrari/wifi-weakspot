@@ -5,6 +5,7 @@ package com.pulsewave.app.navigation
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -73,7 +74,8 @@ fun PulseWaveNavigationSuite(backStack: NavBackStack<NavKey>, content: @Composab
     val latest by rememberUpdatedState(content)
     val movable = remember { movableContentOf { latest() } }
 
-    BoxWithConstraints(Modifier.fillMaxSize()) {
+    // Fade-through clears both screens briefly; the backdrop must stay opaque in either layout.
+    BoxWithConstraints(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         if (maxWidth < WindowWidth.Medium) {
             Scaffold(
                 contentWindowInsets = WindowInsets(0),

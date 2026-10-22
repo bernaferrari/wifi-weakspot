@@ -54,6 +54,37 @@ fun signalColors(quality: SignalQuality): SignalColors {
 @ReadOnlyComposable
 fun signalColors(rssi: Int): SignalColors = signalColors(SignalQuality.of(rssi))
 
+private val heatColorCache = HashMap<Pair<Int, Boolean>, Map<SignalQuality, Color>>()
+
+/**
+ * Vivid signal colors for large fields such as the floor-plan heatmap. Same hues as [signalColors],
+ * but pushed to high chroma at a mid tone (HCT is perceptual, like OKLCH), so a whole map of them
+ * reads as clear green-to-red instead of the pale tints that suit text and badges.
+ */
+@Composable
+@ReadOnlyComposable
+fun signalHeatColors(): Map<SignalQuality, Color> {
+    val scheme = MaterialTheme.colorScheme
+    val dark = scheme.surface.luminance() < 0.5f
+    return heatColorCache.getOrPut(0 to dark) {
+        // Not harmonized: on a map, green must stay green whatever the theme colour is.
+        // Each hue gets its own tone, because yellow only reads as yellow when it's bright;
+        // at one shared tone the middle of the scale turns olive.
+        SignalQuality.entries.associateWith { quality ->
+            val hue = SignalHues.getValue(quality).toHct().hue
+            // Chroma asks for the most the screen can show at that tone (HCT clamps to gamut).
+            val (chroma, tone) = when (quality) {
+                SignalQuality.Excellent -> 120.0 to if (dark) 68.0 else 56.0
+                SignalQuality.Good -> 120.0 to if (dark) 70.0 else 60.0
+                SignalQuality.Fair -> 120.0 to if (dark) 82.0 else 78.0
+                SignalQuality.Weak -> 120.0 to if (dark) 66.0 else 64.0
+                SignalQuality.DeadZone -> 120.0 to if (dark) 56.0 else 52.0
+            }
+            Hct.from(hue, chroma, tone).toColor()
+        }
+    }
+}
+
 /** Distinguishable series colors for graphs, toned for the light or dark theme. */
 @Composable
 @ReadOnlyComposable

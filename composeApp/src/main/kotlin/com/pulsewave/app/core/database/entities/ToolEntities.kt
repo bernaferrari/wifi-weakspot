@@ -10,7 +10,9 @@ data class ToolResultEntity(
     val toolType: String, // PING, DNS, PORT_SCAN
     val target: String,
     val resultJson: String, // Simplified storage for complex result types
-    val isSuccess: Boolean
+    val isSuccess: Boolean,
+    /** Connection used for this check; null for legacy or unidentified connections. */
+    val networkKey: String? = null
 )
 
 @Entity(tableName = "speed_test_results")

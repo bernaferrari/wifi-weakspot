@@ -21,6 +21,7 @@ class WebPlatformActions : PlatformActions {
     override fun loadImage(path: String): ImageBitmap? = null
     override fun deleteOwnedFile(path: String) = Unit
     override fun openUrl(url: String) = openTab(url)
+    override fun shareImage(image: ImageBitmap, title: String) = logMessage("Sharing the map works in the Android app.")
 }
 
 class WebPlatformTheme : PlatformTheme {

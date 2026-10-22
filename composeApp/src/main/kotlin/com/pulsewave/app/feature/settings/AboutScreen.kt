@@ -40,7 +40,7 @@ fun AboutScreen(onBack: () -> Unit) {
                 Icon(Icons.Rounded.Wifi, null, Modifier.size(52.dp), tint = scheme.onPrimaryContainer)
             }
             Spacer(Modifier.height(20.dp))
-            Text("PulseWave", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text("WiFi\u00A0Weakspot", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Text("Version 1.0", style = MaterialTheme.typography.bodyLarge, color = scheme.onSurfaceVariant)
             Spacer(Modifier.height(32.dp))
 
@@ -56,7 +56,7 @@ fun AboutScreen(onBack: () -> Unit) {
                         onClick = {},
                         enabled = false,
                         shapes = ListItemDefaults.segmentedShapes(index = index, count = rows.size),
-                        colors = ListItemDefaults.colors(containerColor = scheme.surfaceContainerLow, disabledContentColor = scheme.onSurface),
+                        colors = ListItemDefaults.colors(containerColor = scheme.surfaceContainerLow, disabledContainerColor = scheme.surfaceContainerLow, disabledContentColor = scheme.onSurface),
                         leadingContent = { ShapeIcon(row.icon, row.shape, scheme.secondaryContainer, scheme.onSecondaryContainer, size = 40.dp, iconSize = 20.dp) },
                         supportingContent = { Text(row.body) }
                     ) { Text(row.title, style = MaterialTheme.typography.titleMedium) }

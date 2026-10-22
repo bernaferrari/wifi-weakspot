@@ -2,6 +2,7 @@ package com.pulsewave.app.core.datastore
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
+import com.pulsewave.app.core.wifi.SignalDisplay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -18,6 +19,7 @@ class SettingsRepository(
         val FAVORITE_BSSIDS = stringSetPreferencesKey("favorite_bssids")
         val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
         val SHOW_DBM = booleanPreferencesKey("show_dbm")
+        val SIGNAL_DISPLAY = stringPreferencesKey("signal_display")
     }
 
     val isDarkMode: Flow<Boolean?> = dataStore.data.map { it[Keys.DARK_MODE] }
@@ -25,8 +27,15 @@ class SettingsRepository(
     val seedColor: Flow<Int> = dataStore.data.map { it[Keys.SEED_COLOR] ?: 0xFF3F51B5.toInt() } // Indigo Default
     val hapticsEnabled: Flow<Boolean> = dataStore.data.map { it[Keys.HAPTICS_ENABLED] ?: true }
     val reduceMotion: Flow<Boolean> = dataStore.data.map { it[Keys.REDUCE_MOTION] ?: false }
-    /** Show raw dBm instead of the 0–100 score, for people who think in dBm. */
-    val showDbm: Flow<Boolean> = dataStore.data.map { it[Keys.SHOW_DBM] ?: false }
+    /** New users get percentages; preserve an explicitly selected legacy display preference. */
+    val signalDisplay: Flow<SignalDisplay> = dataStore.data.map { prefs ->
+        SignalDisplay.entries.firstOrNull { it.name == prefs[Keys.SIGNAL_DISPLAY] }
+            ?: when (prefs[Keys.SHOW_DBM]) {
+                true -> SignalDisplay.Dbm
+                false -> SignalDisplay.Bars
+                null -> SignalDisplay.Percentage
+            }
+    }
     val favoriteBssids: Flow<Set<String>> = dataStore.data.map { it[Keys.FAVORITE_BSSIDS] ?: emptySet() }
     /** False until the first-run welcome is finished or skipped. */
     val onboardingDone: Flow<Boolean> = dataStore.data.map { it[Keys.ONBOARDING_DONE] ?: false }
@@ -52,8 +61,8 @@ class SettingsRepository(
         dataStore.edit { it[Keys.HAPTICS_ENABLED] = enabled }
     }
 
-    suspend fun setShowDbm(enabled: Boolean) {
-        dataStore.edit { it[Keys.SHOW_DBM] = enabled }
+    suspend fun setSignalDisplay(display: SignalDisplay) {
+        dataStore.edit { it[Keys.SIGNAL_DISPLAY] = display.name }
     }
 
     suspend fun setReduceMotion(enabled: Boolean) {
