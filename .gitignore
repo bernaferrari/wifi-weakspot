@@ -20,3 +20,7 @@ captures
 keystore.properties
 *.jks
 *.keystore
+
+# Local tooling and retired experiments
+/.claude/
+/archive/
