@@ -57,7 +57,7 @@ internal fun ChartExplorer(
                     // Landscape: chart on the left, the channel's networks beside it.
                     val sideBySide = maxWidth > maxHeight
                     if (showHistory) {
-                        SignalHistoryGraph(history, networks, connectedBssid = connectedBssid, modifier = Modifier.fillMaxSize().padding(12.dp))
+                        SignalHistoryGraph(history, networks, connectedBssid = connectedBssid, modifier = Modifier.fillMaxSize().padding(12.dp), allowVerticalScrubbing = true)
                         return@BoxWithConstraints
                     }
                     val chart = @Composable { modifier: Modifier ->

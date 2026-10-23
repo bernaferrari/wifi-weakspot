@@ -7,9 +7,6 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material.icons.rounded.LockOpen
-import androidx.compose.material3.toShape
-import androidx.compose.ui.draw.clip
-import com.pulsewave.app.core.wifi.competitorsOf
 import com.pulsewave.app.core.wifi.isSiblingOf
 
 import androidx.compose.animation.togetherWith
@@ -92,12 +89,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -275,7 +270,6 @@ private fun NetworksContent(
     counts: Map<FrequencyBand, Int>,
     onBandChange: (FrequencyBand) -> Unit
 ) {
-    val display = com.pulsewave.app.core.designsystem.LocalSignalDisplay.current
     val reduceMotion = LocalReduceMotion.current
     val haptics = rememberPulseWaveHapticFeedback()
     var showHistory by rememberSaveable { mutableStateOf(false) }
@@ -302,9 +296,10 @@ private fun NetworksContent(
         ).also { lastOrder[0] = it.map { n -> n.bssid } }
     }
 
-    val wide = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.width.let {
+    val windowWidth = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.width.let {
         with(androidx.compose.ui.platform.LocalDensity.current) { it.toDp() }
-    } >= com.pulsewave.app.core.designsystem.WindowWidth.Expanded
+    }
+    val wide = windowWidth >= com.pulsewave.app.core.designsystem.WindowWidth.Expanded
     val palette = rememberNetworkPalette(inBand, connected.bssid.takeIf { connected.isConnected })
     val controls: LazyListScope.() -> Unit = {
         item(key = "bands") {
@@ -313,8 +308,13 @@ private fun NetworksContent(
         item(key = "chart") {
             Card(shape = PulseWaveShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
                 Column(Modifier.padding(vertical = 12.dp)) {
-                    Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(if (showHistory) "Signal over time" else "Channels", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f), maxLines = 2)
+                    Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                            Text(if (showHistory) "Signal over time" else "Channels", style = if (windowWidth < 360.dp) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f, fill = false), maxLines = 2)
+                            IconButton(onClick = { haptics.click(); showHelp = true }) {
+                                Icon(Icons.Outlined.Info, "How to read this chart", Modifier.size(18.dp))
+                            }
+                        }
                         // Match the band selector's visible gap; each segment fills its 48 dp width.
                         Row(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
                                 listOf(false to (Icons.Rounded.WaterfallChart to "Channels"), true to (Icons.AutoMirrored.Rounded.ShowChart to "Signal over time"))
@@ -331,7 +331,7 @@ private fun NetworksContent(
                         }
                         IconButton(onClick = { haptics.click(); showExplorer = true }) { Icon(Icons.Rounded.Fullscreen, if (showHistory) "Expand signal history" else "Expand channels") }
                     }
-                    Box(Modifier.fillMaxWidth().height(if (wide) 440.dp else 340.dp).padding(horizontal = 4.dp)) {
+                    Box(Modifier.fillMaxWidth().height(if (wide) 440.dp else 340.dp)) {
                         if (inBand.isEmpty()) {
                             Text(
                                 "No ${band.label} networks nearby.",
@@ -359,25 +359,18 @@ private fun NetworksContent(
                             )
                         }
                     }
-                    if (!showHistory) Row(
-                        Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(start = 20.dp, end = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(selected?.ssid?.ifBlank { "Hidden network" } ?: "Explore channels", style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(
-                                selected?.let { "${SignalQuality.of(it.rssi).label} · ${display.reading(it.rssi)} · Ch ${frequencyToChannel(it.frequency)}" }
-                                    ?: "Tap a hill or slide across the chart",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        TextButton(onClick = { showHelp = true }) { Text("Guide") }
-                    }
                 }
             }
         }
-        item(key = "advice") { ChannelAdvice(networks, band, connected) }
+        if (!showHistory) item(key = "advice") {
+            ChannelContext(
+                networks = networks,
+                band = band,
+                connected = connected,
+                selectedNetwork = selected?.let { pick -> inBand.firstOrNull { it.bssid == pick.bssid } ?: pick },
+                onClearSelection = { toggle(null) }
+            )
+        }
     }
     var showWeak by rememberSaveable(band) { mutableStateOf(false) }
     val list: LazyListScope.() -> Unit = {
@@ -527,39 +520,6 @@ internal fun CompactBandSelector(band: FrequencyBand, onSelect: (FrequencyBand) 
         }
     }
 }
-
-@Composable
-private fun ChannelAdvice(networks: List<WifiNetwork>, band: FrequencyBand, connected: NetworkStatus) {
-    // Your router's guest or hidden names on the same radio aren't neighbors.
-    val competitors = remember(networks, connected.bssid, connected.frequency) {
-        networks.competitorsOf(connected.bssid.takeIf { connected.isConnected }, connected.frequency)
-    }
-    val scores = remember(competitors, band) {
-        CongestionAnalyzer.analyze(competitors.filter { band.contains(it.frequency) }, band)
-    }
-    val connectedHere = connected.isConnected && band.contains(connected.frequency)
-    val (channel, text) = channelHint(scores, connected.channel.takeIf { connectedHere }) ?: return
-    val scheme = MaterialTheme.colorScheme
-    // A small hint, sized to its words: useful, but not the point of the screen.
-    Surface(
-        shape = PulseWaveShapes.full,
-        color = scheme.tertiaryContainer,
-        contentColor = scheme.onTertiaryContainer,
-        modifier = Modifier.padding(top = 6.dp).clearAndSetSemantics { contentDescription = "$text: channel $channel" }
-    ) {
-        Row(Modifier.padding(start = 6.dp, end = 16.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier.size(32.dp).clip(MaterialShapes.Cookie9Sided.toShape()).background(scheme.onTertiaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("$channel", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = scheme.tertiaryContainer)
-            }
-            Spacer(Modifier.width(10.dp))
-            Text(text, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-    }
-}
-
 
 @Composable
 private fun NetworkRow(

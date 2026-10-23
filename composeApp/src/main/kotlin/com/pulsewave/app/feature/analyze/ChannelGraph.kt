@@ -399,7 +399,7 @@ internal fun DrawScope.drawZones(plot: Rect, zones: Map<SignalQuality, Color>) {
 }
 
 /** Room left of the plot for the signal words. */
-internal val QualityGutter = 52.dp
+internal val QualityGutter = 48.dp
 
 /** Words instead of dBm numbers: what the level means matters more than the exact reading. */
 internal fun DrawScope.drawQualityLabels(plot: Rect, measurer: TextMeasurer, style: TextStyle) {

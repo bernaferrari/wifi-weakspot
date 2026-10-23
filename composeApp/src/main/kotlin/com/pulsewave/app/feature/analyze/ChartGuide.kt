@@ -73,7 +73,7 @@ private val Items = listOf(
             Offset(0f, size.height / 2 - 4.dp.toPx()), Size(size.width, 8.dp.toPx()), CornerRadius(4.dp.toPx())
         )
     },
-    GuideItem("Flat lines are steady", "A jumpy line shows changing signal strength. Tap it, then slide to read individual observations.") { c, line ->
+    GuideItem("Flat lines are steady", "A jumpy line shows changing signal strength. Tap a line to pause, then slide sideways through time or vertically between networks. Resume live to watch new readings.") { c, line ->
         baseline(line)
         drawLine(c[1], Offset(0f, size.height * 0.3f), Offset(size.width, size.height * 0.3f), 2.dp.toPx(), cap = StrokeCap.Round)
         val zig = Path().apply {

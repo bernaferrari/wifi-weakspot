@@ -6,7 +6,11 @@ import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitHorizontalTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -19,9 +23,13 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -37,7 +45,7 @@ import kotlin.math.roundToInt
 
 private const val MaxLines = 8
 
-/** Recent observations on a fixed signal scale. Horizontal drags inspect; vertical drags scroll. */
+/** Tap or scrub to inspect frozen readings; live charts leave vertical gestures to page scrolling. */
 @Composable
 fun SignalHistoryGraph(
     history: Map<String, List<Int>>,
@@ -45,6 +53,7 @@ fun SignalHistoryGraph(
     selectedNetwork: WifiNetwork? = null,
     connectedBssid: String? = null,
     modifier: Modifier = Modifier,
+    allowVerticalScrubbing: Boolean = false,
     onNetworkSelected: ((WifiNetwork?) -> Unit)? = null
 ) {
     val display = com.pulsewave.app.core.designsystem.LocalSignalDisplay.current
@@ -75,12 +84,22 @@ fun SignalHistoryGraph(
     val index = cursor?.let { (it * (samples - 1)).roundToInt().coerceIn(0, (samples - 1).coerceAtLeast(0)) }
     val inspected = shown.firstOrNull { it.bssid == inspectedBssid }
     val value = if (index != null && inspected != null) historyValueAt(readings[inspected.bssid].orEmpty(), index, samples) else null
+    fun pause() {
+        if (snapshot == null) { snapshot = history; snapshotNetworks = shown }
+    }
+    fun resume() {
+        cursor = null
+        snapshot = null
+        snapshotNetworks = null
+        inspectedBssid = null
+        onNetworkSelected?.invoke(null)
+    }
     fun inspect(at: Offset, chooseLine: Boolean) {
         if (samples < 2) return
         val plot = timelinePlot(canvasSize.width, canvasSize.height, density)
         val fraction = ((at.x - plot.left) / plot.width.coerceAtLeast(1f)).coerceIn(0f, 1f)
         val atIndex = (fraction * (samples - 1)).roundToInt()
-        if (snapshot == null) { snapshot = history; snapshotNetworks = networks }
+        pause()
         if (chooseLine || inspectedBssid == null) {
             val pick = shown.filter { historyValueAt(readings[it.bssid].orEmpty(), atIndex, samples) != null }
                 .minByOrNull { network ->
@@ -96,12 +115,25 @@ fun SignalHistoryGraph(
     val inspectLatest by rememberUpdatedState(::inspect)
     fun inspectIndex(requested: Int): Boolean {
         if (samples < 2) return false
-        if (snapshot == null) { snapshot = history; snapshotNetworks = networks }
+        pause()
         if (inspectedBssid == null) inspectedBssid = selected?.bssid
             ?: shown.firstOrNull { it.bssid.equals(connectedBssid, true) }?.bssid ?: shown.firstOrNull()?.bssid
         cursor = requested.coerceIn(0, samples - 1) / (samples - 1f)
         return true
     }
+
+    fun inspectNetwork(direction: Int): Boolean {
+        if (samples < 2) return false
+        val atIndex = index ?: samples - 1
+        val current = inspectedBssid ?: selected?.bssid ?: connectedBssid
+        val next = historyNeighborBssid(readings, shown.map { it.bssid }, atIndex, samples, current, direction) ?: return false
+        pause()
+        inspectedBssid = next
+        cursor = atIndex / (samples - 1f)
+        if (next != selected?.bssid) shown.firstOrNull { it.bssid == next }?.let { onNetworkSelected?.invoke(it) }
+        return true
+    }
+    val inspectingLatest by rememberUpdatedState(cursor != null)
 
     Column(modifier) {
         if (samples < 2) {
@@ -112,7 +144,13 @@ fun SignalHistoryGraph(
             Modifier.weight(1f).fillMaxWidth()
                 .onSizeChanged { canvasSize = Size(it.width.toFloat(), it.height.toFloat()) }
                 .semantics {
-                    contentDescription = "Signal history for ${shown.size} networks. Tap a line, drag horizontally, or use arrow keys to inspect readings."
+                    contentDescription = "Signal history for ${shown.size} networks. Tap a line to inspect. Arrow keys move through time and networks."
+                    stateDescription = if (index == null) "Live" else "${inspected?.ssid?.ifBlank { "Hidden network" } ?: "Network"}, ${value?.let { display.reading(it) } ?: "no reading"}, paused, ${samples - 1 - index} readings ago"
+                    customActions = listOf(
+                        CustomAccessibilityAction("Stronger network") { inspectNetwork(-1) },
+                        CustomAccessibilityAction("Weaker network") { inspectNetwork(1) },
+                        CustomAccessibilityAction("Resume live readings") { resume(); true }
+                    )
                     progressBarRangeInfo = ProgressBarRangeInfo((index ?: samples - 1).toFloat(), 0f..(samples - 1).toFloat(), (samples - 2).coerceAtLeast(0))
                     setProgress { inspectIndex(it.roundToInt()) }
                 }
@@ -120,16 +158,41 @@ fun SignalHistoryGraph(
                     if (it.type != KeyEventType.KeyDown) false else when (it.key) {
                         Key.DirectionLeft -> inspectIndex((index ?: samples - 1) - 1)
                         Key.DirectionRight -> inspectIndex((index ?: samples - 1) + 1)
+                        Key.DirectionUp -> inspectNetwork(-1)
+                        Key.DirectionDown -> inspectNetwork(1)
+                        Key.Escape -> if (cursor != null) { resume(); true } else false
                         else -> false
                     }
                 }
                 .focusable()
                 .pointerInput(Unit) { detectTapGestures { inspectLatest(it, true) } }
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onDragStart = { inspectLatest(it, true) },
-                        onHorizontalDrag = { change, _ -> change.consume(); inspectLatest(change.position, false) }
-                    )
+                .pointerInput(allowVerticalScrubbing) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        // A vertical swipe scrolls the live page. After tapping to inspect, or in
+                        // the full-screen explorer, the plot owns both axes for precise scrubbing.
+                        val wasInspecting = inspectingLatest
+                        val start = if (allowVerticalScrubbing || wasInspecting || down.type != PointerType.Touch) {
+                            awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                        } else {
+                            awaitHorizontalTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                        }
+                        if (start != null) {
+                            inspectLatest(down.position, !wasInspecting)
+                            var previous = down.position
+                            var lineAnchorY = down.position.y
+                            val lineSlop = 8.dp.toPx()
+                            fun move(position: Offset) {
+                                val movement = position - previous
+                                val chooseLine = abs(movement.y) > abs(movement.x) && abs(position.y - lineAnchorY) >= lineSlop
+                                inspectLatest(position, chooseLine)
+                                if (chooseLine) lineAnchorY = position.y
+                                previous = position
+                            }
+                            move(start.position)
+                            drag(start.id) { change -> move(change.position); change.consume() }
+                        }
+                    }
                 }
         ) {
             val plot = timelinePlot(size.width, size.height, this)
@@ -182,19 +245,21 @@ fun SignalHistoryGraph(
                 drawText(layout, topLeft = rect.topLeft)
             }
         }
-        Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp).heightIn(min = 64.dp).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(inspected?.ssid?.ifBlank { "Hidden network" } ?: "Explore signal history", style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     when {
-                        index == null -> "Tap a line, then slide to compare readings"
+                        index == null -> "Tap a line, then drag to compare"
                         value == null -> "No reading at this point"
-                        else -> "${SignalQuality.of(value).label} · ${display.reading(value)} · Paused · " + if (index == samples - 1) "latest reading" else "${samples - 1 - index} reading${if (samples - 1 - index == 1) "" else "s"} back"
+                        else -> "${display.reading(value)} · ${SignalQuality.of(value).label} · " + if (index == samples - 1) "latest reading" else "${samples - 1 - index} reading${if (samples - 1 - index == 1) "" else "s"} ago"
                     },
-                    style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis
                 )
             }
-            if (cursor != null) TextButton(onClick = { cursor = null; snapshot = null; snapshotNetworks = null; inspectedBssid = null; onNetworkSelected?.invoke(null) }) { Text("Live") }
+            Box(Modifier.width(104.dp).heightIn(min = 48.dp), contentAlignment = Alignment.CenterEnd) {
+                if (cursor != null) TextButton(onClick = ::resume) { Text("Resume live") }
+            }
         }
     }
 }

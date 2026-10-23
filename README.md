@@ -2,18 +2,17 @@
   <img src="docs/hero-v2.png" alt="WiFi Weakspot — find your weak spots" width="100%">
 </p>
 
-<h1 align="center"><img src="docs/app-icon.png" alt="" width="36" height="36"> WiFi Weakspot</h1>
+<h1 align="center">WiFi Weakspot</h1>
 
 <p align="center"><b>Find the rooms where Wi-Fi gets weak. Compare before and after a change.</b><br>
 A Wi-Fi analyzer for Android that speaks plain language.</p>
 
-<table>
-  <tr>
-    <td align="center"><img src="docs/screenshots/dark-home.png" alt="Home showing signal strength as a percentage and a plain-language verdict" width="220"><br><sub><b>Understand your signal</b></sub></td>
-    <td align="center"><img src="docs/screenshots/dark-rooms.png" alt="Rooms with saved signal readings to compare" width="220"><br><sub><b>Find weak rooms</b></sub></td>
-    <td align="center"><img src="docs/screenshots/dark-overtime.png" alt="Signal history with an inspected reading" width="220"><br><sub><b>See what changes</b></sub></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="docs/screenshots/readme-home.png" alt="Home showing signal strength as a percentage and a plain-language verdict" width="24%">
+  <img src="docs/screenshots/readme-rooms.png" alt="Rooms with saved signal readings to compare" width="24%">
+  <img src="docs/screenshots/readme-overtime.png" alt="Signal history with an inspected reading" width="24%">
+  <img src="docs/screenshots/readme-channels.png" alt="Channel waves showing nearby Wi-Fi signal overlap" width="24%">
+</p>
 <p align="center"><sub>Screenshots use the browser demo with simulated Wi-Fi data. The demo shares the Android app’s interface; it does not measure your browser’s Wi-Fi.</sub></p>
 
 ## Find your weak spots
@@ -29,7 +28,7 @@ A Wi-Fi analyzer for Android that speaks plain language.</p>
 **Explore connected devices.** Discover responding devices and the names they announce, then investigate with ping, DNS lookups, and port checks.
 
 <p align="center">
-  <img src="docs/screenshots/dark-floorplan.png" alt="Estimated home coverage map from saved readings" width="280">
+  <img src="docs/screenshots/readme-floorplan.png" alt="Estimated home coverage map from saved readings" width="280">
 </p>
 
 ## Clear readings, expressive design
