@@ -1,4 +1,4 @@
-rootProject.name = "PulseWave"
+rootProject.name = "WifiWeakspot"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

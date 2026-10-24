@@ -2,7 +2,7 @@
 <full-backup-content>
     <exclude domain="file" path="survey_floorplans/" />
     <exclude domain="file" path="datastore/" />
-    <exclude domain="database" path="pulsewave.db" />
-    <exclude domain="database" path="pulsewave.db-shm" />
-    <exclude domain="database" path="pulsewave.db-wal" />
+    <exclude domain="database" path="wifiweakspot.db" />
+    <exclude domain="database" path="wifiweakspot.db-shm" />
+    <exclude domain="database" path="wifiweakspot.db-wal" />
 </full-backup-content>

@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.pulsewave.app.android"
+    namespace = "com.bernaferrari.wifiweakspot.android"
     compileSdk {
         version = release(37) {
             minorApiLevel = 2
@@ -15,7 +15,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.pulsewave.app"
+        applicationId = "com.bernaferrari.wifiweakspot"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

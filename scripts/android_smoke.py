@@ -25,7 +25,7 @@ if not re.fullmatch(r'emulator-\d+', args.serial):
 root = Path(__file__).resolve().parents[1]
 out = root / 'build/qa'
 out.mkdir(parents=True, exist_ok=True)
-package = 'com.pulsewave.app'
+package = 'com.bernaferrari.wifiweakspot'
 
 def adb(*arguments, binary=False, check=True, data=None):
     result = subprocess.run(['adb', '-s', args.serial, *arguments], input=data,
@@ -40,8 +40,8 @@ def screenshot(name):
     (out / (name + '.png')).write_bytes(adb('exec-out', 'screencap', '-p', binary=True))
 
 def tree():
-    adb('shell', 'uiautomator', 'dump', '--compressed', '/sdcard/pulsewave-smoke.xml')
-    return ET.fromstring(adb('shell', 'cat', '/sdcard/pulsewave-smoke.xml'))
+    adb('shell', 'uiautomator', 'dump', '--compressed', '/sdcard/wifiweakspot-smoke.xml')
+    return ET.fromstring(adb('shell', 'cat', '/sdcard/wifiweakspot-smoke.xml'))
 
 def find(label, contains=False, timeout=15):
     deadline = time.monotonic() + timeout
@@ -73,12 +73,12 @@ def scroll_to(label):
 
 if args.seed_legacy:
     adb('shell', 'am', 'force-stop', package)
-    old = adb('exec-out', 'run-as', package, 'cat', 'databases/pulsewave.db', binary=True, check=False)
+    old = adb('exec-out', 'run-as', package, 'cat', 'databases/wifiweakspot.db', binary=True, check=False)
     if old.startswith(b'SQLite format 3'):
         (out / 'emulator-before-fixtures.db').write_bytes(old)
     fixture = out / 'legacy-fixture.db'
     fixture.unlink(missing_ok=True)
-    schema = json.loads((root / 'composeApp/schemas/com.pulsewave.app.core.database.PulseWaveDatabase/1.json').read_text())['database']
+    schema = json.loads((root / 'composeApp/schemas/com.bernaferrari.wifiweakspot.core.database.WifiWeakspotDatabase/1.json').read_text())['database']
     with sqlite3.connect(fixture) as db:
         for entity in schema['entities']:
             db.execute(entity['createSql'].replace('${TABLE_NAME}', entity['tableName']))
@@ -92,8 +92,8 @@ if args.seed_legacy:
         db.execute("INSERT INTO speed_test_results VALUES (9020,3000,12.3,4.5,28.0,1.2,'QA server')")
         db.execute("INSERT INTO tool_results VALUES (9030,3000,'DNS','localhost','A: 127.0.0.1',1)")
     adb('shell', 'run-as', package, 'mkdir', '-p', 'databases')
-    adb('shell', 'run-as', package, 'rm', '-f', 'databases/pulsewave.db-wal', 'databases/pulsewave.db-shm')
-    adb('exec-in', 'run-as', package, 'tee', 'databases/pulsewave.db', binary=True, data=fixture.read_bytes())
+    adb('shell', 'run-as', package, 'rm', '-f', 'databases/wifiweakspot.db-wal', 'databases/wifiweakspot.db-shm')
+    adb('exec-in', 'run-as', package, 'tee', 'databases/wifiweakspot.db', binary=True, data=fixture.read_bytes())
     print('Seeded synthetic v1 fixture in disposable emulator; original test DB backed up when present.')
     raise SystemExit(0)
 
@@ -101,7 +101,7 @@ if args.seed_legacy:
 for permission in ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION']:
     adb('shell', 'pm', 'revoke', package, 'android.permission.' + permission, check=False)
 start()
-find('PulseWave')
+find('WifiWeakspot')
 click('Tools')
 find('Ping')
 screenshot('tools-without-scan-permission')
@@ -125,8 +125,8 @@ click('Dark')
 screenshot('settings-dark')
 scroll_to('Reduce motion')
 click('Reduce motion')
-scroll_to('About PulseWave')
-click('About PulseWave')
+scroll_to('About WifiWeakspot')
+click('About WifiWeakspot')
 find('Understand your connection')
 click('Back')
 click('Back')
@@ -154,7 +154,7 @@ click('Back')
 # Verify on-device migration preserved the original measurement and added calibration.
 adb('shell', 'am', 'force-stop', package)
 fixture = out / 'migrated-fixture.db'
-fixture.write_bytes(adb('exec-out', 'run-as', package, 'cat', 'databases/pulsewave.db', binary=True))
+fixture.write_bytes(adb('exec-out', 'run-as', package, 'cat', 'databases/wifiweakspot.db', binary=True))
 with sqlite3.connect(fixture) as db:
     assert db.execute('PRAGMA user_version').fetchone()[0] == 2
     assert db.execute('SELECT x,y,rssi,timestamp FROM survey_points WHERE id=9010').fetchone() == (.3,.7,-66,3000)

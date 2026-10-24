@@ -8,16 +8,16 @@ plugins {
 }
 
 /**
- * The real PulseWave app running in a browser. It compiles :composeApp's shared source
+ * The real WifiWeakspot app running in a browser. It compiles :composeApp's shared source
  * (every screen, view model, navigation, and the design system) unchanged; only the
  * platform services (Wi-Fi, permissions, storage, router) are simulated here.
  */
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        outputModuleName.set("pulsewave-demo")
+        outputModuleName.set("wifiweakspot-demo")
         browser {
-            commonWebpackConfig { outputFileName = "pulsewave-demo.js" }
+            commonWebpackConfig { outputFileName = "wifiweakspot-demo.js" }
         }
         binaries.executable()
     }

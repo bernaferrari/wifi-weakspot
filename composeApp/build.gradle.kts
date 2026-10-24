@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.pulsewave.app.library"
+    namespace = "com.bernaferrari.wifiweakspot.library"
     compileSdk {
         version = release(37) {
             minorApiLevel = 2
