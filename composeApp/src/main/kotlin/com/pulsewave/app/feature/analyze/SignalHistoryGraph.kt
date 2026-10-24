@@ -94,20 +94,22 @@ fun SignalHistoryGraph(
         inspectedBssid = null
         onNetworkSelected?.invoke(null)
     }
-    fun inspect(at: Offset, chooseLine: Boolean) {
+    /** [sticky] keeps the inspected line until the finger is clearly closer to another, so crowded lines don't flicker. */
+    fun inspect(at: Offset, sticky: Boolean) {
         if (samples < 2) return
         val plot = timelinePlot(canvasSize.width, canvasSize.height, density)
         val fraction = ((at.x - plot.left) / plot.width.coerceAtLeast(1f)).coerceIn(0f, 1f)
         val atIndex = (fraction * (samples - 1)).roundToInt()
         pause()
-        if (chooseLine || inspectedBssid == null) {
-            val pick = shown.filter { historyValueAt(readings[it.bssid].orEmpty(), atIndex, samples) != null }
-                .minByOrNull { network ->
-                    val rssi = historyValueAt(readings[network.bssid].orEmpty(), atIndex, samples)!!
-                    abs(plot.bottom - plot.height * dbmToFraction(rssi.toFloat()) - at.y)
-                }
-            inspectedBssid = pick?.bssid
-            if (pick != null && pick.bssid != selected?.bssid) onNetworkSelected?.invoke(pick)
+        fun distance(network: WifiNetwork) = historyValueAt(readings[network.bssid].orEmpty(), atIndex, samples)
+            ?.let { abs(plot.bottom - plot.height * dbmToFraction(it.toFloat()) - at.y) }
+        val pick = shown.mapNotNull { network -> distance(network)?.let { network to it } }.minByOrNull { it.second }
+        val current = shown.firstOrNull { it.bssid == inspectedBssid }?.let(::distance)
+        val switchMargin = with(density) { 14.dp.toPx() }
+        if (pick != null && pick.first.bssid != inspectedBssid && (!sticky || current == null || pick.second + switchMargin < current)) {
+            if (inspectedBssid != null) haptics.light()
+            inspectedBssid = pick.first.bssid
+            if (pick.first.bssid != selected?.bssid) onNetworkSelected?.invoke(pick.first)
         }
         if (atIndex != index) haptics.light()
         cursor = fraction
@@ -165,7 +167,7 @@ fun SignalHistoryGraph(
                     }
                 }
                 .focusable()
-                .pointerInput(Unit) { detectTapGestures { inspectLatest(it, true) } }
+                .pointerInput(Unit) { detectTapGestures { inspectLatest(it, false) } }
                 .pointerInput(allowVerticalScrubbing) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
@@ -178,19 +180,11 @@ fun SignalHistoryGraph(
                             awaitHorizontalTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
                         }
                         if (start != null) {
-                            inspectLatest(down.position, !wasInspecting)
-                            var previous = down.position
-                            var lineAnchorY = down.position.y
-                            val lineSlop = 8.dp.toPx()
-                            fun move(position: Offset) {
-                                val movement = position - previous
-                                val chooseLine = abs(movement.y) > abs(movement.x) && abs(position.y - lineAnchorY) >= lineSlop
-                                inspectLatest(position, chooseLine)
-                                if (chooseLine) lineAnchorY = position.y
-                                previous = position
-                            }
-                            move(start.position)
-                            drag(start.id) { change -> move(change.position); change.consume() }
+                            // A fresh scrub grabs the nearest line; while sliding, the finger takes
+                            // over whichever line it clearly moves onto.
+                            inspectLatest(down.position, wasInspecting)
+                            inspectLatest(start.position, true)
+                            drag(start.id) { change -> inspectLatest(change.position, true); change.consume() }
                         }
                     }
                 }
