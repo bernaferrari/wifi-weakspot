@@ -74,7 +74,7 @@ object ItDomainStrings : DomainStrings {
         "Il segnale diminuisce di ${dropDb} dB da ${bestRoom} a ${worstRoom}. Prova una posizione del router più centrale e rialzata, quindi ricontrolla gli stessi punti per vedere se aiuta."
     override fun tipMultipleAccessPoints(count: Int) =
         "Il tuo dispositivo ha utilizzato ${count} punti di accesso in queste stanze, che potrebbero riflettere bande o punti di accesso diversi. Questo da solo non conferma il roaming affidabile."
-    override val tipRouterPlacement = "Tieni il router all'aperto, sollevato dal pavimento e lontano da forni a microonde, specchi e acquari."
+    override val tipRouterPlacement = "Posiziona il router in casa, in alto e senza ostacoli intorno, lontano da microonde, specchi e acquari."
 
     override val spotFirstReading = "Prima lettura · ricontrollare dopo aver apportato una modifica"
     override val spotDifferentNetwork = "Rete o spot diverso · avvia un nuovo confronto"
@@ -112,12 +112,12 @@ object ItDomainStrings : DomainStrings {
     override val signalChangeTitle = "Cambio di segnale"
     override fun signalChangeText(networkName: String, level: MonitorSignalLevel, rssi: Int): String {
         val quality = when (level) {
-            MonitorSignalLevel.Excellent -> "eccellente"
-            MonitorSignalLevel.Good -> "bene"
-            MonitorSignalLevel.Fair -> "discreto"
-            MonitorSignalLevel.Weak -> "debole"
+            MonitorSignalLevel.Excellent -> qualityExcellentLabel
+            MonitorSignalLevel.Good -> qualityGoodLabel
+            MonitorSignalLevel.Fair -> qualityFairLabel
+            MonitorSignalLevel.Weak -> qualityWeakLabel
         }
-        return "Il segnale \"${networkName}\" è ora ${quality} (${rssi} dBm)"
+        return "Segnale di «$networkName»: $quality ($rssi dBm)"
     }
 
     override val exportFileChooserTitle = "Esporta file"

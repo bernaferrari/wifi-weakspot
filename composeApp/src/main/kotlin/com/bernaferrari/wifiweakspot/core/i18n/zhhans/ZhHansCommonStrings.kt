@@ -12,11 +12,14 @@ object ZhHansCommonStrings : CommonStrings {
     override val network = "网络"
     override val tools = "工具"
     override val maker = "制作者"
-    override val noReply = "没有回复"
+    override val noReply = "无响应"
+
     override val fastest = "最快"
     override val address = "地址"
+
     override val responseTime = "响应时间"
-    override val checkAgain = "复查"
+    override val checkAgain = "重新检查"
+
     override val rename = "重命名"
     override val stop = "停止"
     override val unknown = "未知"
@@ -35,7 +38,8 @@ object ZhHansCommonStrings : CommonStrings {
     override val yourNetwork = "你的网络"
 
     override val openInNewTab = "在新选项卡中打开"
-    override val mapSharingAndroidOnly = "可以在Android 应用程序中共享地图。"
+    override val mapSharingAndroidOnly = "地图分享功能可在 Android 应用中使用。"
+
     override val back = "返回"
     override val close = "关闭"
     override val cancel = "取消"
@@ -49,9 +53,11 @@ object ZhHansCommonStrings : CommonStrings {
     override val tabRooms = "房间"
     override val tabSettings = "设置"
 
-    override val permissionScreenTitle = "允许访问附近Wi-Fi"
+    override val permissionScreenTitle = "允许访问附近的 Wi-Fi"
+
     override val permissionAllowAccess = "允许访问"
-    override val openAppSettings = "打开应用程序设置"
+
+    override val openAppSettings = "打开应用设置"
 
     override fun signalBadgeDescription(quality: String, reading: String) = "${quality}信号，${reading}"
 
@@ -59,13 +65,16 @@ object ZhHansCommonStrings : CommonStrings {
     override fun scansCount(count: Int) = "${count} 次扫描"
 
     override val scansLeftCaption = "剩余"
-    override val scanWaitingCaption = "等待"
+    override val scanWaitingCaption = "等待中"
+
     override val scanDevMode = "开发模式"
     override val readyToScan = "准备扫描"
     override fun scansRemaining(count: Int) = "剩余 ${count} 次扫描"
 
-    override fun nextScanIn(time: String) = "下一次扫描在 ${time}"
-    override val checking = "检查..."
+    override fun nextScanIn(time: String) = "距下次扫描还有 ${time}"
+
+    override val checking = "正在检查…"
+
     override val justNow = "刚刚"
     override fun minutesAgo(minutes: Long) = "${minutes} 分钟前"
 

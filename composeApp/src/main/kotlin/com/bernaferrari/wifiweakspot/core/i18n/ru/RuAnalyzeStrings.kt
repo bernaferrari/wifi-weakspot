@@ -74,7 +74,8 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override val guideTallerBody = "Высота — это уровень сигнала."
     override val guideOverlapBody = "Перекрывающиеся сети используют общий спектр и могут конкурировать за эфирное время."
     override val guideWiderBody = "Более широкий канал занимает больший спектр и может перекрывать большее количество соседей."
-    override val guideSameRouterBody = "+1: Имена, которые, похоже, звучат с одного и того же радио, находятся на одном холме."
+    override val guideSameRouterBody = "+1: Имена сетей, которые, вероятно, используют один радиомодуль Wi-Fi, объединены на одной кривой."
+
     override val guideCrowdBody = "Зелёный означает меньше перекрытий, красный — больше. Полоса под 2.4 GHz показывает перекрытие. Нажмите на него для подсчета."
     override val guideSteadyBody = "Прерывистая линия показывает изменение уровня сигнала. Коснитесь линии, чтобы приостановить ее, а затем перемещайте ее вбок во времени или вертикально между сетями. Возобновите прямой эфир, чтобы посмотреть новые чтения."
     override val guideHighlightBody = "Коснитесь холма или ряда, чтобы выделить его. Перетащите горизонтально по диаграмме, чтобы изучить ее."
@@ -96,17 +97,18 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override fun signalHistoryDescription(networkCount: Int) = "История сигнала сетей: ${networkCount}. Нажмите на линию для просмотра. Стрелки перемещают выбор по времени и между сетями."
 
     override val historyLive = "Прямой эфир"
-    override fun historyPaused(networkName: String, reading: String?, readingsAgo: Int) =
-        "${networkName}, ${reading ?: "не читается"}, пауза, ${readingsAgo(readingsAgo)}"
+    override fun historyPaused(networkName: String, reading: String?, readingsAgo: Int) = "${networkName}, ${reading ?: "нет измерения"}, пауза, ${readingsAgo(readingsAgo)}"
+
     override val strongerNetwork = "Более мощная сеть"
     override val weakerNetwork = "Более слабая сеть"
     override val axisOlder = "раньше"
     override val axisLatest = "сейчас"
     override val exploreSignalHistory = "Изучите историю сигналов"
     override val tapLineToCompare = "Коснитесь линии, затем перетащите ее, чтобы сравнить."
-    override val noReadingAtPoint = "На данный момент чтение недоступно"
-    override fun inspectedReading(reading: String, quality: String, readingsAgo: Int) =
-        "${reading} · ${quality} · " + if (readingsAgo == 0) "последнее чтение" else readingsAgo(readingsAgo)
+    override val noReadingAtPoint = "Для этого момента нет измерения"
+
+    override fun inspectedReading(reading: String, quality: String, readingsAgo: Int) = "${reading} · ${quality} · " + if (readingsAgo == 0) "последнее измерение" else readingsAgo(readingsAgo)
+
     private fun readingsAgo(count: Int) = "${count} ${plural(count, "измерение", "измерения", "измерений")} назад"
 
     override val resumeLive = "Возобновить трансляцию"

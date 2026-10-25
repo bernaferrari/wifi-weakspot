@@ -73,7 +73,8 @@ object FrAnalyzeStrings : AnalyzeStrings {
     override val guideTallerBody = "La hauteur est la force du signal."
     override val guideOverlapBody = "Les réseaux qui se chevauchent partagent le spectre et peuvent rivaliser pour le temps d'antenne."
     override val guideWiderBody = "Un canal plus large occupe plus de spectre et peut chevaucher davantage de voisins."
-    override val guideSameRouterBody = "+1: Les noms qui semblent provenir de la même radio partagent une colline."
+    override val guideSameRouterBody = "+1 : Les noms de réseaux qui semblent utiliser le même module Wi-Fi partagent une courbe."
+
     override val guideCrowdBody = "Le vert indique moins de chevauchement ; le rouge, davantage. La bande sous 2.4 GHz montre un chevauchement. Appuyez dessus pour compter."
     override val guideSteadyBody = "Une ligne saccadée montre l'évolution de la force du signal. Appuyez sur une ligne pour faire une pause, puis glissez latéralement dans le temps ou verticalement entre les réseaux. Reprenez le direct pour regarder de nouvelles lectures."
     override val guideHighlightBody = "Appuyez sur une colline ou une ligne pour la mettre en surbrillance. Faites glisser horizontalement sur le graphique pour l'explorer."
@@ -98,18 +99,20 @@ object FrAnalyzeStrings : AnalyzeStrings {
     override fun signalHistoryDescription(networkCount: Int) =
         "Historique des signaux pour ${networks(networkCount)}. Appuyez sur une ligne à inspecter. Les touches fléchées se déplacent dans le temps et les réseaux."
     override val historyLive = "En direct"
-    override fun historyPaused(networkName: String, reading: String?, readingsAgo: Int) =
-        "${networkName}, ${reading ?: "pas de lecture"}, en pause, ${readingsAgo(readingsAgo)}"
+    override fun historyPaused(networkName: String, reading: String?, readingsAgo: Int) = "${networkName}, ${reading ?: "aucune mesure"}, en pause, ${readingsAgo(readingsAgo)}"
+
     override val strongerNetwork = "Réseau plus fort"
     override val weakerNetwork = "Réseau plus faible"
     override val axisOlder = "ancien"
     override val axisLatest = "récent"
     override val exploreSignalHistory = "Explorez l'historique des signaux"
     override val tapLineToCompare = "Appuyez sur une ligne, puis faites-la glisser pour comparer"
-    override val noReadingAtPoint = "Aucune lecture à ce stade"
-    override fun inspectedReading(reading: String, quality: String, readingsAgo: Int) =
-        "${reading} · ${quality} · " + if (readingsAgo == 0) "dernière lecture" else readingsAgo(readingsAgo)
-    private fun readingsAgo(count: Int) = if (count == 1) "il y a 1 lecture" else "${count} lectures il y a"
+    override val noReadingAtPoint = "Aucune mesure à cet instant"
+
+    override fun inspectedReading(reading: String, quality: String, readingsAgo: Int) = "${reading} · ${quality} · " + if (readingsAgo == 0) "dernière mesure" else readingsAgo(readingsAgo)
+
+    private fun readingsAgo(count: Int) = if (count == 1) "il y a 1 mesure" else "il y a $count mesures"
+
     override val resumeLive = "Reprendre le direct"
 
     override fun seenReading(rssi: Int, seen: String) = "${rssi} dBm · vu ${seen}"

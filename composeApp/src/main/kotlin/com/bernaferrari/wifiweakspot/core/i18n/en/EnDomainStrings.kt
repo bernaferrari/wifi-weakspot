@@ -80,7 +80,7 @@ object EnDomainStrings : DomainStrings {
         "Signal drops $dropDb dB from $bestRoom to $worstRoom. Try a more central, raised router position, then recheck the same spots to see whether it helps."
     override fun tipMultipleAccessPoints(count: Int) =
         "Your device used $count access points across these rooms, which may reflect different bands or access points. This alone does not confirm reliable roaming."
-    override val tipRouterPlacement = "Keep the router in the open, off the floor, and away from microwaves, mirrors, and fish tanks."
+    override val tipRouterPlacement = "Keep the router indoors, elevated and unobstructed, away from microwaves, mirrors, and fish tanks."
 
     override val spotFirstReading = "First reading · recheck after making a change"
     override val spotDifferentNetwork = "Different network or spot · start a new comparison"
@@ -119,10 +119,10 @@ object EnDomainStrings : DomainStrings {
     override val signalChangeTitle = "Signal Change"
     override fun signalChangeText(networkName: String, level: MonitorSignalLevel, rssi: Int): String {
         val quality = when (level) {
-            MonitorSignalLevel.Excellent -> "excellent"
-            MonitorSignalLevel.Good -> "good"
-            MonitorSignalLevel.Fair -> "fair"
-            MonitorSignalLevel.Weak -> "weak"
+            MonitorSignalLevel.Excellent -> qualityExcellentLabel
+            MonitorSignalLevel.Good -> qualityGoodLabel
+            MonitorSignalLevel.Fair -> qualityFairLabel
+            MonitorSignalLevel.Weak -> qualityWeakLabel
         }
         return "\"$networkName\" signal is now $quality ($rssi dBm)"
     }

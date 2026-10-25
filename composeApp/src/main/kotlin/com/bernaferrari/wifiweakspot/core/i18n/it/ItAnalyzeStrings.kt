@@ -73,7 +73,8 @@ object ItAnalyzeStrings : AnalyzeStrings {
     override val guideTallerBody = "L'altezza indica la potenza del segnale."
     override val guideOverlapBody = "Le reti sovrapposte condividono lo spettro e possono competere per il tempo di trasmissione."
     override val guideWiderBody = "Un canale più ampio occupa più spettro e può sovrapporsi a più vicini."
-    override val guideSameRouterBody = "+1: Nomi che sembrano provenire dalla stessa radio condividono una collina."
+    override val guideSameRouterBody = "+1: I nomi di rete che sembrano usare lo stesso modulo Wi-Fi condividono una curva."
+
     override val guideCrowdBody = "Il verde indica meno sovrapposizioni, il rosso di più. La striscia sotto 2.4 GHz mostra una sovrapposizione. Toccalo per i conteggi."
     override val guideSteadyBody = "Una linea discontinua mostra la variazione della potenza del segnale. Tocca una linea per mettere in pausa, quindi scorri lateralmente nel tempo o verticalmente tra le reti. Riprendi la diretta per guardare le nuove letture."
     override val guideHighlightBody = "Tocca una collina o una riga per evidenziarla. Trascina orizzontalmente sul grafico per esplorare."
@@ -98,18 +99,20 @@ object ItAnalyzeStrings : AnalyzeStrings {
     override fun signalHistoryDescription(networkCount: Int) =
         "Cronologia del segnale per ${networks(networkCount)}. Tocca una linea per ispezionarla. I tasti freccia si muovono attraverso il tempo e le reti."
     override val historyLive = "In diretta"
-    override fun historyPaused(networkName: String, reading: String?, readingsAgo: Int) =
-        "${networkName}, ${reading ?: "nessuna lettura"}, in pausa, ${readingsAgo(readingsAgo)}"
+    override fun historyPaused(networkName: String, reading: String?, readingsAgo: Int) = "${networkName}, ${reading ?: "nessuna misurazione"}, in pausa, ${readingsAgo(readingsAgo)}"
+
     override val strongerNetwork = "Rete più forte"
     override val weakerNetwork = "Rete più debole"
     override val axisOlder = "precedente"
     override val axisLatest = "recente"
     override val exploreSignalHistory = "Esplora la cronologia dei segnali"
     override val tapLineToCompare = "Tocca una linea, quindi trascina per confrontare"
-    override val noReadingAtPoint = "Nessuna lettura a questo punto"
-    override fun inspectedReading(reading: String, quality: String, readingsAgo: Int) =
-        "${reading} · ${quality} · " + if (readingsAgo == 0) "ultima lettura" else readingsAgo(readingsAgo)
-    private fun readingsAgo(count: Int) = if (count == 1) "1 lettura fa" else "${count} letture fa"
+    override val noReadingAtPoint = "Nessuna misurazione in questo punto"
+
+    override fun inspectedReading(reading: String, quality: String, readingsAgo: Int) = "${reading} · ${quality} · " + if (readingsAgo == 0) "ultima misurazione" else readingsAgo(readingsAgo)
+
+    private fun readingsAgo(count: Int) = if (count == 1) "1 misurazione fa" else "$count misurazioni fa"
+
     override val resumeLive = "Riprendi la diretta"
 
     override fun seenReading(rssi: Int, seen: String) = "${rssi} dBm · visto ${seen}"

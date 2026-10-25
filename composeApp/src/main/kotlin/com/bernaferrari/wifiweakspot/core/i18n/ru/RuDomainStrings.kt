@@ -74,7 +74,7 @@ object RuDomainStrings : DomainStrings {
         "Сигнал падает на ${dropDb} дБ с ${bestRoom} до ${worstRoom}. Попробуйте более центральное, приподнятое положение фрезы, затем еще раз проверьте те же места, чтобы посмотреть, поможет ли это."
     override fun tipMultipleAccessPoints(count: Int) = "В этих комнатах устройство использовало ${count} ${plural(count, "точку доступа", "точки доступа", "точек доступа")}. Это могут быть разные диапазоны или точки доступа. Само по себе это не подтверждает надёжность роуминга."
 
-    override val tipRouterPlacement = "Держите маршрутизатор на открытом воздухе, на полу, вдали от микроволновых печей, зеркал и аквариумов."
+    override val tipRouterPlacement = "Разместите роутер в помещении, повыше и без препятствий вокруг, вдали от микроволновых печей, зеркал и аквариумов."
 
     override val spotFirstReading = "Первое чтение · повторная проверка после внесения изменений"
     override val spotDifferentNetwork = "Другая сеть или спот · начать новое сравнение"
@@ -112,12 +112,12 @@ object RuDomainStrings : DomainStrings {
     override val signalChangeTitle = "Изменение сигнала"
     override fun signalChangeText(networkName: String, level: MonitorSignalLevel, rssi: Int): String {
         val quality = when (level) {
-            MonitorSignalLevel.Excellent -> "отлично"
-            MonitorSignalLevel.Good -> "хорошо"
-            MonitorSignalLevel.Fair -> "ярмарка"
-            MonitorSignalLevel.Weak -> "слабый"
+            MonitorSignalLevel.Excellent -> qualityExcellentLabel
+            MonitorSignalLevel.Good -> qualityGoodLabel
+            MonitorSignalLevel.Fair -> qualityFairLabel
+            MonitorSignalLevel.Weak -> qualityWeakLabel
         }
-        return "Сигнал «${networkName}» теперь ${quality} (${rssi} dBm)"
+        return "Сигнал сети «$networkName»: $quality ($rssi dBm)"
     }
 
     override val exportFileChooserTitle = "Экспортировать файл"

@@ -3,26 +3,30 @@ package com.bernaferrari.wifiweakspot.core.i18n.ja
 import com.bernaferrari.wifiweakspot.core.i18n.ToolsStrings
 
 object JaToolsStrings : ToolsStrings {
-    override val tryAgain = "もう一度試してください"
+    override val tryAgain = "再試行"
 
     override val targetPlaceholder = "ウェブサイトまたはIPアドレス"
     override val clearTarget = "クリア"
-    override val checkSectionTitle = "チェックしてください"
-    override val recentSectionTitle = "最近"
+    override val checkSectionTitle = "テスト"
 
-    override val toolPortsDescription = "何が開いているのか"
+    override val recentSectionTitle = "最近のテスト"
 
-    override val pingQuestion = "答えますか？"
-    override val dnsQuestion = "その住所は何ですか?"
+    override val toolPortsDescription = "開いているポート"
+
+    override val pingQuestion = "応答するか？"
+
+    override val dnsQuestion = "IPアドレスは？"
+
     override val dnsDetail = "DNS ルックアップ"
-    override val portsQuestion = "それは何を提供するのでしょうか?"
+    override val portsQuestion = "利用できるサービスは？"
 
     override val runningPortScanTitle = "ポートを確認中"
 
     override val diagnosticFailed = "診断に失敗しました"
-    override val invalidTarget = "URL パスやスペースを含めずにホスト名または IP アドレスを入力します。"
+    override val invalidTarget = "URLのパスや空白を含めずに、ホスト名またはIPアドレスを入力してください。"
+
     override val diagnosticCouldNotComplete = "診断を完了できませんでした。"
-    override val connectionChangedRunAgain = "接続が変更されました。新しいネットワークでこのチェックを再度実行します。"
+    override val connectionChangedRunAgain = "接続先が変わりました。新しいネットワークで再度テストしてください。"
 
     override val openItsWebPage = "Web ページを開く"
 
@@ -31,41 +35,58 @@ object JaToolsStrings : ToolsStrings {
     override val slowest = "最も遅い"
     override fun repliesContentDescription(replies: String) = "返信: ${replies}"
 
-    override val pingDidntAnswer = "応答しませんでした"
-    override val pingResponsive = "レスポンシブ"
-    override val pingResponsiveButUneven = "反応は良いが不均一"
-    override val pingDroppingReplies = "返信の削除"
-    override val pingSlowToAnswer = "返事が遅い"
+    override val pingDidntAnswer = "応答なし"
 
-    override val pingNoAnswerLocal = "オフ、スリープ状態、または ping を無視するように設定されている可能性があります。"
+    override val pingResponsive = "応答は良好"
+
+    override val pingResponsiveButUneven = "応答にばらつきあり"
+
+    override val pingDroppingReplies = "一部の要求に応答なし"
+
+    override val pingSlowToAnswer = "応答が遅い"
+
+    override val pingNoAnswerLocal = "電源がオフ、スリープ中、またはPingに応答しない設定の可能性があります。"
+
     override fun pingRepliesLost(lost: Int, total: Int) = "${total} 回中 ${lost} 回、応答がありませんでした。ルーターへのテストとインターネット上のホストへのテストを比較すると、問題の場所を絞り込めます。このテストだけでは原因を特定できません。"
 
-    override val pingUneven = "返信時間はさまざまでした。こことルーターの近くのルーター チェックを比較し、インターネット ホストをテストします。"
-    override val pingLocalExplanation = "このデバイスに到達して戻ってくるまでの時間です。デバイス自体が結果に影響を与える可能性があります。"
-    override val pingInternetExplanation = "このホストに到達して戻ってくるまでの時間です。接続、ルート、ホストはすべて結果に影響します。"
+    override val pingUneven = "応答時間にばらつきがありました。この場所とルーターの近くで結果を比較し、インターネット上のホストでもテストしてください。"
+
+    override val pingLocalExplanation = "このデバイスまで往復する時間です。接続先のデバイス自体も結果に影響します。"
+
+    override val pingInternetExplanation = "このホストまで往復する時間です。接続状況、通信経路、ホストの状態が結果に影響します。"
 
     override fun dnsAddressUnit(count: Int) = "件のアドレス"
 
-    override fun dnsForQuery(query: String) = "${query}用"
-    override val dnsNotFound = "見つかりませんでした"
-    override val dnsFound = "見つけました"
-    override val dnsNotFoundExplanation = "スペルを確認するか、再試行してください。名前は存在しないかもしれません。"
-    override fun dnsFoundExplanation(query: String) = "お使いのデバイスは ${query} を見つけることができます。"
-    override val dnsAddressesTitle = "住所"
+    override fun dnsForQuery(query: String) = "${query}の名前解決"
 
-    override val portsOpenUnit = "開ける"
+    override val dnsNotFound = "アドレスが見つかりません"
+
+    override val dnsFound = "アドレスが見つかりました"
+
+    override val dnsNotFoundExplanation = "入力した名前を確認し、もう一度お試しください。その名前が登録されていない可能性もあります。"
+
+    override fun dnsFoundExplanation(query: String) = "このデバイスで${query}のアドレスを取得できました。"
+
+    override val dnsAddressesTitle = "IPアドレス"
+
+    override val portsOpenUnit = "件のポートが開放"
+
     override fun portsCommonServicesOn(host: String) = "${host} の共通サービス"
-    override val portsNothingOpen = "何も開いていません"
-    override fun portsOffersServices(count: Int) = if (count == 1) "1 つのサービスを提供します" else "${count} のサービスを提供します"
-    override val portsNoneAnswered = "共通サービスが応答しませんでした。"
-    override val portsOffersExplanation = "設定ページやファイル共有など。"
+    override val portsNothingOpen = "開いているポートなし"
+
+    override fun portsOffersServices(count: Int) = "${count}件のサービスを利用できます"
+
+    override val portsNoneAnswered = "よく使われるサービスからの応答はありませんでした。"
+
+    override val portsOffersExplanation = "設定ページやファイル共有などのサービスです。"
 
     override val portWebPage = "ウェブページ"
     override val portSecureWebPage = "安全なウェブページ"
     override val portRemoteLoginSsh = "リモートログイン (SSH)"
     override val portOldRemoteLoginTelnet = "古いリモート ログイン (Telnet)"
     override val portFileTransferFtp = "ファイル転送 (FTP)"
-    override val portAddressLookupsDns = "住所検索 (DNS)"
+    override val portAddressLookupsDns = "名前解決（DNS）"
+
     override val portFileSharing = "ファイル共有"
     override val portMacFileSharing = "Mac ファイル共有"
     override val portPrinting = "印刷"
@@ -75,42 +96,63 @@ object JaToolsStrings : ToolsStrings {
     override val portStorageOrAdminPage = "ストレージまたは管理ページ"
     override val portDatabase = "データベース"
     override val portService = "サービス"
-    override val devicesLooking = "デバイスを探しています…"
-    override val devicesFindOnWifi = "Wi-Fi でデバイスを検索"
-    override fun devicesOnNetworkNamed(count: Int, ssid: String) = "${count} オン ${ssid}"
-    override fun devicesOnYourNetwork(count: Int) = "${count}"
-    override val couldntLookForDevices = "デバイスが見つかりませんでした"
+    override val devicesLooking = "デバイスを検索中…"
+
+    override val devicesFindOnWifi = "Wi-Fiに接続中のデバイスを検索"
+
+    override fun devicesOnNetworkNamed(count: Int, ssid: String) = "${ssid}で${count}台を検出"
+
+    override fun devicesOnYourNetwork(count: Int) = "使用中のネットワークで${count}台を検出"
+
+    override val couldntLookForDevices = "デバイスを検索できませんでした"
+
     override val scanFailed = "スキャンに失敗しました"
-    override val connectionChangedLookAgain = "接続が変更されました。このネットワークをもう一度見てください。"
-    override val stoppedLooking = "見るのをやめた"
+    override val connectionChangedLookAgain = "接続先が変わりました。このネットワークで再検索してください。"
+
+    override val stoppedLooking = "検索を停止しました"
+
     override val noDevicesFound = "デバイスが見つかりませんでした"
-    override val noDevicesFoundSubtitle =
-        "一部のデバイスは、尋ねられても沈黙を保ちます。しばらくしてからもう一度試すか、このデバイスが自宅 Wi-Fi にあることを確認してください。"
+    override val noDevicesFoundSubtitle = "スキャンに応答しないデバイスもあります。少し待って再試行するか、このデバイスが自宅のWi-Fiに接続されているか確認してください。"
+
     override fun otherDevicesGroup(count: Int) = "その他のデバイス · ${count}"
-    override fun quietDevices(count: Int) = if (count == 1) "静音デバイス 1 台" else "${count} 静かなデバイス"
-    override val quietDevicesSubtitle = "彼らは自分たちが何者であるかを語らなかった"
-    override val hide = "隠す"
-    override val show = "表示する"
+    override fun quietDevices(count: Int) = "種類が不明なデバイス${count}台"
+
+    override val quietDevicesSubtitle = "デバイスの種類を取得できませんでした"
+
+    override val hide = "閉じる"
+
+    override val show = "表示"
+
     override fun checkingLocalAddresses(percent: Int) = "ローカルアドレスを確認しています · ${percent}%"
     override fun deviceDidntAnswer(detail: String) = "${detail} · 応答しませんでした"
 
-    override val deviceNotScannedYet = "スキャンではまだ見つかりませんでした"
-    override val deviceAnsweredLastScan = "最後のスキャンに応答しました"
-    override val deviceSeenButNoAnswer = "ネットワーク上で見られましたが、応答しませんでした"
-    override val actionCheckPorts = "ポートを確認してください"
+    override val deviceNotScannedYet = "まだスキャンで見つかっていません"
+
+    override val deviceAnsweredLastScan = "前回のスキャンで応答あり"
+
+    override val deviceSeenButNoAnswer = "ネットワーク上で検出されましたが、応答はありませんでした"
+
+    override val actionCheckPorts = "ポートを確認"
+
     override val openRouterSettings = "ルーター設定を開く"
     override val detailsTitle = "詳細"
     override val factNetworkName = "ネットワーク名"
     override val factHardwareAddress = "ハードウェアアドレス"
-    override val macHiddenByAndroid = "Android によって隠されました"
-    override val factYourName = "あなたの名前です"
-    override val portsNotCheckedYet = "まだチェックされていません。"
-    override fun portsNoneOpenWhenChecked(moment: String) =
-        "${moment.replaceFirstChar { it.lowercase() }} をチェックしたとき、開いている共通ポートはありませんでした。"
-    override fun portsCheckedAt(moment: String) = "${moment.replaceFirstChar { it.lowercase() }} にチェックを入れました。"
+    override val macHiddenByAndroid = "Androidによって非公開"
+
+    override val factYourName = "設定した名前"
+
+    override val portsNotCheckedYet = "まだ確認していません"
+
+    override fun portsNoneOpenWhenChecked(moment: String) = "${moment}に確認した時点では、よく使われるポートは開いていませんでした。"
+
+    override fun portsCheckedAt(moment: String) = "確認日時：${moment}"
+
     override val renameDeviceTitle = "デバイスの名前を変更"
-    override val renameSupporting = "見つかった名前 WiFi Weakspot を使用するには、空のままにしておきます。"
-    override val connectionChangedOpenAgain = "接続が変更されました。新しいネットワークでこのデバイスを再度開きます。"
+    override val renameSupporting = "空欄にすると、WiFi Weakspotが検出した名前を使います。"
+
+    override val connectionChangedOpenAgain = "接続先が変わりました。新しいネットワークでこのデバイスの詳細を開き直してください。"
+
     override val couldntLoadDetails = "保存された詳細をロードできませんでした。このデバイスをもう一度開いてみてください。"
     override val scanBeforeNaming = "名前を保存する前に、このデバイスをスキャンしてください。"
 

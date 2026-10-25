@@ -18,8 +18,10 @@ object JaHistoryStrings : HistoryStrings {
     override val kindInternetTests = "インターネットテスト"
     override val kindScans = "スキャン"
     override val emptyTitle = "まだ何も保存されていません"
-    override val emptySubtitle = "ルーターのチェック、ネットワーク スキャン、ツールの結果がここに表示されるため、時間の経過とともに Wi-Fi がどのように変化するかを確認できます。"
-    override fun trendBarsDescription(count: Int, readings: String) = "最後の ${count} ルーター テスト: ${readings}"
+    override val emptySubtitle = "ルーターのテスト、ネットワークのスキャン、各ツールの結果を保存し、Wi-Fiの変化を振り返ることができます。"
+
+    override fun trendBarsDescription(count: Int, readings: String) = "直近${count}回のルーターテスト：${readings}"
+
     override val trendNoReply = "ルーターから応答がありません。一部のルーターはこれらのチェックを無視します。"
     override val trendRecheckToCompare = "変更後に再確認して比較してください。"
     override fun trendQuicker(usualMs: String) = "通常より速い (${usualMs} ミリ秒)"
@@ -28,51 +30,68 @@ object JaHistoryStrings : HistoryStrings {
 
     override fun internetTitle(mbps: String) = "${mbps} Mbps ダウンロード"
     override fun routerTitle(ms: String) = "${ms} ミリ秒 (ルーターまで)"
-    override fun networksNearby(count: Int) = if (count == 1) "近くのネットワークが 1 つあります" else "${count} ネットワーク"
+    override fun networksNearby(count: Int) = "近くのネットワーク${count}件"
+
     override fun strongestNetwork(network: String) = "最強: ${network}"
-    override fun accessPoints(count: Int) = if (count == 1) "アクセスポイント 1 台" else "${count} アクセスポイント"
-    override fun devicesFound(count: Int) = if (count == 1) "1 台のデバイスが見つかりました" else "${count} デバイスが見つかりました"
-    override fun listWithMore(list: String, more: Int) = if (more > 0) "${list} と ${more} 詳細" else list
+    override fun accessPoints(count: Int) = "アクセスポイント${count}個"
+
+    override fun devicesFound(count: Int) = "デバイス${count}台を検出"
+
+    override fun listWithMore(list: String, more: Int) = if (more > 0) "${list}、ほか${more}件" else list
+
     override fun pingSummary(averageMs: String, replied: Int, sent: Int) = "${averageMs} ms · ${sent} 回中 ${replied} 回応答"
 
-    override fun lookupTitle(target: String) = "上を向いて ${target}"
-    override val noRecords = "記録がありません"
+    override fun lookupTitle(target: String) = "${target}の名前解決"
+
+    override val noRecords = "レコードなし"
+
     override val lookupFailed = "検索に失敗しました"
-    override fun openPortsTitle(target: String) = "${target} のポートを開く"
+    override fun openPortsTitle(target: String) = "${target}の開いているポート"
+
     override val noCommonPortsOpen = "開いている共通ポートはありませんでした"
-    override val completed = "完成しました"
+    override val completed = "完了"
+
     override val failed = "失敗しました"
 
     override val metricDownload = "ダウンロード"
     override val metricUpload = "アップロード"
     override val metricLatency = "レイテンシ"
-    override val metricVariation = "変化"
-    override val metricLost = "紛失しました"
+    override val metricVariation = "ばらつき"
+
+    override val metricLost = "未応答"
+
     override fun metricOnBand(band: String) = "${band}に"
-    override val metricReplied = "返信しました"
-    override val metricReplies = "返信"
+    override val metricReplied = "応答あり"
+
+    override val metricReplies = "応答"
+
     override val metricAverage = "平均"
     override val factServer = "サーバー"
     override val factRoom = "部屋"
-    override val factBand = "バンド"
+    override val factBand = "周波数帯"
+
     override val factSignal = "信号"
     override val factAccessPoints = "アクセスポイント"
     override fun signalFact(quality: String, rssi: Int) = "${quality} シグナル · ${rssi} dBm"
 
     override val linesNetworksStrongestFirst = "ネットワーク、最も強いものから"
-    override val linesRecords = "記録"
+    override val linesRecords = "DNSレコード"
+
     override fun replyNumber(index: Int) = "返信 ${index}"
     override val scanNote = "あなたと同じチャンネル上の近くのネットワークが通信時間を競います。"
 
-    override val go = "行く"
+    override val go = "開始"
+
     override val testInternetSpeedInstead = "代わりにインターネット速度をテストしてください"
     override val keepDeviceStill = "デバイスを数秒間動かさないでください。"
-    override val connectToStart = "Wi-Fi に接続して開始します。"
+    override val connectToStart = "開始するにはWi-Fiに接続してください。"
+
     override val lastTime = "前回"
     override val couldNotSaveSpot = "このスポットを保存できませんでした。もう一度やり直してください。"
-    override val connectFirst = "まず、Wi-Fi に接続します。このチェックでは、ルーターからの応答を測定します。"
+    override val connectFirst = "先にWi-Fiに接続してください。このテストでは、ルーターからの応答時間を測定します。"
+
     override val historyNotSaved = "結果を測定しましたが、履歴を保存できませんでした。"
-    override val checkStopped = "接続が変更されたか、ルーターのチェックが停止しました。この Wi-Fi を接続したままにして、もう一度お試しください。一部のルーターは ping をブロックします。"
+    override val checkStopped = "接続先が変わったか、テストが停止しました。同じWi-Fiに接続したまま再試行してください。Pingに応答しないルーターもあります。"
 
     override val internetSpeedTitle = "インターネット速度 · fast.com"
 }

@@ -12,14 +12,17 @@ object JaCommonStrings : CommonStrings {
     override val network = "ネットワーク"
     override val tools = "ツール"
     override val maker = "メーカー"
-    override val noReply = "返事がありません"
+    override val noReply = "応答なし"
+
     override val fastest = "最速"
-    override val address = "住所"
+    override val address = "アドレス"
+
     override val responseTime = "応答時間"
-    override val checkAgain = "再確認"
+    override val checkAgain = "再測定"
+
     override val rename = "名前を変更"
     override val stop = "停止"
-    override val unknown = "未知"
+    override val unknown = "不明"
 
     override val hiddenNetwork = "非公開ネットワーク"
     override val fasterScans = "スキャンを高速化"
@@ -35,7 +38,8 @@ object JaCommonStrings : CommonStrings {
     override val yourNetwork = "使用中のネットワーク"
 
     override val openInNewTab = "新しいタブで開く"
-    override val mapSharingAndroidOnly = "地図の共有は Android アプリで機能します。"
+    override val mapSharingAndroidOnly = "マップの共有はAndroidアプリで利用できます。"
+
     override val back = "戻る"
     override val close = "閉じる"
     override val cancel = "キャンセル"
@@ -49,9 +53,11 @@ object JaCommonStrings : CommonStrings {
     override val tabRooms = "部屋"
     override val tabSettings = "設定"
 
-    override val permissionScreenTitle = "近くの Wi-Fi へのアクセスを許可します"
-    override val permissionAllowAccess = "アクセスを許可する"
-    override val openAppSettings = "アプリ設定を開きます"
+    override val permissionScreenTitle = "近くのWi-Fiへのアクセス"
+
+    override val permissionAllowAccess = "アクセスを許可"
+
+    override val openAppSettings = "アプリの設定を開く"
 
     override fun signalBadgeDescription(quality: String, reading: String) = "${quality} 信号、${reading}"
 
@@ -59,13 +65,16 @@ object JaCommonStrings : CommonStrings {
     override fun scansCount(count: Int) = "スキャン${count}回"
 
     override val scansLeftCaption = "残り"
-    override val scanWaitingCaption = "待っている"
+    override val scanWaitingCaption = "待機中"
+
     override val scanDevMode = "開発モード"
     override val readyToScan = "スキャンの準備ができました"
     override fun scansRemaining(count: Int) = "残り${count}回スキャン可能"
 
-    override fun nextScanIn(time: String) = "${time} の次のスキャン"
-    override val checking = "確認中..."
+    override fun nextScanIn(time: String) = "次のスキャンまで${time}"
+
+    override val checking = "確認中…"
+
     override val justNow = "ちょうど今"
     override fun minutesAgo(minutes: Long) = "${minutes}分前"
 

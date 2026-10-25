@@ -12,11 +12,14 @@ object KoCommonStrings : CommonStrings {
     override val network = "네트워크"
     override val tools = "도구"
     override val maker = "메이커"
-    override val noReply = "답장이 없습니다"
+    override val noReply = "응답 없음"
+
     override val fastest = "가장 빠름"
     override val address = "주소"
+
     override val responseTime = "응답 시간"
-    override val checkAgain = "재확인"
+    override val checkAgain = "다시 측정"
+
     override val rename = "이름 바꾸기"
     override val stop = "중지"
     override val unknown = "알 수 없음"
@@ -35,7 +38,8 @@ object KoCommonStrings : CommonStrings {
     override val yourNetwork = "내 네트워크"
 
     override val openInNewTab = "새 탭에서 열기"
-    override val mapSharingAndroidOnly = "지도 공유는 Android 앱에서 작동합니다."
+    override val mapSharingAndroidOnly = "지도 공유는 Android 앱에서 사용할 수 있습니다."
+
     override val back = "뒤로"
     override val close = "닫기"
     override val cancel = "취소"
@@ -50,7 +54,9 @@ object KoCommonStrings : CommonStrings {
     override val tabSettings = "설정"
 
     override val permissionScreenTitle = "주변 Wi-Fi 접근 허용"
+
     override val permissionAllowAccess = "접근 허용"
+
     override val openAppSettings = "앱 설정 열기"
 
     override fun signalBadgeDescription(quality: String, reading: String) = "${quality} 신호, ${reading}"
@@ -59,13 +65,16 @@ object KoCommonStrings : CommonStrings {
     override fun scansCount(count: Int) = "스캔 ${count}회"
 
     override val scansLeftCaption = "남음"
-    override val scanWaitingCaption = "기다리고 있어요"
+    override val scanWaitingCaption = "대기 중"
+
     override val scanDevMode = "개발 모드"
     override val readyToScan = "스캔 준비 완료"
     override fun scansRemaining(count: Int) = "스캔 ${count}회 남음"
 
-    override fun nextScanIn(time: String) = "다음 스캔은 ${time}"
-    override val checking = "확인 중..."
+    override fun nextScanIn(time: String) = "다음 스캔까지 ${time}"
+
+    override val checking = "확인 중…"
+
     override val justNow = "지금 막"
     override fun minutesAgo(minutes: Long) = "${minutes}분 전"
 

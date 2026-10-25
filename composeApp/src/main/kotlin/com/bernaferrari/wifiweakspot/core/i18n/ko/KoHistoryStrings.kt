@@ -18,8 +18,10 @@ object KoHistoryStrings : HistoryStrings {
     override val kindInternetTests = "인터넷 테스트"
     override val kindScans = "스캔"
     override val emptyTitle = "아직 저장된 것이 없습니다."
-    override val emptySubtitle = "라우터 확인, 네트워크 스캔 및 도구 결과가 여기에 표시되므로 시간이 지남에 따라 Wi-Fi이 어떻게 변하는지 확인할 수 있습니다."
-    override fun trendBarsDescription(count: Int, readings: String) = "마지막 ${count} 라우터 테스트: ${readings}"
+    override val emptySubtitle = "공유기 확인, 네트워크 스캔, 도구 결과가 여기에 저장되어 Wi-Fi의 변화를 살펴볼 수 있습니다."
+
+    override fun trendBarsDescription(count: Int, readings: String) = "최근 공유기 테스트 ${count}회: ${readings}"
+
     override val trendNoReply = "라우터에서 응답이 없습니다. 일부 라우터는 이러한 검사를 무시합니다."
     override val trendRecheckToCompare = "변경 후 다시 확인하여 비교해 보세요."
     override fun trendQuicker(usualMs: String) = "평소보다 빠릅니다(${usualMs}ms)"
@@ -28,51 +30,68 @@ object KoHistoryStrings : HistoryStrings {
 
     override fun internetTitle(mbps: String) = "${mbps} Mbps 다운로드"
     override fun routerTitle(ms: String) = "${ms}ms 라우터까지"
-    override fun networksNearby(count: Int) = if (count == 1) "근처 네트워크 1개" else "${count} 주변 네트워크"
+    override fun networksNearby(count: Int) = "주변 네트워크 ${count}개"
+
     override fun strongestNetwork(network: String) = "최강: ${network}"
-    override fun accessPoints(count: Int) = if (count == 1) "액세스 포인트 1개" else "${count} 액세스 포인트"
-    override fun devicesFound(count: Int) = if (count == 1) "기기 1개 발견됨" else "${count} 기기 발견됨"
-    override fun listWithMore(list: String, more: Int) = if (more > 0) "${list} 외 ${more}" else list
+    override fun accessPoints(count: Int) = "액세스 포인트 ${count}개"
+
+    override fun devicesFound(count: Int) = "기기 ${count}개 발견"
+
+    override fun listWithMore(list: String, more: Int) = if (more > 0) "${list} 외 ${more}개" else list
+
     override fun pingSummary(averageMs: String, replied: Int, sent: Int) = "${averageMs} ms · ${sent}회 중 ${replied}회 응답"
 
-    override fun lookupTitle(target: String) = "찾아보세요 ${target}"
-    override val noRecords = "기록 없음"
+    override fun lookupTitle(target: String) = "${target} 이름 조회"
+
+    override val noRecords = "레코드 없음"
+
     override val lookupFailed = "조회 실패"
-    override fun openPortsTitle(target: String) = "${target}에서 포트 열기"
+    override fun openPortsTitle(target: String) = "${target}의 열린 포트"
+
     override val noCommonPortsOpen = "공용 포트가 하나도 열려 있지 않았습니다."
     override val completed = "완료"
+
     override val failed = "실패"
 
     override val metricDownload = "다운로드"
     override val metricUpload = "업로드"
     override val metricLatency = "지연 시간"
-    override val metricVariation = "변형"
-    override val metricLost = "분실"
+    override val metricVariation = "변동"
+
+    override val metricLost = "응답 없음"
+
     override fun metricOnBand(band: String) = "${band}"
-    override val metricReplied = "답변됨"
-    override val metricReplies = "답글"
+    override val metricReplied = "응답함"
+
+    override val metricReplies = "응답"
+
     override val metricAverage = "평균"
     override val factServer = "서버"
     override val factRoom = "방"
-    override val factBand = "밴드"
+    override val factBand = "주파수 대역"
+
     override val factSignal = "시그널"
     override val factAccessPoints = "액세스 포인트"
     override fun signalFact(quality: String, rssi: Int) = "${quality} 신호 · ${rssi} dBm"
 
     override val linesNetworksStrongestFirst = "네트워크, 가장 강한 것부터"
-    override val linesRecords = "기록"
+    override val linesRecords = "DNS 레코드"
+
     override fun replyNumber(index: Int) = "답글 ${index}"
     override val scanNote = "귀하와 동일한 채널에 있는 인근 네트워크가 방송 시간을 놓고 경쟁합니다."
 
-    override val go = "바로가기"
+    override val go = "시작"
+
     override val testInternetSpeedInstead = "대신 인터넷 속도를 테스트해 보세요."
     override val keepDeviceStill = "몇 초 동안 기기를 가만히 두세요."
     override val connectToStart = "시작하려면 Wi-Fi에 연결하세요."
+
     override val lastTime = "지난번"
     override val couldNotSaveSpot = "이 장소를 저장할 수 없습니다. 다시 시도해 보세요."
-    override val connectFirst = "먼저 Wi-Fi에 연결하세요. 이 검사는 라우터의 응답을 측정합니다."
+    override val connectFirst = "먼저 Wi-Fi에 연결하세요. 이 테스트는 공유기의 응답 시간을 측정합니다."
+
     override val historyNotSaved = "결과가 측정되었으나 기록을 저장할 수 없습니다."
-    override val checkStopped = "연결이 변경되었거나 라우터 확인이 중지되었습니다. Wi-Fi 연결을 유지하고 다시 시도하세요. 일부 라우터는 핑을 차단합니다."
+    override val checkStopped = "네트워크가 변경되었거나 테스트가 중지되었습니다. 같은 Wi-Fi에 연결한 상태로 다시 시도하세요. 일부 공유기는 Ping에 응답하지 않습니다."
 
     override val internetSpeedTitle = "인터넷 속도 · fast.com"
 }

@@ -3,30 +3,42 @@ package com.bernaferrari.wifiweakspot.core.i18n.ja
 import com.bernaferrari.wifiweakspot.core.i18n.SettingsStrings
 
 object JaSettingsStrings : SettingsStrings {
-    override val sectionScanning = "スキャン中"
+    override val sectionScanning = "スキャン"
+
     override val fasterScansThrottled = "Android では 2 分ごとに 4 回のスキャンが可能"
     override val sectionAppearance = "外観"
     override val themeAuto = "自動"
     override val themeLight = "ライト"
     override val themeDark = "ダーク"
     override val showSignalAs = "信号の表示方法"
-    override val sectionComfort = "快適さ"
+    override val sectionComfort = "使いやすさ"
+
     override val reduceMotionTitle = "動きを減らす"
-    override val hapticsSubtitle = "タップ時と結果時に振動する"
+    override val hapticsSubtitle = "タップ時や結果の表示時に振動"
+
     override val sectionAlerts = "アラート"
-    override val backgroundAlertsTitle = "バックグラウンドアラート"
-    override val backgroundAlertsSubtitle = "近くのWi-Fiが変化すると"
-    override val notificationsDenied = "通知で監視ステータスとアラートを確認できるようにします。"
-    override val checkEvery = "すべてチェックしてください"
+    override val backgroundAlertsTitle = "バックグラウンド通知"
+
+    override val backgroundAlertsSubtitle = "近くのWi-Fiに変化があったとき"
+
+    override val notificationsDenied = "監視状況や通知を表示するには、通知を許可してください。"
+
+    override val checkEvery = "確認する間隔"
+
     override fun intervalSeconds(seconds: Int) = "${seconds} 秒"
     override fun intervalMinutes(minutes: Int) = "${minutes} 分"
-    override val newNetworkAlertsTitle = "新しいネットワーク アラート"
-    override val signalChangeAlertsTitle = "信号変化アラート"
-    override val signalChangeAlertsSubtitle = "信号が大幅に上昇または下降した場合"
-    override val sectionAbout = "について"
+    override val newNetworkAlertsTitle = "新しいネットワークを通知"
+
+    override val signalChangeAlertsTitle = "信号の変化を通知"
+
+    override val signalChangeAlertsSubtitle = "信号が大きく強まったり弱まったりしたとき"
+
+    override val sectionAbout = "このアプリについて"
+
     override fun aboutApp(appName: String) = "${appName}について"
     override fun version(version: String) = "バージョン ${version}"
-    override val replayIntroTitle = "もう一度紹介文を表示"
+    override val replayIntroTitle = "使い方の紹介をもう一度見る"
+
     override val wallpaperColors = "壁紙の色"
     override val colorIndigo = "インディゴ"
     override val colorOrange = "オレンジ"
@@ -42,18 +54,27 @@ object JaSettingsStrings : SettingsStrings {
     override val openSourceLicense = "オープンソース · Apache 2.0"
     override val feedbackTitle = "フィードバック"
     override val feedbackBody = "アイデアとバグレポート"
-    override val elsewhere = "他所"
+    override val elsewhere = "関連リンク"
+
     override val privacySummary = "測定結果は、共有しない限りこのデバイスに保存されます。"
     override val privacyPolicy = "プライバシーポリシー"
 
-    override val notNow = "今はありません"
-    override val getStarted = "始めましょう"
+    override val notNow = "後で"
+
+    override val getStarted = "始める"
+
     override val welcomeHeadline = "自宅のWi-Fiの\n弱い場所を見つける"
     override val welcomeBody = "信号が弱くなる場所と改善方法を確認できます。"
-    override val featureRoomsTitle = "すべての部屋をチェックしてください"
-    override val featureRoomsBody = "それが落ちている部屋を見つけてください。"
-    override val featureRouterTitle = "ルーターを確認してください"
-    override val featureRouterBody = "どれだけ早く応答するかを見てください。"
-    override val featureNearbyTitle = "近くのネットワークを表示"
-    override val featureNearbyBody = "よりクリアなチャンネルを選択してください。"
+    override val featureRoomsTitle = "各部屋で測定"
+
+    override val featureRoomsBody = "信号が弱い部屋を見つけられます。"
+
+    override val featureRouterTitle = "ルーターをテスト"
+
+    override val featureRouterBody = "応答にかかる時間を確認できます。"
+
+    override val featureNearbyTitle = "近くのネットワークを確認"
+
+    override val featureNearbyBody = "重なりの少ないチャンネルを探せます。"
+
 }

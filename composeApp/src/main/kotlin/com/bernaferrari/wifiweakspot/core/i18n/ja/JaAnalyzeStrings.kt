@@ -13,53 +13,73 @@ object JaAnalyzeStrings : AnalyzeStrings {
     override val wifiOffTitle = "Wi-Fi がオフです"
     override val locationOffBody = "Androidでは、近くのWi-Fiを表示するために位置情報をオンにする必要があります。WiFi WeakspotはGPSを使用しません。"
 
-    override val scanPermissionBody = "Android は、位置情報にアクセスできるアプリと近くのネットワーク名のみを共有します。 WiFi Weakspot はあなたの居場所を決して記録しません。"
-    override val wifiOffBody = "Wi-Fi をオンにすると、近くのネットワークが表示されます。"
+    override val scanPermissionBody = "Androidでは、近くのWi-Fiネットワーク名を取得するために位置情報へのアクセス許可が必要です。WiFi Weakspotは居場所を記録しません。"
+
+    override val wifiOffBody = "近くのネットワークを確認するには、Wi-Fiをオンにしてください。"
+
     override val locationOffTitle = "位置情報がオフです"
+
     override val turnOnLocation = "位置情報をオンにする"
-    override val scanPausedTitle = "Android スキャンを一時停止しました"
-    override fun scanPausedBody(seconds: Long) = "次のスキャンは ${seconds} 秒以内に許可されます。待機をスキップするには、スキャン スロットルをオフにします。"
-    override val turnOffThrottling = "スロットリングをオフにする"
-    override val readyToScanBody = "「スキャン」をタップすると、近くにあるすべてのネットワークが表示されます。"
+    override val scanPausedTitle = "Androidによるスキャン制限中"
+
+    override fun scanPausedBody(seconds: Long) = "次のスキャンまで${seconds}秒です。スキャン回数の制限を解除すると、待機時間を短縮できます。"
+
+    override val turnOffThrottling = "スキャン回数の制限を解除"
+
+    override val readyToScanBody = "「スキャン」をタップすると、近くのネットワークを検索します。"
+
     override val scan = "スキャン"
     override val channels = "チャンネル"
     override val signalOverTime = "信号の推移"
-    override val howToReadThisChart = "このチャートの見方"
-    override val expandSignalHistory = "信号履歴を展開する"
-    override val expandChannels = "チャネルを拡張する"
+    override val howToReadThisChart = "グラフの見方"
+
+    override val expandSignalHistory = "信号履歴を拡大"
+
+    override val expandChannels = "チャンネルグラフを拡大"
+
     override fun noBandNetworksNearby(band: String) = "近くに ${band} ネットワークがありません。"
     override fun networksOnBand(count: Int, band: String) = if (count == 0) "近くに${band}のネットワークはありません" else "${band}：${networks(count)}"
 
-    override fun showVeryWeakNetworks(count: Int) =
-        if (count == 1) "非常に弱いネットワークを 1 件表示" else "${count} 非常に弱いネットワークを表示します"
-    override fun hideVeryWeakNetworks(count: Int) =
-        if (count == 1) "非常に弱いネットワークを 1 つ非表示にする" else "${count} 非常に弱いネットワークを非表示にします"
+    override fun showVeryWeakNetworks(count: Int) = "信号が非常に弱いネットワーク${count}件を表示"
+
+    override fun hideVeryWeakNetworks(count: Int) = "信号が非常に弱いネットワーク${count}件を隠す"
+
     override fun bandNetworkCount(count: Int) = if (count == 0) "なし" else networks(count)
-    override val highlightedOnChart = "チャート上でハイライト表示"
-    override val notHighlightedOnChart = "チャートではハイライトされていません"
+    override val highlightedOnChart = "グラフ上で強調表示中"
+
+    override val notHighlightedOnChart = "グラフ上で未選択"
+
     override fun detailsForNetwork(ssid: String) = "${ssid.ifEmpty { "隠されたネットワーク" }}の詳細"
-    override fun alsoYourRouter(quality: String) = "${quality} · ルーターも"
+    override fun alsoYourRouter(quality: String) = "${quality} · 同じルーターの別ネットワーク"
+
     override val connected = "接続中"
 
     override val scanReportHeading = "WiFi Weakspot スキャンレポート"
+
     override fun scanReportTime(time: String) = "時間: ${time}"
     override fun scanReportTotal(count: Int) = "ネットワーク総数: ${count}"
     override val scanReportNetworksHeading = "ネットワーク:"
     override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) =
         "• ${ssid} - ${rssi}dBm、Ch ${channel}、${security}"
-    override val channelLooksClear = "チャンネルがクリアに見えます"
-    override val noChannelImprovement = "このスキャンでは改善は見つかりませんでした"
-    override fun lessOverlapThanChannel(currentChannel: Int) = "チャンネル ${currentChannel} よりもオーバーラップが少ない"
-    override val leastOverlapInScan = "このスキャンで重複が最も少ない"
-    override fun channelAdviceDescription(advice: String, channel: Int) = "${advice}: チャンネル ${channel}"
-    override val lowOverlap = "低オーバーラップ"
-    override val moderateOverlap = "中程度の重複"
-    override val highOverlap = "重複が多い"
-    override val veryHighOverlap = "非常に高い重複"
+    override val channelLooksClear = "使用中のチャンネルは混雑が少なそうです"
 
-    override fun channelGraphDescription(networkCount: Int, busiestChannel: Int?, busiestCount: Int) =
-        "チャネルグラフ、${networks(networkCount)}。" +
-            (if (busiestChannel != null) " 最もビジーなチャンネル ${busiestChannel} と ${busiestCount}。" else "")
+    override val noChannelImprovement = "今回のスキャンでは、より良いチャンネルは見つかりませんでした"
+
+    override fun lessOverlapThanChannel(currentChannel: Int) = "チャンネル${currentChannel}より重なりが少ない"
+
+    override val leastOverlapInScan = "今回のスキャンで重なりが最小"
+
+    override fun channelAdviceDescription(advice: String, channel: Int) = "${advice}: チャンネル ${channel}"
+    override val lowOverlap = "重なりが少ない"
+
+    override val moderateOverlap = "重なりが中程度"
+
+    override val highOverlap = "重なりが多い"
+
+    override val veryHighOverlap = "重なりが非常に多い"
+
+    override fun channelGraphDescription(networkCount: Int, busiestChannel: Int?, busiestCount: Int) = "チャンネルグラフ。ネットワーク${networkCount}件。" + if (busiestChannel != null) " 最も混雑しているチャンネルは${busiestChannel}で、${busiestCount}件のネットワークがあります。" else ""
+
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) =
         name + (if (isYou) " (あなた)" else "") + (if (extraNames > 0) " +${extraNames}" else "")
     override val busyCaption = "混雑"
@@ -67,84 +87,109 @@ object JaAnalyzeStrings : AnalyzeStrings {
     override val axisOkay = "普通"
     override val axisWeak = "弱い"
     override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ch ${channel}"
-    override val clearSelectedNetwork = "選択したネットワークをクリアします"
-    override val tapWaveForDetails = "Wave をタップするとネットワークの詳細が表示されます"
+    override val clearSelectedNetwork = "ネットワークの選択を解除"
 
-    override val chartGuideTitle = "チャートを読む"
-    override val guideTallerBody = "高さは信号強度です。"
-    override val guideOverlapBody = "重複するネットワークはスペクトルを共有し、通信時間を競合する可能性があります。"
-    override val guideWiderBody = "チャネルが広いほど、より多くのスペクトルを占有し、より多くの隣接チャネルと重複する可能性があります。"
-    override val guideSameRouterBody = "+1: 同じラジオから来たと思われる名前が同じ丘を共有しています。"
+    override val tapWaveForDetails = "山の形をタップすると、ネットワークの詳細が表示されます"
+
+    override val chartGuideTitle = "グラフの見方"
+
+    override val guideTallerBody = "山の高さは信号の強さを表します。"
+
+    override val guideOverlapBody = "重なっているネットワークは周波数帯を共有しており、通信時間を取り合うことがあります。"
+
+    override val guideWiderBody = "チャンネル幅が広いほど多くの周波数を使うため、近くのネットワークと重なりやすくなります。"
+
+    override val guideSameRouterBody = "+1：同じWi-Fi無線モジュールを使っていると推定されるネットワーク名を、1つの山にまとめて表示します。"
+
     override val guideCrowdBody = "緑は重なりが少なく、赤は多いことを表します。2.4 GHz の下のストリップはオーバーラップを示しています。タップするとカウントされます。"
-    override val guideSteadyBody = "飛び跳ねた線は、信号強度の変化を示しています。線をタップして一時停止し、時間を横にスライドしたり、ネットワーク間を縦にスライドしたりできます。ライブを再開して新しい測定値を確認します。"
-    override val guideHighlightBody = "丘または列をタップして強調表示します。チャート上で水平方向にドラッグして探索します。"
+    override val guideSteadyBody = "線が大きく上下するほど、信号の強さが変動しています。線をタップして一時停止し、左右に動かすと時点を、上下に動かすとネットワークを切り替えられます。再開すると最新の測定値が表示されます。"
 
-    override fun channelOverlapHeading(count: Int, channel: Int) = when (count) {
-        0 -> "チャンネル ${channel} はクリアです"
-        1 -> "1 つのネットワークがチャンネル ${channel} と重複しています"
-        else -> "${count} ネットワークがチャネル ${channel} と重複しています"
-    }
-    override fun fromChannel(homeChannel: Int, reading: String) = "チャンネル ${homeChannel} · ${reading} から"
+    override val guideHighlightBody = "山の形や一覧の行をタップすると強調表示されます。グラフ上を左右にドラッグして確認できます。"
 
-    override val estimatedChannelOverlap = "推定チャンネル重複"
+    override fun channelOverlapHeading(count: Int, channel: Int) = if (count == 0) "チャンネル${channel}に重なりはありません" else "チャンネル${channel}と重なるネットワーク：${count}件"
+
+    override fun fromChannel(homeChannel: Int, reading: String) = "チャンネル${homeChannel}から · ${reading}"
+
+    override val estimatedChannelOverlap = "チャンネルの重なりの推定"
+
     override fun tryChannel(channel: Int) = "チャンネル ${channel} をお試しください"
-    override val lowestOverlapFor20Mhz = "20 MHz チャネルの最小推定オーバーラップ"
-    override val overlapDisclaimer = "測定されたトラフィックではなく、近くのアクセス ポイントと信号強度に基づいています。 " +
-        "設定を変更する前に、ルーターのサポートされているチャンネルとローカル ルールを確認してください。 " +
-        "5 および 6 GHz の提案には、既知のルーターのサポートが必要です。ワイドチャンネルセンターが欠けている " +
-        "プライマリ 20 MHz チャンネルのみを表示します。"
-    override val overlapScore = "オーバーラップスコア"
+    override val lowestOverlapFor20Mhz = "20 MHz幅のチャンネルで、重なりが最も少ないと推定されます"
 
-    override val collectingReadings = "測定値を収集中… 数回のスキャン後に線が表示されます。"
-    override fun signalHistoryDescription(networkCount: Int) =
-        "${networks(networkCount)} の信号履歴。検査する行をタップします。矢印キーは時間とネットワークを移動します。"
-    override val historyLive = "ライブ"
-    override fun historyPaused(networkName: String, reading: String?, readingsAgo: Int) =
-        "${networkName}、${reading ?: "読んでいません"}、一時停止、${readingsAgo(readingsAgo)}"
-    override val strongerNetwork = "より強力なネットワーク"
-    override val weakerNetwork = "弱いネットワーク"
+    override val overlapDisclaimer = "近くのアクセスポイントと信号の強さに基づく推定で、実際の通信量を測定したものではありません。設定を変更する前に、ルーターの対応チャンネルと地域の規則を確認してください。5 GHz・6 GHzの提案はルーターの対応が確認できる場合のみです。広いチャンネルの中心周波数が不明な場合は、主チャンネルの20 MHz分だけを表示します。"
+
+    override val overlapScore = "重なりのスコア"
+
+    override val collectingReadings = "測定値を収集中です。数回スキャンすると線が表示されます。"
+
+    override fun signalHistoryDescription(networkCount: Int) = "${networkCount}件のネットワークの信号履歴です。線をタップして確認できます。矢印キーで時点やネットワークを切り替えられます。"
+
+    override val historyLive = "リアルタイム"
+
+    override fun historyPaused(networkName: String, reading: String?, readingsAgo: Int) = "${networkName}, ${reading ?: "測定値なし"}, 一時停止中, ${readingsAgo(readingsAgo)}"
+
+    override val strongerNetwork = "信号がより強いネットワーク"
+
+    override val weakerNetwork = "信号がより弱いネットワーク"
+
     override val axisOlder = "過去"
     override val axisLatest = "最新"
-    override val exploreSignalHistory = "信号履歴を探索する"
-    override val tapLineToCompare = "線をタップし、ドラッグして比較します"
-    override val noReadingAtPoint = "現時点では読み取り値はありません"
-    override fun inspectedReading(reading: String, quality: String, readingsAgo: Int) =
-        "${reading} · ${quality} · " + if (readingsAgo == 0) "最近の読書" else readingsAgo(readingsAgo)
-    private fun readingsAgo(count: Int) = if (count == 1) "1 件読む前" else "${count} 閲覧前"
-    override val resumeLive = "ライブを再開"
+    override val exploreSignalHistory = "信号履歴を確認"
 
-    override fun seenReading(rssi: Int, seen: String) = "${rssi} dBm · ${seen} を見た"
+    override val tapLineToCompare = "線をタップし、ドラッグして比較できます"
+
+    override val noReadingAtPoint = "この時点の測定値はありません"
+
+    override fun inspectedReading(reading: String, quality: String, readingsAgo: Int) = "${reading} · ${quality} · " + if (readingsAgo == 0) "最新の測定値" else readingsAgo(readingsAgo)
+
+    private fun readingsAgo(count: Int) = "${count}回前の測定"
+
+    override val resumeLive = "リアルタイム表示を再開"
+
+    override fun seenReading(rssi: Int, seen: String) = "${rssi} dBm · 検出：${seen}"
+
     override val factChannel = "チャンネル"
-    override val factWidth = "幅"
+    override val factWidth = "チャンネル幅"
+
     override val factSecurity = "セキュリティ"
     override val factDistance = "推定距離"
-    override val notAvailable = "利用できません"
-    override val watch = "時計"
+
+    override val notAvailable = "取得できません"
+
+    override val watch = "信号を追跡"
+
     override val addToFavorites = "お気に入りに追加"
     override val removeFromFavorites = "お気に入りから削除"
 
-    override fun routerCheckLastTime(pingMs: String) = "${pingMs} ミリ秒"
-    override fun devicesFoundLastScan(count: Int) = "${count} 最後のスキャンが見つかりました"
-    override val devicesSubtitle = "誰がつながっているのか"
-    override val testWebsiteSubtitle = "Ping、DNS、ポート"
-    override fun savedChecks(count: Int) = when (count) {
-        0 -> "過去の実績"
-        1 -> "1 チェック"
-        else -> "${count} 小切手"
-    }
-    override val notOnWifi = "Wi-Fi にはありません"
+    override fun routerCheckLastTime(pingMs: String) = "前回：${pingMs} ms"
+
+    override fun devicesFoundLastScan(count: Int) = "前回のスキャンで${count}台を検出"
+
+    override val devicesSubtitle = "接続中のデバイス"
+
+    override val testWebsiteSubtitle = "Ping・DNS・ポート"
+
+    override fun savedChecks(count: Int) = if (count == 0) "過去の結果" else "テスト${count}件"
+
+    override val notOnWifi = "Wi-Fiに未接続"
+
     override val online = "オンライン"
-    override val internetNotConfirmed = "インターネット未確認"
+    override val internetNotConfirmed = "インターネット接続は未確認"
+
     override fun channelChip(channel: Int) = "チャンネル ${channel}"
     override fun linkRateChip(mbps: Int) = "リンクレート ${mbps} Mbps"
     override val chooseNetwork = "ネットワークを選択してください"
     override val turnOnWifi = "Wi-Fiをオンにする"
     override val dismiss = "却下"
-    override val findWeakSpotsTitle = "弱点を見つける"
-    override val findWeakSpotsBody = "どの部屋が弱いかを確認します。"
-    override val findWeakSpotsAction = "お部屋をチェックしてください"
-    override fun networksNearby(count: Int) = "${networks(count)} 近く"
-    override val nearbyStale = "最後のスキャンから。タップして更新します。"
+    override val findWeakSpotsTitle = "信号が弱い場所を探す"
+
+    override val findWeakSpotsBody = "信号が届きにくい部屋を確認できます。"
+
+    override val findWeakSpotsAction = "部屋ごとに測定する"
+
+    override fun networksNearby(count: Int) = "近くに${count}件のネットワーク"
+
+    override val nearbyStale = "前回のスキャン結果です。タップして更新できます。"
+
     override val nearbyNoConnection = "各ネットワークのチャンネルと信号を参照してください。"
     override fun nearbyOverlap(count: Int, channel: Int) = when (count) {
         0 -> "チャネル ${channel} で近くのオーバーラップが検出されませんでした。"
@@ -153,12 +198,20 @@ object JaAnalyzeStrings : AnalyzeStrings {
     }
 
     override val adviceNoWifiBody = "確認したいネットワークに接続します。現在の接続を使用して、インターネット テストやネットワーク ツールを引き続き実行できます。"
-    override val adviceNoInternetTitle = "まずインターネットアクセスを確認してください"
-    override val adviceNoInternetBody = "Android は、この Wi-Fi 接続でのインターネット アクセスを確認していません。サインイン ページを確認し、ルーターとインターネット ホストへの接続をテストします。"
-    override val adviceNoSignalTitle = "Wi-Fi シグナルを読み取る"
-    override val adviceNoSignalBody = "ネットワークの Wi-Fi スキャンに信号測定値の表示を許可します。問題が発生した部屋の信号を比較してください。"
-    override val adviceWeakSignalTitle = "ルーター付近のカバレッジを比較します"
-    override val adviceWeakSignalBody = "現在のWi-Fi 信号は弱いです。ここでルーターチェックを実行し、ルーターの近くで繰り返します。独自のネットワークを調査して弱点を見つけます。"
-    override val adviceGoodSignalTitle = "ルーターの応答性を比較する"
-    override val adviceGoodSignalBody = "信号強度は使用可能なようで、Android はインターネット アクセスを報告します。接続が遅いと感じる場合は、ルーターの応答をこことルーターの近くで比較してください。信号が強いだけではパフォーマンスは保証されません。"
+    override val adviceNoInternetTitle = "まずインターネット接続を確認"
+
+    override val adviceNoInternetBody = "AndroidでこのWi-Fiのインターネット接続を確認できていません。ログイン用のページがないか確認し、ルーターとインターネット上のホストへの接続をテストしてください。"
+
+    override val adviceNoSignalTitle = "Wi-Fiの信号を測定"
+
+    override val adviceNoSignalBody = "「ネットワーク」でWi-Fiスキャンを許可すると、信号を測定できます。問題が起きる部屋で測定し、ほかの場所と比較してください。"
+
+    override val adviceWeakSignalTitle = "ルーターの近くでも測定して比較"
+
+    override val adviceWeakSignalBody = "現在のWi-Fi信号は弱くなっています。ここでルーターをテストし、近くに移動してもう一度テストしてください。自分のネットワークをマッピングすると、信号が弱い場所を探せます。"
+
+    override val adviceGoodSignalTitle = "ルーターの応答を比較"
+
+    override val adviceGoodSignalBody = "信号の強さは実用的で、Androidでもインターネット接続が確認されています。遅いと感じる場合は、ここでの応答時間とルーターの近くでの応答時間を比べてください。信号が強くても、通信が速いとは限りません。"
+
 }

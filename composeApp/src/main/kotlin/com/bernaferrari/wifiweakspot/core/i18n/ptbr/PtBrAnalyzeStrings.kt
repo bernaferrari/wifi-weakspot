@@ -73,7 +73,8 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
     override val guideTallerBody = "Altura é a intensidade do sinal."
     override val guideOverlapBody = "Redes sobrepostas partilham espectro e podem competir pelo tempo de antena."
     override val guideWiderBody = "Um canal mais amplo ocupa mais espectro e pode sobrepor mais vizinhos."
-    override val guideSameRouterBody = "+1: Nomes que parecem vir da mesma rádio compartilham uma colina."
+    override val guideSameRouterBody = "+1: Nomes de redes que parecem usar o mesmo rádio Wi-Fi compartilham uma curva."
+
     override val guideCrowdBody = "Verde indica menos sobreposição; vermelho, mais. A faixa abaixo de 2,4 GHz mostra sobreposição. Toque nele para contar."
     override val guideSteadyBody = "Uma linha saltada mostra a alteração da intensidade do sinal. Toque em uma linha para pausar e deslize lateralmente no tempo ou verticalmente entre redes. Retome ao vivo para assistir novas leituras."
     override val guideHighlightBody = "Toque em uma colina ou linha para destacá-la. Arraste horizontalmente pelo gráfico para explorar."
@@ -98,18 +99,20 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
     override fun signalHistoryDescription(networkCount: Int) =
         "Histórico de sinais para ${networks(networkCount)}. Toque em uma linha para inspecionar. As teclas de seta movem-se através do tempo e das redes."
     override val historyLive = "Ao vivo"
-    override fun historyPaused(networkName: String, reading: String?, readingsAgo: Int) =
-        "${networkName}, ${reading ?: "sem leitura"}, pausado, ${readingsAgo(readingsAgo)}"
+    override fun historyPaused(networkName: String, reading: String?, readingsAgo: Int) = "${networkName}, ${reading ?: "sem medição"}, pausado, ${readingsAgo(readingsAgo)}"
+
     override val strongerNetwork = "Rede mais forte"
     override val weakerNetwork = "Rede mais fraca"
     override val axisOlder = "anterior"
     override val axisLatest = "recente"
     override val exploreSignalHistory = "Explore o histórico do sinal"
     override val tapLineToCompare = "Toque em uma linha e arraste para comparar"
-    override val noReadingAtPoint = "Nenhuma leitura neste momento"
-    override fun inspectedReading(reading: String, quality: String, readingsAgo: Int) =
-        "${reading} · ${quality} · " + if (readingsAgo == 0) "última leitura" else readingsAgo(readingsAgo)
-    private fun readingsAgo(count: Int) = if (count == 1) "1 leitura atrás" else "${count} leituras atrás"
+    override val noReadingAtPoint = "Sem medição neste ponto"
+
+    override fun inspectedReading(reading: String, quality: String, readingsAgo: Int) = "${reading} · ${quality} · " + if (readingsAgo == 0) "última medição" else readingsAgo(readingsAgo)
+
+    private fun readingsAgo(count: Int) = if (count == 1) "há 1 medição" else "há $count medições"
+
     override val resumeLive = "Retomar ao vivo"
 
     override fun seenReading(rssi: Int, seen: String) = "${rssi} dBm · visto ${seen}"
