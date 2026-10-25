@@ -81,7 +81,10 @@ fun AboutScreen(onBack: () -> Unit) {
 
                 Column(Modifier.padding(top = 24.dp, start = 16.dp, end = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Outlined.VerifiedUser, null, Modifier.size(20.dp), tint = scheme.onSurfaceVariant)
-                    Text("Your results never leave this device.", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    Text("Your results stay on your device unless you share them.", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    TextButton(onClick = { platform.openUrl("$RepositoryUrl/blob/main/PRIVACY.md") }) {
+                        Text("Privacy policy")
+                    }
                 }
             }
         }

@@ -45,3 +45,7 @@ Signal strength is not internet speed. The percentage uses a fixed scale from âˆ
 Coverage colors between readings are estimates, not measurements of every point. Channel overlap does not measure actual network traffic, and a quieter-looking channel does not guarantee faster Wi-Fi. Some routers and devices ignore discovery requests or pings.
 
 Android permissions and scan limits affect which networks appear and how often readings refresh. Device discovery may be unavailable through a VPN. Unrelated Wi-Fi networks with identical names can still share room history.
+
+## Privacy
+
+No accounts, ads, analytics, or uploads of your Wi-Fi results to the developer. Your saved readings and maps stay on your device; sharing is your choice. Optional network tests and external websites contact their destinations. Read the [privacy policy](PRIVACY.md) for permissions, storage, and deletion details.
