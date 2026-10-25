@@ -12,10 +12,12 @@ object EnDomainStrings : DomainStrings {
     override val qualityExcellentExplanation = "A strong connection to the router. Signal alone doesn’t measure internet speed."
     override val qualityGoodLabel = "Good"
     override val qualityGoodHeadline = "Good signal"
-    override val qualityGoodExplanation = "A solid signal from the router."
+    override val qualityGoodExplanation = "The router’s signal strength is good."
+
     override val qualityFairLabel = "Okay"
     override val qualityFairHeadline = "Okay signal"
-    override val qualityFairExplanation = "A usable signal, with less room for interference."
+    override val qualityFairExplanation = "The signal is usable, but more vulnerable to interference."
+
     override val qualityWeakLabel = "Weak"
     override val qualityWeakHeadline = "Weak spot"
     override val qualityWeakExplanation = "A weak signal. Compare this spot with one closer to the router."

@@ -12,7 +12,7 @@ object JaDomainStrings : DomainStrings {
     override val qualityExcellentExplanation = "ルーターとの接続は良好です。信号の強さだけではインターネット速度はわかりません。"
     override val qualityGoodLabel = "良い"
     override val qualityGoodHeadline = "良い信号"
-    override val qualityGoodExplanation = "ルーターから安定した信号が届いています。"
+    override val qualityGoodExplanation = "ルーターから良好な強さの信号が届いています。"
 
     override val qualityFairLabel = "普通"
     override val qualityFairHeadline = "普通の信号"

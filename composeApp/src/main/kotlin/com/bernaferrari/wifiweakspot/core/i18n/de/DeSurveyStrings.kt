@@ -42,7 +42,8 @@ object DeSurveyStrings : SurveyStrings {
 
     override val weakestFirst = "Der Schwächste zuerst, daher liegen die Problemstellen oben."
     override val mapYourHome = "Kartieren Sie Ihr Zuhause"
-    override val mapYourHomeBody = "Sehen Sie sich Ihr Wi-Fi auf einer Karte Ihres Zuhauses an. Verwenden Sie ein Foto Ihres Plans oder ein leeres Raster."
+    override val mapYourHomeBody = "Sehen Sie die WLAN-Abdeckung im Grundriss Ihres Zuhauses. Nutzen Sie ein Foto des Grundrisses oder ein leeres Raster."
+
     override val createMap = "Erstellen Sie eine Karte"
 
     override val namePlaceholder = "Obergeschoss, Arbeitszimmer…"
@@ -86,7 +87,8 @@ object DeSurveyStrings : SurveyStrings {
     override fun roomDescription(room: String, quality: String, reading: String) = "${room}, Signal: ${quality}, ${reading}. Messwerte ansehen und diesen Ort erneut messen."
 
     override val noSignalToSave = "Kein Wi-Fi-Signal zum Speichern. Stellen Sie zunächst eine Verbindung zu Ihrem Wi-Fi her."
-    override val allowScansToLink = "Erlauben Sie Wi-Fi Scans in Netzwerken, damit dieser Messwert mit Ihrem Netzwerk verknüpft werden kann."
+    override val allowScansToLink = "Erlauben Sie unter Netzwerke die WLAN-Scans, um diese Messung Ihrem Netzwerk zuzuordnen."
+
     override val connectToSpotNetwork = "Stellen Sie eine Verbindung zum Netzwerk dieses Spots her, bevor Sie ihn erneut überprüfen."
     override fun savedRoom(room: String) = "Gespeichert ${room}"
     override val couldNotSaveStableReading = "Es konnte kein stabiler Messwert gespeichert werden. Bleiben Sie am selben Ort und mit demselben WLAN verbunden und versuchen Sie es erneut."
@@ -105,12 +107,12 @@ object DeSurveyStrings : SurveyStrings {
         "Stellen Sie eine Verbindung zu ${ssid?.ifBlank { null } ?: "das gleiche Wi-Fi"} her, um die Überprüfung erneut durchzuführen."
 
     override val stepDeveloperOptionsTitle = "Aktivieren Sie die Entwickleroptionen"
-    override val stepDeveloperOptionsBody =
-        "Öffnen Sie in den Einstellungen **Über das Telefon** und tippen Sie siebenmal auf **Build-Nummer**. Möglicherweise müssen Sie Ihre Bildschirmsperre eingeben."
+    override val stepDeveloperOptionsBody = "Öffnen Sie in den Einstellungen **Über das Telefon** und tippen Sie 7-mal auf **Build-Nummer**. Möglicherweise müssen Sie die Displaysperre bestätigen."
+
     override val openAboutPhone = "Öffnen Sie „Info zum Telefon“."
     override val stepThrottlingTitle = "Deaktivieren Sie die Wi-Fi Scan-Drosselung"
-    override val stepThrottlingBody =
-        "Scrollen Sie in den **Entwickleroptionen** nach unten zu **Netzwerk** und schalten Sie die **Wi-Fi Scan-Drosselung** aus."
+    override val stepThrottlingBody = "Deaktivieren Sie in **Entwickleroptionen** unter **Netzwerke** die Option **Drosselung der WLAN-Suche**. Die Namen können je nach Gerät abweichen."
+
     override val openDeveloperOptions = "Öffnen Sie die Entwickleroptionen"
     override val stepComeBackTitle = "Komm hierher zurück"
     override val stepComeBackBody = "Wenn Sie zurückkehren, prüft WiFi Weakspot die Einstellung automatisch. Sie können die Begrenzung jederzeit wieder aktivieren."
@@ -129,13 +131,13 @@ object DeSurveyStrings : SurveyStrings {
     override val unlimitedOnTitle = "Unbegrenzte Scans sind aktiviert"
     override val unlimitedOnBody = "Netzwerke und Kanaldiagramme in der Nähe werden alle paar Sekunden aktualisiert."
     override val scansLimitedTitle = "Scans sind begrenzt"
-    override val scansLimitedAndroid9Body =
-        "Android 9 ermöglicht 4 Scans alle 2 Minuten und kann nicht ausgeschaltet werden. WiFi Weakspot verwendet aktuelle Ergebnisse zwischendurch wieder."
+    override val scansLimitedAndroid9Body = "Android 9 erlaubt höchstens 4 Scans in 2 Minuten. Diese Begrenzung lässt sich nicht abschalten. Während der Wartezeit zeigt WiFi Weakspot die letzten Ergebnisse an."
+
     override val usingRoot = "Mit root"
     override val deviceRooted = "Ihr Gerät ist gerootet"
     override val rootScanningBody = "Scans laufen über die System-Shell, daher gibt es an den Entwickleroptionen nichts zu ändern."
-    override val rootDeniedBody =
-        "Root-Zugriff wurde verweigert. Erlauben Sie WiFi Weakspot in Ihrem root-Manager und versuchen Sie es erneut, oder verwenden Sie die Entwickleroptionen unten."
+    override val rootDeniedBody = "Der Root-Zugriff wurde verweigert. Erlauben Sie WiFi Weakspot im Root-Manager und versuchen Sie es erneut, oder nutzen Sie die Entwickleroptionen unten."
+
     override val rootNotNeededBody = "Scans sind bereits unbegrenzt. Root wird nicht benötigt."
     override val rootOfferBody = "Mit Root-Zugriff können Sie ohne Änderungen an den Entwickleroptionen scannen. Ihr Root-Manager fragt einmal nach der Berechtigung."
 

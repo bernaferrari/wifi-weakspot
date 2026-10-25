@@ -9,6 +9,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HistoryModelTest {
+    @Test fun portSummaryAndDetailsTranslateLegacyUnknownMarkers() {
+        val result = ToolResultEntity(timestamp = 1, toolType = "PORT_SCAN", target = "192.168.1.1",
+            resultJson = "12345:Unknown,12346:unknown,12347", isSuccess = true)
+        val entry = buildHistory(emptyList(), emptyList(), listOf(result), emptyList()).single()
+        val unknown = com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.unknown
+        assertEquals("12345 $unknown, 12346 $unknown, 12347 $unknown", entry.summary)
+        assertEquals(listOf(unknown, unknown, unknown), entry.lines.map { it.title })
+    }
+
     @Test fun internetTestsHaveTheirOwnFilterAndNeverEnterRouterTrends() {
         val internet = SpeedTestResultEntity(timestamp = 1, downloadMbps = 200f, uploadMbps = 40f,
             pingMs = 20f, jitterMs = 2f, serverName = "Internet test")

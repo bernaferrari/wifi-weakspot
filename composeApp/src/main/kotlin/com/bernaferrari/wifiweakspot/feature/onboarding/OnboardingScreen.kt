@@ -88,10 +88,13 @@ fun OnboardingScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     WelcomePage()
+                    if (needsAccess) {
+                        Spacer(Modifier.height(24.dp))
+                        PrivacyNote()
+                    }
                 }
                 Column(Modifier.fillMaxWidth().padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     if (needsAccess) {
-                        PrivacyNote()
                         PrimaryButton(strings.common.permissionAllowAccess, onClick = requestPermission)
                         TextButton(onClick = finish) { Text(strings.settings.notNow) }
                     } else {

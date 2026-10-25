@@ -14,7 +14,7 @@ class ChannelAdviceTest {
     @Test fun tiedCurrentChannelNeverSuggestsAnUnnecessaryChange() {
         val hint = channelHint(scores(2462), 6)!!
         assertEquals(6, hint.channel)
-        assertEquals("Your channel looks clear", hint.label)
+        assertEquals("Your channel isn’t crowded", hint.label)
     }
 
     @Test fun equalNonstandardChannelAlsoAvoidsFalseImprovementClaim() {
@@ -24,7 +24,7 @@ class ChannelAdviceTest {
     @Test fun lowerObservedOverlapIsDescribedAsOverlapRatherThanPerformance() {
         val hint = channelHint(scores(2437), 6)!!
         assertEquals(1, hint.channel)
-        assertEquals("Less overlap than channel 6", hint.label)
+        assertEquals("Less crowded than channel 6", hint.label)
     }
 
     @Test fun missingRouterSupportDoesNotInventAFiveGhzRecommendation() {
@@ -39,6 +39,6 @@ class ChannelAdviceTest {
         val scores = CongestionAnalyzer.analyze(busy, FrequencyBand.BAND_2_4)
         val hint = channelHint(scores, 6)!!
         assertEquals(6, hint.channel)
-        assertEquals("No improvement found in this scan", hint.label)
+        assertEquals("No better channel found", hint.label)
     }
 }

@@ -5,19 +5,19 @@
         "file": "screenshots/v2-04-channels.jpg",
         "width": 1080,
         "height": 1920,
-        "bytes": 124159
+        "bytes": 198812
       },
       {
         "file": "screenshots/v2-01-signal.jpg",
         "width": 1080,
         "height": 1920,
-        "bytes": 116907
+        "bytes": 186324
       },
       {
         "file": "screenshots/v2-05-history.jpg",
         "width": 1080,
         "height": 1920,
-        "bytes": 112340
+        "bytes": 187639
       },
       {
         "file": "screenshots/v3-02-rooms.jpg",
@@ -55,13 +55,13 @@
         "file": "tablet/7-02-channels.jpg",
         "width": 1080,
         "height": 1920,
-        "bytes": 126579
+        "bytes": 202278
       },
       {
         "file": "tablet/7-01-home.jpg",
         "width": 1080,
         "height": 1920,
-        "bytes": 108373
+        "bytes": 167273
       },
       {
         "file": "tablet/7-03-coverage.jpg",
@@ -81,13 +81,13 @@
         "file": "tablet/10-02-channels.jpg",
         "width": 1920,
         "height": 1080,
-        "bytes": 120899
+        "bytes": 191503
       },
       {
         "file": "tablet/10-01-home.jpg",
         "width": 1920,
         "height": 1080,
-        "bytes": 105658
+        "bytes": 160251
       }
     ],
     "desktop": [
@@ -95,19 +95,19 @@
         "file": "desktop/desktop-02-channels.jpg",
         "width": 1920,
         "height": 1080,
-        "bytes": 113798
+        "bytes": 182511
       },
       {
         "file": "desktop/desktop-01-home.jpg",
         "width": 1920,
         "height": 1080,
-        "bytes": 97923
+        "bytes": 145196
       },
       {
         "file": "desktop/desktop-03-history.jpg",
         "width": 1920,
         "height": 1080,
-        "bytes": 118792
+        "bytes": 174001
       },
       {
         "file": "desktop/desktop-04-appearance-v3.jpg",

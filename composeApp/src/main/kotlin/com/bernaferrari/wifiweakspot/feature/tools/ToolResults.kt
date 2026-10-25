@@ -116,8 +116,8 @@ internal fun portMeaning(port: Int, service: String): String = when (port) {
 }
 
 /** The scanner's service name, with its stored "unknown" marker shown in the user's language. */
-internal fun serviceLabel(service: String): String =
-    if (service == UNKNOWN_SERVICE) appStrings.common.unknown else service
+internal fun serviceLabel(service: String, unknownLabel: String = appStrings.common.unknown): String =
+    if (service.isBlank() || service.equals(UNKNOWN_SERVICE, ignoreCase = true)) unknownLabel else service
 
 /** Stored in port scan results when no service name is known; never shown as is. */
 internal const val UNKNOWN_SERVICE = "unknown"

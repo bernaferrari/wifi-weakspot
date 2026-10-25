@@ -63,13 +63,13 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
     override val scanReportNetworksHeading = "网络："
     override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
-    override val channelLooksClear = "当前信道的重叠较少"
+    override val channelLooksClear = "当前信道较空闲"
 
-    override val noChannelImprovement = "本次扫描未发现更好的信道"
+    override val noChannelImprovement = "未找到更好的信道"
 
-    override fun lessOverlapThanChannel(currentChannel: Int) = "比信道 ${currentChannel} 的重叠更少"
+    override fun lessOverlapThanChannel(currentChannel: Int) = "比信道 ${currentChannel} 更空闲"
 
-    override val leastOverlapInScan = "本次扫描中重叠最少"
+    override val suggestedChannel = "建议信道"
 
     override fun channelAdviceDescription(advice: String, channel: Int) = "${advice}：信道${channel}"
     override val lowOverlap = "重叠较少"
@@ -212,5 +212,12 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
     override val adviceGoodSignalTitle = "比较路由器响应"
 
     override val adviceGoodSignalBody = "信号强度可用，Android 也已确认互联网连接。如果感觉速度慢，请比较当前位置和路由器附近的响应时间；信号强并不一定代表通信性能好。"
+
+    override val channelAdviceBasis = "条形越短，本次扫描中的重叠越少。速度可能有所变化。"
+    override fun channelChangeInstructions(channel: Int, band: String) = "为 ${band} 选择信道 ${channel}"
+
+    override val channelOverlapTitle = "与附近 Wi-Fi 的重叠"
+    override val channelApplyChange = "保存，必要时重新连接"
+    override val channelChangeNote = "请在路由器的应用或设置中更改，而非在 WiFi Weakspot 中更改。"
 
 }

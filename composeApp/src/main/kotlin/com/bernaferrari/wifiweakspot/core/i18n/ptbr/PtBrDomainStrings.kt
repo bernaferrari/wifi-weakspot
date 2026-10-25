@@ -12,7 +12,8 @@ object PtBrDomainStrings : DomainStrings {
     override val qualityExcellentExplanation = "A conexão com o roteador é forte. O sinal por si só não mede a velocidade da internet."
     override val qualityGoodLabel = "Bom"
     override val qualityGoodHeadline = "Sinal bom"
-    override val qualityGoodExplanation = "Um sinal sólido do roteador."
+    override val qualityGoodExplanation = "O sinal recebido do roteador está bom."
+
     override val qualityFairLabel = "Razoável"
     override val qualityFairHeadline = "Sinal razoável"
     override val qualityFairExplanation = "O sinal é utilizável, mas tolera menos interferência."

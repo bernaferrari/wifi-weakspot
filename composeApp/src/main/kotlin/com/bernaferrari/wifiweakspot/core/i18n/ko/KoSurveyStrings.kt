@@ -139,7 +139,7 @@ object KoSurveyStrings : SurveyStrings {
 
     override val stepThrottlingTitle = "Wi-Fi 스캔 횟수 제한 해제"
 
-    override val stepThrottlingBody = "**개발자 옵션**의 **네트워크**에서 **Wi-Fi 스캔 제한**을 끄세요."
+    override val stepThrottlingBody = "**개발자 옵션**의 **네트워크**에서 **Wi‑Fi 검색 제한**을 끄세요. 항목 이름은 기기마다 다를 수 있습니다."
 
     override val openDeveloperOptions = "개발자 옵션 열기"
     override val stepComeBackTitle = "앱으로 돌아오기"

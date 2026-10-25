@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -46,11 +47,12 @@ import androidx.compose.material.icons.rounded.NetworkWifi3Bar
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SignalWifi0Bar
 import androidx.compose.material.icons.rounded.SignalWifi4Bar
-import androidx.compose.material.icons.rounded.WaterfallChart
+import com.bernaferrari.wifiweakspot.core.designsystem.component.NetworksIcons
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.WifiFind
 import androidx.compose.material.icons.rounded.WifiOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
@@ -90,6 +92,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.contentDescription
@@ -271,99 +274,39 @@ private fun NetworksContent(
     counts: Map<FrequencyBand, Int>,
     onBandChange: (FrequencyBand) -> Unit
 ) {
-    val reduceMotion = LocalReduceMotion.current
-    val haptics = rememberWifiWeakspotHapticFeedback()
-    var showHistory by rememberSaveable { mutableStateOf(false) }
-    var showHelp by remember { mutableStateOf(false) }
-    var showExplorer by rememberSaveable { mutableStateOf(false) }
-    var selected by remember { mutableStateOf<WifiNetwork?>(null) }
-    // Tapping the highlighted network again clears it; null always clears.
-    val toggle: (WifiNetwork?) -> Unit = { pick ->
-        haptics.light()
-        selected = if (pick == null || pick.bssid == selected?.bssid) null else pick
-    }
-    LaunchedEffect(band) { selected = null }
-    var detail by remember { mutableStateOf<WifiNetwork?>(null) }
-    // Your own connection leads the list; everything else is strongest first.
-    // Rows hold their places between scans (see settledOrder), so taps land where you aim.
-    val lastOrder = remember(band) { arrayOf(emptyList<String>()) }
-    val inBand = remember(networks, band, connected.bssid) {
-        settledOrder(
-            lastOrder[0],
-            networks.filter { band.contains(it.frequency) },
-            id = { it.bssid },
-            strength = { it.rssi },
-            pinned = { connected.isConnected && it.bssid.equals(connected.bssid, ignoreCase = true) }
-        ).also { lastOrder[0] = it.map { n -> n.bssid } }
-    }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val reduceMotion = LocalReduceMotion.current
+        val haptics = rememberWifiWeakspotHapticFeedback()
+        var showHistory by rememberSaveable { mutableStateOf(false) }
+        var showHelp by remember { mutableStateOf(false) }
+        var showExplorer by rememberSaveable { mutableStateOf(false) }
+        var selected by remember { mutableStateOf<WifiNetwork?>(null) }
+        // Tapping the highlighted network again clears it; null always clears.
+        val toggle: (WifiNetwork?) -> Unit = { pick ->
+            haptics.light()
+            selected = if (pick == null || pick.bssid == selected?.bssid) null else pick
+        }
+        LaunchedEffect(band) { selected = null }
+        var detail by remember { mutableStateOf<WifiNetwork?>(null) }
+        // Your own connection leads the list; everything else is strongest first.
+        // Rows hold their places between scans (see settledOrder), so taps land where you aim.
+        val lastOrder = remember(band) { arrayOf(emptyList<String>()) }
+        val inBand = remember(networks, band, connected.bssid) {
+            settledOrder(
+                lastOrder[0],
+                networks.filter { band.contains(it.frequency) },
+                id = { it.bssid },
+                strength = { it.rssi },
+                pinned = { connected.isConnected && it.bssid.equals(connected.bssid, ignoreCase = true) }
+            ).also { lastOrder[0] = it.map { n -> n.bssid } }
+        }
 
-    val windowWidth = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.width.let {
-        with(androidx.compose.ui.platform.LocalDensity.current) { it.toDp() }
-    }
-    val wide = windowWidth >= com.bernaferrari.wifiweakspot.core.designsystem.WindowWidth.Expanded
-    val palette = rememberNetworkPalette(inBand, connected.bssid.takeIf { connected.isConnected })
-    val controls: LazyListScope.() -> Unit = {
-        item(key = "bands") {
-            BandSelector(band, counts) { onBandChange(it) }
-        }
-        item(key = "chart") {
-            Card(shape = WifiWeakspotShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                Column(Modifier.padding(vertical = 12.dp)) {
-                    Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                            Text(if (showHistory) strings.analyze.signalOverTime else strings.analyze.channels, style = if (windowWidth < 360.dp) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f, fill = false), maxLines = 2)
-                            IconButton(onClick = { haptics.click(); showHelp = true }) {
-                                Icon(Icons.Outlined.Info, strings.analyze.howToReadThisChart, Modifier.size(18.dp))
-                            }
-                        }
-                        // Match the band selector's visible gap; each segment fills its 48 dp width.
-                        Row(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
-                                listOf(false to (Icons.Rounded.WaterfallChart to strings.analyze.channels), true to (Icons.AutoMirrored.Rounded.ShowChart to strings.analyze.signalOverTime))
-                                    .forEachIndexed { index, (history, look) ->
-                                        ToggleButton(
-                                            checked = showHistory == history,
-                                            onCheckedChange = { haptics.light(); showHistory = history },
-                                            shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes() else ButtonGroupDefaults.connectedTrailingButtonShapes(),
-                                            contentPadding = PaddingValues(horizontal = 12.dp),
-                                            colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-                                            modifier = Modifier.size(48.dp)
-                                        ) { Icon(look.first, look.second, Modifier.size(20.dp)) }
-                                    }
-                        }
-                        IconButton(onClick = { haptics.click(); showExplorer = true }) { Icon(Icons.Rounded.Fullscreen, if (showHistory) strings.analyze.expandSignalHistory else strings.analyze.expandChannels) }
-                    }
-                    Box(Modifier.fillMaxWidth().height(if (wide) 440.dp else 340.dp)) {
-                        if (inBand.isEmpty()) {
-                            Text(
-                                strings.analyze.noBandNetworksNearby(band.label),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.align(Alignment.Center)
-                            )
-                        } else if (showHistory) {
-                            SignalHistoryGraph(
-                                history = history.filterKeys { bssid -> inBand.any { it.bssid == bssid } },
-                                networks = inBand,
-                                selectedNetwork = selected,
-                                connectedBssid = connected.bssid.takeIf { connected.isConnected },
-                                onNetworkSelected = toggle,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        } else {
-                            ChannelGraph(
-                                networks = inBand,
-                                selectedBand = band,
-                                selectedNetwork = selected,
-                                connectedBssid = connected.bssid.takeIf { connected.isConnected },
-                                onNetworkSelected = toggle,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                    }
-                }
-            }
-        }
-        if (!showHistory) item(key = "advice") {
+        val windowWidth = maxWidth
+        val wide = maxWidth >= com.bernaferrari.wifiweakspot.core.designsystem.WindowWidth.Expanded
+        // Size the graph to the available landscape height; advice lives beside it.
+        val minimumGraphHeight = 140.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale
+        val graphHeight = if (wide) (maxHeight - 200.dp).coerceIn(minimumGraphHeight, maxOf(minimumGraphHeight, 440.dp)) else 340.dp
+        val channelContext: @Composable () -> Unit = {
             ChannelContext(
                 networks = networks,
                 band = band,
@@ -372,105 +315,175 @@ private fun NetworksContent(
                 onClearSelection = { toggle(null) }
             )
         }
-    }
-    var showWeak by rememberSaveable(band) { mutableStateOf(false) }
-    val list: LazyListScope.() -> Unit = {
-        item(key = "listHeader") {
-            Text(
-                strings.analyze.networksOnBand(inBand.size, band.label),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(start = 4.dp, top = 20.dp, bottom = 8.dp)
-            )
+        val palette = rememberNetworkPalette(inBand, connected.bssid.takeIf { connected.isConnected })
+        val controls: LazyListScope.() -> Unit = {
+            item(key = "bands") {
+                BandSelector(band, counts) { onBandChange(it) }
+            }
+            item(key = "chart") {
+                Card(shape = WifiWeakspotShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                    Column(Modifier.padding(vertical = 12.dp)) {
+                        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                                Text(if (showHistory) strings.analyze.signalOverTime else strings.analyze.channels, style = if (windowWidth < 360.dp) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f, fill = false), maxLines = 2)
+                                IconButton(onClick = { haptics.click(); showHelp = true }) {
+                                    Icon(Icons.Outlined.Info, strings.analyze.howToReadThisChart, Modifier.size(18.dp))
+                                }
+                            }
+                            // Match the band selector's visible gap; each segment fills its 48 dp width.
+                            Row(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                                    listOf(false to (NetworksIcons.Filled to strings.analyze.channels), true to (Icons.AutoMirrored.Rounded.ShowChart to strings.analyze.signalOverTime))
+                                        .forEachIndexed { index, (history, look) ->
+                                            ToggleButton(
+                                                checked = showHistory == history,
+                                                onCheckedChange = { haptics.light(); showHistory = history },
+                                                shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes() else ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                                                contentPadding = PaddingValues(horizontal = 12.dp),
+                                                colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+                                                modifier = Modifier.size(48.dp)
+                                            ) { Icon(look.first, look.second, Modifier.size(20.dp)) }
+                                        }
+                            }
+                            IconButton(onClick = { haptics.click(); showExplorer = true }) { Icon(Icons.Rounded.Fullscreen, if (showHistory) strings.analyze.expandSignalHistory else strings.analyze.expandChannels) }
+                        }
+                        Box(Modifier.fillMaxWidth().height(graphHeight)) {
+                            if (inBand.isEmpty()) {
+                                Text(
+                                    strings.analyze.noBandNetworksNearby(band.label),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
+                            } else if (showHistory) {
+                                SignalHistoryGraph(
+                                    history = history.filterKeys { bssid -> inBand.any { it.bssid == bssid } },
+                                    networks = inBand,
+                                    selectedNetwork = selected,
+                                    connectedBssid = connected.bssid.takeIf { connected.isConnected },
+                                    onNetworkSelected = toggle,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } else {
+                                ChannelGraph(
+                                    networks = inBand,
+                                    selectedBand = band,
+                                    selectedNetwork = selected,
+                                    connectedBssid = connected.bssid.takeIf { connected.isConnected },
+                                    onNetworkSelected = toggle,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            if (!wide && !showHistory) item(key = "advice") {
+                channelContext()
+            }
         }
-        // With dozens of neighbors, the unusable ones fold away behind one row.
-        val weak = if (inBand.size > 10) inBand.filter { SignalQuality.of(it.rssi) == SignalQuality.DeadZone && !it.bssid.equals(connected.bssid, true) } else emptyList()
-        val visible = if (showWeak) inBand else inBand - weak.toSet()
-        itemsIndexed(visible, key = { _, n -> n.bssid }) { index, network ->
-            NetworkRow(
-                network = network,
-                index = index,
-                count = visible.size,
-                isConnected = connected.isConnected && network.bssid.equals(connected.bssid, ignoreCase = true),
-                isYourRouter = connected.isConnected && network.isSiblingOf(connected.bssid, connected.frequency),
-                isSelected = selected?.bssid == network.bssid,
-                chartColor = palette.color(network.bssid),
-                onClick = { toggle(network) },
-                onDetails = { haptics.click(); detail = network },
-                modifier = if (reduceMotion) Modifier else Modifier.animateItem()
-            )
-        }
-        if (weak.isNotEmpty()) {
-            item(key = "weakToggle") {
-                TextButton(
-                    onClick = { haptics.light(); showWeak = !showWeak },
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
-                ) {
-                    Text(if (showWeak) strings.analyze.hideVeryWeakNetworks(weak.size) else strings.analyze.showVeryWeakNetworks(weak.size))
+        var showWeak by rememberSaveable(band) { mutableStateOf(false) }
+        val list: LazyListScope.() -> Unit = {
+            if (wide && !showHistory) item(key = "advice") {
+                channelContext()
+            }
+            item(key = "listHeader") {
+                Text(
+                    strings.analyze.networksOnBand(inBand.size, band.label),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(start = 4.dp, top = 20.dp, bottom = 8.dp)
+                )
+            }
+            // With dozens of neighbors, the unusable ones fold away behind one row.
+            val weak = if (inBand.size > 10) inBand.filter { SignalQuality.of(it.rssi) == SignalQuality.DeadZone && !it.bssid.equals(connected.bssid, true) } else emptyList()
+            val visible = if (showWeak) inBand else inBand - weak.toSet()
+            itemsIndexed(visible, key = { _, n -> n.bssid }) { index, network ->
+                NetworkRow(
+                    network = network,
+                    index = index,
+                    count = visible.size,
+                    isConnected = connected.isConnected && network.bssid.equals(connected.bssid, ignoreCase = true),
+                    isYourRouter = connected.isConnected && network.isSiblingOf(connected.bssid, connected.frequency),
+                    isSelected = selected?.bssid == network.bssid,
+                    chartColor = palette.color(network.bssid),
+                    onClick = { toggle(network) },
+                    onDetails = { haptics.click(); detail = network },
+                    modifier = if (reduceMotion) Modifier else Modifier.animateItem()
+                )
+            }
+            if (weak.isNotEmpty()) {
+                item(key = "weakToggle") {
+                    TextButton(
+                        onClick = { haptics.light(); showWeak = !showWeak },
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                    ) {
+                        Text(if (showWeak) strings.analyze.hideVeryWeakNetworks(weak.size) else strings.analyze.showVeryWeakNetworks(weak.size))
+                    }
                 }
             }
         }
-    }
 
-    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val padding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 32.dp)
-        if (maxWidth >= 840.dp) {
-            Row(Modifier.fillMaxSize()) {
-                LazyColumn(Modifier.weight(1.2f), contentPadding = padding, verticalArrangement = Arrangement.spacedBy(12.dp), content = controls)
-                LazyColumn(Modifier.weight(1f), contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap), content = list)
-            }
-        } else {
-            LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
-                controls()
-                list()
+        val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+        Box(Modifier.fillMaxSize()) {
+            val padding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 32.dp)
+            if (wide) {
+                Row(Modifier.fillMaxSize()) {
+                    LazyColumn(Modifier.weight(1.2f), contentPadding = padding, verticalArrangement = Arrangement.spacedBy(12.dp), content = controls)
+                    LazyColumn(Modifier.weight(1f), contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap), content = list)
+                }
+            } else {
+                LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+                    controls()
+                    list()
+                }
             }
         }
-    }
 
-    if (showHelp) ChartGuideSheet { showHelp = false }
-    if (showExplorer) ChartExplorer(
-        allNetworks = networks,
-        band = band,
-        onBandChange = onBandChange,
-        connectedBssid = connected.bssid.takeIf { connected.isConnected },
-        connectedFrequency = connected.frequency.takeIf { connected.isConnected },
-        history = history,
-        showHistory = showHistory,
-        onDismiss = { showExplorer = false }
-    )
-    detail?.let { network ->
-        val settings: SettingsRepository = koinInject()
-        val favorites by settings.favoriteBssids.collectAsState(initial = emptySet())
-        val scope = rememberCoroutineScope()
-        val platform: com.bernaferrari.wifiweakspot.core.platform.PlatformActions = org.koin.compose.koinInject()
-        val common = strings.common
-        val sCatalog = strings
-        val s = strings.analyze
-        ModalBottomSheet(onDismissRequest = { detail = null }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-            WifiDetailScreen(
-                network = network,
-                onBack = { detail = null },
-                isFavorite = network.bssid in favorites,
-                onToggleFavorite = { scope.launch { settings.toggleFavorite(network.bssid) } },
-                onTrack = {
-                    selected = network; showHistory = true; detail = null
-                    // Bring the graph into view; it lives at the top of the list.
-                    if (!wide) scope.launch {
-                        if (reduceMotion) listState.scrollToItem(0) else listState.animateScrollToItem(0)
+        if (showHelp) ChartGuideSheet { showHelp = false }
+        if (showExplorer) ChartExplorer(
+            allNetworks = networks,
+            band = band,
+            onBandChange = onBandChange,
+            connectedBssid = connected.bssid.takeIf { connected.isConnected },
+            connectedFrequency = connected.frequency.takeIf { connected.isConnected },
+            history = history,
+            showHistory = showHistory,
+            onDismiss = { showExplorer = false }
+        )
+        detail?.let { network ->
+            val settings: SettingsRepository = koinInject()
+            val favorites by settings.favoriteBssids.collectAsState(initial = emptySet())
+            val scope = rememberCoroutineScope()
+            val platform: com.bernaferrari.wifiweakspot.core.platform.PlatformActions = org.koin.compose.koinInject()
+            val common = strings.common
+            val sCatalog = strings
+            val s = strings.analyze
+            ModalBottomSheet(onDismissRequest = { detail = null }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+                WifiDetailScreen(
+                    network = network,
+                    onBack = { detail = null },
+                    isFavorite = network.bssid in favorites,
+                    onToggleFavorite = { scope.launch { settings.toggleFavorite(network.bssid) } },
+                    onTrack = {
+                        selected = network; showHistory = true; detail = null
+                        // Bring the graph into view; it lives at the top of the list.
+                        if (!wide) scope.launch {
+                            if (reduceMotion) listState.scrollToItem(0) else listState.animateScrollToItem(0)
+                        }
+                    },
+                    onShare = {
+                        val text = buildString {
+                            appendLine(network.ssid.ifEmpty { common.hiddenNetwork })
+                            appendLine(s.shareNetworkLine(network.rssi, frequencyToChannel(network.frequency), bandLabel(network.frequency)))
+                            appendLine(network.bssid)
+                        }
+                        platform.share(text, sCatalog.common.share)
                     }
-                },
-                onShare = {
-                    val text = buildString {
-                        appendLine(network.ssid.ifEmpty { common.hiddenNetwork })
-                        appendLine(s.shareNetworkLine(network.rssi, frequencyToChannel(network.frequency), bandLabel(network.frequency)))
-                        appendLine(network.bssid)
-                    }
-                    platform.share(text, sCatalog.common.share)
-                }
-            )
+                )
+            }
         }
     }
 }
+
 
 @Composable
 private fun BandSelector(band: FrequencyBand, counts: Map<FrequencyBand, Int>, onSelect: (FrequencyBand) -> Unit) {
@@ -479,6 +492,8 @@ private fun BandSelector(band: FrequencyBand, counts: Map<FrequencyBand, Int>, o
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
     ) {
         FrequencyBand.entries.forEachIndexed { index, entry ->
+            val count = counts[entry] ?: 0
+            val description = "${entry.label}, ${strings.analyze.bandNetworkCount(count)}"
             ToggleButton(
                 checked = band == entry,
                 onCheckedChange = { onSelect(entry) },
@@ -488,14 +503,21 @@ private fun BandSelector(band: FrequencyBand, counts: Map<FrequencyBand, Int>, o
                     else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                 },
                 colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-                modifier = Modifier.weight(1f).heightIn(min = 56.dp)
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                modifier = Modifier.weight(1f).heightIn(min = 56.dp).semantics { contentDescription = description }
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // Counts sit beside the band, wrapping underneath only when text needs more room.
+                FlowRow(
+                    modifier = Modifier.clearAndSetSemantics { },
+                    horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    itemVerticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(entry.label, style = MaterialTheme.typography.labelLarge)
-                    Text(
-                        strings.analyze.bandNetworkCount(counts[entry] ?: 0),
-                        style = MaterialTheme.typography.labelSmall
-                    )
+                    val ink = androidx.compose.material3.LocalContentColor.current
+                    Badge(containerColor = ink.copy(alpha = 0.12f), contentColor = ink) {
+                        Text(count.toString(), style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"))
+                    }
                 }
             }
         }

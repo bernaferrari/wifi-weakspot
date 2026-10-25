@@ -2,12 +2,12 @@
   {
     "file": "docs/screenshots/readme-channels.jpg",
     "source": "store-listing/en-US/screenshots/v2-04-channels.jpg",
-    "sha256": "377c6f5f444dcdb4b8c621a3e376f9a6d64e2496d74dcad73ef5c5598930446d"
+    "sha256": "d8a6d88c463b67d436b9716815793caf374a76b17fb3e3513b72c6f78ba59fb9"
   },
   {
     "file": "docs/screenshots/readme-overtime.jpg",
     "source": "store-listing/en-US/screenshots/v2-05-history.jpg",
-    "sha256": "468b43f7067a5cf6db328b1e0b3bbf19a730d6ccb576cf6c54162f02499a6497"
+    "sha256": "c377d272ed6abe1b4a06b2a1ff33e29bb6b7601074bfd6bfc2673171eb47e373"
   },
   {
     "file": "docs/screenshots/readme-rooms.jpg",
@@ -27,6 +27,6 @@
   {
     "file": "docs/screenshots/readme-wide.jpg",
     "source": "store-listing/en-US/desktop/desktop-02-channels.jpg",
-    "sha256": "acd9af6d62696fe17a41cf48df9a6c84f4d52d112264aa233f0e2592a885ddc8"
+    "sha256": "53c77431b5dcb459259851c466c6e6a7ad5d7c8ecdab3faf4ee756db928f0f82"
   }
 ]

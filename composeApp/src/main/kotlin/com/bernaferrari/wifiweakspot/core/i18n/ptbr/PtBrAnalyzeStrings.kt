@@ -48,10 +48,10 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
     override val scanReportNetworksHeading = "Redes:"
     override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
-    override val channelLooksClear = "Seu canal parece claro"
-    override val noChannelImprovement = "Nenhuma melhoria encontrada nesta verificação"
-    override fun lessOverlapThanChannel(currentChannel: Int) = "Menos sobreposição que o canal ${currentChannel}"
-    override val leastOverlapInScan = "Menor sobreposição nesta verificação"
+    override val channelLooksClear = "Seu canal está pouco congestionado"
+    override val noChannelImprovement = "Nenhum canal melhor encontrado"
+    override fun lessOverlapThanChannel(currentChannel: Int) = "Menos congestionado que o canal ${currentChannel}"
+    override val suggestedChannel = "Canal sugerido"
     override fun channelAdviceDescription(advice: String, channel: Int) = "${advice}: canal ${channel}"
     override val lowOverlap = "Baixa sobreposição"
     override val moderateOverlap = "Sobreposição moderada"
@@ -94,10 +94,8 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
     override val estimatedChannelOverlap = "Sobreposição estimada de canais"
     override fun tryChannel(channel: Int) = "Experimente o canal ${channel}"
     override val lowestOverlapFor20Mhz = "Sobreposição estimada mais baixa para 20 MHz canais"
-    override val overlapDisclaimer = "Com base em pontos de acesso próximos e na intensidade do sinal, não no tráfego medido. " +
-        "Verifique os canais suportados e as regras locais do seu roteador antes de alterar as configurações. " +
-        "As sugestões 5 e 6 GHz requerem suporte de roteador conhecido; faltando centros de canais largos " +
-        "mostrar apenas o canal principal 20 MHz."
+    override val overlapDisclaimer = "A estimativa usa os pontos de acesso próximos e a intensidade do sinal, não o tráfego medido. Antes de alterar as configurações, verifique os canais compatíveis com o roteador e as regras da sua região. Canais de 5 e 6 GHz só são sugeridos quando a compatibilidade do roteador é conhecida. Se a frequência central de um canal largo não estiver disponível, apenas o canal primário de 20 MHz será mostrado."
+
     override val overlapScore = "Pontuação de sobreposição"
 
     override val collectingReadings = "Coletando medições… As linhas aparecem após algumas buscas."
@@ -149,7 +147,8 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
     override val turnOnWifi = "Ative Wi-Fi"
     override val dismiss = "Liberar"
     override val findWeakSpotsTitle = "Encontre pontos fracos"
-    override val findWeakSpotsBody = "Veja quais cômodos são fracos."
+    override val findWeakSpotsBody = "Veja onde o sinal fica fraco."
+
     override val findWeakSpotsAction = "Verifique seus cômodos"
     override fun networksNearby(count: Int) = "${networks(count)} nas proximidades"
     override val nearbyStale = "Da sua última varredura. Toque para atualizar."
@@ -166,7 +165,15 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
     override val adviceNoSignalTitle = "Leia seu sinal Wi-Fi"
     override val adviceNoSignalBody = "Permitir varreduras Wi-Fi em redes para ver medições de sinal. Compare o sinal na sala onde você percebe problemas."
     override val adviceWeakSignalTitle = "Compare a cobertura perto do seu roteador"
-    override val adviceWeakSignalBody = "O sinal Wi-Fi atual está fraco. Execute uma verificação do roteador aqui e repita próximo ao roteador. Use uma pesquisa em sua própria rede para encontrar pontos fracos."
+    override val adviceWeakSignalBody = "O sinal Wi-Fi está fraco. Teste a resposta do roteador aqui e repita perto dele. Compare medições da sua própria rede para encontrar os pontos fracos."
+
     override val adviceGoodSignalTitle = "Compare a capacidade de resposta do roteador"
     override val adviceGoodSignalBody = "A intensidade do sinal parece utilizável e Android relata o acesso à Internet. Se a conexão parecer lenta, compare a resposta do roteador aqui e perto do roteador; sinal forte por si só não garante desempenho."
+    override val channelAdviceBasis = "Barras menores indicam menos sobreposição nesta varredura. A velocidade pode variar."
+    override fun channelChangeInstructions(channel: Int, band: String) = "Escolha o canal ${channel} para ${band}"
+
+    override val channelOverlapTitle = "Sobreposição com redes próximas"
+    override val channelApplyChange = "Salve e reconecte, se necessário"
+    override val channelChangeNote = "Faça a alteração no aplicativo ou nas configurações do roteador, não no WiFi Weakspot."
+
 }

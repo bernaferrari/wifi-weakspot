@@ -48,10 +48,11 @@ object DeAnalyzeStrings : AnalyzeStrings {
     override val scanReportNetworksHeading = "Netzwerke:"
     override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
-    override val channelLooksClear = "Dein Kanal sieht klar aus"
-    override val noChannelImprovement = "Bei diesem Scan wurde keine Verbesserung festgestellt"
-    override fun lessOverlapThanChannel(currentChannel: Int) = "Weniger Überlappung als Kanal ${currentChannel}"
-    override val leastOverlapInScan = "Geringste Überlappung in diesem Scan"
+    override val channelLooksClear = "Ihr Kanal ist wenig belegt"
+
+    override val noChannelImprovement = "Kein besserer Kanal gefunden"
+    override fun lessOverlapThanChannel(currentChannel: Int) = "Weniger belegt als Kanal ${currentChannel}"
+    override val suggestedChannel = "Empfohlener Kanal"
     override fun channelAdviceDescription(advice: String, channel: Int) = "${advice}: Kanal ${channel}"
     override val lowOverlap = "Geringe Überlappung"
     override val moderateOverlap = "Mäßige Überlappung"
@@ -93,10 +94,8 @@ object DeAnalyzeStrings : AnalyzeStrings {
     override val estimatedChannelOverlap = "Geschätzte Kanalüberlappung"
     override fun tryChannel(channel: Int) = "Probieren Sie Kanal ${channel} aus"
     override val lowestOverlapFor20Mhz = "Geringste geschätzte Überlappung für 20 MHz Kanäle"
-    override val overlapDisclaimer = "Basierend auf nahegelegenen Zugangspunkten und Signalstärke, nicht gemessenem Verkehr. " +
-        "Überprüfen Sie die von Ihrem Router unterstützten Kanäle und lokalen Regeln, bevor Sie Einstellungen ändern. " +
-        "5 und 6 GHz Vorschläge erfordern bekannte Router-Unterstützung; fehlende Breitkanalzentren " +
-        "zeigt nur die primären 20 MHz Kanäle an."
+    override val overlapDisclaimer = "Die Schätzung basiert auf Zugangspunkten in der Nähe und der Signalstärke, nicht auf gemessenem Datenverkehr. Prüfen Sie vor Änderungen die unterstützten Kanäle Ihres Routers und die örtlichen Vorschriften. Kanäle im 5- und 6-GHz-Band werden nur vorgeschlagen, wenn die Routerunterstützung bekannt ist. Fehlt die Mittenfrequenz eines breiten Kanals, wird nur sein primärer 20-MHz-Kanal angezeigt."
+
     override val overlapScore = "Überlappungspunktzahl"
 
     override val collectingReadings = "Messwerte werden gesammelt… Nach einigen Scans erscheinen die Linien."
@@ -148,7 +147,8 @@ object DeAnalyzeStrings : AnalyzeStrings {
     override val turnOnWifi = "Wi-Fi einschalten"
     override val dismiss = "Ablehnen"
     override val findWeakSpotsTitle = "Finden Sie Schwachstellen"
-    override val findWeakSpotsBody = "Sehen Sie, welche Räume schwach sind."
+    override val findWeakSpotsBody = "Finden Sie Räume mit schwachem Signal."
+
     override val findWeakSpotsAction = "Überprüfen Sie Ihre Räume"
     override fun networksNearby(count: Int) = "${networks(count)} in der Nähe"
     override val nearbyStale = "Von Ihrem letzten Scan. Zum Aktualisieren tippen."
@@ -165,7 +165,15 @@ object DeAnalyzeStrings : AnalyzeStrings {
     override val adviceNoSignalTitle = "Lesen Sie Ihr Wi-Fi-Signal"
     override val adviceNoSignalBody = "Erlauben Sie Wi-Fi Scans in Netzwerken, um Signalmessungen anzuzeigen. Vergleichen Sie das Signal in dem Raum, in dem Sie Probleme bemerken."
     override val adviceWeakSignalTitle = "Vergleichen Sie die Abdeckung in der Nähe Ihres Routers"
-    override val adviceWeakSignalBody = "Das aktuelle Wi-Fi-Signal ist schwach. Führen Sie hier eine Routerprüfung durch und wiederholen Sie den Vorgang dann in der Nähe des Routers. Nutzen Sie eine Umfrage in Ihrem eigenen Netzwerk, um Schwachstellen zu finden."
+    override val adviceWeakSignalBody = "Das WLAN-Signal ist schwach. Prüfen Sie die Routerantwort hier und erneut in der Nähe des Routers. Vergleichen Sie Messungen Ihres eigenen Netzwerks, um schwache Stellen zu finden."
+
     override val adviceGoodSignalTitle = "Vergleichen Sie die Reaktionsfähigkeit des Routers"
     override val adviceGoodSignalBody = "Die Signalstärke sieht brauchbar aus und Android meldet Internetzugang. Wenn sich die Verbindung langsam anfühlt, vergleichen Sie die Reaktion des Routers hier und in der Nähe des Routers. Ein starkes Signal allein garantiert keine Leistung."
+    override val channelAdviceBasis = "Kürzere Balken bedeuten weniger Überlappung in diesem Scan. Die Geschwindigkeit kann variieren."
+    override fun channelChangeInstructions(channel: Int, band: String) = "Wählen Sie Kanal ${channel} für ${band}"
+
+    override val channelOverlapTitle = "Überlappung mit benachbarten WLANs"
+    override val channelApplyChange = "Speichern und bei Bedarf erneut verbinden"
+    override val channelChangeNote = "Ändern Sie dies in der Router-App oder den Router-Einstellungen, nicht in WiFi Weakspot."
+
 }

@@ -42,7 +42,8 @@ object ItSurveyStrings : SurveyStrings {
 
     override val weakestFirst = "Prima i più deboli, quindi i punti problematici sono in cima."
     override val mapYourHome = "Mappa la tua casa"
-    override val mapYourHomeBody = "Visualizza il tuo Wi-Fi sulla mappa di casa tua. Utilizza una foto della tua planimetria o una griglia vuota."
+    override val mapYourHomeBody = "Visualizza la copertura Wi-Fi sulla planimetria di casa. Usa una foto della planimetria o una griglia vuota."
+
     override val createMap = "Crea una mappa"
 
     override val namePlaceholder = "Piano superiore, studio…"
@@ -86,7 +87,8 @@ object ItSurveyStrings : SurveyStrings {
     override fun roomDescription(room: String, quality: String, reading: String) = "${room}, segnale ${quality}, ${reading}. Rivedi le misurazioni e misura di nuovo questo punto."
 
     override val noSignalToSave = "Nessun segnale Wi-Fi da salvare. Connettiti prima al tuo Wi-Fi."
-    override val allowScansToLink = "Consenti scansioni Wi-Fi nelle reti in modo che questa misurazione possa essere collegata alla tua rete."
+    override val allowScansToLink = "Consenti le scansioni Wi-Fi in Reti per associare questa misurazione alla tua rete."
+
     override val connectToSpotNetwork = "Connettiti alla rete di questo spot prima di ricontrollarlo."
     override fun savedRoom(room: String) = "Salvato ${room}"
     override val couldNotSaveStableReading = "Impossibile salvare una misurazione stabile. Resta fermo e connesso allo stesso Wi-Fi, poi riprova."
@@ -105,12 +107,12 @@ object ItSurveyStrings : SurveyStrings {
         "Connettiti a ${ssid?.ifBlank { null } ?: "lo stesso Wi-Fi"} per verificare di nuovo."
 
     override val stepDeveloperOptionsTitle = "Attiva le opzioni sviluppatore"
-    override val stepDeveloperOptionsBody =
-        "In Impostazioni, apri **Informazioni sul telefono** e tocca **Numero build** 7 volte. Potrebbe essere necessario inserire il blocco schermo."
+    override val stepDeveloperOptionsBody = "In Impostazioni, apri **Informazioni sul telefono** e tocca **Numero build** 7 volte. Potrebbe essere necessario confermare il blocco schermo."
+
     override val openAboutPhone = "Apri Informazioni sul telefono"
     override val stepThrottlingTitle = "Disattiva Wi-Fi limitazione della scansione"
-    override val stepThrottlingBody =
-        "In **Opzioni sviluppatore**, scorri verso il basso fino a **Rete** e disattiva **Wi-Fi limitazione della scansione**."
+    override val stepThrottlingBody = "In **Opzioni sviluppatore**, nella sezione **Reti**, disattiva **Limita ricerca di reti Wi‑Fi**. I nomi possono variare in base al dispositivo."
+
     override val openDeveloperOptions = "Apri Opzioni sviluppatore"
     override val stepComeBackTitle = "Torna qui"
     override val stepComeBackBody = "Al ritorno, WiFi Weakspot verifica automaticamente l’impostazione. Puoi riattivare il limite in qualsiasi momento."
@@ -129,13 +131,13 @@ object ItSurveyStrings : SurveyStrings {
     override val unlimitedOnTitle = "Sono attive scansioni illimitate"
     override val unlimitedOnBody = "Le reti vicine e i grafici dei canali si aggiornano ogni pochi secondi."
     override val scansLimitedTitle = "Le scansioni sono limitate"
-    override val scansLimitedAndroid9Body =
-        "Android 9 consente 4 scansioni ogni 2 minuti e non è possibile disattivarlo. WiFi Weakspot riutilizza i risultati recenti nel mezzo."
+    override val scansLimitedAndroid9Body = "Android 9 consente al massimo 4 scansioni ogni 2 minuti e non permette di rimuovere il limite. Nel frattempo, WiFi Weakspot mostra i risultati più recenti."
+
     override val usingRoot = "Utilizzando root"
     override val deviceRooted = "Il tuo dispositivo è rootato"
     override val rootScanningBody = "Le scansioni passano attraverso la shell del sistema, quindi non c'è nulla da cambiare nelle opzioni sviluppatore."
-    override val rootDeniedBody =
-        "L'accesso root è stato negato. Consenti WiFi Weakspot nel tuo gestore root e riprova oppure utilizza le opzioni sviluppatore di seguito."
+    override val rootDeniedBody = "L’accesso root è stato negato. Autorizza WiFi Weakspot nel gestore root e riprova, oppure usa le opzioni sviluppatore qui sotto."
+
     override val rootNotNeededBody = "Le scansioni sono già illimitate. Non è necessario il root."
     override val rootOfferBody = "Usa root per scansionare le reti senza modificare le opzioni sviluppatore. Il gestore root chiederà l’autorizzazione una volta."
 

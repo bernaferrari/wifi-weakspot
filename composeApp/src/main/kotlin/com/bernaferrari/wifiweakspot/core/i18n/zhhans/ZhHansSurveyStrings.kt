@@ -133,13 +133,13 @@ object ZhHansSurveyStrings : SurveyStrings {
         "连接${ssid?.ifBlank { null } ?: "相同Wi-Fi"}再次检查。"
 
     override val stepDeveloperOptionsTitle = "打开开发者选项"
-    override val stepDeveloperOptionsBody = "在设置中打开**关于手机**，连续点击**版本号** 7 次，可能需要验证锁屏密码。"
+    override val stepDeveloperOptionsBody = "在设置中打开**关于手机**，连续点击 **Build 号** 7 次，可能需要验证锁屏密码。"
 
     override val openAboutPhone = "打开“关于手机”"
 
     override val stepThrottlingTitle = "关闭 Wi-Fi 扫描限制"
 
-    override val stepThrottlingBody = "在**开发者选项**的**网络**部分，关闭 **Wi-Fi 扫描限制**。"
+    override val stepThrottlingBody = "在**开发者选项**的**网络**部分，关闭 **WLAN 扫描调节**。不同设备的选项名称可能不同。"
 
     override val openDeveloperOptions = "打开开发者选项"
     override val stepComeBackTitle = "返回应用"

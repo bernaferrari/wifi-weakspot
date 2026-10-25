@@ -126,7 +126,7 @@ private class SeedHistory {
      * with distance and with each wall crossed, so the far bedroom ends up the weak spot.
      */
     val floorPlan = SurveyProjectEntity(
-        id = 1, name = "Home", description = null, imagePath = null, createdAt = ago(3, 2.0), updatedAt = ago(0, 1.0),
+        id = 1, name = com.bernaferrari.wifiweakspot.core.i18n.appStrings.survey.defaultMapName(1), description = null, imagePath = null, createdAt = ago(3, 2.0), updatedAt = ago(0, 1.0),
         targetSsid = SimulatedHome.Ssid, targetBssid = SimulatedHome.Bssid, widthMeters = 12f, heightMeters = 8f
     )
     val floorPlanPoints: List<SurveyPointEntity> = buildList {

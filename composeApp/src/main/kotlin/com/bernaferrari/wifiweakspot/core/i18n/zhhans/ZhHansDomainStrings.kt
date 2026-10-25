@@ -12,7 +12,7 @@ object ZhHansDomainStrings : DomainStrings {
     override val qualityExcellentExplanation = "与路由器的连接信号很强。信号强度本身不能衡量网速。"
     override val qualityGoodLabel = "良好"
     override val qualityGoodHeadline = "信号良好"
-    override val qualityGoodExplanation = "路由器信号稳定。"
+    override val qualityGoodExplanation = "接收到的路由器信号强度良好。"
 
     override val qualityFairLabel = "一般"
     override val qualityFairHeadline = "信号一般"

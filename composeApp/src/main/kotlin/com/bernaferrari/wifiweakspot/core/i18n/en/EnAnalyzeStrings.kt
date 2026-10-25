@@ -48,10 +48,10 @@ object EnAnalyzeStrings : AnalyzeStrings {
     override val scanReportNetworksHeading = "Networks:"
     override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
-    override val channelLooksClear = "Your channel looks clear"
-    override val noChannelImprovement = "No improvement found in this scan"
-    override fun lessOverlapThanChannel(currentChannel: Int) = "Less overlap than channel $currentChannel"
-    override val leastOverlapInScan = "Least overlap in this scan"
+    override val channelLooksClear = "Your channel isn’t crowded"
+    override val noChannelImprovement = "No better channel found"
+    override fun lessOverlapThanChannel(currentChannel: Int) = "Less crowded than channel ${currentChannel}"
+    override val suggestedChannel = "Suggested channel"
     override fun channelAdviceDescription(advice: String, channel: Int) = "$advice: channel $channel"
     override val lowOverlap = "Low overlap"
     override val moderateOverlap = "Moderate overlap"
@@ -163,7 +163,15 @@ object EnAnalyzeStrings : AnalyzeStrings {
     override val adviceNoSignalTitle = "Read your Wi-Fi signal"
     override val adviceNoSignalBody = "Allow Wi-Fi scans in Networks to see signal measurements. Compare signal in the room where you notice problems."
     override val adviceWeakSignalTitle = "Compare coverage near your router"
-    override val adviceWeakSignalBody = "The current Wi-Fi signal is weak. Run a router check here, then repeat near the router. Use a survey of your own network to find weak spots."
+    override val adviceWeakSignalBody = "The Wi-Fi signal is weak. Test router response here, then repeat near the router. Compare measurements of your own network to find weak spots."
+
     override val adviceGoodSignalTitle = "Compare router responsiveness"
     override val adviceGoodSignalBody = "Signal strength looks usable and Android reports internet access. If the connection feels slow, compare router response here and near the router; strong signal alone does not guarantee performance."
+    override val channelAdviceBasis = "Shorter bars mean less overlap in this scan. Speed may vary."
+    override fun channelChangeInstructions(channel: Int, band: String) = "Choose channel ${channel} for ${band}"
+
+    override val channelOverlapTitle = "Nearby Wi-Fi overlap"
+    override val channelApplyChange = "Save, then reconnect if needed"
+    override val channelChangeNote = "Make this change in your router’s app or settings, not in WiFi Weakspot."
+
 }

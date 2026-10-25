@@ -48,10 +48,10 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override val scanReportNetworksHeading = "Сети:"
     override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
-    override val channelLooksClear = "Ваш канал выглядит чистым."
-    override val noChannelImprovement = "При этом сканировании улучшений не обнаружено."
-    override fun lessOverlapThanChannel(currentChannel: Int) = "Меньше перекрытия, чем у канала ${currentChannel}"
-    override val leastOverlapInScan = "Наименьшее перекрытие в этом сканировании"
+    override val channelLooksClear = "Ваш канал мало загружен"
+    override val noChannelImprovement = "Более подходящий канал не найден"
+    override fun lessOverlapThanChannel(currentChannel: Int) = "Менее загружен, чем канал ${currentChannel}"
+    override val suggestedChannel = "Рекомендуемый канал"
     override fun channelAdviceDescription(advice: String, channel: Int) = "${advice}: канал ${channel}"
     override val lowOverlap = "Низкое перекрытие"
     override val moderateOverlap = "Умеренное перекрытие"
@@ -90,10 +90,8 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override val estimatedChannelOverlap = "Предполагаемое перекрытие каналов"
     override fun tryChannel(channel: Int) = "Попробуйте канал ${channel}"
     override val lowestOverlapFor20Mhz = "Наименьшее расчетное перекрытие для 20 MHz каналов"
-    override val overlapDisclaimer = "На основе близлежащих точек доступа и уровня сигнала, а не измеренного трафика. " +
-        "Перед изменением настроек проверьте поддерживаемые каналы вашего маршрутизатора и местные правила. " +
-        "5 и 6 GHz требуют известной поддержки маршрутизатора; отсутствуют ширококанальные центры " +
-        "отображает только основной 20 MHz канал."
+    override val overlapDisclaimer = "Оценка основана на ближайших точках доступа и силе сигнала, а не на измеренном трафике. Перед изменением настроек проверьте поддерживаемые роутером каналы и местные правила. Каналы в диапазонах 5 и 6 GHz предлагаются только при известной поддержке роутера. Если центральная частота широкого канала неизвестна, отображается только его основной канал шириной 20 MHz."
+
     override val overlapScore = "Оценка перекрытия"
 
     override val collectingReadings = "Сбор измерений… Линии появятся после нескольких сканирований."
@@ -142,7 +140,8 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override val turnOnWifi = "Включи Wi-Fi"
     override val dismiss = "Пропустить"
     override val findWeakSpotsTitle = "Найдите слабые места"
-    override val findWeakSpotsBody = "Посмотрите, какие комнаты слабые."
+    override val findWeakSpotsBody = "Найдите комнаты со слабым сигналом."
+
     override val findWeakSpotsAction = "Проверьте свои комнаты."
     override fun networksNearby(count: Int) = "${networks(count)} рядом"
     override val nearbyStale = "Из вашего последнего сканирования. Нажмите, чтобы обновить."
@@ -155,7 +154,15 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override val adviceNoSignalTitle = "Прочитайте свой сигнал Wi-Fi."
     override val adviceNoSignalBody = "Разрешить сканирование Wi-Fi в сетях для просмотра измерений сигнала. Сравните сигнал в комнате, где вы заметили проблемы."
     override val adviceWeakSignalTitle = "Сравните зону покрытия рядом с вашим маршрутизатором"
-    override val adviceWeakSignalBody = "Текущий сигнал Wi-Fi слабый. Запустите проверку маршрутизатора здесь, затем повторите процедуру рядом с маршрутизатором. Используйте исследование своей сети, чтобы найти слабые места."
+    override val adviceWeakSignalBody = "Сигнал Wi-Fi слабый. Проверьте отклик роутера здесь и повторите тест рядом с ним. Сравните измерения своей сети, чтобы найти слабые места."
+
     override val adviceGoodSignalTitle = "Сравните скорость реагирования маршрутизатора"
     override val adviceGoodSignalBody = "Уровень сигнала выглядит приемлемым, а Android указывает на доступ к Интернету. Если соединение кажется медленным, сравните реакцию маршрутизатора здесь и рядом с маршрутизатором; сильный сигнал сам по себе не гарантирует производительность."
+    override val channelAdviceBasis = "Чем короче столбик, тем меньше перекрытие в этом сканировании. Скорость может меняться."
+    override fun channelChangeInstructions(channel: Int, band: String) = "Выберите канал ${channel} для диапазона ${band}"
+
+    override val channelOverlapTitle = "Перекрытие с соседними сетями"
+    override val channelApplyChange = "Сохраните и при необходимости подключитесь заново"
+    override val channelChangeNote = "Измените настройку в приложении или настройках роутера, а не в WiFi Weakspot."
+
 }

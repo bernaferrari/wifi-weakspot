@@ -63,13 +63,13 @@ object KoAnalyzeStrings : AnalyzeStrings {
     override val scanReportNetworksHeading = "네트워크:"
     override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
-    override val channelLooksClear = "현재 채널의 겹침이 적어 보입니다"
+    override val channelLooksClear = "현재 채널은 혼잡하지 않음"
 
-    override val noChannelImprovement = "이번 스캔에서는 더 나은 채널을 찾지 못했습니다"
+    override val noChannelImprovement = "더 나은 채널을 찾지 못함"
 
-    override fun lessOverlapThanChannel(currentChannel: Int) = "채널 ${currentChannel}보다 겹침이 적음"
+    override fun lessOverlapThanChannel(currentChannel: Int) = "채널 ${currentChannel}보다 덜 혼잡함"
 
-    override val leastOverlapInScan = "이번 스캔에서 겹침이 가장 적음"
+    override val suggestedChannel = "추천 채널"
 
     override fun channelAdviceDescription(advice: String, channel: Int) = "${advice}: 채널 ${channel}"
     override val lowOverlap = "겹침 적음"
@@ -212,5 +212,12 @@ object KoAnalyzeStrings : AnalyzeStrings {
     override val adviceGoodSignalTitle = "공유기 응답 비교"
 
     override val adviceGoodSignalBody = "신호 세기는 사용 가능한 수준이며 Android에서 인터넷 연결도 확인했습니다. 느리게 느껴진다면 현재 위치와 공유기 근처의 응답 시간을 비교하세요. 신호가 강하다고 통신 성능이 보장되는 것은 아닙니다."
+
+    override val channelAdviceBasis = "막대가 짧을수록 이번 스캔에서 겹침이 적습니다. 속도는 달라질 수 있습니다."
+    override fun channelChangeInstructions(channel: Int, band: String) = "${band}에서 채널 ${channel} 선택"
+
+    override val channelOverlapTitle = "주변 Wi-Fi와의 겹침"
+    override val channelApplyChange = "저장하고 필요하면 다시 연결"
+    override val channelChangeNote = "WiFi Weakspot이 아닌 공유기 앱이나 설정에서 변경하세요."
 
 }

@@ -12,7 +12,8 @@ object FrDomainStrings : DomainStrings {
     override val qualityExcellentExplanation = "La connexion au routeur est forte. Le signal seul ne mesure pas le débit internet."
     override val qualityGoodLabel = "Bon"
     override val qualityGoodHeadline = "Bon signal"
-    override val qualityGoodExplanation = "Un signal solide du routeur."
+    override val qualityGoodExplanation = "Le signal reçu du routeur est bon."
+
     override val qualityFairLabel = "Correct"
     override val qualityFairHeadline = "Signal correct"
     override val qualityFairExplanation = "Le signal est utilisable, mais tolère moins les interférences."

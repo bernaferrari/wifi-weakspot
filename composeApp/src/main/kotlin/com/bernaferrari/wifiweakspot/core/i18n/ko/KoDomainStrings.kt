@@ -12,7 +12,7 @@ object KoDomainStrings : DomainStrings {
     override val qualityExcellentExplanation = "공유기와의 연결 신호가 강합니다. 신호 세기만으로 인터넷 속도를 알 수는 없습니다."
     override val qualityGoodLabel = "좋음"
     override val qualityGoodHeadline = "신호 좋음"
-    override val qualityGoodExplanation = "공유기에서 안정적인 신호가 수신됩니다."
+    override val qualityGoodExplanation = "공유기에서 충분한 세기의 신호가 수신됩니다."
 
     override val qualityFairLabel = "보통"
     override val qualityFairHeadline = "신호 보통"

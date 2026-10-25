@@ -18,7 +18,8 @@ object EsHistoryStrings : HistoryStrings {
     override val kindInternetTests = "pruebas de internet"
     override val kindScans = "Escaneos"
     override val emptyTitle = "Nada guardado aún"
-    override val emptySubtitle = "Aquí se muestran comprobaciones de enrutadores, escaneos de red y resultados de herramientas, para que pueda ver cómo su Wi-Fi cambia con el tiempo."
+    override val emptySubtitle = "Aquí se guardan las comprobaciones del router, las búsquedas de redes y los resultados de las herramientas para comparar cómo cambia tu Wi-Fi."
+
     override fun trendBarsDescription(count: Int, readings: String) = "Últimas ${count} pruebas de enrutador: ${readings}"
     override val trendNoReply = "No hay respuesta del router. Algunos enrutadores ignoran estas comprobaciones."
     override val trendRecheckToCompare = "Vuelva a verificar después de un cambio para comparar."

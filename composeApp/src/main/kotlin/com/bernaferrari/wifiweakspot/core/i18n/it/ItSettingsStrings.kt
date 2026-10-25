@@ -13,7 +13,7 @@ object ItSettingsStrings : SettingsStrings {
     override val sectionComfort = "Comodità"
     override val reduceMotionTitle = "Riduci le animazioni"
 
-    override val hapticsSubtitle = "Vibra al tocco e quando appaiono i risultati"
+    override val hapticsSubtitle = "Vibrazione al tocco e ai risultati"
 
     override val sectionAlerts = "Avvisi"
     override val backgroundAlertsTitle = "Avvisi in background"

@@ -12,7 +12,8 @@ object DeDomainStrings : DomainStrings {
     override val qualityExcellentExplanation = "Eine starke Verbindung zum Router. Die Signalstärke allein misst nicht die Internetgeschwindigkeit."
     override val qualityGoodLabel = "Gut"
     override val qualityGoodHeadline = "Gutes Signal"
-    override val qualityGoodExplanation = "Ein stabiles Signal vom Router."
+    override val qualityGoodExplanation = "Die Signalstärke vom Router ist gut."
+
     override val qualityFairLabel = "Ausreichend"
     override val qualityFairHeadline = "Ausreichendes Signal"
     override val qualityFairExplanation = "Das Signal ist nutzbar, aber anfälliger für Störungen."

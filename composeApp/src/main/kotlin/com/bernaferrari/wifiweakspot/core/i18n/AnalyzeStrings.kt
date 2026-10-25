@@ -129,7 +129,22 @@ interface AnalyzeStrings {
     fun lessOverlapThanChannel(currentChannel: Int): String
 
     /** Advice chip beside a suggested channel number when you're not on this band. */
-    val leastOverlapInScan: String
+    val suggestedChannel: String
+
+    /** Explains the scan-based comparison without promising a speed increase. */
+    val channelAdviceBasis: String
+
+    /** Heading for measured overlap bars. */
+    val channelOverlapTitle: String
+
+    /** Final router step. */
+    val channelApplyChange: String
+
+    /** Clarifies where the setting must be changed. */
+    val channelChangeNote: String
+
+    /** Router instructions for the inspected band and suggested channel. */
+    fun channelChangeInstructions(channel: Int, band: String): String
 
     /** Accessibility text for the advice chip: [advice] is the chip text, [channel] the number. */
     fun channelAdviceDescription(advice: String, channel: Int): String

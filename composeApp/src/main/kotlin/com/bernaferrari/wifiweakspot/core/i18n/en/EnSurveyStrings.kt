@@ -93,12 +93,12 @@ object EnSurveyStrings : SurveyStrings {
         "Connect to ${ssid?.ifBlank { null } ?: "the same Wi-Fi"} to check again."
 
     override val stepDeveloperOptionsTitle = "Turn on Developer options"
-    override val stepDeveloperOptionsBody =
-        "In Settings, open **About phone** and tap **Build number** 7 times. You may need to enter your screen lock."
+    override val stepDeveloperOptionsBody = "In Settings, open **About phone** and tap **Build number** 7 times. You may need to confirm your screen lock."
+
     override val openAboutPhone = "Open About phone"
     override val stepThrottlingTitle = "Turn off Wi-Fi scan throttling"
-    override val stepThrottlingBody =
-        "In **Developer options**, scroll down to **Networking** and switch off **Wi-Fi scan throttling**."
+    override val stepThrottlingBody = "In **Developer options**, under **Networking**, turn off **Wi‑Fi scan throttling**. Names may vary by device."
+
     override val openDeveloperOptions = "Open Developer options"
     override val stepComeBackTitle = "Come back here"
     override val stepComeBackBody =

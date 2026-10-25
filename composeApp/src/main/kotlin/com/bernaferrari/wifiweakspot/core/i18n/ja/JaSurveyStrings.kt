@@ -139,7 +139,7 @@ object JaSurveyStrings : SurveyStrings {
 
     override val stepThrottlingTitle = "Wi-Fiスキャンの回数制限を解除"
 
-    override val stepThrottlingBody = "**開発者向けオプション**の**ネットワーク**で、**Wi-Fiスキャンのスロットリング**をオフにします。"
+    override val stepThrottlingBody = "**開発者向けオプション**の**ネットワーク**で、**Wi‑Fi スキャン スロットリング**をオフにします。項目名は機種によって異なる場合があります。"
 
     override val openDeveloperOptions = "開発者向けオプションを開く"
     override val stepComeBackTitle = "アプリに戻る"

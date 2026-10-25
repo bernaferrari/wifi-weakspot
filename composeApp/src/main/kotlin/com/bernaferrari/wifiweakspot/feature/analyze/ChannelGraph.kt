@@ -174,6 +174,12 @@ fun ChannelGraph(
     val sharedCatalog = strings
 
     val s = strings.analyze
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    // Translated axis words and larger accessibility text need their actual measured width.
+    val qualityGutter = with(density) {
+        maxOf(QualityGutter, listOf(s.axisStrong, s.axisOkay, s.axisWeak, s.busyCaption)
+            .maxOf { textMeasurer.measure(it, labelStyle, maxLines = 1).size.width }.toDp() + 8.dp)
+    }
     val busiest = remember(networks) {
         networks.groupBy { frequencyToChannel(it.frequency) }.maxByOrNull { it.value.size }
     }
@@ -182,9 +188,9 @@ fun ChannelGraph(
             .semantics {
                 contentDescription = s.channelGraphDescription(networks.size, busiest?.key, busiest?.value?.size ?: 0)
             }
-            .then(if (explore) Modifier.pointerInput(selectedBand) {
+            .then(if (explore) Modifier.pointerInput(selectedBand, qualityGutter) {
                 fun moveTo(x: Float) {
-                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, latestShowCrowd)
+                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, latestShowCrowd, qualityGutter)
                     val nearest = channels.minBy { kotlin.math.abs(plot.left + mapFreqToNormX(it.second.toFloat(), selectedBand) * plot.width - x) }.first
                     if (nearest != cursorChannel) { cursorChannel = nearest; haptics.light() }
                 }
@@ -197,11 +203,11 @@ fun ChannelGraph(
                     } while (event.changes.any { it.pressed })
                 }
             } else Modifier)
-            .pointerInput(selectedBand, explore) {
+            .pointerInput(selectedBand, explore, qualityGutter) {
                 if (explore) return@pointerInput
                 // Tapping the same spot again steps through overlapping hills, strongest first.
                 detectTapGestures { tap ->
-                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, latestShowCrowd)
+                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, latestShowCrowd, qualityGutter)
                     if (latestShowCrowd && tap.y > plot.bottom + 24.dp.toPx()) {
                         haptics.light()
                         crowdCounts = !crowdCounts
@@ -212,12 +218,12 @@ fun ChannelGraph(
                     selectLatest?.invoke(if (here.isEmpty()) null else here[(current + 1) % here.size])
                 }
             }
-            .pointerInput(selectedBand, explore) {
+            .pointerInput(selectedBand, explore, qualityGutter) {
                 if (explore) return@pointerInput
                 // Horizontal scrubbing is immediate; vertical gestures remain available to the list.
                 var last: String? = null
                 fun scrub(at: Offset) {
-                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, latestShowCrowd)
+                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, latestShowCrowd, qualityGutter)
                     val pick = networksAt(Offset(at.x, plot.bottom), latestRadios, selectedBand, plot, anyHeight = true).firstOrNull() ?: return
                     if (pick.bssid != last) {
                         last = pick.bssid
@@ -231,7 +237,7 @@ fun ChannelGraph(
                 )
             }
     ) {
-        val plot = plotRect(size.width, size.height, this, selectedBand, latestShowCrowd)
+        val plot = plotRect(size.width, size.height, this, selectedBand, latestShowCrowd, qualityGutter)
         drawZones(plot, zones)
         drawQualityLabels(s, plot, textMeasurer, labelStyle.copy(color = scheme.onSurfaceVariant.copy(alpha = 0.7f)))
         val yourNetwork = connectedBssid?.let { bssid -> radios.firstOrNull { it.bssid.equals(bssid, ignoreCase = true) } }
@@ -320,11 +326,11 @@ fun ChannelGraph(
     }
 }
 
-private fun plotRect(width: Float, height: Float, density: Density, band: FrequencyBand, crowd: Boolean = band == FrequencyBand.BAND_2_4): Rect = with(density) {
+private fun plotRect(width: Float, height: Float, density: Density, band: FrequencyBand, crowd: Boolean = band == FrequencyBand.BAND_2_4, qualityGutter: androidx.compose.ui.unit.Dp = QualityGutter): Rect = with(density) {
     // Room below the channel numbers for the 2.4 GHz crowd strip, only when it's drawn.
     val below = if (crowd) 52.dp else 28.dp
     // The gutter holds the signal words, so they never collide with hills or names.
-    Rect(left = QualityGutter.toPx(), top = 12.dp.toPx(), right = width - 12.dp.toPx(), bottom = height - below.toPx())
+    Rect(left = qualityGutter.toPx(), top = 12.dp.toPx(), right = width - 12.dp.toPx(), bottom = height - below.toPx())
 }
 
 internal data class CrowdColors(

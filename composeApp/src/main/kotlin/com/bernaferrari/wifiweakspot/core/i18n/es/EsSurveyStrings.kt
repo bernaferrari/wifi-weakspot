@@ -42,7 +42,8 @@ object EsSurveyStrings : SurveyStrings {
 
     override val weakestFirst = "Los más débiles primero, por lo que los puntos problemáticos están arriba."
     override val mapYourHome = "Mapea tu casa"
-    override val mapYourHomeBody = "Vea su Wi-Fi en un mapa de su hogar. Utilice una foto de su plan o una cuadrícula en blanco."
+    override val mapYourHomeBody = "Consulta la cobertura Wi-Fi en el plano de casa. Puedes usar una foto del plano o una cuadrícula en blanco."
+
     override val createMap = "Crear un mapa"
 
     override val namePlaceholder = "Planta de arriba, despacho…"
@@ -63,7 +64,8 @@ object EsSurveyStrings : SurveyStrings {
     override val noFreshScan = "Android no proporcionó nuevos resultados. Espera un momento e inténtalo de nuevo."
 
     override val couldNotScan = "No se pudo escanear. Marque Wi-Fi y la configuración de ubicación."
-    override val chooseAccessPointFirst = "Elige un punto de acceso antes de mapear su cobertura."
+    override val chooseAccessPointFirst = "Elige un punto de acceso antes de medir su cobertura."
+
     override val saveMeasurementBeforeExport = "Guarde al menos una medición antes de exportar."
     override val couldNotExportProject = "No se pudo exportar este proyecto. Intentar otra vez."
 
@@ -86,7 +88,8 @@ object EsSurveyStrings : SurveyStrings {
     override fun roomDescription(room: String, quality: String, reading: String) = "${room}, señal ${quality}, ${reading}. Revisa las mediciones y vuelve a medir este lugar."
 
     override val noSignalToSave = "No hay señal Wi-Fi para guardar. Conéctate a tu Wi-Fi primero."
-    override val allowScansToLink = "Permite Wi-Fi escaneos en Redes para que esta lectura pueda vincularse a su red."
+    override val allowScansToLink = "Permite las búsquedas de Wi-Fi en Redes para vincular esta medición a tu red."
+
     override val connectToSpotNetwork = "Conéctate a la red de este lugar antes de volver a verificarlo."
     override fun savedRoom(room: String) = "Guardado ${room}"
     override val couldNotSaveStableReading = "No se pudo guardar una medición estable. Mantén el dispositivo quieto y conectado al mismo Wi-Fi, e inténtalo de nuevo."
@@ -105,12 +108,12 @@ object EsSurveyStrings : SurveyStrings {
         "Conéctate a ${ssid?.ifBlank { null } ?: "lo mismo Wi-Fi"} para verificar nuevamente."
 
     override val stepDeveloperOptionsTitle = "Activar opciones de desarrollador"
-    override val stepDeveloperOptionsBody =
-        "En Configuración, abre **Acerca del teléfono** y toca **Número de compilación** 7 veces. Es posible que tengas que ingresar tu bloqueo de pantalla."
+    override val stepDeveloperOptionsBody = "En Ajustes, abre **Acerca del teléfono** y toca **Número de compilación** 7 veces. Puede que tengas que confirmar el bloqueo de pantalla."
+
     override val openAboutPhone = "Abrir Acerca del teléfono"
     override val stepThrottlingTitle = "Desactivar Wi-Fi aceleración de escaneo"
-    override val stepThrottlingBody =
-        "En **Opciones de desarrollador**, desplácese hacia abajo hasta **Redes** y desactive **Wi-Fi aceleración de escaneo**."
+    override val stepThrottlingBody = "En **Opciones para desarrolladores**, busca la sección **Redes** y desactiva **Limitar búsqueda de redes Wi‑Fi**. Los nombres pueden variar según el dispositivo."
+
     override val openDeveloperOptions = "Abrir opciones de desarrollador"
     override val stepComeBackTitle = "Vuelve aquí"
     override val stepComeBackBody = "Al volver, WiFi Weakspot comprobará el ajuste automáticamente. Puedes volver a activar el límite cuando quieras."
@@ -129,13 +132,13 @@ object EsSurveyStrings : SurveyStrings {
     override val unlimitedOnTitle = "Los escaneos ilimitados están activados"
     override val unlimitedOnBody = "Las redes cercanas y los gráficos de canales se actualizan cada pocos segundos."
     override val scansLimitedTitle = "Los escaneos son limitados"
-    override val scansLimitedAndroid9Body =
-        "Android 9 permite 4 escaneos cada 2 minutos y no puede desactivarlo. WiFi Weakspot reutiliza resultados recientes en el medio."
+    override val scansLimitedAndroid9Body = "Android 9 permite como máximo 4 búsquedas cada 2 minutos y no permite quitar el límite. Mientras tanto, WiFi Weakspot muestra los resultados más recientes."
+
     override val usingRoot = "Usando root"
     override val deviceRooted = "Tu dispositivo está rooteado"
     override val rootScanningBody = "Los análisis pasan por el shell del sistema, por lo que no hay nada que cambiar en las opciones de desarrollador."
-    override val rootDeniedBody =
-        "Se denegó el acceso raíz. Permite WiFi Weakspot en su administrador root e inténtelo nuevamente, o use las opciones de desarrollador a continuación."
+    override val rootDeniedBody = "Se denegó el acceso root. Autoriza WiFi Weakspot en tu gestor de root y vuelve a intentarlo, o usa las opciones de desarrollador que aparecen abajo."
+
     override val rootNotNeededBody = "Los escaneos ya son ilimitados. No se necesita raíz."
     override val rootOfferBody = "Usa root para buscar redes sin cambiar las opciones de desarrollador. Tu gestor de root te pedirá permiso una vez."
 
@@ -143,7 +146,8 @@ object EsSurveyStrings : SurveyStrings {
     override val waitingForRootManager = "Esperando al gestor de root…"
 
     override val tryRootAgain = "Intenta root nuevamente"
-    override val useRoot = "Utilice root"
+    override val useRoot = "Usar root"
+
     override val copied = "Copiado"
     override val copyCommand = "Copiar comando"
 

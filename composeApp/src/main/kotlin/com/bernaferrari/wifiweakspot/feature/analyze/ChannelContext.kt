@@ -11,10 +11,15 @@ import androidx.compose.material3.*
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +49,7 @@ internal fun ChannelContext(
         CongestionAnalyzer.analyze(competitors.filter { band.contains(it.frequency) }, band)
     }
     val connectedHere = connected.isConnected && band.contains(connected.frequency)
+    var explaining by remember(band) { mutableStateOf<ChannelAdviceSnapshot?>(null) }
     val hint = channelHint(scores, connected.channel.takeIf { connectedHere })
     val scheme = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
@@ -53,7 +59,7 @@ internal fun ChannelContext(
     // Reserve the two-line selection's height even at large font sizes. The recommendation
     // can swap with it without displacing the list or the finger's next target.
     val rowHeight = with(LocalDensity.current) {
-        maxOf(50.dp, typography.labelLarge.lineHeight.toDp() + typography.bodySmall.lineHeight.toDp() + 10.dp)
+        maxOf(56.dp, typography.labelLarge.lineHeight.toDp() + typography.bodySmall.lineHeight.toDp() + 10.dp)
     }
     Box(
         Modifier.fillMaxWidth().padding(top = 6.dp).heightIn(min = rowHeight),
@@ -81,21 +87,28 @@ internal fun ChannelContext(
             }
         } else if (hint != null) {
             Surface(
+                onClick = { explaining = ChannelAdviceSnapshot(hint, band, scores) },
                 shape = WifiWeakspotShapes.full,
                 color = scheme.tertiaryContainer,
                 contentColor = scheme.onTertiaryContainer,
-                modifier = Modifier.clearAndSetSemantics { contentDescription = s.channelAdviceDescription(hint.label, hint.channel) }
+                modifier = Modifier.semantics { contentDescription = s.channelAdviceDescription(hint.label, hint.channel) }
             ) {
-                Row(Modifier.padding(start = 6.dp, end = 16.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(32.dp).clip(MaterialShapes.Cookie9Sided.toShape()).background(scheme.onTertiaryContainer), contentAlignment = Alignment.Center) {
+                Row(Modifier.clearAndSetSemantics { }.heightIn(min = rowHeight).padding(start = 8.dp, end = 12.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(40.dp).clip(MaterialShapes.Cookie9Sided.toShape()).background(scheme.onTertiaryContainer), contentAlignment = Alignment.Center) {
                         Text("${hint.channel}", style = typography.labelLarge, fontWeight = FontWeight.Bold, color = scheme.tertiaryContainer)
                     }
                     Spacer(Modifier.width(10.dp))
-                    Text(hint.label, style = typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(hint.label, style = typography.labelLarge, modifier = Modifier.weight(1f, fill = false))
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, Modifier.size(20.dp))
                 }
             }
         } else {
             Text(s.tapWaveForDetails, modifier = Modifier.padding(start = 4.dp), style = typography.bodySmall, color = scheme.onSurfaceVariant)
         }
     }
+    explaining?.let { advice ->
+        ChannelAdviceSheet(advice, onDismiss = { explaining = null })
+    }
+
 }

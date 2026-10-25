@@ -12,7 +12,8 @@ object EsDomainStrings : DomainStrings {
     override val qualityExcellentExplanation = "La conexión con el router es fuerte. La señal por sí sola no mide la velocidad de internet."
     override val qualityGoodLabel = "Buena"
     override val qualityGoodHeadline = "Buena señal"
-    override val qualityGoodExplanation = "Una señal sólida del router."
+    override val qualityGoodExplanation = "El nivel de señal del router es bueno."
+
     override val qualityFairLabel = "Aceptable"
     override val qualityFairHeadline = "Señal aceptable"
     override val qualityFairExplanation = "La señal es utilizable, pero tolera menos interferencias."
@@ -58,7 +59,7 @@ object EsDomainStrings : DomainStrings {
     override val verdictSlowHeadline = "Las respuestas del router se retrasan"
     override val verdictSlowExplanation = "Las respuestas fueron lentas o desiguales. Intenta nuevamente cerca del router para comparar."
     override val verdictUnreliableHeadline = "La comprobación del router no es concluyente"
-    override val verdictUnreliableExplanation = "Muchas respuestas desaparecieron. Algunos enrutadores ignoran estas comprobaciones, así que inténtelo de nuevo antes de cambiar algo."
+    override val verdictUnreliableExplanation = "Faltaron muchas respuestas. Algunos routers ignoran estas pruebas; inténtalo de nuevo antes de cambiar la configuración."
 
     override val roomSuggestions = listOf("Sala de estar", "Cocina", "Dormitorio", "Despacho", "Habitación infantil", "Baño", "Comedor", "Pasillo", "Garaje", "Sótano", "Balcón", "Jardín")
 
@@ -129,7 +130,8 @@ object EsDomainStrings : DomainStrings {
     override val exportFileChooserTitle = "Exportar archivo"
     override fun chartDescription(name: String) = "Gráfico: ${name}"
 
-    override val lanVpnUnavailable = "La detección de dispositivos no está disponible a través de esta conexión VPN. Verifique si su VPN permite el acceso a la red local o inténtelo nuevamente cuando esté desconectada."
+    override val lanVpnUnavailable = "La búsqueda de dispositivos no está disponible con esta conexión VPN. Comprueba si tu VPN permite el acceso a la red local o desconéctala y vuelve a intentarlo."
+
     override val lanConnectFirst = "Conéctate a Wi-Fi o Ethernet antes de escanear dispositivos locales."
     override val lanNotConnected = "No conectado"
 

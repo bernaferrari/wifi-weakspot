@@ -25,8 +25,8 @@ object SimulatedHome {
     private val startedAt = nowMillis()
 
     private val aps: List<Ap> = buildList {
-        add(Ap(Ssid, Bssid, -52, Frequency, 80, 5210, Wpa3))
-        add(Ap(Ssid, "02:15:b2:00:00:02", -55, 2437, 20, 0, Wpa2))
+        add(Ap(Ssid, Bssid, -58, Frequency, 80, 5210, Wpa3))
+        add(Ap(Ssid, "02:15:b2:00:00:02", -61, 2437, 20, 0, Wpa2))
         val names = listOf("Vivo-Fibra", "NET_2G", "CLARO", "Apto 302", "Casa da Ana", "TP-Link_7C21", "Xiaomi_5A", "ASUS", "Linksys00412",
             "DIRECT-HP Printer", "Escritorio", "Familia Silva", "Galaxy A54", "iPhone de Joao", "Starlink")
         val channels24 = listOf(1, 1, 6, 6, 6, 11, 11, 11, 3, 9, 1, 6, 11, 4, 11, 1, 6)
@@ -50,7 +50,7 @@ object SimulatedHome {
     /** One scan: every neighbor drifts a little, as real readings do. */
     fun scan(): List<WifiNetwork> {
         val now = nowMillis()
-        aps.forEach { it.rssi = (it.rssi + random.nextInt(-3, 4)).coerceIn(-93, -45) }
+        aps.forEach { it.rssi = (it.rssi + random.nextInt(-3, 4)).coerceIn(-93, -58) }
         aps[0].rssi = connectedRssi()
         aps[1].rssi = (connectedRssi() - 3).coerceAtLeast(-93)
         return aps.map {
@@ -66,7 +66,7 @@ object SimulatedHome {
         val seconds = (nowMillis() - startedAt) / 1000.0
         val phase = (seconds % LoopSeconds) / LoopSeconds
         val dip = max(0.0, sin(phase * 2 * PI)).pow(3) * 32
-        return (-50 - dip + random.nextInt(-2, 3)).toInt().coerceIn(-92, -45)
+        return (-58 - dip + random.nextInt(-2, 3)).toInt().coerceIn(-92, -58)
     }
 
     /** Link rate the radio would negotiate at [rssi]. */

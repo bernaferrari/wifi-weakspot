@@ -317,7 +317,7 @@ private fun toolDetails(result: ToolResultEntity, key: String): HistoryEntry {
                 timestamp = result.timestamp,
                 title = s.openPortsTitle(result.target),
                 summary = if (ports.isEmpty()) s.noCommonPortsOpen
-                else s.listWithMore(ports.take(3).joinToString(", ") { "${it.first} ${it.second}" }, (ports.size - 3).coerceAtLeast(0)),
+                else s.listWithMore(ports.take(3).joinToString(", ") { "${it.first} ${com.bernaferrari.wifiweakspot.feature.tools.serviceLabel(it.second)}" }, (ports.size - 3).coerceAtLeast(0)),
                 metrics = listOf(HistoryMetric("${ports.size}", "", com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.openPorts)),
                 linesTitle = com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.openPorts.takeIf { ports.isNotEmpty() },
                 lines = ports.map { HistoryLine(com.bernaferrari.wifiweakspot.feature.tools.serviceLabel(it.second), trailing = "TCP ${it.first}") }

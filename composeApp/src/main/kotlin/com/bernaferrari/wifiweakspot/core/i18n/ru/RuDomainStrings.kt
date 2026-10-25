@@ -12,7 +12,8 @@ object RuDomainStrings : DomainStrings {
     override val qualityExcellentExplanation = "Сильный сигнал от роутера. Сам по себе уровень сигнала не определяет скорость интернета."
     override val qualityGoodLabel = "Хороший"
     override val qualityGoodHeadline = "Хороший сигнал"
-    override val qualityGoodExplanation = "Устойчивый сигнал от роутера."
+    override val qualityGoodExplanation = "Хороший уровень сигнала от роутера."
+
     override val qualityFairLabel = "Средний"
     override val qualityFairHeadline = "Средний сигнал"
     override val qualityFairExplanation = "Сигнал пригоден для работы, но более чувствителен к помехам."

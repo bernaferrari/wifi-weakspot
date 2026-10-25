@@ -6,6 +6,17 @@ import org.junit.Test
 
 /** Regressions from ambiguous English words: reading, fair, open, and in the open. */
 class TranslationMeaningTest {
+    @Test fun storedUnknownPortMarkersUseEveryLanguagesLabel() {
+        for (language in AppLanguage.entries) {
+            val label = language.strings.common.unknown
+            for (stored in listOf("unknown", "Unknown", "UNKNOWN", "")) {
+                assertEquals(language.tag, label,
+                    com.bernaferrari.wifiweakspot.feature.tools.serviceLabel(stored, label))
+            }
+            assertEquals("HTTPS", com.bernaferrari.wifiweakspot.feature.tools.serviceLabel("HTTPS", label))
+        }
+    }
+
     @Test fun signalAlertsUseTheSameScaleAsTheRestOfTheApp() {
         for (language in AppLanguage.entries) {
             val domain = language.strings.domain
@@ -85,6 +96,21 @@ class TranslationMeaningTest {
         }
         assertEquals("Can. 36", AppLanguage.PortugueseBrazil.strings.analyze.channelShort(36))
         assertEquals("Can. 36", AppLanguage.Italian.strings.analyze.channelShort(36))
+    }
+
+    @Test fun coverageAdviceMeansPhysicalMeasurements() {
+        val measurementTerms = mapOf(
+            AppLanguage.English to "measurements",
+            AppLanguage.Spanish to "mediciones",
+            AppLanguage.PortugueseBrazil to "medições",
+            AppLanguage.French to "mesures",
+            AppLanguage.German to "Messungen",
+            AppLanguage.Italian to "misurazioni",
+            AppLanguage.Russian to "измерения"
+        )
+        for ((language, term) in measurementTerms) {
+            assertTrue(language.tag, language.strings.analyze.adviceWeakSignalBody.contains(term))
+        }
     }
 
 }

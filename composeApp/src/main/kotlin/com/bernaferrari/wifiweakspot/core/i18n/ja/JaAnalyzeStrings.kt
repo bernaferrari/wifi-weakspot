@@ -63,13 +63,13 @@ object JaAnalyzeStrings : AnalyzeStrings {
     override val scanReportNetworksHeading = "ネットワーク:"
     override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
-    override val channelLooksClear = "使用中のチャンネルは混雑が少なそうです"
+    override val channelLooksClear = "使用中のチャンネルは空いています"
 
-    override val noChannelImprovement = "今回のスキャンでは、より良いチャンネルは見つかりませんでした"
+    override val noChannelImprovement = "より良いチャンネルは見つかりませんでした"
 
-    override fun lessOverlapThanChannel(currentChannel: Int) = "チャンネル${currentChannel}より重なりが少ない"
+    override fun lessOverlapThanChannel(currentChannel: Int) = "チャンネル${currentChannel}より空いています"
 
-    override val leastOverlapInScan = "今回のスキャンで重なりが最小"
+    override val suggestedChannel = "おすすめのチャンネル"
 
     override fun channelAdviceDescription(advice: String, channel: Int) = "${advice}: チャンネル ${channel}"
     override val lowOverlap = "重なりが少ない"
@@ -212,5 +212,12 @@ object JaAnalyzeStrings : AnalyzeStrings {
     override val adviceGoodSignalTitle = "ルーターの応答を比較"
 
     override val adviceGoodSignalBody = "信号の強さは実用的で、Androidでもインターネット接続が確認されています。遅いと感じる場合は、ここでの応答時間とルーターの近くでの応答時間を比べてください。信号が強くても、通信が速いとは限りません。"
+
+    override val channelAdviceBasis = "棒が短いほど、今回のスキャンでの重なりが少ないことを示します。速度は状況によって変わります。"
+    override fun channelChangeInstructions(channel: Int, band: String) = "${band}でチャンネル${channel}を選ぶ"
+
+    override val channelOverlapTitle = "周辺Wi-Fiとの重なり"
+    override val channelApplyChange = "保存し、必要に応じて再接続する"
+    override val channelChangeNote = "WiFi Weakspotではなく、ルーターのアプリまたは設定画面で変更してください。"
 
 }
