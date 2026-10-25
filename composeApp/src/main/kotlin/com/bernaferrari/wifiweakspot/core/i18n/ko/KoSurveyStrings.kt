@@ -120,7 +120,7 @@ object KoSurveyStrings : SurveyStrings {
 
     override fun savedAt(time: String) = "${time}에 저장됨"
 
-    override val moveRouterTip = "라우터를 더 높이, 중앙에 위치시키거나 이 방에 더 가까이 옮겨보세요."
+    override val moveRouterTip = "공유기를 더 높이, 중앙에 위치시키거나 이 방에 더 가까이 옮겨보세요."
     override val betterThanLastTime = "지난번보다 나아짐"
 
     override val worseThanLastTime = "지난번보다 나빠짐"

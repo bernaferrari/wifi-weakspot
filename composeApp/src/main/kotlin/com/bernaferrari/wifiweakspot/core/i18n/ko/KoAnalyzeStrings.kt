@@ -4,10 +4,12 @@ import com.bernaferrari.wifiweakspot.core.i18n.AnalyzeStrings
 
 object KoAnalyzeStrings : AnalyzeStrings {
 
-    private fun networks(count: Int) = "${count} 개 네트워크"
+    private fun networks(count: Int) = "네트워크 ${count}개"
 
     override fun channelShort(channel: Int) = "채널 ${channel}"
-    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · 채널 ${channel} · ${band}"
+
+    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · ${channelShort(channel)} · ${band}"
+
     override val noPassword = "비밀번호 없음"
     override val wifiOffTitle = "Wi-Fi 꺼짐"
     override val locationOffBody = "Android에서 주변 Wi-Fi 목록을 보려면 위치 기능을 켜야 합니다. WiFi Weakspot은 GPS를 사용하지 않습니다."
@@ -43,7 +45,8 @@ object KoAnalyzeStrings : AnalyzeStrings {
 
     override fun hideVeryWeakNetworks(count: Int) = "신호가 매우 약한 네트워크 ${count}개 숨기기"
 
-    override fun bandNetworkCount(count: Int) = if (count == 0) "없음" else networks(count)
+    override fun bandNetworkCount(count: Int) = if (count == 0) "없음" else "${count}개"
+
     override val highlightedOnChart = "그래프에서 강조됨"
 
     override val notHighlightedOnChart = "그래프에서 강조되지 않음"
@@ -58,8 +61,8 @@ object KoAnalyzeStrings : AnalyzeStrings {
     override fun scanReportTime(time: String) = "시간: ${time}"
     override fun scanReportTotal(count: Int) = "총 네트워크 수: ${count}"
     override val scanReportNetworksHeading = "네트워크:"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) =
-        "• ${ssid} - ${rssi}dBm, 채널 ${channel}, ${security}"
+    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
+
     override val channelLooksClear = "현재 채널의 겹침이 적어 보입니다"
 
     override val noChannelImprovement = "이번 스캔에서는 더 나은 채널을 찾지 못했습니다"
@@ -79,13 +82,14 @@ object KoAnalyzeStrings : AnalyzeStrings {
 
     override fun channelGraphDescription(networkCount: Int, busiestChannel: Int?, busiestCount: Int) = "채널 그래프. 네트워크 ${networkCount}개." + if (busiestChannel != null) " 가장 혼잡한 채널은 ${busiestChannel}이며 네트워크 ${busiestCount}개가 있습니다." else ""
 
-    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) =
-        name + (if (isYou) " (당신)" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+
     override val busyCaption = "혼잡"
     override val axisStrong = "강함"
     override val axisOkay = "보통"
     override val axisWeak = "약함"
-    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · 채널 ${channel}"
+    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
+
     override val clearSelectedNetwork = "네트워크 선택 해제"
 
     override val tapWaveForDetails = "곡선을 눌러 네트워크 상세 정보를 확인하세요"
@@ -190,11 +194,7 @@ object KoAnalyzeStrings : AnalyzeStrings {
     override val nearbyStale = "지난 스캔 결과입니다. 눌러서 새로고침하세요."
 
     override val nearbyNoConnection = "각 네트워크의 채널과 신호를 확인하세요."
-    override fun nearbyOverlap(count: Int, channel: Int) = when (count) {
-        0 -> "채널 ${channel}에서 근처 중복이 감지되지 않았습니다."
-        1 -> "근처의 신호 1개가 채널 ${channel}과 중복됩니다."
-        else -> "${count} 근처 신호가 채널 ${channel}과 겹칩니다."
-    }
+    override fun nearbyOverlap(count: Int, channel: Int) = if (count == 0) "현재 채널 ${channel}와 겹치는 주변 신호가 없습니다." else "주변 신호 ${count}개가 현재 채널 ${channel}와 겹칩니다."
 
     override val adviceNoWifiBody = "확인하려는 네트워크에 연결하세요. 현재 연결을 사용하여 인터넷 테스트 및 네트워크 도구를 계속 실행할 수 있습니다."
     override val adviceNoInternetTitle = "먼저 인터넷 연결 확인"

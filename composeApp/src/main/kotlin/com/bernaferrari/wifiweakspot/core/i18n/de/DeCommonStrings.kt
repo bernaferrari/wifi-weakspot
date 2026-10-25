@@ -5,8 +5,8 @@ import com.bernaferrari.wifiweakspot.core.i18n.CommonStrings
 object DeCommonStrings : CommonStrings {
     override fun deleteItemTitle(name: String) = "${name} löschen?"
 
-    override val couldNotSaveChanges = "Die Änderungen konnten nicht gespeichert werden. Versuche es erneut."
-    override val couldNotDeleteItem = "Dieses Element konnte nicht gelöscht werden. Versuche es erneut."
+    override val couldNotSaveChanges = "Die Änderungen konnten nicht gespeichert werden. Versuchen Sie es erneut."
+    override val couldNotDeleteItem = "Dieses Element konnte nicht gelöscht werden. Versuchen Sie es erneut."
 
     override val hiddenNetworkShort = "Versteckt"
     override val network = "Netzwerk"
@@ -17,6 +17,7 @@ object DeCommonStrings : CommonStrings {
     override val address = "Adresse"
     override val responseTime = "Reaktionszeit"
     override val checkAgain = "Erneut prüfen"
+
     override val rename = "Umbenennen"
     override val stop = "Stopp"
     override val unknown = "Unbekannt"
@@ -31,8 +32,8 @@ object DeCommonStrings : CommonStrings {
     override val historyTitle = "Verlauf"
     override val routerCheck = "Router prüfen"
     override val testWebsite = "Website testen"
-    override val yourRouter = "Dein Router"
-    override val yourNetwork = "Dein Netzwerk"
+    override val yourRouter = "Ihr Router"
+    override val yourNetwork = "Ihr Netzwerk"
 
     override val openInNewTab = "In einem neuen Tab öffnen"
     override val mapSharingAndroidOnly = "Das Teilen der Karte funktioniert in der Android-App."
@@ -49,7 +50,8 @@ object DeCommonStrings : CommonStrings {
     override val tabRooms = "Räume"
     override val tabSettings = "Einstellungen"
 
-    override val permissionScreenTitle = "Zugriff auf in der Nähe befindliche Wi-Fi erlauben"
+    override val permissionScreenTitle = "Zugriff auf WLANs in der Nähe erlauben"
+
     override val permissionAllowAccess = "Zugriff erlauben"
     override val openAppSettings = "Öffnen Sie die App-Einstellungen"
 
@@ -63,7 +65,8 @@ object DeCommonStrings : CommonStrings {
     override val readyToScan = "Bereit zum Scannen"
     override fun scansRemaining(count: Int) = if (count == 1) "1 Scan übrig" else "${count} verbleibende Scans"
     override fun nextScanIn(time: String) = "Nächster Scan in ${time}"
-    override val checking = "Überprüfung..."
+    override val checking = "Wird geprüft…"
+
     override val justNow = "gerade eben"
     override fun minutesAgo(minutes: Long) = "vor ${minutes} Min."
 

@@ -35,7 +35,8 @@ object PtBrHistoryStrings : HistoryStrings {
     override fun listWithMore(list: String, more: Int) = if (more > 0) "${list} e ${more} mais" else list
     override fun pingSummary(averageMs: String, replied: Int, sent: Int) = "${averageMs} ms · ${replied} de ${sent} responderam"
 
-    override fun lookupTitle(target: String) = "Olhe para cima ${target}"
+    override fun lookupTitle(target: String) = "Consulta DNS: ${target}"
+
     override val noRecords = "Sem registros"
     override val lookupFailed = "Falha na pesquisa"
     override fun openPortsTitle(target: String) = "Portas abertas em ${target}"

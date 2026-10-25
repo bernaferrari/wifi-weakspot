@@ -51,7 +51,7 @@ object ZhHansSurveyStrings : SurveyStrings {
 
     override val weakestFirst = "按信号从弱到强排序，方便先查看信号较差的位置。"
 
-    override val mapYourHome = "绘制您家的地图"
+    override val mapYourHome = "绘制你家的地图"
     override val mapYourHomeBody = "在家中的平面图上查看 Wi-Fi 覆盖情况，可使用平面图照片或空白网格。"
 
     override val createMap = "创建地图"
@@ -81,7 +81,7 @@ object ZhHansSurveyStrings : SurveyStrings {
     override val saveMeasurementBeforeExport = "导出前至少保存一项测量结果。"
     override val couldNotExportProject = "无法导出地图，请重试。"
 
-    override val connectToYourWifi = "连接到您的Wi-Fi"
+    override val connectToYourWifi = "连接到你的Wi-Fi"
     override fun checkingRoom(room: String) = "正在测量${room}，请保持不动"
 
     override val connectedWifi = "已连接的 Wi-Fi"

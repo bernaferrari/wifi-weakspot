@@ -18,7 +18,7 @@ object JaCommonStrings : CommonStrings {
     override val address = "アドレス"
 
     override val responseTime = "応答時間"
-    override val checkAgain = "再測定"
+    override val checkAgain = "もう一度確認"
 
     override val rename = "名前を変更"
     override val stop = "停止"

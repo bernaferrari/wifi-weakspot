@@ -13,7 +13,8 @@ object KoSettingsStrings : SettingsStrings {
     override val showSignalAs = "신호 표시 방식"
     override val sectionComfort = "사용 편의"
 
-    override val reduceMotionTitle = "동작 줄이기"
+    override val reduceMotionTitle = "애니메이션 줄이기"
+
     override val hapticsSubtitle = "탭하거나 결과가 나올 때 진동"
 
     override val sectionAlerts = "알림"
@@ -44,8 +45,10 @@ object KoSettingsStrings : SettingsStrings {
     override val colorOrange = "오렌지"
     override val colorAmber = "호박색"
     override val colorGreen = "녹색"
-    override val colorTeal = "청록색"
-    override val colorCyan = "청록색"
+    override val colorTeal = "진한 청록색"
+
+    override val colorCyan = "밝은 청록색"
+
     override val colorBlue = "파란색"
     override val colorPurple = "보라색"
     override val colorPink = "핑크"
@@ -63,7 +66,8 @@ object KoSettingsStrings : SettingsStrings {
 
     override val getStarted = "시작하기"
 
-    override val welcomeHeadline = "집에서 Wi-Fi 신호가\n약한 곳을 찾아보세요"
+    override val welcomeHeadline = "집 안 Wi-Fi\n약한 곳 찾기"
+
     override val welcomeBody = "신호가 약해지는 곳과 개선 방법을 확인하세요."
     override val featureRoomsTitle = "방마다 측정"
 

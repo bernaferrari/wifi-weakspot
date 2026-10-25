@@ -16,7 +16,8 @@ object RuCommonStrings : CommonStrings {
     override val fastest = "Самый быстрый"
     override val address = "Адрес"
     override val responseTime = "Время отклика"
-    override val checkAgain = "Перепроверить"
+    override val checkAgain = "Повторить проверку"
+
     override val rename = "Переименовать"
     override val stop = "Стоп"
     override val unknown = "Неизвестно"
@@ -49,7 +50,8 @@ object RuCommonStrings : CommonStrings {
     override val tabRooms = "Комнаты"
     override val tabSettings = "Настройки"
 
-    override val permissionScreenTitle = "Разрешить доступ к ближайшему Wi-Fi"
+    override val permissionScreenTitle = "Разрешить доступ к сетям Wi-Fi поблизости"
+
     override val permissionAllowAccess = "Разрешить доступ"
     override val openAppSettings = "Открыть настройки приложения."
 
@@ -65,7 +67,8 @@ object RuCommonStrings : CommonStrings {
     override fun scansRemaining(count: Int) = "Осталось ${count} ${plural(count, "сканирование", "сканирования", "сканирований")}"
 
     override fun nextScanIn(time: String) = "Следующее сканирование через ${time}"
-    override val checking = "Проверяю..."
+    override val checking = "Проверка…"
+
     override val justNow = "только что"
     override fun minutesAgo(minutes: Long) = "${minutes} минуту назад"
     override fun hoursAgo(hours: Long) = "${hours} час назад"

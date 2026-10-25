@@ -7,15 +7,17 @@ object ItToolsStrings : ToolsStrings {
 
     override val targetPlaceholder = "Sito web o indirizzo IP"
     override val clearTarget = "Cancella"
+
     override val checkSectionTitle = "Controlla"
     override val recentSectionTitle = "Recenti"
 
     override val toolPortsDescription = "Cosa è aperto"
 
     override val pingQuestion = "Risponde?"
-    override val dnsQuestion = "Qual è il suo indirizzo?"
+    override val dnsQuestion = "Qual è il suo indirizzo IP?"
+
     override val dnsDetail = "DNS ricerca"
-    override val portsQuestion = "Cosa offre?"
+    override val portsQuestion = "Quali servizi offre?"
 
     override val runningPortScanTitle = "Verifica delle porte"
 
@@ -32,10 +34,13 @@ object ItToolsStrings : ToolsStrings {
     override fun repliesContentDescription(replies: String) = "Risposte: ${replies}"
 
     override val pingDidntAnswer = "Non ho risposto"
-    override val pingResponsive = "Reattivo"
-    override val pingResponsiveButUneven = "Reattivo, ma irregolare"
-    override val pingDroppingReplies = "Eliminazione delle risposte"
-    override val pingSlowToAnswer = "Lento a rispondere"
+    override val pingResponsive = "Buona risposta"
+
+    override val pingResponsiveButUneven = "Risponde, ma con tempi irregolari"
+
+    override val pingDroppingReplies = "Alcune risposte non arrivano"
+
+    override val pingSlowToAnswer = "Risposta lenta"
 
     override val pingNoAnswerLocal = "Potrebbe essere spento, inattivo o impostato per ignorare i ping."
     override fun pingRepliesLost(lost: Int, total: Int) =
@@ -52,11 +57,13 @@ object ItToolsStrings : ToolsStrings {
     override fun dnsFoundExplanation(query: String) = "Il tuo dispositivo può trovare ${query}."
     override val dnsAddressesTitle = "Indirizzi"
 
-    override val portsOpenUnit = "aperto"
+    override fun portsOpenUnit(count: Int) = if (count == 1) "aperta" else "aperte"
+
     override fun portsCommonServicesOn(host: String) = "Servizi comuni su ${host}"
     override val portsNothingOpen = "Niente di aperto"
     override fun portsOffersServices(count: Int) = if (count == 1) "Offre 1 servizio" else "Offre ${count} servizi"
     override val portsNoneAnswered = "Nessun servizio comune ha risposto."
+
     override val portsOffersExplanation = "Cose come una pagina delle impostazioni o la condivisione di file."
 
     override val portWebPage = "Pagina web"
@@ -81,13 +88,16 @@ object ItToolsStrings : ToolsStrings {
     override val couldntLookForDevices = "Impossibile cercare i dispositivi"
     override val scanFailed = "Scansione fallita"
     override val connectionChangedLookAgain = "La connessione è cambiata. Guarda di nuovo su questa rete."
-    override val stoppedLooking = "Ho smesso di cercare"
+    override val stoppedLooking = "Ricerca interrotta"
+
     override val noDevicesFound = "Nessun dispositivo trovato"
-    override val noDevicesFoundSubtitle =
-        "Alcuni dispositivi rimangono silenziosi quando richiesto. Riprova tra un attimo o verifica che questo dispositivo sia presente nella tua casa Wi-Fi."
+    override val noDevicesFoundSubtitle = "Alcuni dispositivi non rispondono alle scansioni. Riprova tra poco o verifica che questo dispositivo sia connesso al Wi-Fi di casa."
+
     override fun otherDevicesGroup(count: Int) = "Altri dispositivi · ${count}"
-    override fun quietDevices(count: Int) = if (count == 1) "1 dispositivo silenzioso" else "${count} dispositivi silenziosi"
-    override val quietDevicesSubtitle = "Non hanno detto cosa sono"
+    override fun quietDevices(count: Int) = if (count == 1) "1 dispositivo non identificato" else "${count} dispositivi non identificati"
+
+    override val quietDevicesSubtitle = "Non è stato possibile identificare il tipo di dispositivo"
+
     override val hide = "Nascondi"
     override val show = "Mostra"
     override fun checkingLocalAddresses(percent: Int) = "Controllo indirizzi locali · ${percent}%"
@@ -102,13 +112,16 @@ object ItToolsStrings : ToolsStrings {
     override val factNetworkName = "Nome della rete"
     override val factHardwareAddress = "Indirizzo hardware"
     override val macHiddenByAndroid = "Nascosto da Android"
-    override val factYourName = "Il tuo nome"
+    override val factYourName = "Nome che hai scelto"
+
     override val portsNotCheckedYet = "Non ancora selezionato."
-    override fun portsNoneOpenWhenChecked(moment: String) =
-        "Nessuna delle porte comuni era aperta quando è stato controllato ${moment.replaceFirstChar { it.lowercase() }}."
-    override fun portsCheckedAt(moment: String) = "Selezionato ${moment.replaceFirstChar { it.lowercase() }}."
+    override fun portsNoneOpenWhenChecked(moment: String) = "Nessuna porta comune era aperta. Verificato: ${moment}."
+
+    override fun portsCheckedAt(moment: String) = "Verificato: ${moment}."
+
     override val renameDeviceTitle = "Rinomina dispositivo"
-    override val renameSupporting = "Lascia vuoto per utilizzare il nome WiFi Weakspot trovato."
+    override val renameSupporting = "Lascia vuoto per usare il nome rilevato da WiFi Weakspot."
+
     override val connectionChangedOpenAgain = "La connessione è cambiata. Apri di nuovo questo dispositivo sulla nuova rete."
     override val couldntLoadDetails = "Impossibile caricare i dettagli salvati. Prova ad aprire di nuovo questo dispositivo."
     override val scanBeforeNaming = "Scansiona questo dispositivo prima di salvare un nome."

@@ -11,13 +11,17 @@ object PtBrSettingsStrings : SettingsStrings {
     override val themeDark = "Escuro"
     override val showSignalAs = "Mostrar sinal como"
     override val sectionComfort = "Conforto"
-    override val reduceMotionTitle = "Reduzir o movimento"
-    override val hapticsSubtitle = "Vibrar em toques e resultados"
+    override val reduceMotionTitle = "Reduzir animações"
+
+    override val hapticsSubtitle = "Vibrar ao tocar e ao mostrar resultados"
+
     override val sectionAlerts = "Alertas"
     override val backgroundAlertsTitle = "Alertas em segundo plano"
-    override val backgroundAlertsSubtitle = "Quando próximo Wi-Fi muda"
+    override val backgroundAlertsSubtitle = "Quando as redes Wi-Fi próximas mudam"
+
     override val notificationsDenied = "Permitir notificações para ver o status de monitoramento e alertas."
-    override val checkEvery = "Verifique cada"
+    override val checkEvery = "Intervalo de verificação"
+
     override fun intervalSeconds(seconds: Int) = "${seconds} seg"
     override fun intervalMinutes(minutes: Int) = "${minutes} minutos"
     override val newNetworkAlertsTitle = "Novos alertas de rede"
@@ -32,7 +36,8 @@ object PtBrSettingsStrings : SettingsStrings {
     override val colorOrange = "Laranja"
     override val colorAmber = "Âmbar"
     override val colorGreen = "Verde"
-    override val colorTeal = "Cerceta"
+    override val colorTeal = "Azul-petróleo"
+
     override val colorCyan = "Ciano"
     override val colorBlue = "Azul"
     override val colorPurple = "Roxo"
@@ -42,18 +47,22 @@ object PtBrSettingsStrings : SettingsStrings {
     override val openSourceLicense = "Código aberto · Apache 2.0"
     override val feedbackTitle = "Opinião"
     override val feedbackBody = "Ideias e relatórios de bugs"
-    override val elsewhere = "Em outro lugar"
+    override val elsewhere = "Outros links"
+
     override val privacySummary = "Seus resultados ficam no seu dispositivo, a menos que você os compartilhe."
     override val privacyPolicy = "Política de Privacidade"
 
     override val notNow = "Agora não"
     override val getStarted = "Comece"
-    override val welcomeHeadline = "Encontre os pontos fracos\ndo seu Wi-Fi"
+    override val welcomeHeadline = "Encontre onde\no Wi-Fi fica fraco"
+
     override val welcomeBody = "Veja onde o sinal cai e como melhorar."
-    override val featureRoomsTitle = "Verifique todos os quartos"
-    override val featureRoomsBody = "Encontre os quartos onde ele cai."
+    override val featureRoomsTitle = "Verifique todos os cômodos"
+    override val featureRoomsBody = "Encontre os cômodos onde o sinal fica fraco."
+
     override val featureRouterTitle = "Verifique seu roteador"
     override val featureRouterBody = "Veja com que rapidez ele responde."
     override val featureNearbyTitle = "Ver redes próximas"
-    override val featureNearbyBody = "Escolha um canal mais claro."
+    override val featureNearbyBody = "Encontre um canal com menos sobreposição."
+
 }

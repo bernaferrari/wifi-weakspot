@@ -4,11 +4,12 @@ import com.bernaferrari.wifiweakspot.core.i18n.AnalyzeStrings
 
 object JaAnalyzeStrings : AnalyzeStrings {
 
-    private fun networks(count: Int) = "${count} 件のネットワーク"
+    private fun networks(count: Int) = "ネットワーク${count}件"
 
     override fun channelShort(channel: Int) = "ch ${channel}"
 
-    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · ch ${channel} · ${band}"
+    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · ${channelShort(channel)} · ${band}"
+
     override val noPassword = "パスワードなし"
     override val wifiOffTitle = "Wi-Fi がオフです"
     override val locationOffBody = "Androidでは、近くのWi-Fiを表示するために位置情報をオンにする必要があります。WiFi WeakspotはGPSを使用しません。"
@@ -44,7 +45,8 @@ object JaAnalyzeStrings : AnalyzeStrings {
 
     override fun hideVeryWeakNetworks(count: Int) = "信号が非常に弱いネットワーク${count}件を隠す"
 
-    override fun bandNetworkCount(count: Int) = if (count == 0) "なし" else networks(count)
+    override fun bandNetworkCount(count: Int) = if (count == 0) "なし" else "${count}件"
+
     override val highlightedOnChart = "グラフ上で強調表示中"
 
     override val notHighlightedOnChart = "グラフ上で未選択"
@@ -59,8 +61,8 @@ object JaAnalyzeStrings : AnalyzeStrings {
     override fun scanReportTime(time: String) = "時間: ${time}"
     override fun scanReportTotal(count: Int) = "ネットワーク総数: ${count}"
     override val scanReportNetworksHeading = "ネットワーク:"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) =
-        "• ${ssid} - ${rssi}dBm、Ch ${channel}、${security}"
+    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
+
     override val channelLooksClear = "使用中のチャンネルは混雑が少なそうです"
 
     override val noChannelImprovement = "今回のスキャンでは、より良いチャンネルは見つかりませんでした"
@@ -80,13 +82,14 @@ object JaAnalyzeStrings : AnalyzeStrings {
 
     override fun channelGraphDescription(networkCount: Int, busiestChannel: Int?, busiestCount: Int) = "チャンネルグラフ。ネットワーク${networkCount}件。" + if (busiestChannel != null) " 最も混雑しているチャンネルは${busiestChannel}で、${busiestCount}件のネットワークがあります。" else ""
 
-    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) =
-        name + (if (isYou) " (あなた)" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+
     override val busyCaption = "混雑"
     override val axisStrong = "強い"
     override val axisOkay = "普通"
     override val axisWeak = "弱い"
-    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ch ${channel}"
+    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
+
     override val clearSelectedNetwork = "ネットワークの選択を解除"
 
     override val tapWaveForDetails = "山の形をタップすると、ネットワークの詳細が表示されます"
@@ -191,11 +194,7 @@ object JaAnalyzeStrings : AnalyzeStrings {
     override val nearbyStale = "前回のスキャン結果です。タップして更新できます。"
 
     override val nearbyNoConnection = "各ネットワークのチャンネルと信号を参照してください。"
-    override fun nearbyOverlap(count: Int, channel: Int) = when (count) {
-        0 -> "チャネル ${channel} で近くのオーバーラップが検出されませんでした。"
-        1 -> "1 つの近くの信号があなたのチャンネル ${channel} と重なっています。"
-        else -> "${count} 近くの信号がチャンネル ${channel} と重なっています。"
-    }
+    override fun nearbyOverlap(count: Int, channel: Int) = if (count == 0) "使用中のチャンネル${channel}と重なる近くの信号は検出されませんでした。" else "近くの${count}個の信号が、使用中のチャンネル${channel}と重なっています。"
 
     override val adviceNoWifiBody = "確認したいネットワークに接続します。現在の接続を使用して、インターネット テストやネットワーク ツールを引き続き実行できます。"
     override val adviceNoInternetTitle = "まずインターネット接続を確認"

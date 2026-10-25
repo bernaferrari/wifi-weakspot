@@ -16,7 +16,8 @@ object PtBrCommonStrings : CommonStrings {
     override val fastest = "Mais rápido"
     override val address = "Endereço"
     override val responseTime = "Tempo de resposta"
-    override val checkAgain = "Verifique novamente"
+    override val checkAgain = "Verificar novamente"
+
     override val rename = "Renomear"
     override val stop = "Parar"
     override val unknown = "Desconhecido"
@@ -49,7 +50,8 @@ object PtBrCommonStrings : CommonStrings {
     override val tabRooms = "Cômodos"
     override val tabSettings = "Configurações"
 
-    override val permissionScreenTitle = "Permitir acesso a pessoas próximas Wi-Fi"
+    override val permissionScreenTitle = "Permitir acesso a redes Wi-Fi próximas"
+
     override val permissionAllowAccess = "Permitir acesso"
     override val openAppSettings = "Abra as configurações do aplicativo"
 
@@ -62,8 +64,9 @@ object PtBrCommonStrings : CommonStrings {
     override val scanDevMode = "MODO DESENVOLVIMENTO"
     override val readyToScan = "Pronto para digitalizar"
     override fun scansRemaining(count: Int) = if (count == 1) "1 busca restante" else "${count} varreduras restantes"
-    override fun nextScanIn(time: String) = "Próxima varredura em ${time}"
-    override val checking = "Verificando..."
+    override fun nextScanIn(time: String) = "Próxima busca em ${time}"
+    override val checking = "Verificando…"
+
     override val justNow = "agora mesmo"
     override fun minutesAgo(minutes: Long) = "${minutes} min atrás"
     override fun hoursAgo(hours: Long) = "${hours} h atrás"

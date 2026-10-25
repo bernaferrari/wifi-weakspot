@@ -7,6 +7,7 @@ object JaToolsStrings : ToolsStrings {
 
     override val targetPlaceholder = "ウェブサイトまたはIPアドレス"
     override val clearTarget = "クリア"
+
     override val checkSectionTitle = "テスト"
 
     override val recentSectionTitle = "最近のテスト"
@@ -69,7 +70,7 @@ object JaToolsStrings : ToolsStrings {
 
     override val dnsAddressesTitle = "IPアドレス"
 
-    override val portsOpenUnit = "件のポートが開放"
+    override fun portsOpenUnit(count: Int) = "件の開放ポート"
 
     override fun portsCommonServicesOn(host: String) = "${host} の共通サービス"
     override val portsNothingOpen = "開いているポートなし"

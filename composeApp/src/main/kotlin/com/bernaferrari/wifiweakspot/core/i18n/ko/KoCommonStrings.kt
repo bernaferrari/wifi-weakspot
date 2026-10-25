@@ -18,7 +18,7 @@ object KoCommonStrings : CommonStrings {
     override val address = "주소"
 
     override val responseTime = "응답 시간"
-    override val checkAgain = "다시 측정"
+    override val checkAgain = "다시 확인"
 
     override val rename = "이름 바꾸기"
     override val stop = "중지"

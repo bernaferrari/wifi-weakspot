@@ -62,28 +62,32 @@ object PtBrDomainStrings : DomainStrings {
 
     override val roomSuggestions = listOf("Sala de estar", "Cozinha", "Quarto", "Escritório", "Quarto das crianças", "Banheiro", "Sala de jantar", "Corredor", "Garagem", "Porão", "Varanda", "Jardim")
 
-    override val coverageNoRooms = "Nenhum quarto verificado ainda"
-    override fun coverageWeakInRoom(room: String) = "Fraco Wi-Fi em ${room}"
-    override fun coverageWeakInRooms(count: Int) = "Fraco Wi-Fi em ${count} quartos"
-    override fun coverageRoomsCheckedNoneWeak(count: Int) =
-        if (count == 1) "1 quarto verificado, nenhum fraco" else "${count} quartos verificados, nenhum fraco"
+    override val coverageNoRooms = "Nenhum cômodo medido ainda"
 
-    override fun tipHighBandWeak(room: String, band: String) =
-        "Em ${room} seu dispositivo usou ${band}, que atravessa paredes menos longe. Se o seu roteador puder dividir bandas, 2,4 GHz poderá funcionar melhor lá."
-    override fun tipSignalDrop(dropDb: Int, bestRoom: String, worstRoom: String) =
-        "O sinal cai ${dropDb} dB de ${bestRoom} para ${worstRoom}. Experimente uma posição mais central e elevada do roteador e verifique novamente os mesmos pontos para ver se isso ajuda."
+    override fun coverageWeakInRoom(room: String) = "Sinal Wi-Fi fraco em ${room}"
+
+    override fun coverageWeakInRooms(count: Int) = "Sinal Wi-Fi fraco em ${count} cômodos"
+
+    override fun coverageRoomsCheckedNoneWeak(count: Int) =
+        if (count == 1) "1 cômodo verificado, nenhum fraco" else "${count} cômodos medidos, nenhum fraco"
+
+    override fun tipHighBandWeak(room: String, band: String) = "Em ${room}, o dispositivo usou ${band}, uma faixa que perde mais sinal ao atravessar paredes. Se o roteador permitir separar as faixas, 2,4 GHz pode ser mais estável nesse local."
+
+    override fun tipSignalDrop(dropDb: Int, bestRoom: String, worstRoom: String) = "O sinal cai ${dropDb} dB de ${bestRoom} para ${worstRoom}. Tente colocar o roteador em um local mais central e alto e repita as medições nos mesmos pontos."
+
     override fun tipMultipleAccessPoints(count: Int) =
         "Seu dispositivo usou ${count} pontos de acesso nessas salas, o que pode refletir diferentes bandas ou pontos de acesso. Isto por si só não confirma um roaming confiável."
     override val tipRouterPlacement = "Deixe o roteador dentro de casa, em um local alto e sem obstáculos, longe de micro-ondas, espelhos e aquários."
 
-    override val spotFirstReading = "Primeira leitura · verifique novamente após fazer uma alteração"
-    override val spotDifferentNetwork = "Rede ou local diferente · iniciar uma nova comparação"
+    override val spotFirstReading = "Primeira medição · meça novamente após fazer uma alteração"
+
+    override val spotDifferentNetwork = "Rede ou local diferente · inicie uma nova comparação"
 
     override fun spotComparison(deltaDb: Int, accessPointChanged: Boolean, bandChanged: Boolean): String {
         val signal = when {
             deltaDb >= 4 -> "Sinal ${deltaDb} dB mais forte"
             deltaDb <= -4 -> "Sinal ${-deltaDb} dB mais fraco"
-            else -> "Sinal sobre o mesmo"
+            else -> "Sinal praticamente igual"
         }
         val changed = buildList {
             if (accessPointChanged) add("ponto de acesso alterado")
@@ -93,10 +97,12 @@ object PtBrDomainStrings : DomainStrings {
     }
 
     override val monitorChannelName = "Monitoramento em segundo plano"
+
     override val monitorChannelDescription = "Mostra quando WiFi Weakspot está monitorando redes WiFi"
     override val alertsChannelName = "Alertas de rede"
     override val alertsChannelDescription = "Alertas para novas redes e mudanças de sinal"
-    override val monitorStartFailed = "O monitoramento não pôde ser iniciado. Permita verificações Wi-Fi e ative os serviços de localização e tente novamente."
+    override val monitorStartFailed = "Não foi possível iniciar o monitoramento. Permita as buscas de Wi-Fi, ative a localização e tente novamente."
+
     override val monitorWaitingForScanLimited = "Aguardando uma nova varredura Wi-Fi. Android pode limitar solicitações de varredura."
     override val monitorWaitingForScan = "Esperando por uma nova varredura Wi-Fi"
     override fun monitorStatus(networkCount: Int, lastScanTime: String) = "${networkCount} ${if (networkCount == 1) "rede" else "redes"} · Última busca: ${lastScanTime}"

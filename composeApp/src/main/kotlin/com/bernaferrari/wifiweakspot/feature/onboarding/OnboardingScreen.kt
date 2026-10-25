@@ -139,14 +139,14 @@ private fun WelcomePage() {
         }
     }
     val colors = signalColors(quality)
-    SignalMorphBlob(quality = quality, color = colors.container, size = 168.dp) {
-        Icon(Icons.Rounded.Wifi, null, Modifier.size(68.dp), tint = colors.onContainer)
+    SignalMorphBlob(quality = quality, color = colors.container, size = 144.dp) {
+        Icon(Icons.Rounded.Wifi, null, Modifier.size(60.dp), tint = colors.onContainer)
     }
     Spacer(Modifier.height(24.dp))
     BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Text(
             strings.settings.welcomeHeadline,
-            style = if (maxWidth < 320.dp) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.displaySmall,
+            style = if (maxWidth < 400.dp) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             modifier = Modifier.semantics { heading() }

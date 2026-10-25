@@ -20,7 +20,7 @@ object EsHistoryStrings : HistoryStrings {
     override val emptyTitle = "Nada guardado aún"
     override val emptySubtitle = "Aquí se muestran comprobaciones de enrutadores, escaneos de red y resultados de herramientas, para que pueda ver cómo su Wi-Fi cambia con el tiempo."
     override fun trendBarsDescription(count: Int, readings: String) = "Últimas ${count} pruebas de enrutador: ${readings}"
-    override val trendNoReply = "No hay respuesta del enrutador. Algunos enrutadores ignoran estas comprobaciones."
+    override val trendNoReply = "No hay respuesta del router. Algunos enrutadores ignoran estas comprobaciones."
     override val trendRecheckToCompare = "Vuelva a verificar después de un cambio para comparar."
     override fun trendQuicker(usualMs: String) = "Más rápido de lo habitual (${usualMs} ms)"
     override fun trendSlower(usualMs: String) = "Más lento de lo habitual (${usualMs} ms)"
@@ -35,7 +35,8 @@ object EsHistoryStrings : HistoryStrings {
     override fun listWithMore(list: String, more: Int) = if (more > 0) "${list} y ${more} más" else list
     override fun pingSummary(averageMs: String, replied: Int, sent: Int) = "${averageMs} ms · ${replied} de ${sent} respondieron"
 
-    override fun lookupTitle(target: String) = "Mirar hacia arriba ${target}"
+    override fun lookupTitle(target: String) = "Consulta DNS: ${target}"
+
     override val noRecords = "Sin registros"
     override val lookupFailed = "La búsqueda falló"
     override fun openPortsTitle(target: String) = "Abrir puertos en ${target}"
@@ -65,14 +66,14 @@ object EsHistoryStrings : HistoryStrings {
     override val scanNote = "Las redes cercanas en el mismo canal que el tuyo compiten por el tiempo aire."
 
     override val go = "IR"
-    override val testInternetSpeedInstead = "Pruebe la velocidad de Internet en su lugar"
-    override val keepDeviceStill = "Mantenga su dispositivo quieto durante unos segundos."
+    override val testInternetSpeedInstead = "Prueba la velocidad de Internet en su lugar"
+    override val keepDeviceStill = "Mantenga tu dispositivo quieto durante unos segundos."
     override val connectToStart = "Conéctate a tu Wi-Fi para comenzar."
     override val lastTime = "Último tiempo"
     override val couldNotSaveSpot = "No se pudo guardar este lugar. Intentar otra vez."
-    override val connectFirst = "Conéctate a tu Wi-Fi primero. Esta verificación mide las respuestas de su enrutador."
+    override val connectFirst = "Conéctate a tu Wi-Fi primero. Esta verificación mide las respuestas de tu router."
     override val historyNotSaved = "Se midió el resultado, pero no se pudo guardar el historial."
-    override val checkStopped = "La conexión cambió o se detuvo la verificación del enrutador. Mantén este Wi-Fi conectado y vuelve a intentarlo. Algunos enrutadores bloquean el ping."
+    override val checkStopped = "La conexión cambió o se detuvo la verificación del router. Mantén este Wi-Fi conectado y vuelve a intentarlo. Algunos enrutadores bloquean el ping."
 
     override val internetSpeedTitle = "Velocidad de Internet · fast.com"
 }

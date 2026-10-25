@@ -94,15 +94,15 @@ object KoDomainStrings : DomainStrings {
 
     override fun spotComparison(deltaDb: Int, accessPointChanged: Boolean, bandChanged: Boolean): String {
         val signal = when {
-            deltaDb >= 4 -> "신호 ${deltaDb}dB 더 강함"
-            deltaDb <= -4 -> "신호 ${-deltaDb} dB 약함"
-            else -> "같은 신호"
+            deltaDb >= 4 -> "신호가 ${deltaDb} dB 강해졌습니다"
+            deltaDb <= -4 -> "신호가 ${-deltaDb} dB 약해졌습니다"
+            else -> "신호는 거의 같습니다"
         }
         val changed = buildList {
-            if (accessPointChanged) add("액세스 포인트가 변경되었습니다.")
-            if (bandChanged) add("밴드 변경됨")
+            if (accessPointChanged) add("액세스 포인트 변경")
+            if (bandChanged) add("주파수 대역 변경")
         }
-        return signal + if (changed.isEmpty()) " 마지막 확인 이후" else " · ${changed.joinToString("; ")}"
+        return signal + if (changed.isEmpty()) " (지난 측정과 비교)" else " · ${changed.joinToString("; ")}"
     }
 
     override val monitorChannelName = "백그라운드 모니터링"

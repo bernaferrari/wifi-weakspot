@@ -7,6 +7,7 @@ object ZhHansToolsStrings : ToolsStrings {
 
     override val targetPlaceholder = "网站或IP地址"
     override val clearTarget = "清除"
+
     override val checkSectionTitle = "检查"
 
     override val recentSectionTitle = "最近检查"
@@ -69,7 +70,7 @@ object ZhHansToolsStrings : ToolsStrings {
 
     override val dnsAddressesTitle = "IP 地址"
 
-    override val portsOpenUnit = "个开放"
+    override fun portsOpenUnit(count: Int) = "个开放端口"
 
     override fun portsCommonServicesOn(host: String) = "${host}上的常用服务"
     override val portsNothingOpen = "没有开放端口"

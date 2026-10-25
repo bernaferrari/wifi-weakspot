@@ -94,15 +94,15 @@ object JaDomainStrings : DomainStrings {
 
     override fun spotComparison(deltaDb: Int, accessPointChanged: Boolean, bandChanged: Boolean): String {
         val signal = when {
-            deltaDb >= 4 -> "信号 ${deltaDb} dB 強くなります"
-            deltaDb <= -4 -> "信号 ${-deltaDb} dB 弱くなっています"
-            else -> "ほぼ同じ信号"
+            deltaDb >= 4 -> "信号が${deltaDb} dB強くなりました"
+            deltaDb <= -4 -> "信号が${-deltaDb} dB弱くなりました"
+            else -> "信号はほぼ同じです"
         }
         val changed = buildList {
-            if (accessPointChanged) add("アクセスポイントが変更されました")
-            if (bandChanged) add("バンドが変わりました")
+            if (accessPointChanged) add("接続先のアクセスポイントが変わりました")
+            if (bandChanged) add("周波数帯が変わりました")
         }
-        return signal + if (changed.isEmpty()) " 前回のチェック以降" else " · ${changed.joinToString("; ")}"
+        return signal + if (changed.isEmpty()) "（前回の測定と比較）" else " · ${changed.joinToString("; ")}"
     }
 
     override val monitorChannelName = "バックグラウンド監視"

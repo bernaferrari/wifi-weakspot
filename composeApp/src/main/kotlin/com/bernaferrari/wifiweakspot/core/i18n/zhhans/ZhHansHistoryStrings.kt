@@ -78,12 +78,12 @@ object ZhHansHistoryStrings : HistoryStrings {
     override val linesRecords = "DNS 记录"
 
     override fun replyNumber(index: Int) = "回复${index}"
-    override val scanNote = "与您处于同一频道的附近网络会争夺通话时间。"
+    override val scanNote = "与你处于同一信道的附近网络会争夺通话时间。"
 
     override val go = "开始"
 
     override val testInternetSpeedInstead = "测试网速"
-    override val keepDeviceStill = "让您的设备保持静止几秒钟。"
+    override val keepDeviceStill = "让你的设备保持静止几秒钟。"
     override val connectToStart = "请先连接 Wi-Fi 以开始测试。"
 
     override val lastTime = "最后一次"

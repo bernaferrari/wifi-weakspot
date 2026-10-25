@@ -16,7 +16,8 @@ object FrCommonStrings : CommonStrings {
     override val fastest = "Le plus rapide"
     override val address = "Adresse"
     override val responseTime = "Temps de réponse"
-    override val checkAgain = "Revérifier"
+    override val checkAgain = "Vérifier à nouveau"
+
     override val rename = "Renommer"
     override val stop = "Arrêter"
     override val unknown = "Inconnu"
@@ -49,7 +50,8 @@ object FrCommonStrings : CommonStrings {
     override val tabRooms = "Pièces"
     override val tabSettings = "Paramètres"
 
-    override val permissionScreenTitle = "Autoriser l'accès aux Wi-Fi à proximité"
+    override val permissionScreenTitle = "Autoriser l’accès aux réseaux Wi-Fi à proximité"
+
     override val permissionAllowAccess = "Autoriser l'accès"
     override val openAppSettings = "Ouvrir les paramètres de l'application"
 
@@ -63,7 +65,8 @@ object FrCommonStrings : CommonStrings {
     override val readyToScan = "Prêt à numériser"
     override fun scansRemaining(count: Int) = if (count == 1) "1 analyse restante" else "${count} scans restants"
     override fun nextScanIn(time: String) = "Prochaine analyse dans ${time}"
-    override val checking = "Vérification..."
+    override val checking = "Vérification…"
+
     override val justNow = "tout à l'heure"
     override fun minutesAgo(minutes: Long) = "${minutes} il y a min"
     override fun hoursAgo(hours: Long) = "${hours} il y a h"

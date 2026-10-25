@@ -90,7 +90,7 @@ interface ToolsStrings {
     // Ports result.
 
     /** Unit next to the big count of open ports ("3 open"). Very short. */
-    val portsOpenUnit: String
+    fun portsOpenUnit(count: Int): String
     /** Line under the count. */
     fun portsCommonServicesOn(host: String): String
     val portsNothingOpen: String

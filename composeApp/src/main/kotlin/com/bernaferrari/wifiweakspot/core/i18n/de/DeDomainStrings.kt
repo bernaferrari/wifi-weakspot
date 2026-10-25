@@ -62,22 +62,26 @@ object DeDomainStrings : DomainStrings {
 
     override val roomSuggestions = listOf("Wohnzimmer", "Küche", "Schlafzimmer", "Arbeitszimmer", "Kinderzimmer", "Badezimmer", "Esszimmer", "Flur", "Garage", "Keller", "Balkon", "Garten")
 
-    override val coverageNoRooms = "Noch keine Zimmer überprüft"
-    override fun coverageWeakInRoom(room: String) = "Schwach Wi-Fi in ${room}"
-    override fun coverageWeakInRooms(count: Int) = "Schwach Wi-Fi in ${count} Räumen"
+    override val coverageNoRooms = "Noch keine Räume gemessen"
+
+    override fun coverageWeakInRoom(room: String) = "Schwaches WLAN: ${room}"
+
+    override fun coverageWeakInRooms(count: Int) = "Schwaches WLAN in ${count} Räumen"
+
     override fun coverageRoomsCheckedNoneWeak(count: Int) =
         if (count == 1) "1 Zimmer überprüft, keines schwach" else "${count} Zimmer überprüft, keines schwach"
 
-    override fun tipHighBandWeak(room: String, band: String) =
-        "In ${room} verwendete Ihr Gerät ${band}, das weniger weit durch Wände reicht. Wenn Ihr Router Bänder aufteilen kann, hält 2.4 GHz dort möglicherweise besser."
-    override fun tipSignalDrop(dropDb: Int, bestRoom: String, worstRoom: String) =
-        "Signal fällt um ${dropDb} dB von ${bestRoom} auf ${worstRoom}. Versuchen Sie es mit einer zentraleren, erhöhten Position des Routers und überprüfen Sie dann die gleichen Stellen noch einmal, um zu sehen, ob es hilft."
+    override fun tipHighBandWeak(room: String, band: String) = "Bei ${room} nutzte Ihr Gerät ${band}. Diese Frequenz wird durch Wände stärker gedämpft. Falls Ihr Router getrennte Frequenzbänder erlaubt, kann 2,4 GHz dort stabiler sein."
+
+    override fun tipSignalDrop(dropDb: Int, bestRoom: String, worstRoom: String) = "Von ${bestRoom} nach ${worstRoom} nimmt das Signal um ${dropDb} dB ab. Stellen Sie den Router zentraler und höher auf und messen Sie erneut an denselben Stellen."
+
     override fun tipMultipleAccessPoints(count: Int) =
         "Ihr Gerät verwendet ${count} Zugangspunkte in diesen Räumen, was möglicherweise unterschiedliche Bänder oder Zugangspunkte widerspiegelt. Dies allein bestätigt kein zuverlässiges Roaming."
     override val tipRouterPlacement = "Stelle den Router im Innenraum erhöht und frei von Hindernissen auf, mit Abstand zu Mikrowellen, Spiegeln und Aquarien."
 
-    override val spotFirstReading = "Erste Lesung · Nach einer Änderung erneut prüfen"
-    override val spotDifferentNetwork = "Anderes Netzwerk oder anderer Spot · Starten Sie einen neuen Vergleich"
+    override val spotFirstReading = "Erste Messung · nach einer Änderung erneut messen"
+
+    override val spotDifferentNetwork = "Anderes Netzwerk oder anderer Ort · neuen Vergleich beginnen"
 
     override fun spotComparison(deltaDb: Int, accessPointChanged: Boolean, bandChanged: Boolean): String {
         val signal = when {
@@ -93,10 +97,12 @@ object DeDomainStrings : DomainStrings {
     }
 
     override val monitorChannelName = "Hintergrundüberwachung"
+
     override val monitorChannelDescription = "Zeigt an, wenn WiFi Weakspot WiFi Netzwerke überwacht"
     override val alertsChannelName = "Netzwerkwarnungen"
     override val alertsChannelDescription = "Warnungen für neue Netzwerke und Signaländerungen"
-    override val monitorStartFailed = "Die Überwachung konnte nicht gestartet werden. Erlauben Sie Wi-Fi Scans und aktivieren Sie die Ortungsdienste. Versuchen Sie es dann erneut."
+    override val monitorStartFailed = "Die Überwachung konnte nicht gestartet werden. Erlauben Sie WLAN-Scans und aktivieren Sie die Standortdienste. Versuchen Sie es dann erneut."
+
     override val monitorWaitingForScanLimited = "Warten auf einen neuen Wi-Fi Scan. Android kann Scananfragen einschränken."
     override val monitorWaitingForScan = "Warten auf einen neuen Wi-Fi Scan"
     override fun monitorStatus(networkCount: Int, lastScanTime: String) = "${networkCount} ${if (networkCount == 1) "Netzwerk" else "Netzwerke"} · Letzter Scan: ${lastScanTime}"

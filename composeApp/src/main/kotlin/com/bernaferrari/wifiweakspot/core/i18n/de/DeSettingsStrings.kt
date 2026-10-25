@@ -11,22 +11,29 @@ object DeSettingsStrings : SettingsStrings {
     override val themeDark = "Dunkel"
     override val showSignalAs = "Signalanzeige"
     override val sectionComfort = "Komfort"
-    override val reduceMotionTitle = "Bewegung reduzieren"
-    override val hapticsSubtitle = "Vibrieren Sie bei Berührungen und Ergebnissen"
+    override val reduceMotionTitle = "Animationen reduzieren"
+
+    override val hapticsSubtitle = "Vibration bei Berührungen und Ergebnissen"
+
     override val sectionAlerts = "Warnungen"
     override val backgroundAlertsTitle = "Hintergrundwarnungen"
-    override val backgroundAlertsSubtitle = "Bei Nähe ändert sich Wi-Fi"
+    override val backgroundAlertsSubtitle = "Bei Änderungen an WLANs in der Nähe"
+
     override val notificationsDenied = "Erlauben Sie Benachrichtigungen, um den Überwachungsstatus und Warnungen anzuzeigen."
-    override val checkEvery = "Überprüfen Sie alle"
+    override val checkEvery = "Prüfintervall"
+
     override fun intervalSeconds(seconds: Int) = "${seconds} Sek"
     override fun intervalMinutes(minutes: Int) = "${minutes} Min"
     override val newNetworkAlertsTitle = "Neue Netzwerkwarnungen"
     override val signalChangeAlertsTitle = "Signaländerungswarnungen"
     override val signalChangeAlertsSubtitle = "Wenn Ihr Signal stark ansteigt oder abfällt"
-    override val sectionAbout = "Ungefähr"
-    override fun aboutApp(appName: String) = "Ungefähr ${appName}"
+    override val sectionAbout = "Über die App"
+
+    override fun aboutApp(appName: String) = "Über ${appName}"
+
     override fun version(version: String) = "Version ${version}"
-    override val replayIntroTitle = "Zeigen Sie die Einleitung noch einmal an"
+    override val replayIntroTitle = "Einführung erneut anzeigen"
+
     override val wallpaperColors = "Hintergrundfarben"
     override val colorIndigo = "Indigo"
     override val colorOrange = "Orange"
@@ -38,22 +45,30 @@ object DeSettingsStrings : SettingsStrings {
     override val colorPurple = "Lila"
     override val colorPink = "Rosa"
 
-    override val tagline = "Finde schwaches WLAN zu Hause"
+    override val tagline = "Schwache WLAN-Stellen zu Hause finden"
+
     override val openSourceLicense = "Open Source · Apache 2.0"
     override val feedbackTitle = "Feedback"
     override val feedbackBody = "Ideen und Fehlerberichte"
-    override val elsewhere = "Anderswo"
-    override val privacySummary = "Deine Ergebnisse bleiben auf deinem Gerät, solange du sie nicht teilst."
-    override val privacyPolicy = "Datenschutzrichtlinie"
+    override val elsewhere = "Weitere Links"
+
+    override val privacySummary = "Ihre Ergebnisse bleiben auf Ihrem Gerät, solange Sie sie nicht teilen."
+
+    override val privacyPolicy = "Datenschutzerklärung"
 
     override val notNow = "Nicht jetzt"
-    override val getStarted = "Legen Sie los"
-    override val welcomeHeadline = "Finde schwaches WLAN\nbei dir zu Hause"
-    override val welcomeBody = "Sieh, wo das Signal schwächer wird und wie du es verbesserst."
+    override val getStarted = "Loslegen"
+
+    override val welcomeHeadline = "Wo ist Ihr\nWLAN schwach?"
+
+    override val welcomeBody = "Finden Sie heraus, wo das Signal schwächer wird und wie Sie es verbessern können."
+
     override val featureRoomsTitle = "Überprüfen Sie jedes Zimmer"
-    override val featureRoomsBody = "Finden Sie die Räume, in denen es abfällt."
+    override val featureRoomsBody = "Finden Sie die Räume mit schwachem Signal."
+
     override val featureRouterTitle = "Überprüfen Sie Ihren Router"
     override val featureRouterBody = "Sehen Sie, wie schnell die Antwort erfolgt."
     override val featureNearbyTitle = "Netzwerke in der Nähe anzeigen"
-    override val featureNearbyBody = "Wählen Sie einen klareren Kanal."
+    override val featureNearbyBody = "Finden Sie einen Kanal mit weniger Überlappung."
+
 }

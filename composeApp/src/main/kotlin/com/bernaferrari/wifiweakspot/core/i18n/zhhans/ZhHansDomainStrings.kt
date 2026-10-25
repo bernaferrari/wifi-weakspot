@@ -94,15 +94,15 @@ object ZhHansDomainStrings : DomainStrings {
 
     override fun spotComparison(deltaDb: Int, accessPointChanged: Boolean, bandChanged: Boolean): String {
         val signal = when {
-            deltaDb >= 4 -> "信号${deltaDb} dB 更强"
-            deltaDb <= -4 -> "信号${-deltaDb} dB 较弱"
-            else -> "信号大致相同"
+            deltaDb >= 4 -> "信号增强了 ${deltaDb} dB"
+            deltaDb <= -4 -> "信号减弱了 ${-deltaDb} dB"
+            else -> "信号基本相同"
         }
         val changed = buildList {
-            if (accessPointChanged) add("接入点已更改")
-            if (bandChanged) add("频段已更改")
+            if (accessPointChanged) add("接入点已变化")
+            if (bandChanged) add("频段已变化")
         }
-        return signal + if (changed.isEmpty()) "（与上次检查相比）" else " · ${changed.joinToString("; ")}"
+        return signal + if (changed.isEmpty()) "（与上次测量相比）" else " · ${changed.joinToString("; ")}"
     }
 
     override val monitorChannelName = "后台监控"

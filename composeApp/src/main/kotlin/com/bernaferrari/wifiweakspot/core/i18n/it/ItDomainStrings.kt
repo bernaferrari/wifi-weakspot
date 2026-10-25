@@ -62,22 +62,26 @@ object ItDomainStrings : DomainStrings {
 
     override val roomSuggestions = listOf("Soggiorno", "Cucina", "Camera da letto", "Studio", "Cameretta", "Bagno", "Sala da pranzo", "Corridoio", "Garage", "Seminterrato", "Balcone", "Giardino")
 
-    override val coverageNoRooms = "Nessuna stanza ancora controllata"
-    override fun coverageWeakInRoom(room: String) = "Debole Wi-Fi in ${room}"
-    override fun coverageWeakInRooms(count: Int) = "Debole Wi-Fi in ${count} stanze"
+    override val coverageNoRooms = "Nessuna stanza ancora misurata"
+
+    override fun coverageWeakInRoom(room: String) = "Segnale Wi-Fi debole: ${room}"
+
+    override fun coverageWeakInRooms(count: Int) = "Segnale Wi-Fi debole in ${count} stanze"
+
     override fun coverageRoomsCheckedNoneWeak(count: Int) =
         if (count == 1) "1 stanza controllata, nessuna debole" else "${count} stanze controllate, nessuna debole"
 
-    override fun tipHighBandWeak(room: String, band: String) =
-        "In ${room} il tuo dispositivo utilizzava ${band}, che trasporta meno lontano attraverso i muri. Se il tuo router può dividere le bande, 2.4 GHz potrebbe resistere meglio lì."
-    override fun tipSignalDrop(dropDb: Int, bestRoom: String, worstRoom: String) =
-        "Il segnale diminuisce di ${dropDb} dB da ${bestRoom} a ${worstRoom}. Prova una posizione del router più centrale e rialzata, quindi ricontrolla gli stessi punti per vedere se aiuta."
+    override fun tipHighBandWeak(room: String, band: String) = "In ${room} il dispositivo ha usato ${band}, una banda che attraversa meno bene i muri. Se il router permette di separare le bande, la rete a 2,4 GHz potrebbe essere più stabile."
+
+    override fun tipSignalDrop(dropDb: Int, bestRoom: String, worstRoom: String) = "Il segnale cala di ${dropDb} dB tra ${bestRoom} e ${worstRoom}. Prova a mettere il router in una posizione più centrale e alta, poi ripeti le misurazioni negli stessi punti."
+
     override fun tipMultipleAccessPoints(count: Int) =
         "Il tuo dispositivo ha utilizzato ${count} punti di accesso in queste stanze, che potrebbero riflettere bande o punti di accesso diversi. Questo da solo non conferma il roaming affidabile."
     override val tipRouterPlacement = "Posiziona il router in casa, in alto e senza ostacoli intorno, lontano da microonde, specchi e acquari."
 
-    override val spotFirstReading = "Prima lettura · ricontrollare dopo aver apportato una modifica"
-    override val spotDifferentNetwork = "Rete o spot diverso · avvia un nuovo confronto"
+    override val spotFirstReading = "Prima misurazione · ripeti dopo una modifica"
+
+    override val spotDifferentNetwork = "Rete o luogo diverso · avvia un nuovo confronto"
 
     override fun spotComparison(deltaDb: Int, accessPointChanged: Boolean, bandChanged: Boolean): String {
         val signal = when {
@@ -92,11 +96,13 @@ object ItDomainStrings : DomainStrings {
         return signal + if (changed.isEmpty()) " dall'ultimo controllo" else " · ${changed.joinToString("; ")}"
     }
 
-    override val monitorChannelName = "Monitoraggio dello sfondo"
+    override val monitorChannelName = "Monitoraggio in background"
+
     override val monitorChannelDescription = "Mostra quando WiFi Weakspot sta monitorando le reti WiFi"
     override val alertsChannelName = "Avvisi di rete"
     override val alertsChannelDescription = "Avvisi per nuove reti e cambiamenti di segnale"
-    override val monitorStartFailed = "Impossibile avviare il monitoraggio. Consenti le scansioni Wi-Fi e attiva i servizi di localizzazione, quindi riprova."
+    override val monitorStartFailed = "Impossibile avviare il monitoraggio. Consenti le scansioni Wi-Fi, attiva la posizione e riprova."
+
     override val monitorWaitingForScanLimited = "In attesa di una nuova scansione Wi-Fi. Android potrebbe limitare le richieste di scansione."
     override val monitorWaitingForScan = "In attesa di una nuova scansione Wi-Fi"
     override fun monitorStatus(networkCount: Int, lastScanTime: String) = "${networkCount} ${if (networkCount == 1) "rete" else "reti"} · Ultima scansione: ${lastScanTime}"

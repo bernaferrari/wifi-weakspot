@@ -11,13 +11,16 @@ object RuSettingsStrings : SettingsStrings {
     override val themeDark = "Тёмная"
     override val showSignalAs = "Отображение сигнала"
     override val sectionComfort = "Комфорт"
-    override val reduceMotionTitle = "Уменьшить движение"
+    override val reduceMotionTitle = "Уменьшить анимацию"
+
     override val hapticsSubtitle = "Вибрация при нажатии и результатах"
     override val sectionAlerts = "Оповещения"
     override val backgroundAlertsTitle = "Фоновые оповещения"
-    override val backgroundAlertsSubtitle = "Когда рядом Wi-Fi меняется"
+    override val backgroundAlertsSubtitle = "При изменениях в сетях Wi-Fi поблизости"
+
     override val notificationsDenied = "Разрешить уведомления, чтобы видеть статус мониторинга и оповещения."
-    override val checkEvery = "Проверяйте каждый"
+    override val checkEvery = "Интервал проверки"
+
     override fun intervalSeconds(seconds: Int) = "${seconds} сек."
     override fun intervalMinutes(minutes: Int) = "${minutes} мин."
     override val newNetworkAlertsTitle = "Новые сетевые оповещения"
@@ -42,18 +45,22 @@ object RuSettingsStrings : SettingsStrings {
     override val openSourceLicense = "Открытый исходный код · Apache 2.0"
     override val feedbackTitle = "Обратная связь"
     override val feedbackBody = "Идеи и отчеты об ошибках"
-    override val elsewhere = "В другом месте"
+    override val elsewhere = "Другие ссылки"
+
     override val privacySummary = "Результаты остаются на вашем устройстве, если вы сами ими не поделитесь."
     override val privacyPolicy = "Политика конфиденциальности"
 
     override val notNow = "Не сейчас"
     override val getStarted = "Начать"
-    override val welcomeHeadline = "Найдите зоны слабого\nWi-Fi дома"
+    override val welcomeHeadline = "Где дома\nслабый Wi-Fi?"
+
     override val welcomeBody = "Узнайте, где сигнал слабеет и как это исправить."
     override val featureRoomsTitle = "Проверьте каждую комнату."
-    override val featureRoomsBody = "Найдите комнаты, где он падает."
+    override val featureRoomsBody = "Найдите комнаты со слабым сигналом."
+
     override val featureRouterTitle = "Проверьте свой роутер"
     override val featureRouterBody = "Посмотрите, как быстро он отвечает."
     override val featureNearbyTitle = "Посмотреть ближайшие сети"
-    override val featureNearbyBody = "Выберите более четкий канал."
+    override val featureNearbyBody = "Найдите канал с меньшим перекрытием."
+
 }

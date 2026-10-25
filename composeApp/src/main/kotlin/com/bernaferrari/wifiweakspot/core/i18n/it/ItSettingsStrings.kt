@@ -11,13 +11,17 @@ object ItSettingsStrings : SettingsStrings {
     override val themeDark = "Scuro"
     override val showSignalAs = "Mostra segnale come"
     override val sectionComfort = "Comodità"
-    override val reduceMotionTitle = "Riduci il movimento"
-    override val hapticsSubtitle = "Vibra su rubinetti e risultati"
+    override val reduceMotionTitle = "Riduci le animazioni"
+
+    override val hapticsSubtitle = "Vibra al tocco e quando appaiono i risultati"
+
     override val sectionAlerts = "Avvisi"
     override val backgroundAlertsTitle = "Avvisi in background"
-    override val backgroundAlertsSubtitle = "Quando nelle vicinanze Wi-Fi cambia"
+    override val backgroundAlertsSubtitle = "Quando cambiano le reti Wi-Fi vicine"
+
     override val notificationsDenied = "Consenti notifiche per vedere lo stato del monitoraggio e gli avvisi."
-    override val checkEvery = "Controlla ogni"
+    override val checkEvery = "Intervallo di controllo"
+
     override fun intervalSeconds(seconds: Int) = "${seconds} sec"
     override fun intervalMinutes(minutes: Int) = "${minutes} min"
     override val newNetworkAlertsTitle = "Nuovi avvisi di rete"
@@ -42,18 +46,22 @@ object ItSettingsStrings : SettingsStrings {
     override val openSourceLicense = "Open source · Apache 2.0"
     override val feedbackTitle = "Feedback"
     override val feedbackBody = "Idee e segnalazioni di bug"
-    override val elsewhere = "Altrove"
+    override val elsewhere = "Altri link"
+
     override val privacySummary = "I risultati restano sul tuo dispositivo, a meno che tu non li condivida."
     override val privacyPolicy = "Informativa sulla privacy"
 
     override val notNow = "Non ora"
     override val getStarted = "Inizia"
-    override val welcomeHeadline = "Trova i punti deboli\ndel Wi-Fi a casa"
+    override val welcomeHeadline = "Trova dove\nil Wi-Fi è debole"
+
     override val welcomeBody = "Scopri dove il segnale cala e come migliorarlo."
     override val featureRoomsTitle = "Controlla ogni stanza"
-    override val featureRoomsBody = "Trova le stanze dove cade."
+    override val featureRoomsBody = "Trova le stanze in cui il segnale è debole."
+
     override val featureRouterTitle = "Controlla il tuo router"
     override val featureRouterBody = "Guarda quanto velocemente risponde."
     override val featureNearbyTitle = "Visualizza le reti vicine"
-    override val featureNearbyBody = "Scegli un canale più chiaro."
+    override val featureNearbyBody = "Trova un canale con meno sovrapposizioni."
+
 }

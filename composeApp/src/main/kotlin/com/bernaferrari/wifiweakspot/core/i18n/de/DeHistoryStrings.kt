@@ -35,7 +35,8 @@ object DeHistoryStrings : HistoryStrings {
     override fun listWithMore(list: String, more: Int) = if (more > 0) "${list} und ${more} mehr" else list
     override fun pingSummary(averageMs: String, replied: Int, sent: Int) = "${averageMs} ms · ${replied} von ${sent} Antworten"
 
-    override fun lookupTitle(target: String) = "Suchen Sie nach ${target}"
+    override fun lookupTitle(target: String) = "DNS-Abfrage: ${target}"
+
     override val noRecords = "Keine Datensätze"
     override val lookupFailed = "Suche fehlgeschlagen"
     override fun openPortsTitle(target: String) = "Offene Ports auf ${target}"

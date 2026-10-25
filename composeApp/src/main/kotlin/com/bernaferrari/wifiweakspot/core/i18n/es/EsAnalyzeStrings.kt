@@ -6,8 +6,10 @@ object EsAnalyzeStrings : AnalyzeStrings {
 
     private fun networks(count: Int) = if (count == 1) "1 red" else "${count} redes"
 
-    override fun channelShort(channel: Int) = "Ch ${channel}"
-    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · Ch ${channel} · ${band}"
+    override fun channelShort(channel: Int) = "Can. ${channel}"
+
+    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · ${channelShort(channel)} · ${band}"
+
     override val noPassword = "Sin contraseña"
     override val wifiOffTitle = "Wi-Fi está apagado"
     override val locationOffBody = "Android necesita la ubicación activada para mostrar las redes Wi-Fi cercanas. WiFi Weakspot no usa GPS."
@@ -44,8 +46,8 @@ object EsAnalyzeStrings : AnalyzeStrings {
     override fun scanReportTime(time: String) = "Hora: ${time}"
     override fun scanReportTotal(count: Int) = "Redes totales: ${count}"
     override val scanReportNetworksHeading = "Redes:"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) =
-        "• ${ssid} - ${rssi}dBm, Ch ${channel}, ${security}"
+    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
+
     override val channelLooksClear = "Tu canal se ve claro."
     override val noChannelImprovement = "No se encontró ninguna mejora en este escaneo."
     override fun lessOverlapThanChannel(currentChannel: Int) = "Menos superposición que el canal ${currentChannel}"
@@ -59,13 +61,15 @@ object EsAnalyzeStrings : AnalyzeStrings {
     override fun channelGraphDescription(networkCount: Int, busiestChannel: Int?, busiestCount: Int) =
         "Gráfico de canales, ${networks(networkCount)}." +
             (if (busiestChannel != null) " Canal más ocupado ${busiestChannel} con ${busiestCount}." else "")
-    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) =
-        name + (if (isYou) " (tú)" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+
     override val busyCaption = "Ocupado"
     override val axisStrong = "Fuerte"
-    override val axisOkay = "Aceptable"
+    override val axisOkay = "Media"
+
     override val axisWeak = "Débil"
-    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · Ch ${channel}"
+    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
+
     override val clearSelectedNetwork = "Borrar red seleccionada"
     override val tapWaveForDetails = "Toca un saludo para obtener detalles de la red"
 
@@ -76,7 +80,8 @@ object EsAnalyzeStrings : AnalyzeStrings {
     override val guideSameRouterBody = "+1: Los nombres de red que parecen usar el mismo módulo Wi-Fi comparten una curva."
 
     override val guideCrowdBody = "El verde indica menos superposición; el rojo, más. La franja debajo de 2.4 GHz muestra superposición. Tócalo para contar."
-    override val guideSteadyBody = "Una línea con saltos muestra los cambios en la intensidad de la señal. Toque una línea para hacer una pausa y luego deslícese hacia los lados en el tiempo o verticalmente entre redes. Reanude en vivo para ver nuevas lecturas."
+    override val guideSteadyBody = "Una línea con muchos saltos indica cambios en la señal. Toca una línea para pausar; arrastra a los lados para cambiar de momento y arriba o abajo para cambiar de red. Reanuda para ver nuevas mediciones."
+
     override val guideHighlightBody = "Toque una colina o fila para resaltarla. Arrastre horizontalmente por el gráfico para explorar."
 
     override fun channelOverlapHeading(count: Int, channel: Int) = when (count) {
@@ -90,12 +95,13 @@ object EsAnalyzeStrings : AnalyzeStrings {
     override fun tryChannel(channel: Int) = "Prueba el canal ${channel}"
     override val lowestOverlapFor20Mhz = "Superposición estimada más baja para 20 MHz canales"
     override val overlapDisclaimer = "Basado en puntos de acceso cercanos y en la intensidad de la señal, no en el tráfico medido. " +
-        "Verifique los canales admitidos y las reglas locales de su enrutador antes de cambiar la configuración. " +
+        "Verifique los canales admitidos y las reglas locales de tu router antes de cambiar la configuración. " +
         "Las sugerencias 5 y 6 GHz requieren soporte de enrutador conocido; faltan centros de canal ancho " +
         "muestra solo el canal principal 20 MHz."
     override val overlapScore = "Puntuación de superposición"
 
-    override val collectingReadings = "Recopilando lecturas... Las líneas aparecen después de un par de escaneos."
+    override val collectingReadings = "Recopilando mediciones… Las líneas aparecerán tras unas cuantas búsquedas."
+
     override fun signalHistoryDescription(networkCount: Int) =
         "Historial de señales para ${networks(networkCount)}. Toque una línea para inspeccionar. Las teclas de flecha se mueven a través del tiempo y las redes."
     override val historyLive = "Vivir"
@@ -154,13 +160,13 @@ object EsAnalyzeStrings : AnalyzeStrings {
         else -> "${count} las señales cercanas se superponen a tu canal ${channel}."
     }
 
-    override val adviceNoWifiBody = "Conéctese a la red que desea verificar. Aún puedes ejecutar pruebas de Internet y herramientas de red usando tu conexión actual."
+    override val adviceNoWifiBody = "Conéctate a la red que desea verificar. Aún puedes ejecutar pruebas de Internet y herramientas de red usando tu conexión actual."
     override val adviceNoInternetTitle = "Primero verifique el acceso a Internet"
-    override val adviceNoInternetBody = "Android no ha confirmado el acceso a Internet en esta conexión Wi-Fi. Busque una página de inicio de sesión y luego pruebe la conectividad con su enrutador y un servidor de Internet."
+    override val adviceNoInternetBody = "Android no ha confirmado el acceso a Internet en esta conexión Wi-Fi. Busque una página de inicio de sesión y luego pruebe la conectividad con tu router y un servidor de Internet."
     override val adviceNoSignalTitle = "Lee tu señal Wi-Fi"
-    override val adviceNoSignalBody = "Permita escaneos Wi-Fi en Redes para ver mediciones de señal. Compara la señal en la habitación donde notes problemas."
+    override val adviceNoSignalBody = "Permite escaneos Wi-Fi en Redes para ver mediciones de señal. Compara la señal en la habitación donde notes problemas."
     override val adviceWeakSignalTitle = "Compara la cobertura cerca de tu router"
-    override val adviceWeakSignalBody = "La señal Wi-Fi actual es débil. Ejecute una verificación del enrutador aquí, luego repita cerca del enrutador. Utilice una encuesta de su propia red para encontrar puntos débiles."
-    override val adviceGoodSignalTitle = "Comparar la capacidad de respuesta del enrutador"
-    override val adviceGoodSignalBody = "La intensidad de la señal parece utilizable y Android informa acceso a Internet. Si la conexión se siente lenta, compare la respuesta del enrutador aquí y cerca del enrutador; Una señal fuerte por sí sola no garantiza el rendimiento."
+    override val adviceWeakSignalBody = "La señal Wi-Fi actual es débil. Ejecute una verificación del router aquí, luego repita cerca del router. Utilice una encuesta de su propia red para encontrar puntos débiles."
+    override val adviceGoodSignalTitle = "Comparar la capacidad de respuesta del router"
+    override val adviceGoodSignalBody = "La intensidad de la señal parece utilizable y Android informa acceso a Internet. Si la conexión se siente lenta, compare la respuesta del router aquí y cerca del router; Una señal fuerte por sí sola no garantiza el rendimiento."
 }

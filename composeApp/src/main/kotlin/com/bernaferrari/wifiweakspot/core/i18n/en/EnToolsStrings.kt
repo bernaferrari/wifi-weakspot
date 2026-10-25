@@ -51,7 +51,8 @@ object EnToolsStrings : ToolsStrings {
     override fun dnsFoundExplanation(query: String) = "Your device can find $query."
     override val dnsAddressesTitle = "Addresses"
 
-    override val portsOpenUnit = "open"
+    override fun portsOpenUnit(count: Int) = "open"
+
     override fun portsCommonServicesOn(host: String) = "Common services on $host"
     override val portsNothingOpen = "Nothing open"
     override fun portsOffersServices(count: Int) = if (count == 1) "It offers 1 service" else "It offers $count services"

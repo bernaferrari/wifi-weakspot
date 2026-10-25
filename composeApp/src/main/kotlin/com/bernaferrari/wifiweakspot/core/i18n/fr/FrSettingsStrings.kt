@@ -11,13 +11,17 @@ object FrSettingsStrings : SettingsStrings {
     override val themeDark = "Sombre"
     override val showSignalAs = "Afficher le signal en"
     override val sectionComfort = "Confort"
-    override val reduceMotionTitle = "Réduire le mouvement"
-    override val hapticsSubtitle = "Vibrer sur les robinets et les résultats"
+    override val reduceMotionTitle = "Réduire les animations"
+
+    override val hapticsSubtitle = "Vibrer au toucher et à l’affichage des résultats"
+
     override val sectionAlerts = "Alertes"
     override val backgroundAlertsTitle = "Alertes en arrière-plan"
-    override val backgroundAlertsSubtitle = "À proximité Wi-Fi change"
+    override val backgroundAlertsSubtitle = "Quand les réseaux Wi-Fi à proximité changent"
+
     override val notificationsDenied = "Autorisez les notifications à voir l’état de surveillance et les alertes."
-    override val checkEvery = "Vérifiez chaque"
+    override val checkEvery = "Intervalle de vérification"
+
     override fun intervalSeconds(seconds: Int) = "${seconds} seconde"
     override fun intervalMinutes(minutes: Int) = "${minutes} minute"
     override val newNetworkAlertsTitle = "Nouvelles alertes réseau"
@@ -32,7 +36,8 @@ object FrSettingsStrings : SettingsStrings {
     override val colorOrange = "Orange"
     override val colorAmber = "Ambre"
     override val colorGreen = "Vert"
-    override val colorTeal = "Sarcelle"
+    override val colorTeal = "Bleu canard"
+
     override val colorCyan = "Cyan"
     override val colorBlue = "Bleu"
     override val colorPurple = "Violet"
@@ -42,18 +47,22 @@ object FrSettingsStrings : SettingsStrings {
     override val openSourceLicense = "Open source · Apache 2.0"
     override val feedbackTitle = "Retour"
     override val feedbackBody = "Idées et rapports de bugs"
-    override val elsewhere = "Autre part"
+    override val elsewhere = "Autres liens"
+
     override val privacySummary = "Vos résultats restent sur votre appareil, sauf si vous les partagez."
     override val privacyPolicy = "Politique de confidentialité"
 
     override val notNow = "Pas maintenant"
     override val getStarted = "Commencer"
-    override val welcomeHeadline = "Repérez les zones de faible\nsignal Wi-Fi chez vous"
+    override val welcomeHeadline = "Où le Wi-Fi\npasse mal ?"
+
     override val welcomeBody = "Voyez où le signal faiblit et comment l'améliorer."
     override val featureRoomsTitle = "Vérifiez chaque pièce"
-    override val featureRoomsBody = "Trouvez les pièces où il tombe."
+    override val featureRoomsBody = "Repérez les pièces où le signal est faible."
+
     override val featureRouterTitle = "Vérifiez votre routeur"
     override val featureRouterBody = "Voyez à quelle vitesse il répond."
     override val featureNearbyTitle = "Voir les réseaux à proximité"
-    override val featureNearbyBody = "Choisissez un canal plus clair."
+    override val featureNearbyBody = "Trouvez un canal avec moins de chevauchement."
+
 }

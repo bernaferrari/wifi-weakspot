@@ -13,7 +13,8 @@ object JaSettingsStrings : SettingsStrings {
     override val showSignalAs = "信号の表示方法"
     override val sectionComfort = "使いやすさ"
 
-    override val reduceMotionTitle = "動きを減らす"
+    override val reduceMotionTitle = "アニメーションを減らす"
+
     override val hapticsSubtitle = "タップ時や結果の表示時に振動"
 
     override val sectionAlerts = "アラート"
@@ -44,7 +45,8 @@ object JaSettingsStrings : SettingsStrings {
     override val colorOrange = "オレンジ"
     override val colorAmber = "アンバー"
     override val colorGreen = "グリーン"
-    override val colorTeal = "ティール"
+    override val colorTeal = "青緑"
+
     override val colorCyan = "シアン"
     override val colorBlue = "ブルー"
     override val colorPurple = "パープル"
@@ -63,7 +65,8 @@ object JaSettingsStrings : SettingsStrings {
 
     override val getStarted = "始める"
 
-    override val welcomeHeadline = "自宅のWi-Fiの\n弱い場所を見つける"
+    override val welcomeHeadline = "家のWi-Fiの\n弱い場所を探す"
+
     override val welcomeBody = "信号が弱くなる場所と改善方法を確認できます。"
     override val featureRoomsTitle = "各部屋で測定"
 

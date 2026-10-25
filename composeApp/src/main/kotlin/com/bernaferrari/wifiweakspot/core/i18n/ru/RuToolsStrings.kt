@@ -3,19 +3,21 @@ package com.bernaferrari.wifiweakspot.core.i18n.ru
 import com.bernaferrari.wifiweakspot.core.i18n.ToolsStrings
 
 object RuToolsStrings : ToolsStrings {
-    override val tryAgain = "Попробуй еще раз."
+    override val tryAgain = "Повторить"
 
     override val targetPlaceholder = "Веб-сайт или IP-адрес."
-    override val clearTarget = "Ясно"
+    override val clearTarget = "Очистить"
+
     override val checkSectionTitle = "Проверить"
     override val recentSectionTitle = "Недавние"
 
     override val toolPortsDescription = "Что открыто"
 
     override val pingQuestion = "Он отвечает?"
-    override val dnsQuestion = "Какой у него адрес?"
+    override val dnsQuestion = "Какой у него IP-адрес?"
+
     override val dnsDetail = "DNS поиск"
-    override val portsQuestion = "Что он предлагает?"
+    override val portsQuestion = "Какие службы доступны?"
 
     override val runningPortScanTitle = "Проверка портов"
 
@@ -24,7 +26,7 @@ object RuToolsStrings : ToolsStrings {
     override val diagnosticCouldNotComplete = "Не удалось завершить диагностику."
     override val connectionChangedRunAgain = "Соединение изменилось. Запустите эту проверку еще раз в новой сети."
 
-    override val openItsWebPage = "Откройте его веб-страницу."
+    override val openItsWebPage = "Открыть веб-страницу"
 
     override fun pingRepliedLabel(target: String, answered: Int, total: Int) = "${target} · ответов: ${answered} из ${total}"
 
@@ -32,10 +34,13 @@ object RuToolsStrings : ToolsStrings {
     override fun repliesContentDescription(replies: String) = "Ответы: ${replies}"
 
     override val pingDidntAnswer = "Не ответил"
-    override val pingResponsive = "Адаптивный"
-    override val pingResponsiveButUneven = "Отзывчивый, но неравномерный"
-    override val pingDroppingReplies = "Удаление ответов"
-    override val pingSlowToAnswer = "Медленно отвечаю"
+    override val pingResponsive = "Хороший отклик"
+
+    override val pingResponsiveButUneven = "Отклик с задержками разной длительности"
+
+    override val pingDroppingReplies = "Часть ответов не получена"
+
+    override val pingSlowToAnswer = "Медленный отклик"
 
     override val pingNoAnswerLocal = "Возможно, он выключен, находится в спящем режиме или настроен на игнорирование пингов."
     override fun pingRepliesLost(lost: Int, total: Int) =
@@ -47,18 +52,22 @@ object RuToolsStrings : ToolsStrings {
     override fun dnsAddressUnit(count: Int) = plural(count, "адрес", "адреса", "адресов")
 
     override fun dnsForQuery(query: String) = "Для ${query}"
-    override val dnsNotFound = "Не удалось найти."
-    override val dnsFound = "Нашёл"
+    override val dnsNotFound = "Адрес не найден"
+
+    override val dnsFound = "Адрес найден"
+
     override val dnsNotFoundExplanation = "Проверьте правильность написания или повторите попытку; имя может не существовать."
     override fun dnsFoundExplanation(query: String) = "Ваше устройство может найти ${query}."
     override val dnsAddressesTitle = "Адреса"
 
-    override val portsOpenUnit = "открыто"
+    override fun portsOpenUnit(count: Int) = plural(count, "открытый порт", "открытых порта", "открытых портов")
+
     override fun portsCommonServicesOn(host: String) = "Общие службы на ${host}"
     override val portsNothingOpen = "Ничего не открыто"
     override fun portsOffersServices(count: Int) = "${plural(count, "Доступна", "Доступны", "Доступно")} ${count} ${plural(count, "служба", "службы", "служб")}"
 
-    override val portsNoneAnswered = "Ни одна общая служба не ответила."
+    override val portsNoneAnswered = "Ни одна из распространённых служб не ответила."
+
     override val portsOffersExplanation = "Такие вещи, как страница настроек или обмен файлами."
 
     override val portWebPage = "Веб-страница"
@@ -83,35 +92,44 @@ object RuToolsStrings : ToolsStrings {
     override val couldntLookForDevices = "Не удалось найти устройства."
     override val scanFailed = "Сканирование не удалось."
     override val connectionChangedLookAgain = "Соединение изменилось. Посмотрите еще раз в этой сети."
-    override val stoppedLooking = "Перестал искать"
+    override val stoppedLooking = "Поиск остановлен"
+
     override val noDevicesFound = "Устройства не найдены."
-    override val noDevicesFoundSubtitle =
-        "Некоторые устройства молчат, когда об этом спрашивают. Повторите попытку через минуту или проверьте, есть ли это устройство у вас дома Wi-Fi."
+    override val noDevicesFoundSubtitle = "Некоторые устройства не отвечают на сканирование. Повторите попытку немного позже или проверьте, подключено ли это устройство к домашней сети Wi-Fi."
+
     override fun otherDevicesGroup(count: Int) = "Другие устройства · ${count}"
     override fun quietDevices(count: Int) = "${count} ${plural(count, "неопознанное устройство", "неопознанных устройства", "неопознанных устройств")}"
 
-    override val quietDevicesSubtitle = "Они не сказали, кто они такие"
+    override val quietDevicesSubtitle = "Не удалось определить тип устройств"
+
     override val hide = "Скрыть"
     override val show = "Показать"
     override fun checkingLocalAddresses(percent: Int) = "Проверка локальных адресов · ${percent}%"
     override fun deviceDidntAnswer(detail: String) = "${detail} · не ответил"
 
     override val deviceNotScannedYet = "Пока не найдено при сканировании"
-    override val deviceAnsweredLastScan = "Ответил на последнее сканирование."
-    override val deviceSeenButNoAnswer = "Видел в сети, но не ответил"
-    override val actionCheckPorts = "Проверьте порты"
-    override val openRouterSettings = "Открыть настройки роутера."
+    override val deviceAnsweredLastScan = "Ответило при последнем сканировании"
+
+    override val deviceSeenButNoAnswer = "Обнаружено в сети, но ответа нет"
+
+    override val actionCheckPorts = "Проверить порты"
+
+    override val openRouterSettings = "Открыть настройки роутера"
+
     override val detailsTitle = "Подробности"
     override val factNetworkName = "Имя сети"
     override val factHardwareAddress = "Аппаратный адрес"
     override val macHiddenByAndroid = "Скрыт Android"
-    override val factYourName = "Ваше имя"
+    override val factYourName = "Заданное вами имя"
+
     override val portsNotCheckedYet = "Пока не проверено."
-    override fun portsNoneOpenWhenChecked(moment: String) =
-        "Ни один из общих портов не был открыт, когда установлен флажок ${moment.replaceFirstChar { it.lowercase() }}."
-    override fun portsCheckedAt(moment: String) = "Проверено ${moment.replaceFirstChar { it.lowercase() }}."
+    override fun portsNoneOpenWhenChecked(moment: String) = "Ни один из распространённых портов не был открыт. Проверено: ${moment}."
+
+    override fun portsCheckedAt(moment: String) = "Проверено: ${moment}."
+
     override val renameDeviceTitle = "Переименование устройства"
-    override val renameSupporting = "Оставьте пустым, чтобы использовать найденное имя WiFi Weakspot."
+    override val renameSupporting = "Оставьте поле пустым, чтобы использовать имя, обнаруженное WiFi Weakspot."
+
     override val connectionChangedOpenAgain = "Соединение изменилось. Откройте это устройство еще раз в новой сети."
     override val couldntLoadDetails = "Не удалось загрузить сохраненные данные. Попробуйте открыть это устройство еще раз."
     override val scanBeforeNaming = "Просканируйте это устройство перед сохранением имени."

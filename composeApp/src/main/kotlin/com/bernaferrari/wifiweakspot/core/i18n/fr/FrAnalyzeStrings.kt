@@ -6,8 +6,10 @@ object FrAnalyzeStrings : AnalyzeStrings {
 
     private fun networks(count: Int) = if (count == 1) "1 réseau" else "${count} réseaux"
 
-    override fun channelShort(channel: Int) = "Ch ${channel}"
-    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · Ch ${channel} · ${band}"
+    override fun channelShort(channel: Int) = "Can. ${channel}"
+
+    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · ${channelShort(channel)} · ${band}"
+
     override val noPassword = "Sans mot de passe"
     override val wifiOffTitle = "Wi-Fi est éteint"
     override val locationOffBody = "Android exige que la localisation soit activée pour afficher les réseaux Wi-Fi à proximité. WiFi Weakspot n'utilise pas le GPS."
@@ -44,8 +46,8 @@ object FrAnalyzeStrings : AnalyzeStrings {
     override fun scanReportTime(time: String) = "Heure : ${time}"
     override fun scanReportTotal(count: Int) = "Réseaux totaux : ${count}"
     override val scanReportNetworksHeading = "Réseaux :"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) =
-        "• ${ssid} - ${rssi}dBm, Ch ${channel}, ${security}"
+    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
+
     override val channelLooksClear = "Votre chaîne semble claire"
     override val noChannelImprovement = "Aucune amélioration trouvée dans cette analyse"
     override fun lessOverlapThanChannel(currentChannel: Int) = "Moins de chevauchement que le canal ${currentChannel}"
@@ -59,13 +61,15 @@ object FrAnalyzeStrings : AnalyzeStrings {
     override fun channelGraphDescription(networkCount: Int, busiestChannel: Int?, busiestCount: Int) =
         "Graphique de canal, ${networks(networkCount)}." +
             (if (busiestChannel != null) " Chaîne la plus fréquentée ${busiestChannel} avec ${busiestCount}." else "")
-    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) =
-        name + (if (isYou) " (toi)" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+
     override val busyCaption = "Chargé"
     override val axisStrong = "Fort"
-    override val axisOkay = "Correct"
+    override val axisOkay = "Moyen"
+
     override val axisWeak = "Faible"
-    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · Ch ${channel}"
+    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
+
     override val clearSelectedNetwork = "Effacer le réseau sélectionné"
     override val tapWaveForDetails = "Appuyez sur une vague pour les détails du réseau"
 
@@ -76,7 +80,8 @@ object FrAnalyzeStrings : AnalyzeStrings {
     override val guideSameRouterBody = "+1 : Les noms de réseaux qui semblent utiliser le même module Wi-Fi partagent une courbe."
 
     override val guideCrowdBody = "Le vert indique moins de chevauchement ; le rouge, davantage. La bande sous 2.4 GHz montre un chevauchement. Appuyez dessus pour compter."
-    override val guideSteadyBody = "Une ligne saccadée montre l'évolution de la force du signal. Appuyez sur une ligne pour faire une pause, puis glissez latéralement dans le temps ou verticalement entre les réseaux. Reprenez le direct pour regarder de nouvelles lectures."
+    override val guideSteadyBody = "Une courbe qui monte et descend indique des variations du signal. Touchez-la pour mettre en pause, puis glissez horizontalement pour changer d’instant ou verticalement pour changer de réseau. Reprenez le direct pour voir les nouvelles mesures."
+
     override val guideHighlightBody = "Appuyez sur une colline ou une ligne pour la mettre en surbrillance. Faites glisser horizontalement sur le graphique pour l'explorer."
 
     override fun channelOverlapHeading(count: Int, channel: Int) = when (count) {
@@ -95,7 +100,8 @@ object FrAnalyzeStrings : AnalyzeStrings {
         "affiche uniquement la chaîne principale 20 MHz."
     override val overlapScore = "Score de chevauchement"
 
-    override val collectingReadings = "Collecte des lectures… Les lignes apparaissent après quelques scans."
+    override val collectingReadings = "Collecte des mesures… Les courbes apparaîtront après quelques analyses."
+
     override fun signalHistoryDescription(networkCount: Int) =
         "Historique des signaux pour ${networks(networkCount)}. Appuyez sur une ligne à inspecter. Les touches fléchées se déplacent dans le temps et les réseaux."
     override val historyLive = "En direct"

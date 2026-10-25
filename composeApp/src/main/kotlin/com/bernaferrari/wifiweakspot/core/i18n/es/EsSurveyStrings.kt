@@ -6,24 +6,29 @@ object EsSurveyStrings : SurveyStrings {
     override val measuringHoldStill = "Midiendo… quédate quieto"
     override val tapWhereYouAreStanding = "Toca el mapa donde estás parado"
     override val chooseWifi = "Elige Wi-Fi"
-    override val undoLastReading = "Deshacer la última lectura"
-    override val allReadings = "Todas las lecturas"
+    override val undoLastReading = "Deshacer la última medición"
+
+    override val allReadings = "Todas las mediciones"
+
     override val floorPlanTitle = "Plano"
-    override fun readingCount(count: Int) = if (count == 1) "1 lectura" else "${count} lecturas"
+    override fun readingCount(count: Int) = if (count == 1) "1 medición" else "${count} mediciones"
+
     override val mapOptions = "Opciones de mapa"
-    override val usePlanPhoto = "Usa una foto de tu plan"
+    override val usePlanPhoto = "Usar una foto del plano"
+
     override val changePhoto = "cambiar la foto"
     override val removePhoto = "quitar la foto"
-    override val exportReadingsCsv = "Exportar lecturas (CSV)"
+    override val exportReadingsCsv = "Exportar mediciones (CSV)"
+
     override fun floorName(floor: Int) = if (floor == 0) "Sótano" else "Piso ${floor}"
     override fun floorShortLabel(floor: Int) = if (floor == 0) "B" else "${floor}"
     override fun floorButtonLabel(floor: Int) = "Piso ${floorShortLabel(floor)}"
     override fun addFloor(floor: Int) = if (floor == 0) "Añadir un sótano" else "Agregar piso ${floor}"
     override val deleteFloorReadingsAction = "Eliminar las lecturas de este piso"
-    override fun deleteFloorBody(count: Int) =
-        if (count == 1) "Se eliminará su primera lectura." else "Se eliminarán sus lecturas de ${count}."
+    override fun deleteFloorBody(count: Int) = "Se eliminarán las mediciones de esta planta (${count})."
 
-    override val oneRouterAtATime = "Un mapa sigue un enrutador a la vez. Los sistemas de malla muestran cada unidad por separado."
+    override val oneRouterAtATime = "Cada mapa mide un solo punto de acceso. En los sistemas mesh, cada unidad aparece por separado."
+
     override val noNetworksFound = "Aún no se han encontrado redes. Comprueba que Wi-Fi y la ubicación estén activados."
     override val scanning = "Buscando…"
     override val refresh = "Refrescar"
@@ -33,64 +38,71 @@ object EsSurveyStrings : SurveyStrings {
 
     override val deleteMapBody = "Se eliminarán todas las lecturas de cada piso."
 
-    override val noReadingsYet = "No hay lecturas aquí todavía. Toca el mapa donde estás parado."
+    override val noReadingsYet = "Aún no hay mediciones aquí. Toca en el plano el lugar donde estás."
+
     override val weakestFirst = "Los más débiles primero, por lo que los puntos problemáticos están arriba."
     override val mapYourHome = "Mapea tu casa"
     override val mapYourHomeBody = "Vea su Wi-Fi en un mapa de su hogar. Utilice una foto de su plan o una cuadrícula en blanco."
     override val createMap = "Crear un mapa"
 
-    override val namePlaceholder = "Arriba, oficina…"
+    override val namePlaceholder = "Planta de arriba, despacho…"
 
     override val floorplanDescription = "Plano del proyecto"
     override fun coverageMapDescription(count: Int) =
         "Mapa de cobertura con ${readingCount(count)}. Toca donde estás parado para medir."
 
-    override val networkNotSeenHere = "Ese Wi-Fi no apareció aquí. No se salvó nada."
-    override val projectChangedWhileScanning = "El proyecto cambió durante el escaneo. No se salvó ningún punto."
-    override val couldNotSaveReading = "No se pudo guardar esa lectura. Tus otras lecturas están seguras."
+    override val networkNotSeenHere = "No se encontró esa red Wi-Fi aquí. No se guardó ninguna medición."
+
+    override val projectChangedWhileScanning = "El mapa cambió durante la búsqueda. No se guardó ningún punto."
+
+    override val couldNotSaveReading = "No se pudo guardar esta medición. Las demás mediciones se conservan."
+
     override fun defaultMapName(index: Int) = if (index == 1) "Hogar" else "Inicio ${index}"
-    override val stillSavingMap = "Un momento, todavía guardando el mapa."
-    override val noFreshScan = "Android no proporcionó un escaneo nuevo. Vuelve a intentarlo en breve."
+    override val stillSavingMap = "Se está guardando el mapa. Espera un momento."
+
+    override val noFreshScan = "Android no proporcionó nuevos resultados. Espera un momento e inténtalo de nuevo."
+
     override val couldNotScan = "No se pudo escanear. Marque Wi-Fi y la configuración de ubicación."
-    override val chooseAccessPointFirst = "Elija un punto de acceso antes de mapear su cobertura."
+    override val chooseAccessPointFirst = "Elige un punto de acceso antes de mapear su cobertura."
     override val saveMeasurementBeforeExport = "Guarde al menos una medición antes de exportar."
     override val couldNotExportProject = "No se pudo exportar este proyecto. Intentar otra vez."
 
     override val connectToYourWifi = "Conéctate a tu Wi-Fi"
     override fun checkingRoom(room: String) = "Comprobando ${room}… quédate quieto"
     override val connectedWifi = "Wi-Fi conectado"
-    override val connectedNoReading = "Su dispositivo está conectado, pero aún no hay lectura de señal disponible."
+    override val connectedNoReading = "Tu dispositivo está conectado, pero aún no hay una medición de señal disponible."
+
     override val connectToCheck = "Conéctate al Wi-Fi que deseas verificar."
     override fun removedRoom(room: String) = "Eliminado ${room}"
     override val undo = "Deshacer"
-    override val roomsEmptyHint =
-        "Párate en una habitación y guarda una lectura. Revisa otra habitación para encontrar dónde la señal se debilita."
+    override val roomsEmptyHint = "Quédate quieto en una habitación y guarda una medición. Mide en otra habitación para encontrar dónde se debilita la señal."
+
     override val noWifiSignal = "Sin señal Wi-Fi"
     override val saveRoom = "Guardar habitación"
     override fun dbStronger(delta: Int) = "${delta} dB más fuerte"
     override fun dbWeaker(delta: Int) = "${delta} dB más débil"
     override val savedRooms = "Habitaciones guardadas"
     override fun deleteRoom(room: String) = "Eliminar ${room}"
-    override fun roomDescription(room: String, quality: String, reading: String) =
-        "${room}, ${quality} señal, ${reading}. Revise las lecturas y vuelva a verificar este lugar."
+    override fun roomDescription(room: String, quality: String, reading: String) = "${room}, señal ${quality}, ${reading}. Revisa las mediciones y vuelve a medir este lugar."
 
     override val noSignalToSave = "No hay señal Wi-Fi para guardar. Conéctate a tu Wi-Fi primero."
-    override val allowScansToLink = "Permita Wi-Fi escaneos en Redes para que esta lectura pueda vincularse a su red."
+    override val allowScansToLink = "Permite Wi-Fi escaneos en Redes para que esta lectura pueda vincularse a su red."
     override val connectToSpotNetwork = "Conéctate a la red de este lugar antes de volver a verificarlo."
     override fun savedRoom(room: String) = "Guardado ${room}"
-    override val couldNotSaveStableReading = "No se pudo guardar una lectura estable. Sigue igual Wi-Fi y vuelve a intentarlo."
+    override val couldNotSaveStableReading = "No se pudo guardar una medición estable. Mantén el dispositivo quieto y conectado al mismo Wi-Fi, e inténtalo de nuevo."
+
     override val whereAreYou = "¿Dónde estás?"
     override val somewhereElse = "En algún otro lugar"
 
     override fun savedAt(time: String) = "Guardado ${time}"
-    override val moveRouterTip = "Intente mover el enrutador más arriba, más central o más cerca de esta habitación."
+    override val moveRouterTip = "Intenta mover el router más arriba, más central o más cerca de esta habitación."
     override val betterThanLastTime = "Mejor que la última vez"
     override val worseThanLastTime = "Peor que la última vez"
     override val sameAsLastTime = "Igual que la última vez"
     override val earlierChecks = "Controles anteriores"
     override val remove = "Eliminar"
     override fun connectToRecheck(ssid: String?) =
-        "Conéctese a ${ssid?.ifBlank { null } ?: "lo mismo Wi-Fi"} para verificar nuevamente."
+        "Conéctate a ${ssid?.ifBlank { null } ?: "lo mismo Wi-Fi"} para verificar nuevamente."
 
     override val stepDeveloperOptionsTitle = "Activar opciones de desarrollador"
     override val stepDeveloperOptionsBody =
@@ -101,13 +113,17 @@ object EsSurveyStrings : SurveyStrings {
         "En **Opciones de desarrollador**, desplácese hacia abajo hasta **Redes** y desactive **Wi-Fi aceleración de escaneo**."
     override val openDeveloperOptions = "Abrir opciones de desarrollador"
     override val stepComeBackTitle = "Vuelve aquí"
-    override val stepComeBackBody =
-        "WiFi Weakspot comprueba automáticamente cuando regresas. Puedes volver a activar la aceleración en cualquier momento."
-    override val hideComputerMethod = "Ocultar método informático"
-    override val useAdbInstead = "¿Prefieres una computadora? Utilice ADB"
+    override val stepComeBackBody = "Al volver, WiFi Weakspot comprobará el ajuste automáticamente. Puedes volver a activar el límite cuando quieras."
+
+    override val hideComputerMethod = "Ocultar los pasos para ordenador"
+
+    override val useAdbInstead = "Configurar con ADB desde un ordenador"
+
     override val adbCommandClipLabel = "ADB comando"
-    override val hideRootOption = "Ocultar opción root"
-    override val useRootInstead = "¿Dispositivo rooteado? Utilice root en su lugar"
+    override val hideRootOption = "Ocultar la opción de root"
+
+    override val useRootInstead = "Configurar con permisos de root"
+
     override val scanLimitFootnote = "Android limita los escaneos para ahorrar batería. Puedes volver a activar el límite en cualquier momento."
     override val unlimitedWithRootTitle = "Escaneos ilimitados con root"
     override val unlimitedOnTitle = "Los escaneos ilimitados están activados"
@@ -119,14 +135,16 @@ object EsSurveyStrings : SurveyStrings {
     override val deviceRooted = "Tu dispositivo está rooteado"
     override val rootScanningBody = "Los análisis pasan por el shell del sistema, por lo que no hay nada que cambiar en las opciones de desarrollador."
     override val rootDeniedBody =
-        "Se denegó el acceso raíz. Permita WiFi Weakspot en su administrador root e inténtelo nuevamente, o use las opciones de desarrollador a continuación."
+        "Se denegó el acceso raíz. Permite WiFi Weakspot en su administrador root e inténtelo nuevamente, o use las opciones de desarrollador a continuación."
     override val rootNotNeededBody = "Los escaneos ya son ilimitados. No se necesita raíz."
-    override val rootOfferBody =
-        "Omita las opciones de desarrollador y deje que WiFi Weakspot explore root. Tu root manager te preguntará una vez."
+    override val rootOfferBody = "Usa root para buscar redes sin cambiar las opciones de desarrollador. Tu gestor de root te pedirá permiso una vez."
+
     override val stopUsingRoot = "Deja de usar root"
-    override val waitingForRootManager = "Esperando a tu root manager…"
-    override val tryRootAgain = "Intente root nuevamente"
+    override val waitingForRootManager = "Esperando al gestor de root…"
+
+    override val tryRootAgain = "Intenta root nuevamente"
     override val useRoot = "Utilice root"
     override val copied = "Copiado"
-    override val copyCommand = "comando copiar"
+    override val copyCommand = "Copiar comando"
+
 }

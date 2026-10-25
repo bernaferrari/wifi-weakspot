@@ -22,14 +22,14 @@ object KoHistoryStrings : HistoryStrings {
 
     override fun trendBarsDescription(count: Int, readings: String) = "최근 공유기 테스트 ${count}회: ${readings}"
 
-    override val trendNoReply = "라우터에서 응답이 없습니다. 일부 라우터는 이러한 검사를 무시합니다."
+    override val trendNoReply = "공유기에서 응답이 없습니다. 일부 공유기는 이러한 검사를 무시합니다."
     override val trendRecheckToCompare = "변경 후 다시 확인하여 비교해 보세요."
     override fun trendQuicker(usualMs: String) = "평소보다 빠릅니다(${usualMs}ms)"
     override fun trendSlower(usualMs: String) = "평소보다 느림(${usualMs}ms)"
     override fun trendAboutSame(usualMs: String) = "평소와 거의 같습니다(${usualMs} ms)"
 
     override fun internetTitle(mbps: String) = "${mbps} Mbps 다운로드"
-    override fun routerTitle(ms: String) = "${ms}ms 라우터까지"
+    override fun routerTitle(ms: String) = "${ms}ms 공유기까지"
     override fun networksNearby(count: Int) = "주변 네트워크 ${count}개"
 
     override fun strongestNetwork(network: String) = "최강: ${network}"

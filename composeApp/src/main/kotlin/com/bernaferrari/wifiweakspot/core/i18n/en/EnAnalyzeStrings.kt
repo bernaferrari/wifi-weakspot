@@ -6,8 +6,10 @@ object EnAnalyzeStrings : AnalyzeStrings {
 
     private fun networks(count: Int) = if (count == 1) "1 network" else "$count networks"
 
-    override fun channelShort(channel: Int) = "Ch $channel"
-    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "$rssi dBm · Ch $channel · $band"
+    override fun channelShort(channel: Int) = "Ch ${channel}"
+
+    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · ${channelShort(channel)} · ${band}"
+
     override val noPassword = "No password"
     override val wifiOffTitle = "Wi-Fi is off"
     override val locationOffBody = "Android needs Location on to list nearby Wi-Fi. WiFi\u00A0Weakspot doesn't use GPS."
@@ -44,8 +46,8 @@ object EnAnalyzeStrings : AnalyzeStrings {
     override fun scanReportTime(time: String) = "Time: $time"
     override fun scanReportTotal(count: Int) = "Total Networks: $count"
     override val scanReportNetworksHeading = "Networks:"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) =
-        "• $ssid - ${rssi}dBm, Ch $channel, $security"
+    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
+
     override val channelLooksClear = "Your channel looks clear"
     override val noChannelImprovement = "No improvement found in this scan"
     override fun lessOverlapThanChannel(currentChannel: Int) = "Less overlap than channel $currentChannel"
@@ -59,13 +61,14 @@ object EnAnalyzeStrings : AnalyzeStrings {
     override fun channelGraphDescription(networkCount: Int, busiestChannel: Int?, busiestCount: Int) =
         "Channel graph, ${networks(networkCount)}." +
             (if (busiestChannel != null) " Busiest channel $busiestChannel with $busiestCount." else "")
-    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) =
-        name + (if (isYou) " (you)" else "") + (if (extraNames > 0) " +$extraNames" else "")
+    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+
     override val busyCaption = "Busy"
     override val axisStrong = "Strong"
     override val axisOkay = "Okay"
     override val axisWeak = "Weak"
-    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "$reading · $quality · Ch $channel"
+    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
+
     override val clearSelectedNetwork = "Clear selected network"
     override val tapWaveForDetails = "Tap a wave for network details"
 

@@ -62,22 +62,25 @@ object RuDomainStrings : DomainStrings {
 
     override val roomSuggestions = listOf("Гостиная", "Кухня", "Спальня", "Кабинет", "Детская", "Ванная", "Столовая", "Коридор", "Гараж", "Подвал", "Балкон", "Сад")
 
-    override val coverageNoRooms = "Еще не проверено ни одного номера."
-    override fun coverageWeakInRoom(room: String) = "Слабый Wi-Fi в ${room}"
-    override fun coverageWeakInRooms(count: Int) = "Слабый Wi-Fi в ${count} ${plural(count, "комнате", "комнатах", "комнатах")}"
+    override val coverageNoRooms = "Пока нет измерений в комнатах"
+
+    override fun coverageWeakInRoom(room: String) = "Слабый Wi-Fi: ${room}"
+
+    override fun coverageWeakInRooms(count: Int) = "Комнат со слабым Wi-Fi: ${count}"
 
     override fun coverageRoomsCheckedNoneWeak(count: Int) = "${plural(count, "Проверена", "Проверены", "Проверено")} ${count} ${plural(count, "комната", "комнаты", "комнат")}, слабый сигнал не обнаружен"
 
-    override fun tipHighBandWeak(room: String, band: String) =
-        "В ${room} ваше устройство использовало ${band}, которое пропускает сквозь стены меньшее расстояние. Если ваш маршрутизатор может разделять диапазоны, 2,4 GHz может там держаться лучше."
-    override fun tipSignalDrop(dropDb: Int, bestRoom: String, worstRoom: String) =
-        "Сигнал падает на ${dropDb} дБ с ${bestRoom} до ${worstRoom}. Попробуйте более центральное, приподнятое положение фрезы, затем еще раз проверьте те же места, чтобы посмотреть, поможет ли это."
+    override fun tipHighBandWeak(room: String, band: String) = "Для ${room} устройство использовало диапазон ${band}, сигнал которого хуже проходит сквозь стены. Если роутер позволяет разделить диапазоны, сеть 2,4 GHz здесь может быть стабильнее."
+
+    override fun tipSignalDrop(dropDb: Int, bestRoom: String, worstRoom: String) = "Между ${bestRoom} и ${worstRoom} сигнал ослабевает на ${dropDb} dB. Попробуйте разместить роутер ближе к центру помещения и повыше, затем повторите измерения в тех же местах."
+
     override fun tipMultipleAccessPoints(count: Int) = "В этих комнатах устройство использовало ${count} ${plural(count, "точку доступа", "точки доступа", "точек доступа")}. Это могут быть разные диапазоны или точки доступа. Само по себе это не подтверждает надёжность роуминга."
 
     override val tipRouterPlacement = "Разместите роутер в помещении, повыше и без препятствий вокруг, вдали от микроволновых печей, зеркал и аквариумов."
 
-    override val spotFirstReading = "Первое чтение · повторная проверка после внесения изменений"
-    override val spotDifferentNetwork = "Другая сеть или спот · начать новое сравнение"
+    override val spotFirstReading = "Первое измерение · повторите после изменений"
+
+    override val spotDifferentNetwork = "Другая сеть или место · начните новое сравнение"
 
     override fun spotComparison(deltaDb: Int, accessPointChanged: Boolean, bandChanged: Boolean): String {
         val signal = when {
@@ -87,16 +90,18 @@ object RuDomainStrings : DomainStrings {
         }
         val changed = buildList {
             if (accessPointChanged) add("точка доступа изменена")
-            if (bandChanged) add("изменена")
+            if (bandChanged) add("диапазон изменён")
         }
         return signal + if (changed.isEmpty()) " с момента последней проверки" else " · ${changed.joinToString("; ")}"
     }
 
     override val monitorChannelName = "Фоновый мониторинг"
+
     override val monitorChannelDescription = "Показывает, когда WiFi Weakspot контролирует сети WiFi."
     override val alertsChannelName = "Сетевые оповещения"
     override val alertsChannelDescription = "Оповещения о новых сетях и изменениях сигнала."
-    override val monitorStartFailed = "Не удалось запустить мониторинг. Разрешите сканирование Wi-Fi и включите службы определения местоположения, затем повторите попытку."
+    override val monitorStartFailed = "Не удалось запустить мониторинг. Разрешите сканирование Wi-Fi, включите геолокацию и повторите попытку."
+
     override val monitorWaitingForScanLimited = "Ожидание нового сканирования Wi-Fi. Android может ограничивать запросы на сканирование."
     override val monitorWaitingForScan = "Ожидание нового сканирования Wi-Fi"
     override fun monitorStatus(networkCount: Int, lastScanTime: String) = "${networkCount} ${plural(networkCount, "сеть", "сети", "сетей")} · Последнее сканирование: ${lastScanTime}"

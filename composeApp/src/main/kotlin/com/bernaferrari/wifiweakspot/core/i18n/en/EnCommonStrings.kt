@@ -63,7 +63,7 @@ object EnCommonStrings : CommonStrings {
     override val readyToScan = "Ready to scan"
     override fun scansRemaining(count: Int) = if (count == 1) "1 scan remaining" else "$count scans remaining"
     override fun nextScanIn(time: String) = "Next scan in $time"
-    override val checking = "Checking..."
+    override val checking = "Checking…"
     override val justNow = "just\u00A0now"
     override fun minutesAgo(minutes: Long) = "$minutes\u00A0min\u00A0ago"
     override fun hoursAgo(hours: Long) = "$hours\u00A0h\u00A0ago"

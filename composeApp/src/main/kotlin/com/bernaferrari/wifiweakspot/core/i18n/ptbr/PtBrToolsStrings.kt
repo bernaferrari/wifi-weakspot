@@ -6,16 +6,19 @@ object PtBrToolsStrings : ToolsStrings {
     override val tryAgain = "Tente novamente"
 
     override val targetPlaceholder = "Site ou endereço IP"
-    override val clearTarget = "Claro"
+    override val clearTarget = "Limpar"
+
     override val checkSectionTitle = "Verificar"
     override val recentSectionTitle = "Recente"
 
     override val toolPortsDescription = "O que está aberto"
 
     override val pingQuestion = "Isso responde?"
-    override val dnsQuestion = "Qual é o endereço?"
-    override val dnsDetail = "DNS pesquisa"
-    override val portsQuestion = "O que isso oferece?"
+    override val dnsQuestion = "Qual é o endereço IP?"
+
+    override val dnsDetail = "Consulta DNS"
+
+    override val portsQuestion = "Quais serviços oferece?"
 
     override val runningPortScanTitle = "Verificando portas"
 
@@ -32,10 +35,13 @@ object PtBrToolsStrings : ToolsStrings {
     override fun repliesContentDescription(replies: String) = "Respostas: ${replies}"
 
     override val pingDidntAnswer = "Não respondi"
-    override val pingResponsive = "Responsivo"
-    override val pingResponsiveButUneven = "Responsivo, mas desigual"
-    override val pingDroppingReplies = "Descartando respostas"
-    override val pingSlowToAnswer = "Lento para responder"
+    override val pingResponsive = "Resposta boa"
+
+    override val pingResponsiveButUneven = "Responde, mas com tempos irregulares"
+
+    override val pingDroppingReplies = "Algumas respostas não chegaram"
+
+    override val pingSlowToAnswer = "Resposta lenta"
 
     override val pingNoAnswerLocal = "Ele pode estar desligado, adormecido ou configurado para ignorar pings."
     override fun pingRepliesLost(lost: Int, total: Int) =
@@ -52,11 +58,13 @@ object PtBrToolsStrings : ToolsStrings {
     override fun dnsFoundExplanation(query: String) = "Seu dispositivo pode encontrar ${query}."
     override val dnsAddressesTitle = "Endereços"
 
-    override val portsOpenUnit = "abrir"
+    override fun portsOpenUnit(count: Int) = if (count == 1) "aberta" else "abertas"
+
     override fun portsCommonServicesOn(host: String) = "Serviços comuns em ${host}"
     override val portsNothingOpen = "Nada aberto"
     override fun portsOffersServices(count: Int) = if (count == 1) "Oferece 1 serviço" else "Oferece ${count} serviços"
     override val portsNoneAnswered = "Nenhum serviço comum respondeu."
+
     override val portsOffersExplanation = "Coisas como uma página de configurações ou compartilhamento de arquivos."
 
     override val portWebPage = "página da Internet"
@@ -81,13 +89,16 @@ object PtBrToolsStrings : ToolsStrings {
     override val couldntLookForDevices = "Não foi possível procurar dispositivos"
     override val scanFailed = "Falha na verificação"
     override val connectionChangedLookAgain = "A conexão mudou. Olhe novamente nesta rede."
-    override val stoppedLooking = "Parou de procurar"
+    override val stoppedLooking = "Busca interrompida"
+
     override val noDevicesFound = "Nenhum dispositivo encontrado"
-    override val noDevicesFoundSubtitle =
-        "Alguns dispositivos ficam silenciosos quando solicitados. Tente novamente em alguns instantes ou verifique se este dispositivo está em sua casa Wi-Fi."
+    override val noDevicesFoundSubtitle = "Alguns dispositivos não respondem às buscas. Tente novamente em instantes ou verifique se este dispositivo está conectado ao Wi-Fi de casa."
+
     override fun otherDevicesGroup(count: Int) = "Outros dispositivos · ${count}"
-    override fun quietDevices(count: Int) = if (count == 1) "1 dispositivo silencioso" else "${count} dispositivos silenciosos"
-    override val quietDevicesSubtitle = "Eles não disseram o que são"
+    override fun quietDevices(count: Int) = if (count == 1) "1 dispositivo não identificado" else "${count} dispositivos não identificados"
+
+    override val quietDevicesSubtitle = "Não foi possível identificar o tipo de dispositivo"
+
     override val hide = "Esconder"
     override val show = "Mostrar"
     override fun checkingLocalAddresses(percent: Int) = "Verificando endereços locais · ${percent}%"
@@ -102,13 +113,16 @@ object PtBrToolsStrings : ToolsStrings {
     override val factNetworkName = "Nome da rede"
     override val factHardwareAddress = "Endereço de hardware"
     override val macHiddenByAndroid = "Escondido por Android"
-    override val factYourName = "Seu nome para isso"
+    override val factYourName = "Nome que você escolheu"
+
     override val portsNotCheckedYet = "Ainda não verificado."
-    override fun portsNoneOpenWhenChecked(moment: String) =
-        "Nenhuma das portas comuns estava aberta quando marcada ${moment.replaceFirstChar { it.lowercase() }}."
-    override fun portsCheckedAt(moment: String) = "Verificado ${moment.replaceFirstChar { it.lowercase() }}."
+    override fun portsNoneOpenWhenChecked(moment: String) = "Nenhuma porta comum estava aberta. Verificado: ${moment}."
+
+    override fun portsCheckedAt(moment: String) = "Verificado: ${moment}."
+
     override val renameDeviceTitle = "Renomear dispositivo"
-    override val renameSupporting = "Deixe em branco para usar o nome WiFi Weakspot encontrado."
+    override val renameSupporting = "Deixe em branco para usar o nome encontrado pelo WiFi Weakspot."
+
     override val connectionChangedOpenAgain = "A conexão mudou. Abra este dispositivo novamente na nova rede."
     override val couldntLoadDetails = "Não foi possível carregar os detalhes salvos. Tente abrir este dispositivo novamente."
     override val scanBeforeNaming = "Digitalize este dispositivo antes de salvar um nome."

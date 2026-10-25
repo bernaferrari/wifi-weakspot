@@ -35,7 +35,8 @@ object FrHistoryStrings : HistoryStrings {
     override fun listWithMore(list: String, more: Int) = if (more > 0) "${list} et ${more} plus" else list
     override fun pingSummary(averageMs: String, replied: Int, sent: Int) = "${averageMs} ms · ${replied} réponses sur ${sent}"
 
-    override fun lookupTitle(target: String) = "Recherchez ${target}"
+    override fun lookupTitle(target: String) = "Recherche DNS : ${target}"
+
     override val noRecords = "Aucun enregistrement"
     override val lookupFailed = "La recherche a échoué"
     override fun openPortsTitle(target: String) = "Ouvrir les ports sur ${target}"

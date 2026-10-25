@@ -13,7 +13,8 @@ object ZhHansSettingsStrings : SettingsStrings {
     override val showSignalAs = "信号显示方式"
     override val sectionComfort = "使用体验"
 
-    override val reduceMotionTitle = "减少运动"
+    override val reduceMotionTitle = "减少动画效果"
+
     override val hapticsSubtitle = "点击和显示结果时振动"
 
     override val sectionAlerts = "警报"
@@ -44,7 +45,8 @@ object ZhHansSettingsStrings : SettingsStrings {
     override val colorOrange = "橙色"
     override val colorAmber = "琥珀色"
     override val colorGreen = "绿色"
-    override val colorTeal = "青色"
+    override val colorTeal = "蓝绿色"
+
     override val colorCyan = "青色"
     override val colorBlue = "蓝色"
     override val colorPurple = "紫色"
@@ -63,7 +65,8 @@ object ZhHansSettingsStrings : SettingsStrings {
 
     override val getStarted = "开始使用"
 
-    override val welcomeHeadline = "找出家中\nWi-Fi 信号弱的地方"
+    override val welcomeHeadline = "找出家中的\nWi-Fi 信号弱点"
+
     override val welcomeBody = "看看哪里信号弱，以及如何改善。"
     override val featureRoomsTitle = "测量每个房间"
 

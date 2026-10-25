@@ -284,7 +284,7 @@ fun PortsResultContent(host: String, ports: List<Pair<Int, String>>, onRetry: ()
         item {
             ResultHero(
                 value = "${ports.size}",
-                unit = strings.tools.portsOpenUnit,
+                unit = strings.tools.portsOpenUnit(ports.size),
                 label = strings.tools.portsCommonServicesOn(host),
                 quality = if (ports.isEmpty()) SignalQuality.Good else SignalQuality.Excellent,
                 headline = if (ports.isEmpty()) strings.tools.portsNothingOpen else strings.tools.portsOffersServices(ports.size),

@@ -11,13 +11,17 @@ object EsSettingsStrings : SettingsStrings {
     override val themeDark = "Oscuro"
     override val showSignalAs = "Mostrar señal como"
     override val sectionComfort = "Comodidad"
-    override val reduceMotionTitle = "Reducir el movimiento"
-    override val hapticsSubtitle = "Vibrar en grifos y resultados."
+    override val reduceMotionTitle = "Reducir animaciones"
+
+    override val hapticsSubtitle = "Vibrar al tocar y al mostrar resultados"
+
     override val sectionAlerts = "Alertas"
     override val backgroundAlertsTitle = "Alertas de fondo"
-    override val backgroundAlertsSubtitle = "Cuando cerca Wi-Fi cambia"
+    override val backgroundAlertsSubtitle = "Cuando cambian las redes Wi-Fi cercanas"
+
     override val notificationsDenied = "Permitir notificaciones para ver el estado de monitoreo y alertas."
-    override val checkEvery = "comprobar cada"
+    override val checkEvery = "Intervalo de comprobación"
+
     override fun intervalSeconds(seconds: Int) = "${seconds} seg"
     override fun intervalMinutes(minutes: Int) = "${minutes} minutos"
     override val newNetworkAlertsTitle = "Nuevas alertas de red"
@@ -42,18 +46,22 @@ object EsSettingsStrings : SettingsStrings {
     override val openSourceLicense = "Código abierto · Apache 2.0"
     override val feedbackTitle = "Comentario"
     override val feedbackBody = "Ideas e informes de errores."
-    override val elsewhere = "En otra parte"
+    override val elsewhere = "Otros enlaces"
+
     override val privacySummary = "Tus resultados se quedan en tu dispositivo, salvo que los compartas."
     override val privacyPolicy = "Política de privacidad"
 
     override val notNow = "Ahora no"
     override val getStarted = "empezar"
-    override val welcomeHeadline = "Encuentra los puntos débiles\nde tu Wi-Fi"
+    override val welcomeHeadline = "Encuentra dónde\nfalla tu Wi-Fi"
+
     override val welcomeBody = "Descubre dónde falla y cómo mejorarlo."
     override val featureRoomsTitle = "Revisa cada habitación"
-    override val featureRoomsBody = "Encuentra las habitaciones donde cae."
+    override val featureRoomsBody = "Encuentra las habitaciones donde la señal es débil."
+
     override val featureRouterTitle = "Comprueba tu enrutador"
     override val featureRouterBody = "Mira lo rápido que responde."
     override val featureNearbyTitle = "Ver redes cercanas"
-    override val featureNearbyBody = "Elija un canal más claro."
+    override val featureNearbyBody = "Encuentra un canal con menos interferencias."
+
 }

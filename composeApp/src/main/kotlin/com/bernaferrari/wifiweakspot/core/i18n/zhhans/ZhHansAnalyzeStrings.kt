@@ -8,7 +8,8 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
 
     override fun channelShort(channel: Int) = "信道 ${channel}"
 
-    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · 第 ${channel} · ${band}"
+    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · ${channelShort(channel)} · ${band}"
+
     override val noPassword = "无密码"
     override val wifiOffTitle = "Wi-Fi 已关闭"
     override val locationOffBody = "Android 需要开启位置信息才能列出附近的 Wi-Fi。WiFi Weakspot 不使用 GPS。"
@@ -44,7 +45,8 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
 
     override fun hideVeryWeakNetworks(count: Int) = "隐藏 ${count} 个信号很弱的网络"
 
-    override fun bandNetworkCount(count: Int) = if (count == 0) "无" else networks(count)
+    override fun bandNetworkCount(count: Int) = if (count == 0) "无" else "${count}个"
+
     override val highlightedOnChart = "已在图表中高亮"
 
     override val notHighlightedOnChart = "未在图表中高亮"
@@ -59,8 +61,8 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
     override fun scanReportTime(time: String) = "时间：${time}"
     override fun scanReportTotal(count: Int) = "网络总数：${count}"
     override val scanReportNetworksHeading = "网络："
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) =
-        "• ${ssid} - ${rssi}dBm，第 ${channel}，${security}"
+    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
+
     override val channelLooksClear = "当前信道的重叠较少"
 
     override val noChannelImprovement = "本次扫描未发现更好的信道"
@@ -69,7 +71,7 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
 
     override val leastOverlapInScan = "本次扫描中重叠最少"
 
-    override fun channelAdviceDescription(advice: String, channel: Int) = "${advice}：频道${channel}"
+    override fun channelAdviceDescription(advice: String, channel: Int) = "${advice}：信道${channel}"
     override val lowOverlap = "重叠较少"
 
     override val moderateOverlap = "重叠中等"
@@ -80,13 +82,14 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
 
     override fun channelGraphDescription(networkCount: Int, busiestChannel: Int?, busiestCount: Int) = "信道图，共 ${networkCount} 个网络。" + if (busiestChannel != null) " 最拥挤的信道为 ${busiestChannel}，有 ${busiestCount} 个网络。" else ""
 
-    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) =
-        name + (if (isYou) " （你）" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+
     override val busyCaption = "拥挤"
     override val axisStrong = "强"
     override val axisOkay = "一般"
     override val axisWeak = "弱"
-    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading}·${quality}·第${channel}"
+    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
+
     override val clearSelectedNetwork = "清除网络选择"
 
     override val tapWaveForDetails = "点击曲线查看网络详情"
@@ -112,7 +115,7 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
 
     override val estimatedChannelOverlap = "估算的信道重叠"
 
-    override fun tryChannel(channel: Int) = "尝试频道${channel}"
+    override fun tryChannel(channel: Int) = "尝试信道${channel}"
     override val lowestOverlapFor20Mhz = "按 20 MHz 信道估算，重叠最少"
 
     override val overlapDisclaimer = "此估算基于附近的接入点和信号强度，并非实测流量。更改设置前，请确认路由器支持的信道及当地规定。仅在已知路由器支持时才会建议 5 GHz 和 6 GHz 信道。若无法获取宽信道的中心频率，则只显示主信道的 20 MHz 范围。"
@@ -147,7 +150,7 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
 
     override fun seenReading(rssi: Int, seen: String) = "${rssi} dBm · 发现于${seen}"
 
-    override val factChannel = "频道"
+    override val factChannel = "信道"
     override val factWidth = "信道宽度"
 
     override val factSecurity = "安全"
@@ -175,7 +178,7 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
     override val online = "在线"
     override val internetNotConfirmed = "尚未确认互联网连接"
 
-    override fun channelChip(channel: Int) = "频道${channel}"
+    override fun channelChip(channel: Int) = "信道${channel}"
     override fun linkRateChip(mbps: Int) = "链接率 ${mbps} Mbps"
     override val chooseNetwork = "选择网络"
     override val turnOnWifi = "打开Wi-Fi"
@@ -190,14 +193,10 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
 
     override val nearbyStale = "这是上次扫描的结果，点击即可刷新。"
 
-    override val nearbyNoConnection = "查看每个网络的频道和信号。"
-    override fun nearbyOverlap(count: Int, channel: Int) = when (count) {
-        0 -> "在通道 ${channel} 上未检测到附近重叠。"
-        1 -> "1 个附近信号与您的频道${channel} 重叠。"
-        else -> "${count} 附近的信号与您的频道重叠${channel}。"
-    }
+    override val nearbyNoConnection = "查看每个网络的信道和信号。"
+    override fun nearbyOverlap(count: Int, channel: Int) = if (count == 0) "未发现与当前信道 ${channel} 重叠的附近信号。" else "附近有 ${count} 个信号与当前信道 ${channel} 重叠。"
 
-    override val adviceNoWifiBody = "连接到您要检查的网络。您仍然可以使用当前的连接运行互联网测试和网络工具。"
+    override val adviceNoWifiBody = "连接到你要检查的网络。你仍然可以使用当前的连接运行互联网测试和网络工具。"
     override val adviceNoInternetTitle = "先检查互联网连接"
 
     override val adviceNoInternetBody = "Android 尚未确认此 Wi-Fi 能否访问互联网。请检查是否需要在网页上登录，再测试与路由器和互联网主机的连接。"

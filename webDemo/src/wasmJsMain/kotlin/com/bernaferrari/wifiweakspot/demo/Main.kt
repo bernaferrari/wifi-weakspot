@@ -31,12 +31,18 @@ import org.koin.core.context.startKoin
 /** The real app, with the phone's radios and storage simulated. */
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    document.documentElement?.setAttribute("lang", androidx.compose.ui.text.intl.Locale.current.toLanguageTag())
+    document.title = "WiFi Weakspot · ${com.bernaferrari.wifiweakspot.core.i18n.appStrings.settings.tagline}"
     startKoin { modules(sharedModule, webModule) }
     // Render the real phone layout at store-quality pixel density without upscaling captures.
     // Ordinary demo visits retain the browser's density.
     val captureDensity = window.location.search.removePrefix("?").split('&')
         .firstOrNull { it.startsWith("captureDensity=") }?.substringAfter('=')
         ?.toFloatOrNull()?.takeIf { it.isFinite() && it in 1f..4f }
+    // Exercise translated layouts at accessibility text sizes in screenshot checks.
+    val captureFontScale = window.location.search.removePrefix("?").split('&')
+        .firstOrNull { it.startsWith("captureFontScale=") }?.substringAfter('=')
+        ?.toFloatOrNull()?.takeIf { it.isFinite() && it in 0.85f..2f }
     ComposeViewport(document.body!!) {
         val gate = koinInject<SimulatedPermissionGate>()
         val launchers = remember(gate) {
@@ -44,7 +50,7 @@ fun main() {
         }
         val density = LocalDensity.current
         CompositionLocalProvider(
-            LocalDensity provides (captureDensity?.let { Density(it, density.fontScale) } ?: density),
+            LocalDensity provides Density(captureDensity ?: density.density, captureFontScale ?: density.fontScale),
             LocalPermissionLaunchers provides launchers,
             LocalWebContent provides { url, modifier -> ExternalPage(url, modifier) }
         ) {

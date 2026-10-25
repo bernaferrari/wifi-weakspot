@@ -8,7 +8,8 @@ object RuAnalyzeStrings : AnalyzeStrings {
 
     override fun channelShort(channel: Int) = "Кан. ${channel}"
 
-    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · Ch ${channel} · ${band}"
+    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · ${channelShort(channel)} · ${band}"
+
     override val noPassword = "Без пароля"
     override val wifiOffTitle = "Wi-Fi выключено"
     override val locationOffBody = "Для отображения ближайших сетей Wi-Fi Android требует включить геолокацию. WiFi Weakspot не использует GPS."
@@ -45,8 +46,8 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override fun scanReportTime(time: String) = "Время: ${time}"
     override fun scanReportTotal(count: Int) = "Всего сетей: ${count}"
     override val scanReportNetworksHeading = "Сети:"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) =
-        "• ${ssid} - ${rssi}dBm, Ch ${channel}, ${security}"
+    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
+
     override val channelLooksClear = "Ваш канал выглядит чистым."
     override val noChannelImprovement = "При этом сканировании улучшений не обнаружено."
     override fun lessOverlapThanChannel(currentChannel: Int) = "Меньше перекрытия, чем у канала ${currentChannel}"
@@ -60,24 +61,26 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override fun channelGraphDescription(networkCount: Int, busiestChannel: Int?, busiestCount: Int) =
         "График канала, ${networks(networkCount)}." +
             (if (busiestChannel != null) " Самый загруженный канал ${busiestChannel} с ${busiestCount}." else "")
-    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) =
-        name + (if (isYou) " (вы)" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+
     override val busyCaption = "Загрузка"
     override val axisStrong = "Сильный"
     override val axisOkay = "Средний"
     override val axisWeak = "Слабый"
-    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · Ch ${channel}"
+    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
+
     override val clearSelectedNetwork = "Очистить выбранную сеть."
     override val tapWaveForDetails = "Нажмите волну, чтобы узнать подробности о сети."
 
-    override val chartGuideTitle = "Чтение графиков"
+    override val chartGuideTitle = "Измерение графиков"
     override val guideTallerBody = "Высота — это уровень сигнала."
     override val guideOverlapBody = "Перекрывающиеся сети используют общий спектр и могут конкурировать за эфирное время."
     override val guideWiderBody = "Более широкий канал занимает больший спектр и может перекрывать большее количество соседей."
     override val guideSameRouterBody = "+1: Имена сетей, которые, вероятно, используют один радиомодуль Wi-Fi, объединены на одной кривой."
 
     override val guideCrowdBody = "Зелёный означает меньше перекрытий, красный — больше. Полоса под 2.4 GHz показывает перекрытие. Нажмите на него для подсчета."
-    override val guideSteadyBody = "Прерывистая линия показывает изменение уровня сигнала. Коснитесь линии, чтобы приостановить ее, а затем перемещайте ее вбок во времени или вертикально между сетями. Возобновите прямой эфир, чтобы посмотреть новые чтения."
+    override val guideSteadyBody = "Колебания линии показывают изменения силы сигнала. Нажмите на линию для паузы, затем перемещайтесь по горизонтали между моментами времени или по вертикали между сетями. Возобновите показ, чтобы видеть новые измерения."
+
     override val guideHighlightBody = "Коснитесь холма или ряда, чтобы выделить его. Перетащите горизонтально по диаграмме, чтобы изучить ее."
 
     override fun channelOverlapHeading(count: Int, channel: Int) = if (count == 0) "Канал ${channel} свободен" else "Канал ${channel} перекрывают: ${networks(count)}"
@@ -93,7 +96,8 @@ object RuAnalyzeStrings : AnalyzeStrings {
         "отображает только основной 20 MHz канал."
     override val overlapScore = "Оценка перекрытия"
 
-    override val collectingReadings = "Сбор показаний… Строки появляются после пары сканирований."
+    override val collectingReadings = "Сбор измерений… Линии появятся после нескольких сканирований."
+
     override fun signalHistoryDescription(networkCount: Int) = "История сигнала сетей: ${networkCount}. Нажмите на линию для просмотра. Стрелки перемещают выбор по времени и между сетями."
 
     override val historyLive = "Прямой эфир"

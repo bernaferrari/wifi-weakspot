@@ -38,7 +38,8 @@ object RuHistoryStrings : HistoryStrings {
     override fun listWithMore(list: String, more: Int) = if (more > 0) "${list} и ${more} ещё" else list
     override fun pingSummary(averageMs: String, replied: Int, sent: Int) = "${averageMs} мс · ответов: ${replied} из ${sent}"
 
-    override fun lookupTitle(target: String) = "Посмотрите вверх ${target}"
+    override fun lookupTitle(target: String) = "DNS-запрос: ${target}"
+
     override val noRecords = "Нет записей"
     override val lookupFailed = "Поиск не удался."
     override fun openPortsTitle(target: String) = "Открыть порты на ${target}"

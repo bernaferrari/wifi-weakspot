@@ -6,7 +6,8 @@ object KoToolsStrings : ToolsStrings {
     override val tryAgain = "다시 시도"
 
     override val targetPlaceholder = "웹사이트 또는 IP 주소"
-    override val clearTarget = "클리어"
+    override val clearTarget = "지우기"
+
     override val checkSectionTitle = "테스트"
 
     override val recentSectionTitle = "최근 테스트"
@@ -69,7 +70,7 @@ object KoToolsStrings : ToolsStrings {
 
     override val dnsAddressesTitle = "IP 주소"
 
-    override val portsOpenUnit = "개 열림"
+    override fun portsOpenUnit(count: Int) = "개 열림"
 
     override fun portsCommonServicesOn(host: String) = "${host} 공통 서비스"
     override val portsNothingOpen = "열린 포트 없음"
@@ -134,7 +135,7 @@ object KoToolsStrings : ToolsStrings {
 
     override val actionCheckPorts = "포트 확인"
 
-    override val openRouterSettings = "라우터 설정 열기"
+    override val openRouterSettings = "공유기 설정 열기"
     override val detailsTitle = "세부정보"
     override val factNetworkName = "네트워크 이름"
     override val factHardwareAddress = "하드웨어 주소"
