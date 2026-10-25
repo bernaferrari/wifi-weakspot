@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.analyze
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -63,6 +64,9 @@ fun WifiDetailScreen(
     val quality = SignalQuality.of(network.rssi)
     val colors = signalColors(quality)
     val security = securityLabel(network.capabilities.ifBlank { network.security })
+    val common = strings.common
+    val sharedCatalog = strings
+    val s = strings.analyze
     Column(
         modifier
             .fillMaxWidth()
@@ -78,14 +82,14 @@ fun WifiDetailScreen(
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    network.ssid.ifEmpty { "Hidden network" },
+                    network.ssid.ifEmpty { common.hiddenNetwork },
                     style = MaterialTheme.typography.headlineSmall,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(quality.headline, style = MaterialTheme.typography.titleMedium, color = colors.accent)
                 Text(
-                    "${network.rssi} dBm · seen ${relativeTime(network.timestamp)}",
+                    s.seenReading(network.rssi, relativeTime(network.timestamp)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -94,16 +98,16 @@ fun WifiDetailScreen(
 
         Card(shape = WifiWeakspotShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
             Column(Modifier.padding(vertical = 8.dp)) {
-                Fact("Channel", "${frequencyToChannel(network.frequency)} · ${bandLabel(network.frequency)}")
-                Fact("Width", when {
-                    network.channelWidth <= 0 -> "Not available"
+                Fact(s.factChannel, "${frequencyToChannel(network.frequency)} · ${bandLabel(network.frequency)}")
+                Fact(s.factWidth, when {
+                    network.channelWidth <= 0 -> s.notAvailable
                     network.is80Plus80 -> "80 + 80 MHz"
                     else -> "${network.channelWidth} MHz"
                 })
-                Fact("Security", when (security) { "" -> "Unknown"; "Open" -> "None (no password)"; else -> security })
-                getVendorName(network.bssid)?.let { Fact("Made by", it) }
-                Fact("Distance estimate", formatDistance(estimateDistanceMeters(network.rssi, network.frequency)))
-                Fact("Address", network.bssid.uppercase())
+                Fact(s.factSecurity, when (security) { "" -> sharedCatalog.common.unknown; "Open" -> s.noPassword; else -> security })
+                getVendorName(network.bssid)?.let { Fact(sharedCatalog.common.maker, it) }
+                Fact(s.factDistance, formatDistance(estimateDistanceMeters(network.rssi, network.frequency)))
+                Fact(sharedCatalog.common.address, network.bssid.uppercase())
             }
         }
 
@@ -115,18 +119,18 @@ fun WifiDetailScreen(
             ) {
                 Icon(Icons.AutoMirrored.Rounded.ShowChart, null)
                 Spacer(Modifier.width(8.dp))
-                Text("Watch", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
+                Text(s.watch, style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
             } else Spacer(Modifier.weight(1f))
             FilledTonalIconButton(
                 onClick = onToggleFavorite,
                 shapes = IconButtonDefaults.shapes(),
                 modifier = Modifier.size(ButtonDefaults.MediumContainerHeight)
-            ) { Icon(if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder, if (isFavorite) "Remove from favorites" else "Add to favorites") }
+            ) { Icon(if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder, if (isFavorite) s.removeFromFavorites else s.addToFavorites) }
             FilledTonalIconButton(
                 onClick = onShare,
                 shapes = IconButtonDefaults.shapes(),
                 modifier = Modifier.size(ButtonDefaults.MediumContainerHeight)
-            ) { Icon(Icons.Rounded.Share, "Share") }
+            ) { Icon(Icons.Rounded.Share, common.share) }
         }
     }
 }

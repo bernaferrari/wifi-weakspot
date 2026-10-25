@@ -45,7 +45,7 @@ class AndroidDnsClient(
                 records = records,
                 queryTimeMs = (System.nanoTime() - start) / 1_000_000,
                 isSuccess = records.isNotEmpty(),
-                error = if (records.isEmpty()) "No $recordType addresses returned" else null
+                error = if (records.isEmpty()) "No ${recordType.name} addresses returned" else null
             )
         } catch (e: CancellationException) {
             throw e
@@ -56,7 +56,7 @@ class AndroidDnsClient(
                 records = emptyList(),
                 queryTimeMs = (System.nanoTime() - start) / 1_000_000,
                 isSuccess = false,
-                error = e.message
+                error = "Address lookup failed. Check the host name and your connection."
             )
         }
     }

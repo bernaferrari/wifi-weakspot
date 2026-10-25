@@ -1,5 +1,8 @@
 package com.bernaferrari.wifiweakspot.feature.settings
 
+import com.bernaferrari.wifiweakspot.core.i18n.SettingsStrings
+import com.bernaferrari.wifiweakspot.core.i18n.strings
+
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.foundation.selection.selectableGroup
@@ -63,16 +66,16 @@ import kotlin.math.sin
 data class PaletteOption(val name: String, val seed: Long?, val preview: List<Color>)
 
 /** Seed colors ordered warm to cool; the first is the app's own. */
-val SeedPalettes = listOf(
-    "Indigo" to 0xFF3F51B5,
-    "Orange" to 0xFFFF5722,
-    "Amber" to 0xFFFFC107,
-    "Green" to 0xFF4CAF50,
-    "Teal" to 0xFF009688,
-    "Cyan" to 0xFF00BCD4,
-    "Blue" to 0xFF2196F3,
-    "Purple" to 0xFF9C27B0,
-    "Pink" to 0xFFE91E63
+val SeedPalettes: List<Pair<(SettingsStrings) -> String, Long>> = listOf(
+    SettingsStrings::colorIndigo to 0xFF3F51B5,
+    SettingsStrings::colorOrange to 0xFFFF5722,
+    SettingsStrings::colorAmber to 0xFFFFC107,
+    SettingsStrings::colorGreen to 0xFF4CAF50,
+    SettingsStrings::colorTeal to 0xFF009688,
+    SettingsStrings::colorCyan to 0xFF00BCD4,
+    SettingsStrings::colorBlue to 0xFF2196F3,
+    SettingsStrings::colorPurple to 0xFF9C27B0,
+    SettingsStrings::colorPink to 0xFFE91E63
 )
 
 /**
@@ -103,7 +106,7 @@ fun ColorPickerRow(
             if (wallpaper != null) PaletteSwatch(
                 colors = wallpaper,
                 selected = wallpaperChosen,
-                label = "Wallpaper colors",
+                label = strings.settings.wallpaperColors,
                 size = 44.dp,
                 icon = Icons.Rounded.AutoAwesome,
                 onClick = onWallpaper
@@ -112,7 +115,7 @@ fun ColorPickerRow(
                 PaletteSwatch(
                     colors = listOf(Color(seed), lerp(Color(seed), Color.White, 0.45f)),
                     selected = !wallpaperChosen && seed.toInt() == currentSeed,
-                    label = name,
+                    label = name(strings.settings),
                     size = 44.dp,
                     onClick = { onSeed(seed.toInt()) }
                 )

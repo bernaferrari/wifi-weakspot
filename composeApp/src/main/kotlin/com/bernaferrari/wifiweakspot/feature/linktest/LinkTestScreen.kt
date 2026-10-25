@@ -74,6 +74,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bernaferrari.wifiweakspot.core.designsystem.WifiWeakspotShapes
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import com.bernaferrari.wifiweakspot.core.designsystem.component.SignalMorphBlob
 import com.bernaferrari.wifiweakspot.core.designsystem.rememberWifiWeakspotHapticFeedback
 import com.bernaferrari.wifiweakspot.core.designsystem.signalColors
@@ -122,8 +123,8 @@ fun LinkTestScreen(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text("Router check") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } },
+                title = { Text(strings.common.routerCheck) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, strings.common.back) } },
                 scrollBehavior = scrollBehavior
             )
         }
@@ -167,7 +168,7 @@ fun LinkTestScreen(
                                 progress = s.progress,
                                 value = s.latestMs,
                                 unit = "ms",
-                                label = "Checking response time",
+                                label = strings.common.checking,
                                 format = ::formatMs
                             )
                             is LinkTestState.Done -> ResultStage(s.result)
@@ -206,10 +207,10 @@ fun LinkTestScreen(
                             onClick = { haptics.click(); viewModel.start() },
                             shapes = ButtonDefaults.shapes(),
                             modifier = Modifier.fillMaxWidth().heightIn(min = ButtonDefaults.MediumContainerHeight)
-                        ) { Text("Test again", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight)) }
+                        ) { Text(strings.common.checkAgain, style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight)) }
                     }
                     is LinkTestState.Pinging -> {
-                        OutlinedButton(onClick = { haptics.light(); viewModel.cancel() }, shapes = ButtonDefaults.shapes()) { Text("Cancel") }
+                        OutlinedButton(onClick = { haptics.light(); viewModel.cancel() }, shapes = ButtonDefaults.shapes()) { Text(strings.common.cancel) }
                     }
                     is LinkTestState.Failed -> {
                         Text(s.message, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
@@ -229,7 +230,7 @@ fun LinkTestScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             ) {
                 Icon(Icons.Rounded.Public, null, Modifier.size(18.dp))
-                Text("  Test internet speed instead")
+                Text("  " + strings.history.testInternetSpeedInstead)
             }
             }
         }
@@ -256,7 +257,7 @@ private fun StartButton(enabled: Boolean, onClick: () -> Unit) {
             size = 248.dp
         ) {
             Text(
-                "GO",
+                strings.history.go,
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Black,
                 color = if (enabled) scheme.onPrimary else scheme.onSurfaceVariant
@@ -318,9 +319,9 @@ private fun ResultTiles(result: LinkTestResult, modifier: Modifier = Modifier) {
     // Three plain numbers in one card; the details live in History.
     Surface(shape = WifiWeakspotShapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainer, modifier = modifier.fillMaxWidth()) {
         Row(Modifier.padding(vertical = 20.dp)) {
-            Stat("Replies", "${result.latency.samples}", Modifier.weight(1f))
-            Stat("Variation", "±${formatMs(result.latency.jitterMs)} ms", Modifier.weight(1f))
-            Stat("Lost", "${result.latency.lossPercent.fixed(0)}%", Modifier.weight(1f))
+            Stat(strings.history.metricReplies, "${result.latency.samples}", Modifier.weight(1f))
+            Stat(strings.history.metricVariation, "±${formatMs(result.latency.jitterMs)} ms", Modifier.weight(1f))
+            Stat(strings.history.metricLost, "${result.latency.lossPercent.fixed(0)}%", Modifier.weight(1f))
         }
     }
 }
@@ -336,14 +337,14 @@ private fun Stat(label: String, value: String, modifier: Modifier = Modifier) {
 @Composable
 private fun IdleInfo(status: NetworkStatus) {
     Text(
-        if (status.isConnected) "Keep your device still for a few seconds." else "Connect to your Wi-Fi to start.",
+        if (status.isConnected) strings.history.keepDeviceStill else strings.history.connectToStart,
         style = MaterialTheme.typography.titleMedium,
         textAlign = TextAlign.Center
     )
     if (status.isConnected) {
         Text(
             buildString {
-                append(status.ssid)
+                append(status.ssid.ifBlank { strings.survey.connectedWifi })
                 append(" · ${bandLabel(status.frequency)}")
             },
             style = MaterialTheme.typography.bodyMedium,
@@ -366,7 +367,7 @@ private fun LastTestCard(points: List<com.bernaferrari.wifiweakspot.feature.hist
     ) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Last time", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Text(strings.history.lastTime, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Text(
                     com.bernaferrari.wifiweakspot.feature.history.momentLabel(last.timestamp),
                     style = MaterialTheme.typography.bodyMedium,
@@ -376,13 +377,13 @@ private fun LastTestCard(points: List<com.bernaferrari.wifiweakspot.feature.hist
             }
             Column {
                 Text(
-                    last.responseMs?.let { "${formatMs(it)} ms" } ?: "No reply",
+                    last.responseMs?.let { "${formatMs(it)} ms" } ?: strings.common.noReply,
                     style = MaterialTheme.typography.displaySmall.copy(fontFeatureSettings = "tnum"),
                     fontWeight = FontWeight.Bold
                 )
                 // The verdict reads as a sentence under the number, tinted by how it went.
                 Text(
-                    last.verdict.headline.removeSuffix(" here"),
+                    last.verdict.headline,
                     style = MaterialTheme.typography.titleMedium,
                     color = signalColors(last.verdict.quality()).accent
                 )
@@ -405,7 +406,7 @@ private fun RoomTagger(saved: List<String>, tagged: String?, onTag: (String) -> 
     FilledTonalButton(onClick = { picking = true }, shapes = ButtonDefaults.shapes()) {
         Icon(if (tagged == null) Icons.Outlined.AddLocationAlt else Icons.Rounded.Check, null, Modifier.size(ButtonDefaults.IconSize))
         Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-        Text(if (tagged == null) "Which room is this?" else "Saved to $tagged")
+        Text(if (tagged == null) strings.survey.whereAreYou else strings.survey.savedRoom(tagged))
     }
     if (picking) com.bernaferrari.wifiweakspot.feature.walk.RoomPickerSheet(
         existing = saved,

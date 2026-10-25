@@ -2,6 +2,8 @@
 
 package com.bernaferrari.wifiweakspot.feature.walk
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 
 import kotlinx.coroutines.launch
@@ -147,6 +149,7 @@ fun WalkScreen(
     onOpenFloorPlan: () -> Unit = {},
     viewModel: WalkViewModel = koinViewModel()
 ) {
+    val survey = strings.survey
     val live by viewModel.live.collectAsStateWithLifecycle()
     val spots by viewModel.spots.collectAsStateWithLifecycle()
     val saving by viewModel.saving.collectAsStateWithLifecycle()
@@ -163,8 +166,11 @@ fun WalkScreen(
 
     LaunchedEffect(message) {
         message?.let {
-            if (it.startsWith("Saved ")) haptics.success()
-            else if (it.startsWith("Couldn't")) haptics.error()
+            when (viewModel.messageTone.value) {
+                WalkMessageTone.Success -> haptics.success()
+                WalkMessageTone.Error -> haptics.error()
+                WalkMessageTone.Neutral -> Unit
+            }
             snackbar.showSnackbar(it)
             viewModel.dismissMessage()
         }
@@ -191,7 +197,7 @@ fun WalkScreen(
                     if (quality == null) FilledTonalButton(
                         onClick = { platform.openWifiSettings() },
                         shapes = ButtonDefaults.shapes()
-                    ) { Text("Open Wi-Fi settings") }
+                    ) { Text(strings.common.openWifiSettings) }
                     else RoomControls(
                         enabled = saving == null,
                         saving = saving != null,
@@ -204,7 +210,7 @@ fun WalkScreen(
         topBar = {
             // The same collapsing title as the other tabs.
             androidx.compose.material3.MediumFlexibleTopAppBar(
-                title = { Text("Rooms") },
+                title = { Text(strings.common.tabRooms) },
                 scrollBehavior = scrollBehavior
             )
         }
@@ -237,15 +243,15 @@ fun WalkScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            quality?.headline ?: if (live.isConnected) "Signal unavailable" else "Connect to your Wi-Fi",
+                            quality?.headline ?: if (live.isConnected) strings.common.signalUnavailable else strings.survey.connectToYourWifi,
                             style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center
                         )
                         Text(
                             when {
-                                saving != null -> "Checking $saving… keep still"
-                                quality != null -> live.ssid.ifBlank { "Connected Wi-Fi" }
-                                live.isConnected -> "Your device is connected, but no signal reading is available yet."
-                                else -> "Connect to the Wi-Fi you want to check."
+                                saving != null -> strings.survey.checkingRoom(saving!!)
+                                quality != null -> live.ssid.ifBlank { strings.survey.connectedWifi }
+                                live.isConnected -> strings.survey.connectedNoReading
+                                else -> strings.survey.connectToCheck
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -257,7 +263,7 @@ fun WalkScreen(
                         item(key = "networks") {
                             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 if (connectedKey != null) FilterChip(selected = selectedNetwork == connectedKey,
-                                    onClick = { viewModel.selectNetwork(null) }, label = { Text(live.ssid) })
+                                    onClick = { viewModel.selectNetwork(null) }, label = { Text(live.ssid.ifBlank { strings.survey.connectedWifi }) })
                                 choices.filter { it.networkKey != connectedKey }.forEach { choice ->
                                     FilterChip(selected = choice.networkKey == selectedNetwork,
                                         onClick = { viewModel.selectNetwork(choice.networkKey) },
@@ -273,7 +279,7 @@ fun WalkScreen(
                                 val history = spots.history.filter { it.spotKey == spot.spotKey }
                                 viewModel.deleteSpot(spot)
                                 scope.launch {
-                                    val result = snackbar.showSnackbar("Removed ${spot.name}", actionLabel = "Undo", duration = SnackbarDuration.Short)
+                                    val result = snackbar.showSnackbar(survey.removedRoom(spot.name), actionLabel = survey.undo, duration = SnackbarDuration.Short)
                                     if (result == SnackbarResult.ActionPerformed) viewModel.restoreSpot(history)
                                 }
                             })
@@ -283,7 +289,7 @@ fun WalkScreen(
                         item(key = "empty") {
                             // The two ways in, in one sentence: a quick reading per room, or the whole home.
                             Text(
-                                "Stand in a room and save a reading. Check another room to find where the signal gets weaker.",
+                                strings.survey.roomsEmptyHint,
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
@@ -305,7 +311,7 @@ fun WalkScreen(
                 openedSpot = null
                 viewModel.deleteSpot(history.first())
                 scope.launch {
-                    val result = snackbar.showSnackbar("Removed ${history.first().name}", actionLabel = "Undo", duration = SnackbarDuration.Short)
+                    val result = snackbar.showSnackbar(survey.removedRoom(history.first().name), actionLabel = survey.undo, duration = SnackbarDuration.Short)
                     if (result == SnackbarResult.ActionPerformed) viewModel.restoreSpot(history)
                 }
             },
@@ -324,6 +330,7 @@ fun WalkScreen(
 /** A shape that grows with signal, with ripples that quicken as it gets stronger. */
 @Composable
 private fun FinderStage(rssi: Int?, height: androidx.compose.ui.unit.Dp) {
+    val survey = strings.survey
     val display = com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay.current
     val quality = rssi?.let(SignalQuality::of)
     val fraction = rssi?.let(SignalQuality::fraction) ?: 0f
@@ -357,7 +364,7 @@ private fun FinderStage(rssi: Int?, height: androidx.compose.ui.unit.Dp) {
     val ringColor = colors.accent
     Box(
         Modifier.fillMaxWidth().height(height).clearAndSetSemantics {
-            contentDescription = quality?.let { "${display.reading(rssi!!)}, ${it.headline}" } ?: "No Wi-Fi signal"
+            contentDescription = quality?.let { listOf(display.reading(rssi!!), it.headline).joinToString(" · ") } ?: survey.noWifiSignal
         },
         contentAlignment = Alignment.Center
     ) {
@@ -406,7 +413,7 @@ private fun RoomControls(enabled: Boolean, saving: Boolean, onMap: () -> Unit, o
         ) {
             Icon(Icons.Rounded.Map, null)
             Spacer(Modifier.width(8.dp))
-            Text("Map home", style = MaterialTheme.typography.titleMedium, maxLines = 1,
+            Text(strings.survey.mapYourHome, style = MaterialTheme.typography.titleMedium, maxLines = 1,
                 autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = MaterialTheme.typography.titleMedium.fontSize))
         }
         Button(
@@ -419,7 +426,7 @@ private fun RoomControls(enabled: Boolean, saving: Boolean, onMap: () -> Unit, o
             if (saving) androidx.compose.material3.LoadingIndicator(Modifier.size(24.dp))
             else Icon(Icons.Outlined.AddLocationAlt, null)
             Spacer(Modifier.width(8.dp))
-            Text(if (saving) "Checking…" else "Save room", style = MaterialTheme.typography.titleMedium, maxLines = 1,
+            Text(if (saving) strings.common.checking else strings.survey.saveRoom, style = MaterialTheme.typography.titleMedium, maxLines = 1,
                 autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = MaterialTheme.typography.titleMedium.fontSize))
         }
     }
@@ -430,18 +437,19 @@ private fun shortChange(current: RoomReading, previous: RoomReading?): String? {
     if (previous == null) return null
     val delta = current.averageRssi - previous.averageRssi
     return when {
-        delta >= 4 -> "$delta dB stronger"
-        delta <= -4 -> "${-delta} dB weaker"
-        else -> "Same as before"
+        delta >= 4 -> appStrings.survey.dbStronger(delta)
+        delta <= -4 -> appStrings.survey.dbWeaker(-delta)
+        else -> appStrings.survey.sameAsLastTime
     }
 }
 
 @Composable
 private fun SavedSpots(spots: CoverageSummary, onOpen: (RoomReading) -> Unit, onDelete: (RoomReading) -> Unit) {
+    val survey = strings.survey
     val display = com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay.current
     Column(Modifier.fillMaxWidth().animateContentSize(MaterialTheme.motionScheme.defaultSpatialSpec())) {
         Text(
-            "Saved rooms",
+            strings.survey.savedRooms,
             style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.padding(start = 8.dp, top = 8.dp, bottom = 8.dp)
         )
@@ -461,12 +469,12 @@ private fun SavedSpots(spots: CoverageSummary, onOpen: (RoomReading) -> Unit, on
                                 Modifier.fillMaxSize().clip(ListItemDefaults.segmentedShapes(index = index, count = spots.rankedRooms.size).shape)
                                     .background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 24.dp),
                                 contentAlignment = Alignment.CenterEnd
-                            ) { Icon(Icons.Rounded.DeleteOutline, "Delete ${spot.name}", tint = MaterialTheme.colorScheme.onErrorContainer) }
+                            ) { Icon(Icons.Rounded.DeleteOutline, survey.deleteRoom(spot.name), tint = MaterialTheme.colorScheme.onErrorContainer) }
                         }
                     ) {
                         SegmentedListItem(
                             modifier = Modifier.semantics {
-                                contentDescription = "${spot.name}, ${spot.quality.label} signal, ${display.reading(spot.averageRssi)}. Review readings and recheck this spot."
+                                contentDescription = survey.roomDescription(spot.name, spot.quality.label, display.reading(spot.averageRssi))
                             },
                             onClick = { onOpen(spot) },
                             shapes = ListItemDefaults.segmentedShapes(index = index, count = spots.rankedRooms.size),

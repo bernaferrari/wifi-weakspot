@@ -11,6 +11,7 @@ import com.bernaferrari.wifiweakspot.core.lan.sameLanConnection
 import com.bernaferrari.wifiweakspot.core.model.NetworkStatus
 import com.bernaferrari.wifiweakspot.core.model.lan.LanDevice
 import com.bernaferrari.wifiweakspot.core.util.nowMillis
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +30,8 @@ sealed interface LanUiState {
     data class Success(val devices: List<LanDevice>) : LanUiState
     data class Error(val message: String) : LanUiState
 }
+
+private class LanConnectionChanged : Exception()
 
 class LanViewModel(
     private val lanScanner: LanScanner,
@@ -85,8 +88,8 @@ class LanViewModel(
                 val key = lanNetworkKey(connection)
                 displayedConnection = connection
                 val result = lanScanner.scanSubnet()
-                check(sameLanConnection(connection, networkStatusRepository.getCurrentNetworkStatus().first())) {
-                    "The connection changed. Look again on this network."
+                if (!sameLanConnection(connection, networkStatusRepository.getCurrentNetworkStatus().first())) {
+                    throw LanConnectionChanged()
                 }
                 val devices = result.devices.map { device ->
                     val saved = key?.let { dao.getLanDevice(device.ipAddress, it) }
@@ -125,7 +128,7 @@ class LanViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _uiState.value = LanUiState.Error(e.message ?: "Scan failed")
+                _uiState.value = LanUiState.Error(if (e is LanConnectionChanged) appStrings.tools.connectionChangedLookAgain else appStrings.tools.scanFailed)
             }
         }
     }

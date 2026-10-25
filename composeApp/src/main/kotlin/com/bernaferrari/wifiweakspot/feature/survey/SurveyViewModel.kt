@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.feature.survey
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bernaferrari.wifiweakspot.core.database.dao.WifiWeakspotDao
@@ -115,9 +116,9 @@ class SurveyViewModel(
                         scanned?.let { freshSurveyMeasurement(it, request.targetBssid, requestedAt, com.bernaferrari.wifiweakspot.core.util.nowMillis()) }
                             .also { found ->
                                 if (found == null) _message.value = if (scanned == null) {
-                                    "Android is pausing scans. Stay here and try again in a moment."
+                                    appStrings.survey.noFreshScan
                                 } else {
-                                    "That Wi-Fi didn't show up here. Nothing was saved."
+                                    appStrings.survey.networkNotSeenHere
                                 }
                             }
                     }
@@ -127,7 +128,7 @@ class SurveyViewModel(
                         // The UI flow may still show the previous target immediately after a write.
                         val persisted = dao.getAllProjects().first().find { it.id == request.projectId }
                         if (persisted?.targetBssid?.equals(request.targetBssid, ignoreCase = true) != true) {
-                            _message.value = "The project changed while scanning. No point was saved."
+                            _message.value = appStrings.survey.projectChangedWhileScanning
                             return@withLock
                         }
                         val position = request.position
@@ -141,7 +142,7 @@ class SurveyViewModel(
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (_: Exception) {
-                    _message.value = "Couldn't save that reading. Your other readings are safe."
+                    _message.value = appStrings.survey.couldNotSaveReading
                 } finally {
                     _isSampling.value = false
                 }
@@ -159,7 +160,7 @@ class SurveyViewModel(
     fun createMap() {
         viewModelScope.launch {
             val taken = projects.value.map { it.name }.toSet()
-            val name = generateSequence(1) { it + 1 }.map { if (it == 1) "Home" else "Home $it" }.first { it !in taken }
+            val name = generateSequence(1) { it + 1 }.map { appStrings.survey.defaultMapName(it) }.first { it !in taken }
             val status = runCatching { networkStatus.getCurrentNetworkStatus().first() }.getOrNull()
             createProject(name, target = status?.takeIf { it.isConnected && it.bssid.isNotBlank() && it.bssid != "02:00:00:00:00:00" }?.let { it.ssid to it.bssid })
         }
@@ -168,7 +169,7 @@ class SurveyViewModel(
     fun createProject(name: String, target: Pair<String, String>? = null) {
         if (name.isBlank()) return
         if (_isUpdatingProject.value) {
-            _message.value = "One moment, still saving the map."
+            _message.value = appStrings.survey.stillSavingMap
             return
         }
         _isUpdatingProject.value = true
@@ -186,7 +187,7 @@ class SurveyViewModel(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                _message.value = "Could not create the map. Try again."
+                _message.value = appStrings.common.couldNotSaveChanges
             } finally {
                 _isUpdatingProject.value = false
             }
@@ -196,7 +197,7 @@ class SurveyViewModel(
     fun renameProject(name: String) {
         val project = currentProject.value ?: return
         if (name.isBlank() || name == project.name) return
-        mutateProject(project.id, "Could not rename the map. Try again.") { persisted ->
+        mutateProject(project.id, appStrings.common.couldNotSaveChanges) { persisted ->
             dao.updateSurveyProject(persisted.copy(name = name.trim(), updatedAt = com.bernaferrari.wifiweakspot.core.util.nowMillis()))
         }
     }
@@ -211,7 +212,7 @@ class SurveyViewModel(
                     dao.markSurveyProjectUsed(project.id, com.bernaferrari.wifiweakspot.core.util.nowMillis())
                 }
             }
-            catch (_: Exception) { _message.value = "Could not remember the selected project." }
+            catch (_: Exception) { _message.value = appStrings.common.couldNotSaveChanges }
         }
     }
 
@@ -227,7 +228,7 @@ class SurveyViewModel(
     /** Removes every reading on one floor. An emptied floor other than 1 disappears from the buttons. */
     fun deleteFloor(floor: Int) {
         val project = currentProject.value ?: return
-        mutateProject(project.id, "Couldn't delete that floor. Try again.") { persisted ->
+        mutateProject(project.id, appStrings.common.couldNotDeleteItem) { persisted ->
             dao.deleteFloorPoints(persisted.id, floor)
         }
         if (_selectedFloor.value == floor) setFloor(1)
@@ -243,10 +244,10 @@ class SurveyViewModel(
         viewModelScope.launch {
             try {
                 if (wifiScanner.awaitNextScan() == null) {
-                    _message.value = "Android did not provide a fresh scan. Try again shortly."
+                    _message.value = appStrings.survey.noFreshScan
                 }
             } catch (_: Exception) {
-                _message.value = "Could not scan. Check Wi-Fi and location settings."
+                _message.value = appStrings.survey.couldNotScan
             }
         }
     }
@@ -254,7 +255,7 @@ class SurveyViewModel(
     /** A project mutation invalidates samples before its asynchronous database write begins. */
     private fun mutateProject(projectId: Long, errorMessage: String, action: suspend (SurveyProjectEntity) -> Unit) {
         if (_isUpdatingProject.value) {
-            _message.value = "One moment, still saving the map."
+            _message.value = appStrings.survey.stillSavingMap
             return
         }
         _isUpdatingProject.value = true
@@ -279,7 +280,7 @@ class SurveyViewModel(
     fun selectTarget(network: WifiNetwork) {
         val project = currentProject.value ?: return
         if (project.targetBssid.equals(network.bssid, ignoreCase = true)) return
-        mutateProject(project.id, "Could not switch networks. Try again.") { persisted ->
+        mutateProject(project.id, appStrings.common.couldNotSaveChanges) { persisted ->
             dao.replaceSurveyTarget(persisted.copy(
                 targetSsid = network.ssid, targetBssid = network.bssid, updatedAt = com.bernaferrari.wifiweakspot.core.util.nowMillis()
             ))
@@ -289,7 +290,7 @@ class SurveyViewModel(
 
     fun setFloorplan(path: String?, onReplaced: (String?) -> Unit = {}) {
         val project = currentProject.value ?: return
-        mutateProject(project.id, "Could not save the floorplan.") { persisted ->
+        mutateProject(project.id, appStrings.common.couldNotSaveChanges) { persisted ->
             dao.updateSurveyProject(persisted.copy(imagePath = path, updatedAt = com.bernaferrari.wifiweakspot.core.util.nowMillis()))
             onReplaced(persisted.imagePath)
         }
@@ -297,13 +298,13 @@ class SurveyViewModel(
 
     fun addPoint(x: Float, y: Float) {
         if (_isUpdatingProject.value) {
-            _message.value = "Wait for the project update before measuring."
+            _message.value = appStrings.survey.stillSavingMap
             return
         }
         val project = currentProject.value ?: return
         val target = project.targetBssid
         if (target == null) {
-            _message.value = "Choose an access point before mapping its coverage."
+            _message.value = appStrings.survey.chooseAccessPointFirst
             return
         }
         if (!x.isFinite() || !y.isFinite()) return
@@ -313,16 +314,16 @@ class SurveyViewModel(
     }
 
     fun deletePoint(point: com.bernaferrari.wifiweakspot.core.database.entities.SurveyPointEntity) {
-        mutateProject(point.projectId, "Couldn't remove that reading.") { dao.deleteSurveyPoint(point.id) }
+        mutateProject(point.projectId, appStrings.common.couldNotDeleteItem) { dao.deleteSurveyPoint(point.id) }
     }
 
     fun undoLastPoint() {
         val last = currentPoints.value.lastOrNull() ?: return
-        mutateProject(last.projectId, "Couldn't remove that reading.") { dao.deleteSurveyPoint(last.id) }
+        mutateProject(last.projectId, appStrings.common.couldNotDeleteItem) { dao.deleteSurveyPoint(last.id) }
     }
 
     fun deleteProject(project: SurveyProjectEntity, onDeleted: (String?) -> Unit = {}) {
-        mutateProject(project.id, "Could not delete this project.") { persisted ->
+        mutateProject(project.id, appStrings.common.couldNotDeleteItem) { persisted ->
             dao.deleteProject(persisted) // Room's foreign key cascades to its points.
             onDeleted(persisted.imagePath)
         }
@@ -346,7 +347,7 @@ class SurveyViewModel(
                     project to dao.getPointsForProject(projectId).first().sortedWith(compareBy({ it.timestamp }, { it.id }))
                 } ?: return@launch
                 val (project, points) = snapshot
-                if (points.isEmpty()) { _message.value = "Save at least one measurement before exporting."; return@launch }
+                if (points.isEmpty()) { _message.value = appStrings.survey.saveMeasurementBeforeExport; return@launch }
                 val csv = mutableListOf("Timestamp,X_Ratio,Y_Ratio,RSSI_dBm,SSID,BSSID,Floor_ID")
                 points.forEach { p -> csv += listOf(p.timestamp, p.x, p.y, p.rssi, csvField(p.ssid ?: ""),
                     csvField(p.bssid ?: ""), p.floorId).joinToString(",") }
@@ -354,7 +355,7 @@ class SurveyViewModel(
                 exportManager.exportToCsv(csv, "Survey_${safeName}_${com.bernaferrari.wifiweakspot.core.util.nowMillis()}")
             } catch (cancelled: CancellationException) {
                 throw cancelled
-            } catch (_: Exception) { _message.value = "Could not export this project. Try again." }
+            } catch (_: Exception) { _message.value = appStrings.survey.couldNotExportProject }
         }
     }
 

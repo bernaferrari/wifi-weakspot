@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.walk
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -49,7 +50,7 @@ fun SpotHistorySheet(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(current.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                     Text(
-                        "Saved ${relativeTime(current.timestamp)}",
+                        strings.survey.savedAt(relativeTime(current.timestamp)),
                         style = MaterialTheme.typography.bodyLarge,
                         color = scheme.onSurfaceVariant
                     )
@@ -62,7 +63,7 @@ fun SpotHistorySheet(
                 Text(current.quality.explanation, style = MaterialTheme.typography.bodyLarge)
                 // One practical idea when it's weak, nothing when it's fine.
                 if (current.quality.isProblem) Text(
-                    "Try moving the router higher, more central, or closer to this room.",
+                    strings.survey.moveRouterTip,
                     style = MaterialTheme.typography.bodyLarge,
                     color = scheme.onSurfaceVariant
                 )
@@ -70,9 +71,9 @@ fun SpotHistorySheet(
                     val delta = current.averageRssi - previous.averageRssi
                     Text(
                         when {
-                            delta >= 4 -> "Better than last time"
-                            delta <= -4 -> "Worse than last time"
-                            else -> "Same as last time"
+                            delta >= 4 -> strings.survey.betterThanLastTime
+                            delta <= -4 -> strings.survey.worseThanLastTime
+                            else -> strings.survey.sameAsLastTime
                         },
                         style = MaterialTheme.typography.bodyLarge,
                         color = scheme.onSurfaceVariant
@@ -82,7 +83,7 @@ fun SpotHistorySheet(
 
             if (readings.size >= 2) {
                 Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
-                    Text("Earlier checks", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
+                    Text(strings.survey.earlierChecks, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(start = 4.dp, bottom = 8.dp))
                     val earlier = readings.drop(1)
                     earlier.forEachIndexed { index, reading ->
                         SegmentedListItem(
@@ -107,7 +108,7 @@ fun SpotHistorySheet(
                     ) {
                         Icon(Icons.Rounded.DeleteOutline, null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Remove", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight), maxLines = 1,
+                        Text(strings.survey.remove, style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight), maxLines = 1,
                             autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight).fontSize))
                     }
                     Button(
@@ -119,12 +120,12 @@ fun SpotHistorySheet(
                     ) {
                         Icon(Icons.Rounded.Refresh, null)
                         Spacer(Modifier.width(8.dp))
-                        Text(if (saving) "Checking…" else "Recheck", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight), maxLines = 1,
+                        Text(if (saving) strings.common.checking else strings.common.checkAgain, style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight), maxLines = 1,
                             autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight).fontSize))
                     }
                 }
                 if (!canRecheck) Text(
-                    "Connect to ${current.ssid.ifBlank { "the same Wi-Fi" }} to check again.",
+                    strings.survey.connectToRecheck(current.ssid),
                     style = MaterialTheme.typography.bodyMedium,
                     color = scheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.CenterHorizontally)

@@ -1,22 +1,48 @@
 package com.bernaferrari.wifiweakspot.core.wifi
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 /**
  * One plain-language scale for received signal strength, shared by every screen.
  *
  * Thresholds follow common home-network guidance: about -67 dBm is the floor for
  * smooth calls and streaming, and links below about -80 dBm drop or stall.
  */
-enum class SignalQuality(
-    val minRssi: Int,
-    val label: String,
-    val headline: String,
-    val explanation: String
-) {
-    Excellent(-55, "Excellent", "Excellent signal", "A strong connection to the router. Signal alone doesn’t measure internet speed."),
-    Good(-67, "Good", "Good signal", "A solid signal from the router."),
-    Fair(-75, "Okay", "Okay signal", "A usable signal, with less room for interference."),
-    Weak(-82, "Weak", "Weak spot", "A weak signal. Compare this spot with one closer to the router."),
-    DeadZone(Int.MIN_VALUE, "Dead zone", "Dead zone", "Very little signal reaches this spot.");
+enum class SignalQuality(val minRssi: Int) {
+    Excellent(-55),
+    Good(-67),
+    Fair(-75),
+    Weak(-82),
+    DeadZone(Int.MIN_VALUE);
+
+    val label: String get() = with(appStrings.domain) {
+        when (this@SignalQuality) {
+            Excellent -> qualityExcellentLabel
+            Good -> qualityGoodLabel
+            Fair -> qualityFairLabel
+            Weak -> qualityWeakLabel
+            DeadZone -> qualityDeadZoneLabel
+        }
+    }
+
+    val headline: String get() = with(appStrings.domain) {
+        when (this@SignalQuality) {
+            Excellent -> qualityExcellentHeadline
+            Good -> qualityGoodHeadline
+            Fair -> qualityFairHeadline
+            Weak -> qualityWeakHeadline
+            DeadZone -> qualityDeadZoneLabel
+        }
+    }
+
+    val explanation: String get() = with(appStrings.domain) {
+        when (this@SignalQuality) {
+            Excellent -> qualityExcellentExplanation
+            Good -> qualityGoodExplanation
+            Fair -> qualityFairExplanation
+            Weak -> qualityWeakExplanation
+            DeadZone -> qualityDeadZoneExplanation
+        }
+    }
 
     /** Bars to draw, 0-4. */
     val bars: Int get() = 4 - ordinal

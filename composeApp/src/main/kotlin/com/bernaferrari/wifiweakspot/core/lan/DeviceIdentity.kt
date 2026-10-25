@@ -1,20 +1,27 @@
 package com.bernaferrari.wifiweakspot.core.lan
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import com.bernaferrari.wifiweakspot.core.model.lan.LanDevice
 
 /** What a device most likely is, guessed from its name and maker. */
-enum class DeviceKind(val label: String) {
-    Router("Router"),
-    ThisPhone("This device"),
-    Phone("Phone or tablet"),
-    Computer("Computer"),
-    Tv("TV or streamer"),
-    Speaker("Speaker"),
-    Printer("Printer"),
-    Console("Game console"),
-    Camera("Camera"),
-    SmartHome("Smart home device"),
-    Unknown("Device")
+enum class DeviceKind {
+    Router, ThisPhone, Phone, Computer, Tv, Speaker, Printer, Console, Camera, SmartHome, Unknown;
+
+    val label: String get() = with(appStrings.domain) {
+        when (this@DeviceKind) {
+            Router -> deviceKindRouter
+            ThisPhone -> deviceKindThisDevice
+            Phone -> deviceKindPhone
+            Computer -> deviceKindComputer
+            Tv -> deviceKindTv
+            Speaker -> deviceKindSpeaker
+            Printer -> deviceKindPrinter
+            Console -> deviceKindConsole
+            Camera -> deviceKindCamera
+            SmartHome -> deviceKindSmartHome
+            Unknown -> deviceKindUnknown
+        }
+    }
 }
 
 /** How a device is shown: a friendly name, its kind, and a short line of detail. */
@@ -116,14 +123,14 @@ fun LanDevice.identify(gateway: String?, phoneIp: String?): DeviceIdentity {
     val makerName = vendor?.let(::shortVendor)
     val name = customName?.takeIf { it.isNotBlank() }
         ?: when (kind) {
-            DeviceKind.Router -> "Your router"
-            DeviceKind.ThisPhone -> "This device"
+            DeviceKind.Router -> appStrings.common.yourRouter
+            DeviceKind.ThisPhone -> appStrings.domain.deviceKindThisDevice
             else -> null
         }
         ?: announcedName?.takeIf { it.isNotBlank() }
         ?: hostname?.let(::friendlyHostname)
-        ?: makerName?.let { if (kind == DeviceKind.Unknown) "$it device" else "$it ${kind.label.lowercase()}" }
-        ?: if (kind == DeviceKind.Unknown) "Unnamed device" else kind.label
+        ?: makerName?.let { appStrings.domain.makerDevice(it, kind) }
+        ?: if (kind == DeviceKind.Unknown) appStrings.domain.unnamedDevice else kind.label
     val detail = listOfNotNull(
         // This phone's own name ("Galaxy S25") is the most useful detail it has.
         announcedName?.takeIf { kind == DeviceKind.ThisPhone && customName == null },

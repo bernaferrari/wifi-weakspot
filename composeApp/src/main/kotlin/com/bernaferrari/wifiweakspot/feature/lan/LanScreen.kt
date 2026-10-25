@@ -54,6 +54,7 @@ import com.bernaferrari.wifiweakspot.core.lan.DeviceIdentity
 import com.bernaferrari.wifiweakspot.core.lan.DeviceKind
 import com.bernaferrari.wifiweakspot.core.lan.identify
 import com.bernaferrari.wifiweakspot.core.model.lan.LanDevice
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import org.koin.compose.viewmodel.koinViewModel
 
 private class ShownDevice(val device: LanDevice, val identity: DeviceIdentity)
@@ -92,14 +93,14 @@ fun LanScreen(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text("Devices") },
+                title = { Text(strings.common.devices) },
                 subtitle = {
                     Text(
                         when {
-                            isScanning && shown.isEmpty() -> "Looking for devices…"
-                            shown.isEmpty() -> "Find devices on your Wi-Fi"
-                            status.ssid.isNotBlank() -> "${shown.size} on ${status.ssid}"
-                            else -> "${shown.size} on your network"
+                            isScanning && shown.isEmpty() -> strings.tools.devicesLooking
+                            shown.isEmpty() -> strings.tools.devicesFindOnWifi
+                            status.ssid.isNotBlank() -> strings.tools.devicesOnNetworkNamed(shown.size, status.ssid)
+                            else -> strings.tools.devicesOnYourNetwork(shown.size)
                         }
                     )
                 },
@@ -107,7 +108,7 @@ fun LanScreen(
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = { haptics.light(); onBack() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.common.back)
                         }
                     }
                 },
@@ -115,7 +116,7 @@ fun LanScreen(
                     IconButton(onClick = { haptics.click(); if (isScanning) viewModel.stopScan() else viewModel.startScan() }) {
                         Icon(
                             if (isScanning) Icons.Rounded.Stop else Icons.Rounded.Refresh,
-                            contentDescription = if (isScanning) "Stop looking" else "Look again"
+                            contentDescription = if (isScanning) strings.common.stop else strings.common.checkAgain
                         )
                     }
                 },
@@ -132,6 +133,9 @@ fun LanScreen(
             onRefresh = { haptics.click(); viewModel.startScan() },
             modifier = Modifier.padding(padding)
         ) {
+            val yourNetwork = strings.common.yourNetwork
+            val otherDevices = strings.tools.otherDevicesGroup(others.size)
+            val footer = strings.tools.noDevicesFoundSubtitle
             LazyColumn(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 32.dp),
                 modifier = Modifier.fillMaxSize()
@@ -146,20 +150,20 @@ fun LanScreen(
                 val error = uiState as? LanUiState.Error
                 when {
                     error != null -> item(key = "error") {
-                        ProblemCard("Couldn't look for devices", error.message, onRetry = viewModel::startScan)
+                        ProblemCard(strings.tools.couldntLookForDevices, error.message, onRetry = viewModel::startScan)
                     }
                     shown.isEmpty() && !isScanning -> item(key = "empty") {
                         EmptyStateWithIllustration(
                             illustration = { LanDeviceIllustration() },
-                            title = if (uiState is LanUiState.Cancelled) "Stopped looking" else "No devices found",
-                            subtitle = "Some devices stay quiet when asked. Try again in a moment, or check that this device is on your home Wi-Fi.",
+                            title = if (uiState is LanUiState.Cancelled) strings.tools.stoppedLooking else strings.tools.noDevicesFound,
+                            subtitle = strings.tools.noDevicesFoundSubtitle,
                             modifier = Modifier.padding(top = 32.dp)
                         )
                     }
                 }
-                deviceGroup("Your network", home, isScanning, onDeviceClick = { haptics.click(); onDeviceClick(it) })
+                deviceGroup(yourNetwork, home, isScanning, onDeviceClick = { haptics.click(); onDeviceClick(it) })
                 deviceGroup(
-                    if (others.isEmpty()) null else "Other devices · ${others.size}",
+                    if (others.isEmpty()) null else otherDevices,
                     others,
                     isScanning,
                     onDeviceClick = { haptics.click(); onDeviceClick(it) }
@@ -178,7 +182,7 @@ fun LanScreen(
                 if (shown.isNotEmpty()) {
                     item(key = "footer") {
                         Text(
-                            "Some devices hide from scans, so a missing one may still be connected.",
+                            footer,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.animateItem().padding(start = 8.dp, end = 8.dp, top = 20.dp)
@@ -223,16 +227,16 @@ private fun QuietToggle(count: Int, expanded: Boolean, onToggle: () -> Unit, mod
     ) {
         Row(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(if (count == 1) "1 quiet device" else "$count quiet devices", style = MaterialTheme.typography.titleMedium)
+                Text(strings.tools.quietDevices(count), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "They didn't say what they are",
+                    strings.tools.quietDevicesSubtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Icon(
                 if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
-                contentDescription = if (expanded) "Hide" else "Show"
+                contentDescription = if (expanded) strings.tools.hide else strings.tools.show
             )
         }
     }
@@ -244,7 +248,7 @@ private fun ScanStatus(scanning: Boolean, progress: Float, modifier: Modifier = 
     Column(modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         LinearWavyProgressIndicator(progress = { progress.coerceIn(0.02f, 1f) }, modifier = Modifier.fillMaxWidth())
         Text(
-            "Checking local addresses · ${(progress * 100).toInt()}%",
+            strings.tools.checkingLocalAddresses((progress * 100).toInt()),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -264,7 +268,7 @@ private fun DeviceRow(shown: ShownDevice, stale: Boolean, onClick: () -> Unit, s
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(shown.identity.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    if (quiet) "${shown.identity.detail} · didn't answer" else shown.identity.detail,
+                    if (quiet) strings.tools.deviceDidntAnswer(shown.identity.detail) else shown.identity.detail,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -281,7 +285,7 @@ private fun ProblemCard(title: String, message: String, onRetry: () -> Unit) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             Text(message, style = MaterialTheme.typography.bodyMedium)
-            Button(onClick = onRetry, shapes = ButtonDefaults.shapes()) { Text("Try again") }
+            Button(onClick = onRetry, shapes = ButtonDefaults.shapes()) { Text(strings.tools.tryAgain) }
         }
     }
 }

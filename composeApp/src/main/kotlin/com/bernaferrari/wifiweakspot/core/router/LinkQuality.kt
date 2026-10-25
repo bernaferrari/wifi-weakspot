@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.core.router
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import kotlin.math.abs
 
 /** Response time, steadiness and loss for the phone-to-router hop. */
@@ -22,11 +23,26 @@ fun summarizeLatency(rtts: List<Float>, sent: Int): RouterLatency? {
     return RouterLatency(median, jitter, loss, rtts.size)
 }
 
-enum class LinkVerdict(val headline: String, val explanation: String) {
-    Great("Router responds quickly", "Replies were quick and steady."),
-    Good("Router response is usable", "Some replies were a little slow or uneven."),
-    Slow("Router replies are delayed", "Replies were slow or uneven. Try again near the router to compare."),
-    Unreliable("Router check inconclusive", "Many replies went missing. Some routers ignore these checks, so try again before changing anything.")
+enum class LinkVerdict {
+    Great, Good, Slow, Unreliable;
+
+    val headline: String get() = with(appStrings.domain) {
+        when (this@LinkVerdict) {
+            Great -> verdictGreatHeadline
+            Good -> verdictGoodHeadline
+            Slow -> verdictSlowHeadline
+            Unreliable -> verdictUnreliableHeadline
+        }
+    }
+
+    val explanation: String get() = with(appStrings.domain) {
+        when (this@LinkVerdict) {
+            Great -> verdictGreatExplanation
+            Good -> verdictGoodExplanation
+            Slow -> verdictSlowExplanation
+            Unreliable -> verdictUnreliableExplanation
+        }
+    }
 }
 
 /** Judges local router replies only. There is no receiver-backed throughput measurement. */

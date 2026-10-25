@@ -115,7 +115,7 @@ class SurveyViewModelTest {
         model.addPoint(0.5f, 0.5f)
         runCurrent()
         assertTrue(points.value.isEmpty())
-        assertTrue(model.message.value!!.contains("pausing scans"))
+        assertTrue(model.message.value!!.contains("fresh scan"))
         coVerify(exactly = 0) { dao.insertSurveyPoint(any()) }
     }
 

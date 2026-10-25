@@ -1,5 +1,7 @@
 package com.bernaferrari.wifiweakspot.feature.analyze
 
+import com.bernaferrari.wifiweakspot.core.i18n.AnalyzeStrings
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -169,16 +171,16 @@ fun ChannelGraph(
         grow.animateTo(1f, growSpec)
     }
 
+    val sharedCatalog = strings
+
+    val s = strings.analyze
     val busiest = remember(networks) {
         networks.groupBy { frequencyToChannel(it.frequency) }.maxByOrNull { it.value.size }
     }
     Canvas(
         modifier
             .semantics {
-                contentDescription = buildString {
-                    append("Channel graph, ${networks.size} networks.")
-                    busiest?.let { append(" Busiest channel ${it.key} with ${it.value.size}.") }
-                }
+                contentDescription = s.channelGraphDescription(networks.size, busiest?.key, busiest?.value?.size ?: 0)
             }
             .then(if (explore) Modifier.pointerInput(selectedBand) {
                 fun moveTo(x: Float) {
@@ -231,7 +233,7 @@ fun ChannelGraph(
     ) {
         val plot = plotRect(size.width, size.height, this, selectedBand, latestShowCrowd)
         drawZones(plot, zones)
-        drawQualityLabels(plot, textMeasurer, labelStyle.copy(color = scheme.onSurfaceVariant.copy(alpha = 0.7f)))
+        drawQualityLabels(s, plot, textMeasurer, labelStyle.copy(color = scheme.onSurfaceVariant.copy(alpha = 0.7f)))
         val yourNetwork = connectedBssid?.let { bssid -> radios.firstOrNull { it.bssid.equals(bssid, ignoreCase = true) } }
         drawChannelAxis(
             plot, selectedBand, textMeasurer, labelStyle, scheme.onSurfaceVariant, scheme.onSurface, scheme.outlineVariant,
@@ -240,7 +242,7 @@ fun ChannelGraph(
             yourColor = yourNetwork?.let { palette.color(it.bssid) } ?: scheme.onSurface
         )
         if (showCrowd) {
-            drawCrowdRow(plot, radios, textMeasurer, labelStyle, crowdColors, crowdCounts)
+            drawCrowdRow(s.busyCaption, plot, radios, textMeasurer, labelStyle, crowdColors, crowdCounts)
         }
 
         val dimOthers = focused != null
@@ -263,7 +265,7 @@ fun ChannelGraph(
             val center = channels.first { it.first == cursorChannel }.second
             val x = plot.left + mapFreqToNormX(center.toFloat(), selectedBand) * plot.width
             drawLine(scheme.onSurface.copy(alpha = 0.7f), Offset(x, plot.top), Offset(x, plot.bottom), strokeWidth = 2.dp.toPx(), cap = StrokeCap.Round)
-            val tag = textMeasurer.measure("Ch $cursorChannel", peakStyle.copy(color = scheme.inverseOnSurface))
+            val tag = textMeasurer.measure(s.channelShort(cursorChannel), peakStyle.copy(color = scheme.inverseOnSurface))
             val w = tag.size.width + 16.dp.toPx()
             val h = tag.size.height + 6.dp.toPx()
             // Centred on its line; it may spill past the plot into the margins, just not off screen.
@@ -287,8 +289,7 @@ fun ChannelGraph(
             if (!palette.isFeatured(network.bssid) && network.bssid != focused?.bssid) return@forEach
             if (!dimOthers && !isYou && unfocusedLabels >= UnfocusedLabels) return@forEach
             val extra = extraNames[network.bssid] ?: 0
-            val name = network.ssid.ifEmpty { "Hidden" }.let { if (it.length > 16) it.take(15) + "…" else it } +
-                (if (isYou) " (you)" else "") + (if (extra > 0) " +$extra" else "")
+            val name = s.chartNetworkLabel(network.ssid.ifEmpty { sharedCatalog.common.hiddenNetworkShort }.let { if (it.length > 16) it.take(15) + "…" else it }, isYou, extra)
             val layout = textMeasurer.measure(name, peakStyle.copy(color = palette.color(network.bssid)), maxLines = 1, overflow = TextOverflow.Ellipsis,
                 constraints = Constraints(maxWidth = (plot.width - 16.dp.toPx()).toInt().coerceAtLeast(1)))
             val segment = occupiedFrequencySegments(network).first()
@@ -340,9 +341,9 @@ internal const val CrowdFloorDbm = -80
  * How crowded each part of 2.4 GHz is, as one soft strip under the channels: green where few
  * routers overlap, red where many do. Counting stays in the help; the strip just shows where.
  */
-private fun DrawScope.drawCrowdRow(plot: Rect, networks: List<WifiNetwork>, measurer: TextMeasurer, style: TextStyle, colors: CrowdColors, counts: Boolean) {
+private fun DrawScope.drawCrowdRow(busyCaption: String, plot: Rect, networks: List<WifiNetwork>, measurer: TextMeasurer, style: TextStyle, colors: CrowdColors, counts: Boolean) {
     val y = plot.bottom + 34.dp.toPx()
-    val caption = measurer.measure("Busy", style.copy(color = colors.quietText))
+    val caption = measurer.measure(busyCaption, style.copy(color = colors.quietText))
     val perChannel = (1..13).map { channel ->
         val center = 2407 + channel * 5
         val count = networks.count { network -> network.rssi >= CrowdFloorDbm && occupiedFrequencySegments(network).any { it.overlaps(center) } }
@@ -402,8 +403,8 @@ internal fun DrawScope.drawZones(plot: Rect, zones: Map<SignalQuality, Color>) {
 internal val QualityGutter = 48.dp
 
 /** Words instead of dBm numbers: what the level means matters more than the exact reading. */
-internal fun DrawScope.drawQualityLabels(plot: Rect, measurer: TextMeasurer, style: TextStyle) {
-    listOf("Strong" to -40, "Okay" to -71, "Weak" to -88).forEach { (label, dbm) ->
+internal fun DrawScope.drawQualityLabels(s: AnalyzeStrings, plot: Rect, measurer: TextMeasurer, style: TextStyle) {
+    listOf(s.axisStrong to -40, s.axisOkay to -71, s.axisWeak to -88).forEach { (label, dbm) ->
         val layout = measurer.measure(label, style)
         val y = plot.bottom - plot.height * dbmToFraction(dbm.toFloat()) - layout.size.height / 2f
         drawText(layout, topLeft = Offset(plot.left - layout.size.width - 8.dp.toPx(), y))

@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.feature.history
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import com.bernaferrari.wifiweakspot.core.lan.identify
 import com.bernaferrari.wifiweakspot.feature.lan.toDevice
 
@@ -16,12 +17,22 @@ import com.bernaferrari.wifiweakspot.core.wifi.SignalQuality
 import com.bernaferrari.wifiweakspot.core.wifi.bandLabel
 import com.bernaferrari.wifiweakspot.feature.linktest.LinkTestViewModel
 
-enum class HistoryKind(val label: String) {
-    Speed("Router checks"),
-    Internet("Internet tests"),
-    Scan("Scans"),
-    Tool("Tools"),
-    Devices("Devices")
+enum class HistoryKind {
+    Speed,
+    Internet,
+    Scan,
+    Tool,
+    Devices;
+
+    /** Filter chip label, in the current language. */
+    val label: String
+        get() = when (this) {
+            Speed -> appStrings.common.routerCheck
+            Internet -> appStrings.history.kindInternetTests
+            Scan -> appStrings.history.kindScans
+            Tool -> appStrings.common.tools
+            Devices -> appStrings.common.devices
+        }
 }
 
 /** A headline number in the detail sheet, such as 412 Mbps. */
@@ -96,15 +107,16 @@ fun routerTests(speedTests: List<SpeedTestResultEntity>): List<RouterTestPoint> 
 
 /** One plain sentence comparing the latest router test with the ones before it. */
 fun trendInsight(points: List<RouterTestPoint>): String {
+    val s = appStrings.history
     val latest = points.lastOrNull() ?: return ""
     val earlier = points.dropLast(1).mapNotNull { it.responseMs }.sorted()
-    val now = latest.responseMs ?: return "No reply from the router. Some routers ignore these checks."
-    if (earlier.isEmpty()) return "Recheck after a change to compare."
+    val now = latest.responseMs ?: return s.trendNoReply
+    if (earlier.isEmpty()) return s.trendRecheckToCompare
     val usual = earlier[earlier.size / 2]
     return when {
-        now < usual - 3f -> "Quicker than usual (${usual.fixed(1)} ms)"
-        now > usual + 3f -> "Slower than usual (${usual.fixed(1)} ms)"
-        else -> "About the same as usual (${usual.fixed(1)} ms)"
+        now < usual - 3f -> s.trendQuicker(usual.fixed(1))
+        now > usual + 3f -> s.trendSlower(usual.fixed(1))
+        else -> s.trendAboutSame(usual.fixed(1))
     }
 }
 
@@ -134,22 +146,23 @@ internal val SpeedTestResultEntity.verdict: LinkVerdict
         return linkVerdict(latency)
     }
 
-private fun signalText(rssi: Int) = "${SignalQuality.of(rssi).label} signal · $rssi dBm"
+private fun signalText(rssi: Int) = appStrings.history.signalFact(SignalQuality.of(rssi).label, rssi)
 
 private fun speedEntry(test: SpeedTestResultEntity): HistoryEntry {
+    val s = appStrings.history
     if (!test.isRouterTest) {
         return HistoryEntry(
             key = "speed-${test.id}",
             kind = HistoryKind.Internet,
             timestamp = test.timestamp,
-            title = "${test.downloadMbps.fixed(0)} Mbps download",
+            title = s.internetTitle(test.downloadMbps.fixed(0)),
             summary = test.serverName,
             metrics = listOfNotNull(
-                HistoryMetric(test.downloadMbps.fixed(0), "Mbps", "Download"),
-                test.uploadMbps.takeIf { it >= 0f }?.let { HistoryMetric(it.fixed(0), "Mbps", "Upload") },
-                HistoryMetric(test.pingMs.fixed(0), "ms", "Latency")
+                HistoryMetric(test.downloadMbps.fixed(0), "Mbps", s.metricDownload),
+                test.uploadMbps.takeIf { it >= 0f }?.let { HistoryMetric(it.fixed(0), "Mbps", s.metricUpload) },
+                HistoryMetric(test.pingMs.fixed(0), "ms", s.metricLatency)
             ),
-            facts = listOf("Server" to test.serverName)
+            facts = listOf(s.factServer to test.serverName)
         )
     }
     val router = test.serverName.removePrefix(LinkTestViewModel.ROUTER_PREFIX).removePrefix(LinkTestViewModel.LEGACY_ROUTER_PREFIX)
@@ -160,38 +173,39 @@ private fun speedEntry(test: SpeedTestResultEntity): HistoryEntry {
         kind = HistoryKind.Speed,
         timestamp = test.timestamp,
         title = when {
-            response != null -> "${response.fixed(0)} ms to router"
-            else -> "Router didn't answer"
+            response != null -> s.routerTitle(response.fixed(0))
+            else -> com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.noReply
         },
-        summary = listOfNotNull(test.room, verdict.headline.removeSuffix(" here")).joinToString(" · "),
+        summary = listOfNotNull(test.room, verdict.headline).joinToString(" · "),
         rssi = test.rssi,
         verdict = verdict,
         metrics = listOfNotNull(
-            response?.let { HistoryMetric(it.fixed(if (it < 10f) 1 else 0), "ms", "Response") },
-            test.jitterMs.takeIf { response != null && it >= 0f }?.let { HistoryMetric("±" + it.fixed(1), "ms", "Variation") },
-            test.lossPercent?.let { HistoryMetric(it.fixed(0), "%", "Lost") }
+            response?.let { HistoryMetric(it.fixed(if (it < 10f) 1 else 0), "ms", com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.responseTime) },
+            test.jitterMs.takeIf { response != null && it >= 0f }?.let { HistoryMetric("±" + it.fixed(1), "ms", s.metricVariation) },
+            test.lossPercent?.let { HistoryMetric(it.fixed(0), "%", s.metricLost) }
         ),
         facts = listOfNotNull(
-            test.room?.let { "Room" to it },
-            test.ssid?.let { "Network" to it },
-            "Router" to router,
-            test.frequencyMhz?.let { "Band" to bandLabel(it) },
-            test.rssi?.let { "Signal" to signalText(it) },
+            test.room?.let { s.factRoom to it },
+            test.ssid?.let { com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.network to it },
+            com.bernaferrari.wifiweakspot.core.i18n.appStrings.domain.deviceKindRouter to router,
+            test.frequencyMhz?.let { s.factBand to bandLabel(it) },
+            test.rssi?.let { s.factSignal to signalText(it) },
         ),
         note = verdict.explanation
     )
 }
 
 private fun scanEntry(rows: List<WifiScanResultEntity>): HistoryEntry {
+    val s = appStrings.history
     // Newest reading of each access point in the session.
     val latest = rows.sortedByDescending { it.timestamp }.distinctBy { it.bssid }
-    val networks = latest.groupBy { it.ssid.ifBlank { "Hidden network" } }
+    val networks = latest.groupBy { it.ssid.ifBlank { com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.hiddenNetwork } }
         .map { (ssid, aps) ->
             val best = aps.maxBy { it.rssi }
             HistoryLine(
                 title = ssid,
                 supporting = listOfNotNull(
-                    if (aps.size > 1) "${aps.size} access points" else null,
+                    if (aps.size > 1) s.accessPoints(aps.size) else null,
                     aps.map { bandLabel(it.frequency) }.distinct().sorted().joinToString(" + ")
                 ).joinToString(" · "),
                 trailing = "${best.rssi} dBm",
@@ -205,21 +219,22 @@ private fun scanEntry(rows: List<WifiScanResultEntity>): HistoryEntry {
         key = "scan-${rows.maxOf { it.timestamp }}",
         kind = HistoryKind.Scan,
         timestamp = rows.maxOf { it.timestamp },
-        title = if (networks.size == 1) "1 network nearby" else "${networks.size} networks nearby",
-        summary = "Strongest: ${strongest.title}",
+        title = s.networksNearby(networks.size),
+        summary = s.strongestNetwork(strongest.title),
         rssi = strongest.rssi,
         metrics = buildList {
-            add(HistoryMetric("${networks.size}", "", "Networks"))
-            listOf("2.4 GHz", "5 GHz", "6 GHz").forEach { band -> bands[band]?.let { add(HistoryMetric("$it", "", "on $band")) } }
+            add(HistoryMetric("${networks.size}", "", com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.tabNetworks))
+            listOf("2.4 GHz", "5 GHz", "6 GHz").forEach { band -> bands[band]?.let { add(HistoryMetric("$it", "", s.metricOnBand(band))) } }
         },
-        facts = listOf("Access points" to "${latest.size}"),
-        linesTitle = "Networks, strongest first",
+        facts = listOf(s.factAccessPoints to "${latest.size}"),
+        linesTitle = s.linesNetworksStrongestFirst,
         lines = networks,
-        note = "Nearby networks on the same channel as yours compete for airtime."
+        note = s.scanNote
     )
 }
 
 private fun devicesEntry(rows: List<LanDeviceEntity>): HistoryEntry {
+    val s = appStrings.history
     // Named devices first, so the summary reads "MacBook, iPad, TV" rather than addresses.
     val named = rows.sortedWith(compareBy<LanDeviceEntity> { (it.customName ?: it.announcedName ?: it.hostname) == null }.thenBy { it.ipAddress.split('.').lastOrNull()?.toIntOrNull() ?: 0 })
     // The same friendly names as the Devices screen ("Living room TV", not "living-room-tv").
@@ -228,18 +243,18 @@ private fun devicesEntry(rows: List<LanDeviceEntity>): HistoryEntry {
         key = "devices-${rows.first().networkKey}-${rows.maxOf { it.lastSeen }}",
         kind = HistoryKind.Devices,
         timestamp = rows.maxOf { it.lastSeen },
-        title = if (rows.size == 1) "1 device found" else "${rows.size} devices found",
-        summary = named.take(3).joinToString(", ") { it.label() } + if (rows.size > 3) " and ${rows.size - 3} more" else "",
+        title = s.devicesFound(rows.size),
+        summary = s.listWithMore(named.take(3).joinToString(", ") { it.label() }, (rows.size - 3).coerceAtLeast(0)),
         metrics = listOf(
-            HistoryMetric("${rows.size}", "", "Devices"),
-            HistoryMetric("${rows.count { it.isOnline }}", "", "Replied")
+            HistoryMetric("${rows.size}", "", com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.devices),
+            HistoryMetric("${rows.count { it.isOnline }}", "", s.metricReplied)
         ),
-        linesTitle = "Devices",
+        linesTitle = com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.devices,
         lines = named.map {
             HistoryLine(
                 title = it.label(),
                 supporting = listOfNotNull(it.ipAddress, it.vendor?.takeIf { v -> v != it.label() }).joinToString(" · "),
-                trailing = if (it.isOnline) "Replied" else null
+                trailing = if (it.isOnline) s.metricReplied else null
             )
         }
     )
@@ -253,6 +268,7 @@ private fun toolEntry(result: ToolResultEntity): HistoryEntry {
 }
 
 private fun toolDetails(result: ToolResultEntity, key: String): HistoryEntry {
+    val s = appStrings.history
     return when (result.toolType) {
         "PING" -> {
             val lines = result.resultJson.lines().filter { it.isNotBlank() }
@@ -262,18 +278,18 @@ private fun toolDetails(result: ToolResultEntity, key: String): HistoryEntry {
                 key = key,
                 kind = HistoryKind.Tool,
                 timestamp = result.timestamp,
-                title = "Ping ${result.target}",
-                summary = if (average != null) "${average.fixed(0)} ms · ${times.size} of ${lines.size} replied" else "No replies",
+                title = "Ping · ${result.target}",
+                summary = if (average != null) s.pingSummary(average.fixed(0), times.size, lines.size) else com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.noReply,
                 metrics = listOfNotNull(
-                    HistoryMetric("${times.size}/${lines.size}", "", "Replies"),
-                    average?.let { HistoryMetric(it.fixed(1), "ms", "Average") },
-                    times.minOrNull()?.let { HistoryMetric(it.fixed(1), "ms", "Fastest") }
+                    HistoryMetric("${times.size}/${lines.size}", "", s.metricReplies),
+                    average?.let { HistoryMetric(it.fixed(1), "ms", s.metricAverage) },
+                    times.minOrNull()?.let { HistoryMetric(it.fixed(1), "ms", com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.fastest) }
                 ),
-                linesTitle = "Replies",
+                linesTitle = s.metricReplies,
                 lines = lines.mapIndexed { index, line ->
                     val time = ReplyTime.find(line)?.groupValues?.get(1)
-                    if (time != null) HistoryLine("Reply ${index + 1}", trailing = "$time ms")
-                    else HistoryLine("Reply ${index + 1}", supporting = line.substringAfter(": ", line), trailing = "Lost")
+                    if (time != null) HistoryLine(s.replyNumber(index + 1), trailing = "$time ms")
+                    else HistoryLine(s.replyNumber(index + 1), supporting = line.substringAfter(": ", line), trailing = s.metricLost)
                 }
             )
         }
@@ -283,13 +299,13 @@ private fun toolDetails(result: ToolResultEntity, key: String): HistoryEntry {
                 key = key,
                 kind = HistoryKind.Tool,
                 timestamp = result.timestamp,
-                title = "Look up ${result.target}",
+                title = s.lookupTitle(result.target),
                 summary = if (result.isSuccess) {
                     records.firstOrNull()?.substringAfter(": ")?.let { first ->
-                        if (records.size > 1) "$first and ${records.size - 1} more" else first
-                    } ?: "No records"
-                } else result.resultJson.removePrefix("Error: ").ifBlank { "Lookup failed" },
-                linesTitle = "Records",
+                        s.listWithMore(first, records.size - 1)
+                    } ?: s.noRecords
+                } else s.lookupFailed,
+                linesTitle = s.linesRecords,
                 lines = records.map { HistoryLine(it.substringAfter(": "), trailing = it.substringBefore(": ")) }
             )
         }
@@ -299,20 +315,20 @@ private fun toolDetails(result: ToolResultEntity, key: String): HistoryEntry {
                 key = key,
                 kind = HistoryKind.Tool,
                 timestamp = result.timestamp,
-                title = "Open ports on ${result.target}",
-                summary = if (ports.isEmpty()) "None of the common ports were open"
-                else ports.take(3).joinToString(", ") { "${it.first} ${it.second}" } + if (ports.size > 3) " and ${ports.size - 3} more" else "",
-                metrics = listOf(HistoryMetric("${ports.size}", "", "Open ports")),
-                linesTitle = "Open ports".takeIf { ports.isNotEmpty() },
-                lines = ports.map { HistoryLine(it.second, trailing = "TCP ${it.first}") }
+                title = s.openPortsTitle(result.target),
+                summary = if (ports.isEmpty()) s.noCommonPortsOpen
+                else s.listWithMore(ports.take(3).joinToString(", ") { "${it.first} ${it.second}" }, (ports.size - 3).coerceAtLeast(0)),
+                metrics = listOf(HistoryMetric("${ports.size}", "", com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.openPorts)),
+                linesTitle = com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.openPorts.takeIf { ports.isNotEmpty() },
+                lines = ports.map { HistoryLine(com.bernaferrari.wifiweakspot.feature.tools.serviceLabel(it.second), trailing = "TCP ${it.first}") }
             )
         }
         else -> HistoryEntry(
             key = key,
             kind = HistoryKind.Tool,
             timestamp = result.timestamp,
-            title = "${result.toolType.lowercase().replaceFirstChar { it.uppercase() }} ${result.target}",
-            summary = if (result.isSuccess) "Completed" else "Failed",
+            title = listOf(result.toolType.lowercase().replaceFirstChar { it.uppercase() }, result.target).joinToString(" · "),
+            summary = if (result.isSuccess) s.completed else s.failed,
             lines = result.resultJson.lines().filter { it.isNotBlank() }.map { HistoryLine(it) }
         )
     }

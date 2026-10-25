@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.walk
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -38,7 +39,7 @@ fun RoomPickerSheet(existing: List<String>, onSave: (String) -> Unit, onDismiss:
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 24.dp).navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Where are you?", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 8.dp, bottom = 8.dp))
+            Text(strings.survey.whereAreYou, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 8.dp, bottom = 8.dp))
             places.chunked(3).forEachIndexed { row, chunk ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     chunk.forEachIndexed { col, place ->
@@ -72,7 +73,7 @@ fun RoomPickerSheet(existing: List<String>, onSave: (String) -> Unit, onDismiss:
             androidx.compose.material3.TextField(
                 value = name,
                 onValueChange = { name = it.take(40) },
-                placeholder = { Text("Somewhere else") },
+                placeholder = { Text(strings.survey.somewhereElse) },
                 singleLine = true,
                 shape = WifiWeakspotShapes.full,
                 colors = androidx.compose.material3.TextFieldDefaults.colors(
@@ -85,7 +86,7 @@ fun RoomPickerSheet(existing: List<String>, onSave: (String) -> Unit, onDismiss:
                 keyboardActions = KeyboardActions(onDone = { if (name.isNotBlank()) onSave(name) }),
                 trailingIcon = {
                     if (name.isNotBlank()) androidx.compose.material3.FilledIconButton(onClick = { onSave(name) }, modifier = Modifier.padding(end = 4.dp)) {
-                        Icon(Icons.Rounded.Check, "Save")
+                        Icon(Icons.Rounded.Check, strings.common.save)
                     }
                 },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
@@ -95,6 +96,15 @@ fun RoomPickerSheet(existing: List<String>, onSave: (String) -> Unit, onDismiss:
 }
 
 internal fun spotIcon(name: String): ImageVector {
+    // Catalog order is stable across languages; custom names retain the English keyword fallback.
+    val suggestion = RoomSuggestions.indexOfFirst { it.equals(name, ignoreCase = true) }
+    val icons = listOf(
+        Icons.Rounded.Weekend, Icons.Rounded.Kitchen, Icons.Rounded.Bed,
+        Icons.Rounded.Computer, Icons.Rounded.ChildCare, Icons.Rounded.Bathtub,
+        Icons.Rounded.DinnerDining, Icons.Rounded.DoorFront, Icons.Rounded.Garage,
+        Icons.Rounded.Stairs, Icons.Rounded.Balcony, Icons.Rounded.Yard
+    )
+    icons.getOrNull(suggestion)?.let { return it }
     val n = name.lowercase()
     return when {
         "kitchen" in n -> Icons.Rounded.Kitchen

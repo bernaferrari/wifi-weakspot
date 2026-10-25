@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.bernaferrari.wifiweakspot.core.database.dao.WifiWeakspotDao
 import com.bernaferrari.wifiweakspot.core.database.entities.SpeedTestResultEntity
 import com.bernaferrari.wifiweakspot.core.domain.NetworkStatusRepository
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import com.bernaferrari.wifiweakspot.core.model.NetworkStatus
 import com.bernaferrari.wifiweakspot.core.rooms.*
 import com.bernaferrari.wifiweakspot.core.router.*
@@ -74,7 +75,7 @@ class LinkTestViewModel(
                 }
                 _taggedRoom.value = room
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { _message.value = "Couldn't save this spot. Try again." }
+            catch (_: Exception) { _message.value = appStrings.history.couldNotSaveSpot }
             finally { tagging = false }
         }
     }
@@ -86,7 +87,7 @@ class LinkTestViewModel(
         job = viewModelScope.launch {
             val current = status.value
             if (!current.isConnected || current.gateway.isBlank()) {
-                _state.value = LinkTestState.Failed("Connect to your Wi-Fi first. This check measures replies from your router.")
+                _state.value = LinkTestState.Failed(appStrings.history.connectFirst)
                 return@launch
             }
             try {
@@ -96,7 +97,7 @@ class LinkTestViewModel(
                 probe.ping(current.gateway, PING_COUNT).collect { event ->
                     val latest = status.value
                     check(latest.isConnected && latest.bssid == current.bssid && latest.gateway == current.gateway) {
-                        "Connection changed"
+                        "The network changed while measuring"
                     }
                     when (event) {
                         is PingEvent.Reply -> {
@@ -122,11 +123,11 @@ class LinkTestViewModel(
                         ssid = current.ssid.takeIf { it.isNotBlank() }, lossPercent = latency.lossPercent
                     ))
                 } catch (cancelled: CancellationException) { throw cancelled }
-                catch (_: Exception) { _message.value = "Result measured, but history couldn't be saved."; null }
+                catch (_: Exception) { _message.value = appStrings.history.historyNotSaved; null }
                 _state.value = LinkTestState.Done(result.copy(savedId = savedId))
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
-                _state.value = LinkTestState.Failed("The connection changed or the router check stopped. Keep this Wi-Fi connected and try again. Some routers block ping.")
+                _state.value = LinkTestState.Failed(appStrings.history.checkStopped)
             }
         }
     }

@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.core.designsystem.component
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -32,12 +33,13 @@ fun WifiBadge(rssi: Int, modifier: Modifier = Modifier, size: androidx.compose.u
     val colors = androidx.compose.runtime.remember(signal, display, surface) {
         if (display == SignalDisplay.Percentage) signalMeterColors(signal, surface) else signal
     }
+    val badgeDescription = strings.common.signalBadgeDescription(quality.label, display.reading(rssi))
     androidx.compose.foundation.layout.Box(
         modifier
             .size(size)
             .clip(quality.polygon().toShape())
             .background(colors.container)
-            .clearAndSetSemantics { contentDescription = "${quality.label} signal, ${display.reading(rssi)}" },
+            .clearAndSetSemantics { contentDescription = badgeDescription },
         contentAlignment = Alignment.Center
     ) {
         if (display == SignalDisplay.Percentage) {

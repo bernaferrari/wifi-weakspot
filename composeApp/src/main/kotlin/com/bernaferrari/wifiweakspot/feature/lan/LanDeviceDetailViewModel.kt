@@ -9,6 +9,7 @@ import com.bernaferrari.wifiweakspot.core.model.lan.LanDevice
 import com.bernaferrari.wifiweakspot.core.lan.lanNetworkKey
 import com.bernaferrari.wifiweakspot.core.lan.sameLanConnection
 import com.bernaferrari.wifiweakspot.core.tools.decodePortScan
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,7 +65,7 @@ class LanDeviceDetailViewModel(
                 val scan = key?.let { dao.getLatestPortScan(ip, it) }
                 if (!sameLanConnection(connection, networkStatusRepository.getCurrentNetworkStatus().first())) {
                     _device.value = LanDevice(ip, null, null, null, 0L, false, false, null, emptyList())
-                    _error.value = "The connection changed. Open this device again on the new network."
+                    _error.value = appStrings.tools.connectionChangedOpenAgain
                     return@launch
                 }
                 val ports = scan?.let { decodePortScan(it.resultJson) }.orEmpty()
@@ -76,7 +77,7 @@ class LanDeviceDetailViewModel(
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
                 _device.value = LanDevice(ip, null, null, null, 0L, false, false, null, emptyList())
-                _error.value = "Couldn't load saved details. Try opening this device again."
+                _error.value = appStrings.tools.couldntLoadDetails
             }
         }
     }
@@ -88,9 +89,9 @@ class LanDeviceDetailViewModel(
         viewModelScope.launch {
             try {
                 if (!sameLanConnection(connection, networkStatusRepository.getCurrentNetworkStatus().first())) {
-                    _error.value = "The connection changed. Open this device again before renaming it."
+                    _error.value = appStrings.tools.connectionChangedOpenAgain
                 } else if (dao.getLanDevice(device.ipAddress, key) == null) {
-                    _error.value = "Scan this device before saving a name."
+                    _error.value = appStrings.tools.scanBeforeNaming
                 } else {
                     val customName = name.trim().takeIf { it.isNotEmpty() }
                     dao.renameLanDevice(device.ipAddress, key, customName)
@@ -98,7 +99,7 @@ class LanDeviceDetailViewModel(
                     _error.value = null
                 }
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { _error.value = "Couldn't save this name. Try again." }
+            catch (_: Exception) { _error.value = appStrings.common.couldNotSaveChanges }
         }
     }
 }

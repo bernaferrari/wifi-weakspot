@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.core.wifi
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import kotlin.math.log10
 import kotlin.math.pow
 
@@ -54,7 +55,7 @@ fun bandLabel(frequencyMhz: Int): String = when {
     frequencyMhz >= 5925 -> "6 GHz"
     frequencyMhz >= 5000 -> "5 GHz"
     frequencyMhz > 0 -> "2.4 GHz"
-    else -> "Unknown"
+    else -> appStrings.common.unknown
 }
 
 /**

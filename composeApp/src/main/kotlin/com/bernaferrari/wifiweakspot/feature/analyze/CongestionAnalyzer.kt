@@ -1,14 +1,26 @@
 package com.bernaferrari.wifiweakspot.feature.analyze
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import com.bernaferrari.wifiweakspot.core.wifi.WifiNetwork
 import com.bernaferrari.wifiweakspot.core.wifi.occupiedFrequencySegments
 import kotlin.math.pow
 
-enum class TrafficRating(val label: String, val colorHex: Long) {
-    LOW("Low overlap", 0xFF4CAF50),
-    MEDIUM("Moderate overlap", 0xFFFFC107),
-    HIGH("High overlap", 0xFFFF5722),
-    SEVERE("Very high overlap", 0xFFB00020);
+enum class TrafficRating(val colorHex: Long) {
+    LOW(0xFF4CAF50),
+    MEDIUM(0xFFFFC107),
+    HIGH(0xFFFF5722),
+    SEVERE(0xFFB00020);
+
+    /** Display name in the current language. */
+    val label: String
+        get() = with(appStrings.analyze) {
+            when (this@TrafficRating) {
+                LOW -> lowOverlap
+                MEDIUM -> moderateOverlap
+                HIGH -> highOverlap
+                SEVERE -> veryHighOverlap
+            }
+        }
 }
 
 data class ChannelScore(

@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.core.lan
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -53,8 +54,8 @@ class AndroidLanScanner(
             val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             val capabilities = connectivity.activeNetwork?.let(connectivity::getNetworkCapabilities)
             if (capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true) {
-                "Device discovery isn't available through this VPN connection. Check whether your VPN allows local-network access, or try again when it is disconnected."
-            } else "Connect to Wi-Fi or Ethernet before scanning local devices."
+                appStrings.domain.lanVpnUnavailable
+            } else appStrings.domain.lanConnectFirst
         }
         val hosts = if (local != null) {
             hostsOnLink(local.first, local.second).filter { it != local.first }
@@ -63,7 +64,7 @@ class AndroidLanScanner(
         }
         val label = local?.let { "${networkAddress(it.first, it.second)}/${it.second.coerceAtLeast(24).coerceAtMost(32)}" }
             ?: subnet
-            ?: "Not connected"
+            ?: appStrings.domain.lanNotConnected
         scanHosts(hosts, label, ownIp = local?.first)
     }
 

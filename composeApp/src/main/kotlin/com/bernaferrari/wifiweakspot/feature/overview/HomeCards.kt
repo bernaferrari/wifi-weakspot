@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.overview
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -119,7 +120,7 @@ fun NearbySummaryCard(
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     // Stale scans say so in the line below, so the title stays short either way.
-                    if (advice.networkCount == 1) "1 network nearby" else "${advice.networkCount} networks nearby",
+                    strings.analyze.networksNearby(advice.networkCount),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )

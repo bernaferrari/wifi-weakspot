@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.analyze
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -47,6 +48,8 @@ internal fun ChannelContext(
     val scheme = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     val display = LocalSignalDisplay.current
+    val common = strings.common
+    val s = strings.analyze
     // Reserve the two-line selection's height even at large font sizes. The recommendation
     // can swap with it without displacing the list or the finger's next target.
     val rowHeight = with(LocalDensity.current) {
@@ -65,14 +68,14 @@ internal fun ChannelContext(
             ) {
                 Row(Modifier.heightIn(min = rowHeight).padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(selectedNetwork.ssid.ifBlank { "Hidden network" }, style = typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(selectedNetwork.ssid.ifBlank { common.hiddenNetwork }, style = typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(
-                            "${display.reading(selectedNetwork.rssi)} · ${SignalQuality.of(selectedNetwork.rssi).label} · Ch ${frequencyToChannel(selectedNetwork.frequency)}",
+                            s.selectedNetworkSummary(display.reading(selectedNetwork.rssi), SignalQuality.of(selectedNetwork.rssi).label, frequencyToChannel(selectedNetwork.frequency)),
                             style = typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis
                         )
                     }
                     IconButton(onClick = onClearSelection, modifier = Modifier.size(48.dp)) {
-                        Icon(Icons.Rounded.Close, "Clear selected network")
+                        Icon(Icons.Rounded.Close, s.clearSelectedNetwork)
                     }
                 }
             }
@@ -81,7 +84,7 @@ internal fun ChannelContext(
                 shape = WifiWeakspotShapes.full,
                 color = scheme.tertiaryContainer,
                 contentColor = scheme.onTertiaryContainer,
-                modifier = Modifier.clearAndSetSemantics { contentDescription = "${hint.label}: channel ${hint.channel}" }
+                modifier = Modifier.clearAndSetSemantics { contentDescription = s.channelAdviceDescription(hint.label, hint.channel) }
             ) {
                 Row(Modifier.padding(start = 6.dp, end = 16.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(32.dp).clip(MaterialShapes.Cookie9Sided.toShape()).background(scheme.onTertiaryContainer), contentAlignment = Alignment.Center) {
@@ -92,7 +95,7 @@ internal fun ChannelContext(
                 }
             }
         } else {
-            Text("Tap a wave for network details", modifier = Modifier.padding(start = 4.dp), style = typography.bodySmall, color = scheme.onSurfaceVariant)
+            Text(s.tapWaveForDetails, modifier = Modifier.padding(start = 4.dp), style = typography.bodySmall, color = scheme.onSurfaceVariant)
         }
     }
 }

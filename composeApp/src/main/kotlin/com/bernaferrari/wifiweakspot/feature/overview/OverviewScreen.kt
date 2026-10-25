@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.overview
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import com.bernaferrari.wifiweakspot.feature.history.quality
 import com.bernaferrari.wifiweakspot.core.util.fixed
 
@@ -116,6 +117,10 @@ fun OverviewScreen(
     val platform: com.bernaferrari.wifiweakspot.core.platform.PlatformActions = org.koin.compose.koinInject()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showConnectionDetail by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val common = strings.common
+    val sharedCatalog = strings
+    val sCatalog = strings
+    val s = strings.analyze
 
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -154,13 +159,9 @@ fun OverviewScreen(
                 item(key = "setup") {
                     SetupCard(
                         icon = if (needsPermission) Icons.Rounded.WifiFind else Icons.Rounded.LocationOn,
-                        title = if (needsPermission) "See every network around you" else "Turn on Location",
-                        body = if (needsPermission) {
-                            "Android shares nearby Wi-Fi names only with apps that have location access. WiFi\u00A0Weakspot never records where you are."
-                        } else {
-                            "Android needs Location on to list nearby Wi-Fi. WiFi\u00A0Weakspot doesn't use GPS."
-                        },
-                        action = if (needsPermission) "Allow" else "Turn on",
+                        title = if (needsPermission) sharedCatalog.common.permissionScreenTitle else s.turnOnLocation,
+                        body = if (needsPermission) s.scanPermissionBody else s.locationOffBody,
+                        action = if (needsPermission) sCatalog.common.permissionAllowAccess else s.turnOnLocation,
                         onAction = {
                             haptics.click()
                             if (needsPermission) onRequestScanPermission()
@@ -184,7 +185,7 @@ fun OverviewScreen(
 
             item(key = "toolsHeader") {
                 Text(
-                    "Tools",
+                    sharedCatalog.common.tools,
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(start = 4.dp, top = 12.dp).semantics { heading() }
                 )
@@ -205,15 +206,15 @@ fun OverviewScreen(
                 QuickTileGrid(
                     listOf(
                         QuickTileSpec(
-                            "Router check",
-                            latestSpeed?.pingMs?.takeIf { it >= 0f }?.let { "${it.fixed(1)} ms last time" }
-                                ?: "Response time",
+                            common.routerCheck,
+                            latestSpeed?.pingMs?.takeIf { it >= 0f }?.let { s.routerCheckLastTime(it.fixed(1)) }
+                                ?: sharedCatalog.common.responseTime,
                             routerGauge?.icon ?: Icons.Rounded.Speed, MaterialShapes.Sunny,
                             routerGauge?.colors?.container ?: scheme.primaryContainer, routerGauge?.colors?.onContainer ?: scheme.onPrimaryContainer, onNavigateToSpeedTest
                         ),
-                        QuickTileSpec("Devices", knownDevices?.let { "$it found last scan" } ?: "Who's connected", Icons.Rounded.Devices, MaterialShapes.Clover8Leaf, scheme.tertiaryContainer, scheme.onTertiaryContainer, onNavigateToLan),
-                        QuickTileSpec("Test a website", "Ping, DNS, ports", com.bernaferrari.wifiweakspot.core.designsystem.component.SiteCheckIcon.Filled, MaterialShapes.Cookie6Sided, scheme.secondaryContainer, scheme.onSecondaryContainer, onNavigateToDiagnose),
-                        QuickTileSpec("History", when (savedTests) { 0 -> "Past results"; 1 -> "1 check"; else -> "$savedTests checks" }, Icons.Rounded.History, MaterialShapes.Puffy, scheme.surfaceContainerHighest, scheme.onSurface, onNavigateToHistory)
+                        QuickTileSpec(common.devices, knownDevices?.let { s.devicesFoundLastScan(it) } ?: s.devicesSubtitle, Icons.Rounded.Devices, MaterialShapes.Clover8Leaf, scheme.tertiaryContainer, scheme.onTertiaryContainer, onNavigateToLan),
+                        QuickTileSpec(common.testWebsite, s.testWebsiteSubtitle, com.bernaferrari.wifiweakspot.core.designsystem.component.SiteCheckIcon.Filled, MaterialShapes.Cookie6Sided, scheme.secondaryContainer, scheme.onSecondaryContainer, onNavigateToDiagnose),
+                        QuickTileSpec(common.historyTitle, s.savedChecks(savedTests), Icons.Rounded.History, MaterialShapes.Puffy, scheme.surfaceContainerHighest, scheme.onSurface, onNavigateToHistory)
                     )
                 )
             }
@@ -253,8 +254,8 @@ fun OverviewScreen(
                 onToggleFavorite = { scope.launch { settings.toggleFavorite(network.bssid) } },
                 onShare = {
                     platform.share(
-                        "${network.ssid}\n${network.rssi} dBm · Ch ${com.bernaferrari.wifiweakspot.core.wifi.frequencyToChannel(network.frequency)} · ${com.bernaferrari.wifiweakspot.core.wifi.bandLabel(network.frequency)}",
-                        "Share network"
+                        "${network.ssid}\n" + s.shareNetworkLine(network.rssi, com.bernaferrari.wifiweakspot.core.wifi.frequencyToChannel(network.frequency), com.bernaferrari.wifiweakspot.core.wifi.bandLabel(network.frequency)),
+                        sCatalog.common.share
                     )
                 }
             )
@@ -267,6 +268,10 @@ private fun ConnectionHero(status: NetworkStatus, wifiEnabled: Boolean, onOpenWi
     val quality = if (status.hasSignalMeasurement) SignalQuality.of(status.rssi) else null
     val colors = signalColors(quality ?: SignalQuality.DeadZone)
     val scheme = MaterialTheme.colorScheme
+    val common = strings.common
+    val sharedCatalog = strings
+    val sCatalog = strings
+    val s = strings.analyze
     // Tapping the live card opens everything about this connection, like any network in the list.
     Card(
         onClick = onClick,
@@ -291,9 +296,9 @@ private fun ConnectionHero(status: NetworkStatus, wifiEnabled: Boolean, onOpenWi
                         Text(
                             when {
                                 quality != null -> quality.headline
-                                status.isConnected -> "Signal unavailable"
-                                !wifiEnabled -> "Wi-Fi is off"
-                                else -> "Not on Wi-Fi"
+                                status.isConnected -> common.signalUnavailable
+                                !wifiEnabled -> s.wifiOffTitle
+                                else -> s.notOnWifi
                             },
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
@@ -302,7 +307,7 @@ private fun ConnectionHero(status: NetworkStatus, wifiEnabled: Boolean, onOpenWi
                         )
                         Spacer(Modifier.height(2.dp))
                         Text(
-                            if (status.isConnected) status.ssid else "Connect to the network you want to check",
+                            if (status.isConnected) status.ssid.ifBlank { strings.survey.connectedWifi } else sharedCatalog.survey.connectToCheck,
                             style = MaterialTheme.typography.bodyLarge,
                             color = scheme.onSurfaceVariant,
                             maxLines = 2,
@@ -318,7 +323,7 @@ private fun ConnectionHero(status: NetworkStatus, wifiEnabled: Boolean, onOpenWi
                                 ) {}
                                 Spacer(Modifier.width(8.dp))
                                 Text(
-                                    if (status.internetValidated) "Online" else "Internet not confirmed",
+                                    if (status.internetValidated) s.online else s.internetNotConfirmed,
                                     style = MaterialTheme.typography.labelLarge
                                 )
                             }
@@ -332,14 +337,14 @@ private fun ConnectionHero(status: NetworkStatus, wifiEnabled: Boolean, onOpenWi
                 Spacer(Modifier.height(16.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     InfoPill(bandLabel(status.frequency))
-                    if (status.channel > 0) InfoPill("Channel ${status.channel}")
-                    if (status.linkSpeed > 0) InfoPill("Link rate ${status.linkSpeed} Mbps")
-                    if (status.security.isNotBlank()) InfoPill(if (status.security == "Open") "No password" else status.security)
+                    if (status.channel > 0) InfoPill(s.channelChip(status.channel))
+                    if (status.linkSpeed > 0) InfoPill(s.linkRateChip(status.linkSpeed))
+                    if (status.security.isNotBlank()) InfoPill(if (status.security == "Open") s.noPassword else status.security)
                 }
             } else if (!status.isConnected) {
                 Spacer(Modifier.height(16.dp))
                 FilledTonalButton(onClick = onOpenWifiSettings, shapes = ButtonDefaults.shapes()) {
-                    Text(if (wifiEnabled) "Choose a network" else "Turn on Wi-Fi")
+                    Text(if (wifiEnabled) s.chooseNetwork else s.turnOnWifi)
                 }
             }
         }
@@ -370,7 +375,7 @@ private fun SetupCard(
                 Button(onClick = onAction, shapes = ButtonDefaults.shapes()) { Text(action) }
             }
             if (onDismiss != null) {
-                IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, "Dismiss") }
+                IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, strings.analyze.dismiss) }
             }
         }
     }
@@ -387,10 +392,10 @@ private fun FindWeakSpotsCard(onClick: () -> Unit) {
     ) {
         Row(Modifier.fillMaxWidth().padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Find weak spots", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("See which rooms are weak.", style = MaterialTheme.typography.bodyLarge)
+                Text(strings.analyze.findWeakSpotsTitle, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(strings.analyze.findWeakSpotsBody, style = MaterialTheme.typography.bodyLarge)
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
-                    Text("Check your rooms", style = MaterialTheme.typography.labelLarge)
+                    Text(strings.analyze.findWeakSpotsAction, style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.width(6.dp))
                     Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, Modifier.size(18.dp))
                 }

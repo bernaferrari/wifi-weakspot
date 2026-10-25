@@ -16,12 +16,14 @@ import com.bernaferrari.wifiweakspot.core.platform.LocalWebContent
 /** Android host for the shared [App]: activity-bound launchers, back gesture, and WebView. */
 @Composable
 fun AndroidApp() {
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val locale = androidx.compose.ui.text.intl.Locale(configuration.locales[0].toLanguageTag())
     CompositionLocalProvider(
         LocalPermissionLaunchers provides rememberAndroidPermissionLaunchers(),
         LocalBackHandler provides { enabled, onBack -> BackHandler(enabled, onBack) },
         LocalWebContent provides { url, modifier -> AndroidWebPage(url, modifier) }
     ) {
-        App()
+        App(locale)
     }
 }
 

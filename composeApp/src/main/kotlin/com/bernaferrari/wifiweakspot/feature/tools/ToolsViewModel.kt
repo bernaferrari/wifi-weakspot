@@ -1,6 +1,7 @@
 package com.bernaferrari.wifiweakspot.feature.tools
 
 import com.bernaferrari.wifiweakspot.core.util.fixed
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,6 +16,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+
+private class ToolConnectionChanged : Exception()
 
 class ToolsViewModel(
     private val pingClient: PingClient,
@@ -33,7 +36,7 @@ class ToolsViewModel(
         val normalized = target.trim()
         if (normalized.isBlank()) return
         if (normalized.startsWith("-") || normalized.any { it.isWhitespace() } || normalized.contains("://") || normalized.contains("/")) {
-            _uiState.value = ToolsUiState.Error("Enter a hostname or IP address without a URL path or spaces.")
+            _uiState.value = ToolsUiState.Error(appStrings.tools.invalidTarget)
             return
         }
 
@@ -53,7 +56,7 @@ class ToolsViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _uiState.value = ToolsUiState.Error(e.message ?: "The diagnostic could not complete.")
+                _uiState.value = ToolsUiState.Error(if (e is ToolConnectionChanged) appStrings.tools.connectionChangedRunAgain else appStrings.tools.diagnosticCouldNotComplete)
             }
         }
     }
@@ -62,6 +65,7 @@ class ToolsViewModel(
         val results = mutableListOf<String>()
         val collectorJob = launch {
             pingClient.ping(host).collect { result ->
+                // Persisted diagnostic wire format; parsed by PingSummary and history. Do not translate.
                 val line = if (result.isSuccess) {
                     "Reply from $host: time=${result.rttMs.fixed(1)} ms"
                 } else {
@@ -109,10 +113,10 @@ class ToolsViewModel(
     private suspend fun runPortScan(host: String) {
         val connection = networkStatusRepository.getCurrentNetworkStatus().first()
         val result = portScanner.scanCommonPorts(host)
-        check(sameLanConnection(connection, networkStatusRepository.getCurrentNetworkStatus().first())) {
-            "The connection changed. Run this check again on the new network."
+        if (!sameLanConnection(connection, networkStatusRepository.getCurrentNetworkStatus().first())) {
+            throw ToolConnectionChanged()
         }
-        val pairs = result.ports.filter { it.status == com.bernaferrari.wifiweakspot.core.model.tools.PortStatus.OPEN }.map { it.port to (it.service ?: "unknown") }
+        val pairs = result.ports.filter { it.status == com.bernaferrari.wifiweakspot.core.model.tools.PortStatus.OPEN }.map { it.port to (it.service ?: UNKNOWN_SERVICE) }
 
         // Save to DB
         dao.insertToolResult(

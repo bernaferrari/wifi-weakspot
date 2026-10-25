@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.feature.walk
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bernaferrari.wifiweakspot.core.domain.NetworkStatusRepository
@@ -22,6 +23,13 @@ class WalkViewModel(
 ) : ViewModel() {
     private val _message = MutableStateFlow<String?>(null)
     val message = _message.asStateFlow()
+    /** How [message] should feel: saved readings buzz success, failures buzz error. */
+    private val _messageTone = MutableStateFlow(WalkMessageTone.Neutral)
+    val messageTone = _messageTone.asStateFlow()
+    private fun post(text: String, tone: WalkMessageTone = WalkMessageTone.Neutral) {
+        _messageTone.value = tone
+        _message.value = text
+    }
     private val _saving = MutableStateFlow<String?>(null)
     val saving = _saving.asStateFlow()
     val live = networkStatusRepository.getCurrentNetworkStatus(refreshIntervalMs = LIVE_REFRESH_MS)
@@ -46,15 +54,15 @@ class WalkViewModel(
         val initial = live.value
         val key = roomNetworkKey(initial.ssid, initial.bssid)
         if (!initial.hasSignalMeasurement) {
-            _message.value = "No Wi-Fi signal to save. Connect to your Wi-Fi first."
+            post(appStrings.survey.noSignalToSave)
             return
         }
         if (key == null) {
-            _message.value = "Allow Wi-Fi scans in Networks so this reading can be linked to your network."
+            post(appStrings.survey.allowScansToLink)
             return
         }
         if (_selectedNetwork.value != null && _selectedNetwork.value != key) {
-            _message.value = "Connect to this spot's network before rechecking it."
+            post(appStrings.survey.connectToSpotNetwork)
             return
         }
         val requestedAt = clock()
@@ -68,34 +76,28 @@ class WalkViewModel(
                 val reading = summarizeRoom(randomId(), trimmed, snapshots.map { it.rssi }, snapshots.map { it.linkSpeed },
                     initial.frequency, initial.ssid, initial.bssid, snapshots.last().sampledAtMillis)!!
                 repository.save(reading)
-                val previous = readings.value.filter { it.spotKey == reading.spotKey && it.id != reading.id }.maxByOrNull { it.timestamp }
-                _message.value = when {
-                    previous == null -> "Saved $trimmed"
-                    reading.averageRssi - previous.averageRssi >= 4 -> "Saved $trimmed · better than last time"
-                    reading.averageRssi - previous.averageRssi <= -4 -> "Saved $trimmed · worse than last time"
-                    else -> "Saved $trimmed · same as last time"
-                }
+                post(tone = WalkMessageTone.Success, text = appStrings.survey.savedRoom(trimmed))
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { _message.value = "Couldn't save a stable reading. Keep still on the same Wi-Fi and try again." }
+            catch (_: Exception) { post(appStrings.survey.couldNotSaveStableReading, WalkMessageTone.Error) }
             finally { _saving.value = null }
         }
     }
     fun restoreSpot(history: List<RoomReading>) { viewModelScope.launch {
         try { repository.saveAll(history) }
         catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { _message.value = "Couldn't restore this room. Try again." }
+        catch (_: Exception) { post(appStrings.common.couldNotSaveChanges, WalkMessageTone.Error) }
     } }
     fun deleteSpot(spot: RoomReading) { viewModelScope.launch {
         try { repository.deleteSpot(spot.spotKey) }
         catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { _message.value = "Couldn't remove this room. Try again." }
+        catch (_: Exception) { post(appStrings.common.couldNotDeleteItem, WalkMessageTone.Error) }
     } }
     fun restore(reading: RoomReading) { viewModelScope.launch { repository.save(reading) } }
     fun delete(reading: RoomReading) {
         viewModelScope.launch {
             try { repository.delete(reading.id) }
             catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { _message.value = "Couldn't remove this reading. Try again." }
+            catch (_: Exception) { post(appStrings.common.couldNotDeleteItem, WalkMessageTone.Error) }
         }
     }
     fun dismissMessage() { _message.value = null }
@@ -104,3 +106,5 @@ class WalkViewModel(
         private const val SPOT_SAMPLES = 4
     }
 }
+
+enum class WalkMessageTone { Neutral, Success, Error }

@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.feature.analyze
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.foundation.focusable
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -57,6 +58,9 @@ fun SignalHistoryGraph(
     onNetworkSelected: ((WifiNetwork?) -> Unit)? = null
 ) {
     val display = com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay.current
+    val common = strings.common
+    val sharedCatalog = strings
+    val s = strings.analyze
     val measurer = rememberTextMeasurer()
     val scheme = MaterialTheme.colorScheme
     val zones = SignalQuality.entries.associateWith { signalColors(it).container }
@@ -140,18 +144,18 @@ fun SignalHistoryGraph(
     Column(modifier) {
         if (samples < 2) {
             Box(Modifier.weight(1f).fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                Text("Collecting readings… The lines appear after a couple of scans.", style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+                Text(s.collectingReadings, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
             }
         } else Canvas(
             Modifier.weight(1f).fillMaxWidth()
                 .onSizeChanged { canvasSize = Size(it.width.toFloat(), it.height.toFloat()) }
                 .semantics {
-                    contentDescription = "Signal history for ${shown.size} networks. Tap a line to inspect. Arrow keys move through time and networks."
-                    stateDescription = if (index == null) "Live" else "${inspected?.ssid?.ifBlank { "Hidden network" } ?: "Network"}, ${value?.let { display.reading(it) } ?: "no reading"}, paused, ${samples - 1 - index} readings ago"
+                    contentDescription = s.signalHistoryDescription(shown.size)
+                    stateDescription = if (index == null) s.historyLive else s.historyPaused(inspected?.ssid?.ifBlank { common.hiddenNetwork } ?: sharedCatalog.common.network, value?.let { display.reading(it) }, samples - 1 - index)
                     customActions = listOf(
-                        CustomAccessibilityAction("Stronger network") { inspectNetwork(-1) },
-                        CustomAccessibilityAction("Weaker network") { inspectNetwork(1) },
-                        CustomAccessibilityAction("Resume live readings") { resume(); true }
+                        CustomAccessibilityAction(s.strongerNetwork) { inspectNetwork(-1) },
+                        CustomAccessibilityAction(s.weakerNetwork) { inspectNetwork(1) },
+                        CustomAccessibilityAction(s.resumeLive) { resume(); true }
                     )
                     progressBarRangeInfo = ProgressBarRangeInfo((index ?: samples - 1).toFloat(), 0f..(samples - 1).toFloat(), (samples - 2).coerceAtLeast(0))
                     setProgress { inspectIndex(it.roundToInt()) }
@@ -191,10 +195,10 @@ fun SignalHistoryGraph(
         ) {
             val plot = timelinePlot(size.width, size.height, this)
             drawZones(plot, zones)
-            drawQualityLabels(plot, measurer, labelStyle.copy(color = scheme.onSurfaceVariant))
-            listOf("older" to plot.left, "latest" to plot.right).forEach { (label, x) ->
+            drawQualityLabels(s, plot, measurer, labelStyle.copy(color = scheme.onSurfaceVariant))
+            listOf(Triple(s.axisOlder, plot.left, false), Triple(s.axisLatest, plot.right, true)).forEach { (label, x, alignEnd) ->
                 val layout = measurer.measure(label, labelStyle.copy(color = scheme.onSurfaceVariant))
-                drawText(layout, topLeft = Offset(if (label == "latest") x - layout.size.width else x, plot.bottom + 6.dp.toPx()))
+                drawText(layout, topLeft = Offset(if (alignEnd) x - layout.size.width else x, plot.bottom + 6.dp.toPx()))
             }
             val step = plot.width / (samples - 1)
             val focus = inspectedBssid.takeIf { cursor != null } ?: selected?.bssid
@@ -225,7 +229,7 @@ fun SignalHistoryGraph(
             shown.forEach { network ->
                 if (focus != null && network.bssid != focus) return@forEach
                 val values = readings[network.bssid].orEmpty()
-                val name = network.ssid.ifEmpty { "Hidden network" } + if (network.bssid.equals(connectedBssid, true)) " (you)" else ""
+                val name = s.chartNetworkLabel(network.ssid.ifEmpty { common.hiddenNetwork }, network.bssid.equals(connectedBssid, true), 0)
                 val layout = measurer.measure(name, nameStyle.copy(color = palette.color(network.bssid)), maxLines = 1,
                     overflow = TextOverflow.Ellipsis, constraints = Constraints(maxWidth = (plot.width - 16.dp.toPx()).toInt().coerceAtLeast(1)))
                 val end = Offset(plot.right - layout.size.width / 2f - 8.dp.toPx(), plot.bottom - plot.height * dbmToFraction(values.last().toFloat()))
@@ -241,18 +245,18 @@ fun SignalHistoryGraph(
         }
         Row(Modifier.fillMaxWidth().padding(top = 8.dp).heightIn(min = 64.dp).padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(inspected?.ssid?.ifBlank { "Hidden network" } ?: "Explore signal history", style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(inspected?.ssid?.ifBlank { common.hiddenNetwork } ?: s.exploreSignalHistory, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     when {
-                        index == null -> "Tap a line, then drag to compare"
-                        value == null -> "No reading at this point"
-                        else -> "${display.reading(value)} · ${SignalQuality.of(value).label} · " + if (index == samples - 1) "latest reading" else "${samples - 1 - index} reading${if (samples - 1 - index == 1) "" else "s"} ago"
+                        index == null -> s.tapLineToCompare
+                        value == null -> s.noReadingAtPoint
+                        else -> s.inspectedReading(display.reading(value), SignalQuality.of(value).label, samples - 1 - index)
                     },
                     style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis
                 )
             }
             Box(Modifier.width(104.dp).heightIn(min = 48.dp), contentAlignment = Alignment.CenterEnd) {
-                if (cursor != null) TextButton(onClick = ::resume) { Text("Resume live") }
+                if (cursor != null) TextButton(onClick = ::resume) { Text(s.resumeLive) }
             }
         }
     }

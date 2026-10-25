@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.core.export
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
@@ -115,7 +116,7 @@ class AndroidExportManager(
             putExtra(Intent.EXTRA_TEXT, text)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        context.startActivity(Intent.createChooser(intent, "Share WiFi\u00A0Weakspot Report").apply {
+        context.startActivity(Intent.createChooser(intent, appStrings.common.share).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         })
     }
@@ -130,7 +131,7 @@ class AndroidExportManager(
             path = file.absolutePath,
             createdAt = System.currentTimeMillis(),
             sizeBytes = file.length(),
-            description = "Chart: $name"
+            description = appStrings.domain.chartDescription(name)
         )
     }
 
@@ -153,7 +154,7 @@ class AndroidExportManager(
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        context.startActivity(Intent.createChooser(intent, "Export File").apply {
+        context.startActivity(Intent.createChooser(intent, appStrings.domain.exportFileChooserTitle).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         })
     }

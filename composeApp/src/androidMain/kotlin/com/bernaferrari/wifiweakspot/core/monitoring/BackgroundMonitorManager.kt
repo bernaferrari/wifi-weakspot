@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.core.monitoring
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -35,7 +36,7 @@ class BackgroundMonitorManager(
             } else context.startService(intent)
             BackgroundMonitorService.errorState.value = null
         } catch (_: Exception) {
-            BackgroundMonitorService.errorState.value = "Monitoring could not start. Check scan permission and try again."
+            BackgroundMonitorService.errorState.value = appStrings.domain.monitorStartFailed
         }
     }
 

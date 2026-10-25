@@ -66,7 +66,7 @@ class HistoryModelTest {
     @Test
     fun silentRouterIsUnreliable() {
         val entry = buildHistory(emptyList(), emptyList(), emptyList(), listOf(routerTest(1, -1f, ms = -1f))).single()
-        assertEquals("Router didn't answer", entry.title)
+        assertEquals("No reply", entry.title)
         assertEquals(LinkVerdict.Unreliable, entry.verdict)
     }
 

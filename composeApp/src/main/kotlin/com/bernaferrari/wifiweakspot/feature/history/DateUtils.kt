@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.history
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -33,16 +34,18 @@ fun dayLabel(timestamp: Long, now: Long = com.bernaferrari.wifiweakspot.core.uti
     val day = Instant.fromEpochMilliseconds(timestamp).toLocalDateTime(zone).date
     val today = Instant.fromEpochMilliseconds(now).toLocalDateTime(zone).date
     val daysAgo = (today.toEpochDays() - day.toEpochDays()).toLong()
-    val weekday = day.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
-    val month = day.month.name.lowercase().replaceFirstChar { it.uppercase() }.take(3)
+    val s = appStrings.history
+    // DayOfWeek runs Monday..Sunday and Month January..December, matching the catalog lists.
+    val weekdayShort = s.weekdayShortNames[day.dayOfWeek.ordinal]
+    val month = s.monthShortNames[day.month.ordinal]
     return when {
-        daysAgo == 0L -> "Today"
-        daysAgo == 1L -> "Yesterday"
-        daysAgo in 2L..6L -> weekday
-        day.year == today.year -> "${weekday.take(3)}, ${day.day} $month"
-        else -> "${weekday.take(3)}, ${day.day} $month ${day.year}"
+        daysAgo == 0L -> s.today
+        daysAgo == 1L -> s.yesterday
+        daysAgo in 2L..6L -> s.weekdayNames[day.dayOfWeek.ordinal]
+        day.year == today.year -> s.dateThisYear(weekdayShort, day.day, month)
+        else -> s.dateOtherYear(weekdayShort, day.day, month, day.year)
     }
 }
 
 /** "Today at 14:32". */
-fun momentLabel(timestamp: Long): String = "${dayLabel(timestamp)} at ${timeOfDay(timestamp)}"
+fun momentLabel(timestamp: Long): String = appStrings.history.momentAt(dayLabel(timestamp), timeOfDay(timestamp))

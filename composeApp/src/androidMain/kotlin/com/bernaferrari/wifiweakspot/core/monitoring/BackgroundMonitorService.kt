@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.core.monitoring
 
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -107,7 +108,7 @@ class BackgroundMonitorService : Service(), KoinComponent {
                 try {
                     startMonitoring()
                 } catch (error: Exception) {
-                    errorState.value = "Monitoring could not start. Allow Wi-Fi scans and enable Location services, then try again."
+                    errorState.value = appStrings.domain.monitorStartFailed
                     stopMonitoring()
                 }
                 START_NOT_STICKY
@@ -135,10 +136,10 @@ class BackgroundMonitorService : Service(), KoinComponent {
             manager.createNotificationChannel(
                 NotificationChannel(
                     CHANNEL_ID_MONITORING,
-                    "Background Monitoring",
+                    appStrings.domain.monitorChannelName,
                     NotificationManager.IMPORTANCE_LOW
                 ).apply {
-                    description = "Shows when WiFi\u00A0Weakspot is monitoring WiFi networks"
+                    description = appStrings.domain.monitorChannelDescription
                     setShowBadge(false)
                 }
             )
@@ -147,10 +148,10 @@ class BackgroundMonitorService : Service(), KoinComponent {
             manager.createNotificationChannel(
                 NotificationChannel(
                     CHANNEL_ID_ALERTS,
-                    "Network Alerts",
+                    appStrings.domain.alertsChannelName,
                     NotificationManager.IMPORTANCE_HIGH
                 ).apply {
-                    description = "Alerts for new networks and signal changes"
+                    description = appStrings.domain.alertsChannelDescription
                     enableVibration(true)
                 }
             )
@@ -175,7 +176,7 @@ class BackgroundMonitorService : Service(), KoinComponent {
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (_: Exception) {
-                    errorState.value = "A scan failed. Check Wi-Fi and Location services."
+                    errorState.value = appStrings.survey.couldNotScan
                 }
                 val interval = getPrefs().getLong(PREF_INTERVAL, DEFAULT_INTERVAL).coerceIn(30_000L, 600_000L)
                 withTimeoutOrNull(interval) { settingsChanges.receive() }
@@ -211,7 +212,7 @@ class BackgroundMonitorService : Service(), KoinComponent {
     private suspend fun performScan() {
         val networks = wifiScanner.awaitNextScan(timeoutMs = 8_000)
         if (networks == null) {
-            errorState.value = "Waiting for a fresh Wi-Fi scan. Android may limit scan requests."
+            errorState.value = appStrings.domain.monitorWaitingForScanLimited
             updateNotification()
             return
         }
@@ -244,7 +245,7 @@ class BackgroundMonitorService : Service(), KoinComponent {
             if (newNetworks.isNotEmpty() && hadBaseline) {
                 val newSsids = networks
                     .filter { it.bssid in newNetworks }
-                    .map { it.ssid.ifEmpty { "Hidden" } }
+                    .map { it.ssid.ifEmpty { appStrings.common.hiddenNetworkShort } }
                     .take(3)
 
                 showNewNetworkAlert(newSsids)
@@ -260,7 +261,7 @@ class BackgroundMonitorService : Service(), KoinComponent {
             if (previousBest != null && currentBest != null && previousBest.bssid == currentBest.bssid) {
                 val signalChange = abs(currentBest.rssi - previousBest.rssi)
                 if (signalChange >= signalThreshold) {
-                    showSignalChangeAlert(currentBest.ssid.ifEmpty { "Your network" }, currentBest.rssi)
+                    showSignalChangeAlert(currentBest.ssid.ifEmpty { appStrings.common.yourNetwork }, currentBest.rssi)
                     lastNotificationTime = now
                 }
             }
@@ -269,27 +270,23 @@ class BackgroundMonitorService : Service(), KoinComponent {
     }
 
     private fun showNewNetworkAlert(newSsids: List<String>) {
-        val title = "New WiFi Network${if (newSsids.size > 1) "s" else ""} Detected"
-        val text = if (newSsids.size == 1) {
-            "\"${newSsids.first()}\" is now in range"
-        } else {
-            "${newSsids.first()}, ${newSsids[1]}" + if (newSsids.size > 2) " and more" else ""
-        }
-
-        showAlertNotification(title, text)
+        showAlertNotification(
+            appStrings.domain.newNetworksTitle(newSsids.size),
+            appStrings.domain.newNetworksText(newSsids)
+        )
     }
 
     private fun showSignalChangeAlert(networkName: String, newRssi: Int) {
-        val quality = when {
-            newRssi > -50 -> "excellent"
-            newRssi > -60 -> "good"
-            newRssi > -70 -> "fair"
-            else -> "weak"
+        val level = when {
+            newRssi > -50 -> MonitorSignalLevel.Excellent
+            newRssi > -60 -> MonitorSignalLevel.Good
+            newRssi > -70 -> MonitorSignalLevel.Fair
+            else -> MonitorSignalLevel.Weak
         }
 
         showAlertNotification(
-            "Signal Change",
-            "\"$networkName\" signal is now $quality ($newRssi dBm)"
+            appStrings.domain.signalChangeTitle,
+            appStrings.domain.signalChangeText(networkName, level, newRssi)
         )
     }
 
@@ -314,7 +311,7 @@ class BackgroundMonitorService : Service(), KoinComponent {
         NotificationManagerCompat.from(this).notify(id, notification)
     }
 
-    private fun createMonitoringNotification(text: String = "Waiting for a fresh Wi-Fi scan"): Notification {
+    private fun createMonitoringNotification(text: String = appStrings.domain.monitorWaitingForScan): Notification {
         val stopIntent = Intent(this, BackgroundMonitorService::class.java).apply {
             action = ACTION_STOP
         }
@@ -329,14 +326,14 @@ class BackgroundMonitorService : Service(), KoinComponent {
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setOngoing(true)
             .setSilent(true)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, appStrings.common.stop, stopPendingIntent)
             .build()
     }
 
     private fun updateNotification() {
         if (!_isMonitoring.value) return
 
-        val text = errorState.value ?: "${_networksFound.value} networks · Last scan: ${_lastScanTime.value}"
+        val text = errorState.value ?: appStrings.domain.monitorStatus(_networksFound.value, _lastScanTime.value)
         val notification = createMonitoringNotification(text)
 
         notifySafely(NOTIFICATION_ID_MONITORING, notification)

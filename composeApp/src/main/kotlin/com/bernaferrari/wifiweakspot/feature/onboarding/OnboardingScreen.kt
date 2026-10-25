@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.onboarding
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -91,10 +92,10 @@ fun OnboardingScreen(
                 Column(Modifier.fillMaxWidth().padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     if (needsAccess) {
                         PrivacyNote()
-                        PrimaryButton("Allow nearby Wi-Fi", onClick = requestPermission)
-                        TextButton(onClick = finish) { Text("Not now") }
+                        PrimaryButton(strings.common.permissionAllowAccess, onClick = requestPermission)
+                        TextButton(onClick = finish) { Text(strings.settings.notNow) }
                     } else {
-                        PrimaryButton("Get started", onClick = finish)
+                        PrimaryButton(strings.settings.getStarted, onClick = finish)
                     }
                 }
             }
@@ -106,7 +107,7 @@ fun OnboardingScreen(
 @Composable
 private fun PrivacyNote() {
     Text(
-        "Android calls this location access. This app never saves where you are, and your results stay on this device.",
+        strings.analyze.scanPermissionBody,
         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -144,7 +145,7 @@ private fun WelcomePage() {
     Spacer(Modifier.height(24.dp))
     BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Text(
-            "Find bad Wi\u2011Fi\nat home",
+            strings.settings.welcomeHeadline,
             style = if (maxWidth < 320.dp) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -153,7 +154,7 @@ private fun WelcomePage() {
     }
     Spacer(Modifier.height(12.dp))
     Text(
-        "See where it drops and how to fix it.",
+        strings.settings.welcomeBody,
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center
@@ -162,11 +163,11 @@ private fun WelcomePage() {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
         val scheme = MaterialTheme.colorScheme
         FeatureRow(Icons.Rounded.MeetingRoom, MaterialShapes.SoftBurst, scheme.tertiaryContainer, scheme.onTertiaryContainer,
-            "Check every room", "Find the rooms where it drops.")
+            strings.settings.featureRoomsTitle, strings.settings.featureRoomsBody)
         FeatureRow(Icons.Rounded.Speed, MaterialShapes.Sunny, scheme.primaryContainer, scheme.onPrimaryContainer,
-            "Check your router", "See how quickly it answers.")
+            strings.settings.featureRouterTitle, strings.settings.featureRouterBody)
         FeatureRow(com.bernaferrari.wifiweakspot.core.designsystem.component.NetworksIcons.Filled, MaterialShapes.Cookie7Sided, scheme.secondaryContainer, scheme.onSecondaryContainer,
-            "See nearby networks", "Pick a clearer channel.")
+            strings.settings.featureNearbyTitle, strings.settings.featureNearbyBody)
     }
 }
 

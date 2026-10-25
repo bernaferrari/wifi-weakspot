@@ -1,0 +1,155 @@
+package com.bernaferrari.wifiweakspot.core.i18n.ru
+
+import com.bernaferrari.wifiweakspot.core.i18n.AnalyzeStrings
+
+object RuAnalyzeStrings : AnalyzeStrings {
+
+    private fun networks(count: Int) = "${count} ${plural(count, "сеть", "сети", "сетей")}"
+
+    override fun channelShort(channel: Int) = "Кан. ${channel}"
+
+    override fun shareNetworkLine(rssi: Int, channel: Int, band: String) = "${rssi} dBm · Ch ${channel} · ${band}"
+    override val noPassword = "Без пароля"
+    override val wifiOffTitle = "Wi-Fi выключено"
+    override val locationOffBody = "Для отображения ближайших сетей Wi-Fi Android требует включить геолокацию. WiFi Weakspot не использует GPS."
+
+    override val scanPermissionBody = "Android передает имена ближайших сетей только приложениям, у которых есть доступ к местоположению. WiFi Weakspot никогда не записывает, где вы находитесь."
+    override val wifiOffBody = "Включите Wi-Fi, чтобы увидеть ближайшие сети."
+    override val locationOffTitle = "Местоположение отключено."
+    override val turnOnLocation = "Включить местоположение"
+    override val scanPausedTitle = "Android сканирование приостановлено"
+    override fun scanPausedBody(seconds: Long) = "Следующее сканирование разрешено через ${seconds} с. Отключите регулирование сканирования, чтобы пропустить ожидание."
+    override val turnOffThrottling = "Отключить регулирование"
+    override val readyToScanBody = "Нажмите «Сканировать», чтобы увидеть все сети поблизости."
+    override val scan = "Сканировать"
+    override val channels = "Каналы"
+    override val signalOverTime = "Изменение сигнала"
+    override val howToReadThisChart = "Как читать эту диаграмму"
+    override val expandSignalHistory = "Развернуть историю сигналов"
+    override val expandChannels = "Развернуть каналы"
+    override fun noBandNetworksNearby(band: String) = "Нет сетей ${band} поблизости."
+    override fun networksOnBand(count: Int, band: String) =
+        if (count == 0) "Нет сетей на ${band}" else "${networks(count)} на ${band}"
+    override fun showVeryWeakNetworks(count: Int) = "Показать ${count} ${plural(count, "очень слабую сеть", "очень слабые сети", "очень слабых сетей")}"
+
+    override fun hideVeryWeakNetworks(count: Int) = "Скрыть ${count} ${plural(count, "очень слабую сеть", "очень слабые сети", "очень слабых сетей")}"
+
+    override fun bandNetworkCount(count: Int) = if (count == 0) "нет" else networks(count)
+    override val highlightedOnChart = "Выделено на графике."
+    override val notHighlightedOnChart = "Не выделено на графике"
+    override fun detailsForNetwork(ssid: String) = "Подробности для ${ssid.ifEmpty { "скрытая сеть" }}"
+    override fun alsoYourRouter(quality: String) = "${quality} · Также ваш роутер"
+    override val connected = "Подключено"
+
+    override val scanReportHeading = "WiFi Weakspot Отчет о сканировании"
+    override fun scanReportTime(time: String) = "Время: ${time}"
+    override fun scanReportTotal(count: Int) = "Всего сетей: ${count}"
+    override val scanReportNetworksHeading = "Сети:"
+    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) =
+        "• ${ssid} - ${rssi}dBm, Ch ${channel}, ${security}"
+    override val channelLooksClear = "Ваш канал выглядит чистым."
+    override val noChannelImprovement = "При этом сканировании улучшений не обнаружено."
+    override fun lessOverlapThanChannel(currentChannel: Int) = "Меньше перекрытия, чем у канала ${currentChannel}"
+    override val leastOverlapInScan = "Наименьшее перекрытие в этом сканировании"
+    override fun channelAdviceDescription(advice: String, channel: Int) = "${advice}: канал ${channel}"
+    override val lowOverlap = "Низкое перекрытие"
+    override val moderateOverlap = "Умеренное перекрытие"
+    override val highOverlap = "Высокое перекрытие"
+    override val veryHighOverlap = "Очень сильное перекрытие"
+
+    override fun channelGraphDescription(networkCount: Int, busiestChannel: Int?, busiestCount: Int) =
+        "График канала, ${networks(networkCount)}." +
+            (if (busiestChannel != null) " Самый загруженный канал ${busiestChannel} с ${busiestCount}." else "")
+    override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) =
+        name + (if (isYou) " (вы)" else "") + (if (extraNames > 0) " +${extraNames}" else "")
+    override val busyCaption = "Загрузка"
+    override val axisStrong = "Сильный"
+    override val axisOkay = "Средний"
+    override val axisWeak = "Слабый"
+    override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · Ch ${channel}"
+    override val clearSelectedNetwork = "Очистить выбранную сеть."
+    override val tapWaveForDetails = "Нажмите волну, чтобы узнать подробности о сети."
+
+    override val chartGuideTitle = "Чтение графиков"
+    override val guideTallerBody = "Высота — это уровень сигнала."
+    override val guideOverlapBody = "Перекрывающиеся сети используют общий спектр и могут конкурировать за эфирное время."
+    override val guideWiderBody = "Более широкий канал занимает больший спектр и может перекрывать большее количество соседей."
+    override val guideSameRouterBody = "+1: Имена, которые, похоже, звучат с одного и того же радио, находятся на одном холме."
+    override val guideCrowdBody = "Зелёный означает меньше перекрытий, красный — больше. Полоса под 2.4 GHz показывает перекрытие. Нажмите на него для подсчета."
+    override val guideSteadyBody = "Прерывистая линия показывает изменение уровня сигнала. Коснитесь линии, чтобы приостановить ее, а затем перемещайте ее вбок во времени или вертикально между сетями. Возобновите прямой эфир, чтобы посмотреть новые чтения."
+    override val guideHighlightBody = "Коснитесь холма или ряда, чтобы выделить его. Перетащите горизонтально по диаграмме, чтобы изучить ее."
+
+    override fun channelOverlapHeading(count: Int, channel: Int) = if (count == 0) "Канал ${channel} свободен" else "Канал ${channel} перекрывают: ${networks(count)}"
+
+    override fun fromChannel(homeChannel: Int, reading: String) = "С канала ${homeChannel} · ${reading}"
+
+    override val estimatedChannelOverlap = "Предполагаемое перекрытие каналов"
+    override fun tryChannel(channel: Int) = "Попробуйте канал ${channel}"
+    override val lowestOverlapFor20Mhz = "Наименьшее расчетное перекрытие для 20 MHz каналов"
+    override val overlapDisclaimer = "На основе близлежащих точек доступа и уровня сигнала, а не измеренного трафика. " +
+        "Перед изменением настроек проверьте поддерживаемые каналы вашего маршрутизатора и местные правила. " +
+        "5 и 6 GHz требуют известной поддержки маршрутизатора; отсутствуют ширококанальные центры " +
+        "отображает только основной 20 MHz канал."
+    override val overlapScore = "Оценка перекрытия"
+
+    override val collectingReadings = "Сбор показаний… Строки появляются после пары сканирований."
+    override fun signalHistoryDescription(networkCount: Int) = "История сигнала сетей: ${networkCount}. Нажмите на линию для просмотра. Стрелки перемещают выбор по времени и между сетями."
+
+    override val historyLive = "Прямой эфир"
+    override fun historyPaused(networkName: String, reading: String?, readingsAgo: Int) =
+        "${networkName}, ${reading ?: "не читается"}, пауза, ${readingsAgo(readingsAgo)}"
+    override val strongerNetwork = "Более мощная сеть"
+    override val weakerNetwork = "Более слабая сеть"
+    override val axisOlder = "раньше"
+    override val axisLatest = "сейчас"
+    override val exploreSignalHistory = "Изучите историю сигналов"
+    override val tapLineToCompare = "Коснитесь линии, затем перетащите ее, чтобы сравнить."
+    override val noReadingAtPoint = "На данный момент чтение недоступно"
+    override fun inspectedReading(reading: String, quality: String, readingsAgo: Int) =
+        "${reading} · ${quality} · " + if (readingsAgo == 0) "последнее чтение" else readingsAgo(readingsAgo)
+    private fun readingsAgo(count: Int) = "${count} ${plural(count, "измерение", "измерения", "измерений")} назад"
+
+    override val resumeLive = "Возобновить трансляцию"
+
+    override fun seenReading(rssi: Int, seen: String) = "${rssi} dBm · видел ${seen}"
+    override val factChannel = "Канал"
+    override val factWidth = "Ширина"
+    override val factSecurity = "Безопасность"
+    override val factDistance = "Оценка расстояния"
+    override val notAvailable = "Недоступно"
+    override val watch = "Смотреть"
+    override val addToFavorites = "Добавить в избранное"
+    override val removeFromFavorites = "Удалить из избранного"
+
+    override fun routerCheckLastTime(pingMs: String) = "${pingMs} мс в прошлый раз"
+    override fun devicesFoundLastScan(count: Int) = "${count} найдено при последнем сканировании"
+    override val devicesSubtitle = "Кто на связи"
+    override val testWebsiteSubtitle = "Пинг, DNS, порты"
+    override fun savedChecks(count: Int) = if (count == 0) "Прошлые результаты" else "${count} ${plural(count, "проверка", "проверки", "проверок")}"
+
+    override val notOnWifi = "Не на Wi-Fi"
+    override val online = "Онлайн"
+    override val internetNotConfirmed = "Интернет не подтвержден"
+    override fun channelChip(channel: Int) = "Канал ${channel}"
+    override fun linkRateChip(mbps: Int) = "Скорость соединения ${mbps} Mbps"
+    override val chooseNetwork = "Выберите сеть"
+    override val turnOnWifi = "Включи Wi-Fi"
+    override val dismiss = "Пропустить"
+    override val findWeakSpotsTitle = "Найдите слабые места"
+    override val findWeakSpotsBody = "Посмотрите, какие комнаты слабые."
+    override val findWeakSpotsAction = "Проверьте свои комнаты."
+    override fun networksNearby(count: Int) = "${networks(count)} рядом"
+    override val nearbyStale = "Из вашего последнего сканирования. Нажмите, чтобы обновить."
+    override val nearbyNoConnection = "См. каналы и сигнал для каждой сети."
+    override fun nearbyOverlap(count: Int, channel: Int) = if (count == 0) "На канале ${channel} перекрытий не обнаружено." else "Соседних сигналов, перекрывающих канал ${channel}: ${count}."
+
+    override val adviceNoWifiBody = "Подключитесь к сети, которую хотите проверить. Вы по-прежнему можете запускать интернет-тесты и сетевые инструменты, используя текущее соединение."
+    override val adviceNoInternetTitle = "Сначала проверьте доступ в Интернет."
+    override val adviceNoInternetBody = "Android не подтвердил доступ в Интернет для этого соединения Wi-Fi. Найдите страницу входа, затем проверьте подключение к маршрутизатору и интернет-хосту."
+    override val adviceNoSignalTitle = "Прочитайте свой сигнал Wi-Fi."
+    override val adviceNoSignalBody = "Разрешить сканирование Wi-Fi в сетях для просмотра измерений сигнала. Сравните сигнал в комнате, где вы заметили проблемы."
+    override val adviceWeakSignalTitle = "Сравните зону покрытия рядом с вашим маршрутизатором"
+    override val adviceWeakSignalBody = "Текущий сигнал Wi-Fi слабый. Запустите проверку маршрутизатора здесь, затем повторите процедуру рядом с маршрутизатором. Используйте исследование своей сети, чтобы найти слабые места."
+    override val adviceGoodSignalTitle = "Сравните скорость реагирования маршрутизатора"
+    override val adviceGoodSignalBody = "Уровень сигнала выглядит приемлемым, а Android указывает на доступ к Интернету. Если соединение кажется медленным, сравните реакцию маршрутизатора здесь и рядом с маршрутизатором; сильный сигнал сам по себе не гарантирует производительность."
+}

@@ -21,7 +21,7 @@ class WebPlatformActions : PlatformActions {
     override fun loadImage(path: String): ImageBitmap? = null
     override fun deleteOwnedFile(path: String) = Unit
     override fun openUrl(url: String) = openTab(url)
-    override fun shareImage(image: ImageBitmap, title: String) = logMessage("Sharing the map works in the Android app.")
+    override fun shareImage(image: ImageBitmap, title: String) = logMessage(com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.mapSharingAndroidOnly)
 }
 
 class WebPlatformTheme : PlatformTheme {

@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.analyze
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.foundation.layout.widthIn
@@ -177,7 +178,7 @@ fun AnalyzeScreen(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             MediumFlexibleTopAppBar(
-                title = { Text("Networks") },
+                title = { Text(strings.common.tabNetworks) },
                 actions = {
                     // Scrolled down, the bands stay one tap away in the bar.
                     androidx.compose.animation.AnimatedVisibility(
@@ -190,7 +191,7 @@ fun AnalyzeScreen(
                     // Scanning is automatic; the only thing worth a button is lifting Android's limit.
                     if (canScan && throttle !is ThrottleState.Unlimited) {
                         IconButton(onClick = { haptics.click(); onNavigateToPowerTools() }) {
-                            Icon(Icons.Rounded.Bolt, "Faster scans", tint = if (throttle is ThrottleState.Exhausted) MaterialTheme.colorScheme.primary else androidx.compose.material3.LocalContentColor.current)
+                            Icon(Icons.Rounded.Bolt, strings.common.fasterScans, tint = if (throttle is ThrottleState.Exhausted) MaterialTheme.colorScheme.primary else androidx.compose.material3.LocalContentColor.current)
                         }
                     }
                 },
@@ -202,28 +203,28 @@ fun AnalyzeScreen(
             when {
                 !permissions.canScanWifi -> CenteredMessage(
                     icon = Icons.Rounded.WifiFind,
-                    title = "See the Wi-Fi around you",
-                    body = "Android only shares nearby network names with apps that have location access. WiFi\u00A0Weakspot never records where you are.",
-                    action = "Allow",
+                    title = strings.common.permissionScreenTitle,
+                    body = strings.analyze.scanPermissionBody,
+                    action = strings.common.permissionAllowAccess,
                     onAction = requestPermission
                 )
-                !radios.wifiEnabled -> CenteredMessage(Icons.Rounded.WifiOff, "Wi-Fi is off", "Turn on Wi-Fi to see nearby networks.", "Open Wi-Fi settings") { platform.openWifiSettings() }
-                !radios.locationEnabled -> CenteredMessage(Icons.Rounded.LocationOff, "Location is off", "Android needs Location on to list nearby Wi-Fi. WiFi\u00A0Weakspot doesn't use GPS.", "Turn on Location") { platform.openLocationSettings() }
+                !radios.wifiEnabled -> CenteredMessage(Icons.Rounded.WifiOff, strings.analyze.wifiOffTitle, strings.analyze.wifiOffBody, strings.common.openWifiSettings) { platform.openWifiSettings() }
+                !radios.locationEnabled -> CenteredMessage(Icons.Rounded.LocationOff, strings.analyze.locationOffTitle, strings.analyze.locationOffBody, strings.analyze.turnOnLocation) { platform.openLocationSettings() }
                 networks.isEmpty() && uiState !is AnalyzeUiState.Success -> {
                     if (uiState is AnalyzeUiState.Loading) {
                         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                             LoadingIndicator(Modifier.size(96.dp))
                             Spacer(Modifier.height(16.dp))
-                            Text("Listening for networks…", style = MaterialTheme.typography.titleMedium)
+                            Text(strings.survey.scanning, style = MaterialTheme.typography.titleMedium)
                         }
                     } else {
                         val exhausted = throttle as? ThrottleState.Exhausted
                         CenteredMessage(
                             icon = Icons.Rounded.WifiFind,
-                            title = if (exhausted != null) "Android paused scanning" else "Ready to scan",
-                            body = if (exhausted != null) "The next scan is allowed in ${exhausted.secondsUntilNextScan} s. Turn off scan throttling to skip the wait."
-                            else "Tap scan to see every network nearby.",
-                            action = if (exhausted != null) "Turn off throttling" else "Scan",
+                            title = if (exhausted != null) strings.analyze.scanPausedTitle else strings.common.readyToScan,
+                            body = if (exhausted != null) strings.analyze.scanPausedBody(exhausted.secondsUntilNextScan)
+                            else strings.analyze.readyToScanBody,
+                            action = if (exhausted != null) strings.analyze.turnOffThrottling else strings.analyze.scan,
                             onAction = { if (exhausted != null) onNavigateToPowerTools() else viewModel.startScan() }
                         )
                     }
@@ -310,14 +311,14 @@ private fun NetworksContent(
                 Column(Modifier.padding(vertical = 12.dp)) {
                     Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                            Text(if (showHistory) "Signal over time" else "Channels", style = if (windowWidth < 360.dp) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f, fill = false), maxLines = 2)
+                            Text(if (showHistory) strings.analyze.signalOverTime else strings.analyze.channels, style = if (windowWidth < 360.dp) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f, fill = false), maxLines = 2)
                             IconButton(onClick = { haptics.click(); showHelp = true }) {
-                                Icon(Icons.Outlined.Info, "How to read this chart", Modifier.size(18.dp))
+                                Icon(Icons.Outlined.Info, strings.analyze.howToReadThisChart, Modifier.size(18.dp))
                             }
                         }
                         // Match the band selector's visible gap; each segment fills its 48 dp width.
                         Row(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
-                                listOf(false to (Icons.Rounded.WaterfallChart to "Channels"), true to (Icons.AutoMirrored.Rounded.ShowChart to "Signal over time"))
+                                listOf(false to (Icons.Rounded.WaterfallChart to strings.analyze.channels), true to (Icons.AutoMirrored.Rounded.ShowChart to strings.analyze.signalOverTime))
                                     .forEachIndexed { index, (history, look) ->
                                         ToggleButton(
                                             checked = showHistory == history,
@@ -329,12 +330,12 @@ private fun NetworksContent(
                                         ) { Icon(look.first, look.second, Modifier.size(20.dp)) }
                                     }
                         }
-                        IconButton(onClick = { haptics.click(); showExplorer = true }) { Icon(Icons.Rounded.Fullscreen, if (showHistory) "Expand signal history" else "Expand channels") }
+                        IconButton(onClick = { haptics.click(); showExplorer = true }) { Icon(Icons.Rounded.Fullscreen, if (showHistory) strings.analyze.expandSignalHistory else strings.analyze.expandChannels) }
                     }
                     Box(Modifier.fillMaxWidth().height(if (wide) 440.dp else 340.dp)) {
                         if (inBand.isEmpty()) {
                             Text(
-                                "No ${band.label} networks nearby.",
+                                strings.analyze.noBandNetworksNearby(band.label),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.align(Alignment.Center)
@@ -376,7 +377,7 @@ private fun NetworksContent(
     val list: LazyListScope.() -> Unit = {
         item(key = "listHeader") {
             Text(
-                when (inBand.size) { 0 -> "No networks on ${band.label}"; 1 -> "1 network on ${band.label}"; else -> "${inBand.size} networks on ${band.label}" },
+                strings.analyze.networksOnBand(inBand.size, band.label),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(start = 4.dp, top = 20.dp, bottom = 8.dp)
             )
@@ -404,7 +405,7 @@ private fun NetworksContent(
                     onClick = { haptics.light(); showWeak = !showWeak },
                     modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                 ) {
-                    Text(if (showWeak) "Hide ${weak.size} very weak networks" else "Show ${weak.size} very weak networks")
+                    Text(if (showWeak) strings.analyze.hideVeryWeakNetworks(weak.size) else strings.analyze.showVeryWeakNetworks(weak.size))
                 }
             }
         }
@@ -442,6 +443,9 @@ private fun NetworksContent(
         val favorites by settings.favoriteBssids.collectAsState(initial = emptySet())
         val scope = rememberCoroutineScope()
         val platform: com.bernaferrari.wifiweakspot.core.platform.PlatformActions = org.koin.compose.koinInject()
+        val common = strings.common
+        val sCatalog = strings
+        val s = strings.analyze
         ModalBottomSheet(onDismissRequest = { detail = null }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
             WifiDetailScreen(
                 network = network,
@@ -457,11 +461,11 @@ private fun NetworksContent(
                 },
                 onShare = {
                     val text = buildString {
-                        appendLine(network.ssid.ifEmpty { "Hidden network" })
-                        appendLine("${network.rssi} dBm · Ch ${frequencyToChannel(network.frequency)} · ${bandLabel(network.frequency)}")
+                        appendLine(network.ssid.ifEmpty { common.hiddenNetwork })
+                        appendLine(s.shareNetworkLine(network.rssi, frequencyToChannel(network.frequency), bandLabel(network.frequency)))
                         appendLine(network.bssid)
                     }
-                    platform.share(text, "Share network")
+                    platform.share(text, sCatalog.common.share)
                 }
             )
         }
@@ -489,7 +493,7 @@ private fun BandSelector(band: FrequencyBand, counts: Map<FrequencyBand, Int>, o
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(entry.label, style = MaterialTheme.typography.labelLarge)
                     Text(
-                        when (val n = counts[entry] ?: 0) { 0 -> "none"; 1 -> "1 network"; else -> "$n networks" },
+                        strings.analyze.bandNetworkCount(counts[entry] ?: 0),
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
@@ -540,32 +544,35 @@ private fun NetworkRow(
     val vendor = remember(network.bssid) { getVendorName(network.bssid) }
     val protocol = securityLabel(network.capabilities.ifBlank { network.security })
     val secured = isNetworkSecured(network.capabilities) || isNetworkSecured(network.security)
+    val common = strings.common
+    val sCatalog = strings
+    val s = strings.analyze
     SegmentedListItem(
         onClick = onClick,
         shapes = ListItemDefaults.segmentedShapes(index = index, count = count),
         colors = ListItemDefaults.colors(containerColor = if (isSelected) scheme.secondaryContainer else scheme.surfaceContainer),
         modifier = modifier.semantics {
             selected = isSelected
-            stateDescription = if (isSelected) "Highlighted on the chart" else "Not highlighted on the chart"
+            stateDescription = if (isSelected) s.highlightedOnChart else s.notHighlightedOnChart
         },
         // The Wi-Fi symbol shares the same quality scale as Home and Rooms.
         leadingContent = { com.bernaferrari.wifiweakspot.core.designsystem.component.WifiBadge(network.rssi) },
         trailingContent = {
-            IconButton(onClick = onDetails) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, "Details for ${network.ssid.ifEmpty { "hidden network" }}") }
+            IconButton(onClick = onDetails) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, s.detailsForNetwork(network.ssid)) }
         },
         supportingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // Most networks have a password; only the exception gets marked.
                 if (!secured || protocol == "Open") {
-                    Icon(Icons.Rounded.LockOpen, "No password", Modifier.size(14.dp), tint = MaterialTheme.colorScheme.error)
+                    Icon(Icons.Rounded.LockOpen, s.noPassword, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.error)
                     Spacer(Modifier.width(4.dp))
                 }
                 Text(
                     // Guest or hidden names on your own radio need no more than that.
-                    if (isYourRouter) "${quality.label} · Also your router"
+                    if (isYourRouter) s.alsoYourRouter(quality.label)
                     else listOfNotNull(
                         quality.label,
-                        "Ch ${frequencyToChannel(network.frequency)}",
+                        s.channelShort(frequencyToChannel(network.frequency)),
                         if (network.channelWidth > 20) "${network.channelWidth} MHz" else null
                     ).joinToString(" · "),
                     maxLines = 1,
@@ -579,7 +586,7 @@ private fun NetworkRow(
             Box(Modifier.size(10.dp).background(chartColor, androidx.compose.foundation.shape.CircleShape))
             Spacer(Modifier.width(8.dp))
             Text(
-                network.ssid.ifEmpty { "Hidden network" },
+                network.ssid.ifEmpty { common.hiddenNetwork },
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -588,7 +595,7 @@ private fun NetworkRow(
             if (isConnected) {
                 Spacer(Modifier.width(8.dp))
                 Surface(shape = WifiWeakspotShapes.full, color = scheme.primary, contentColor = scheme.onPrimary) {
-                    Text("Connected", style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
+                    Text(s.connected, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
                 }
             }
         }

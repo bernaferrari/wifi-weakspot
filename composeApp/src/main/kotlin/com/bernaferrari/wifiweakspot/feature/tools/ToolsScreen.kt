@@ -50,6 +50,7 @@ import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Speed
 import com.bernaferrari.wifiweakspot.core.designsystem.component.ShapeIcon
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 
 data class Tool(
     val id: String,
@@ -101,18 +102,18 @@ fun ToolsScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     val tools = listOf(
-        Tool("ping", "Ping", Icons.Outlined.NetworkPing, "Answers?"),
-        Tool("dns", "DNS", Icons.Outlined.Dns, "Address"),
-        Tool("portscan", "Ports", Icons.Outlined.Security, "What's open"),
+        Tool("ping", "Ping", Icons.Outlined.NetworkPing, strings.tools.pingQuestion),
+        Tool("dns", "DNS", Icons.Outlined.Dns, strings.common.address),
+        Tool("portscan", strings.common.openPorts, Icons.Outlined.Security, strings.tools.toolPortsDescription),
     )
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             MediumFlexibleTopAppBar(
-                title = { Text("Test a website") },
+                title = { Text(strings.common.testWebsite) },
                 navigationIcon = {
-                    if (onBack != null) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+                    if (onBack != null) IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, strings.common.back) }
                 },
                 scrollBehavior = scrollBehavior
             )
@@ -191,9 +192,9 @@ fun ToolsScreen(
                 )
                 is ToolsUiState.Error -> {
                     Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text("Diagnostic failed", style = MaterialTheme.typography.headlineSmall)
+                        Text(strings.tools.diagnosticFailed, style = MaterialTheme.typography.headlineSmall)
                         Text(state.message, color = MaterialTheme.colorScheme.error)
-                        Button(onClick = { viewModel.reset() }) { Text("Try again") }
+                        Button(onClick = { viewModel.reset() }) { Text(strings.tools.tryAgain) }
                     }
                 }
                 is ToolsUiState.PortScanResult -> PortsResultContent(
@@ -228,7 +229,7 @@ fun ToolsHomeContent(
         dao.getToolHistory().map { results -> results.map { it.target }.distinct().take(4) }
     }.collectAsState(initial = emptyList())
     val suggestions = listOfNotNull(
-        status.gateway.takeIf { status.isConnected && it.isNotBlank() }?.let { "Your router" to it },
+        status.gateway.takeIf { status.isConnected && it.isNotBlank() }?.let { strings.common.yourRouter to it },
         "Google" to "google.com",
         "Cloudflare" to "1.1.1.1"
     )
@@ -244,7 +245,7 @@ fun ToolsHomeContent(
         TextField(
             value = inputText,
             onValueChange = onInputChange,
-            placeholder = { Text("Website or IP address") },
+            placeholder = { Text(strings.tools.targetPlaceholder) },
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
             singleLine = true,
             shape = WifiWeakspotShapes.full,
@@ -261,7 +262,7 @@ fun ToolsHomeContent(
             keyboardActions = androidx.compose.foundation.text.KeyboardActions(onGo = { if (hasInput) onToolSelect(tools.first()) }),
             leadingIcon = { Icon(Icons.Default.Search, null, tint = scheme.onSurfaceVariant) },
             trailingIcon = {
-                if (hasInput) IconButton(onClick = { onInputChange("") }) { Icon(Icons.Default.Clear, contentDescription = "Clear") }
+                if (hasInput) IconButton(onClick = { onInputChange("") }) { Icon(Icons.Default.Clear, contentDescription = strings.tools.clearTarget) }
             }
         )
 
@@ -280,7 +281,7 @@ fun ToolsHomeContent(
 
 
         // The checks as plain questions, in one rounded group.
-        Text("Check", style = MaterialTheme.typography.titleSmall, color = scheme.primary, modifier = Modifier.padding(start = 8.dp, top = 8.dp))
+        Text(strings.tools.checkSectionTitle, style = MaterialTheme.typography.titleSmall, color = scheme.primary, modifier = Modifier.padding(start = 8.dp, top = 8.dp))
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             tools.forEachIndexed { index, tool ->
                 CheckRow(
@@ -293,7 +294,7 @@ fun ToolsHomeContent(
         }
 
         if (recent.isNotEmpty()) {
-            Text("Recent", style = MaterialTheme.typography.titleSmall, color = scheme.primary, modifier = Modifier.padding(start = 8.dp, top = 8.dp))
+            Text(strings.tools.recentSectionTitle, style = MaterialTheme.typography.titleSmall, color = scheme.primary, modifier = Modifier.padding(start = 8.dp, top = 8.dp))
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 recent.forEachIndexed { index, target ->
                     Surface(
@@ -319,9 +320,9 @@ fun ToolsHomeContent(
 private fun CheckRow(tool: Tool, enabled: Boolean, shape: androidx.compose.ui.graphics.Shape, onClick: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val (question, detail) = when (tool.id) {
-        "ping" -> "Does it answer?" to "Ping · response time"
-        "dns" -> "What's its address?" to "DNS lookup"
-        else -> "What does it offer?" to "Open ports"
+        "ping" -> strings.tools.pingQuestion to strings.common.responseTime
+        "dns" -> strings.tools.dnsQuestion to strings.tools.dnsDetail
+        else -> strings.tools.portsQuestion to strings.common.openPorts
     }
     Surface(onClick = onClick, enabled = enabled, shape = shape, color = scheme.surfaceContainer, modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -442,7 +443,11 @@ fun RunningToolContent(
         Spacer(Modifier.height(32.dp))
 
         Text(
-            tool.name,
+            when (tool) {
+                ToolType.PING -> "Ping"
+                ToolType.DNS -> "DNS"
+                ToolType.PORT_SCAN -> strings.tools.runningPortScanTitle
+            },
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
@@ -463,7 +468,7 @@ fun RunningToolContent(
                 contentColor = MaterialTheme.colorScheme.error
             )
         ) {
-            Text("Cancel")
+            Text(strings.common.cancel)
         }
     }
 }

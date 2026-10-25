@@ -2,6 +2,8 @@
 
 package com.bernaferrari.wifiweakspot.navigation
 
+import com.bernaferrari.wifiweakspot.core.i18n.CommonStrings
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -44,13 +46,13 @@ import androidx.navigation3.runtime.NavKey
 import com.bernaferrari.wifiweakspot.core.designsystem.WindowWidth
 import com.bernaferrari.wifiweakspot.core.designsystem.rememberWifiWeakspotHapticFeedback
 
-private class TabItem(val destination: NavKey, val label: String, val icon: ImageVector, val selectedIcon: ImageVector)
+private class TabItem(val destination: NavKey, val label: (CommonStrings) -> String, val icon: ImageVector, val selectedIcon: ImageVector)
 
 private val Tabs = listOf(
-    TabItem(HomeDestination, "Home", Icons.Outlined.Home, Icons.Filled.Home),
-    TabItem(NetworksDestination, "Networks", com.bernaferrari.wifiweakspot.core.designsystem.component.NetworksIcons.Outlined, com.bernaferrari.wifiweakspot.core.designsystem.component.NetworksIcons.Filled),
-    TabItem(WalkDestination, "Rooms", Icons.Outlined.MeetingRoom, Icons.Filled.MeetingRoom),
-    TabItem(SettingsDestination, "Settings", Icons.Outlined.Settings, Icons.Filled.Settings)
+    TabItem(HomeDestination, { it.tabHome }, Icons.Outlined.Home, Icons.Filled.Home),
+    TabItem(NetworksDestination, { it.tabNetworks }, com.bernaferrari.wifiweakspot.core.designsystem.component.NetworksIcons.Outlined, com.bernaferrari.wifiweakspot.core.designsystem.component.NetworksIcons.Filled),
+    TabItem(WalkDestination, { it.tabRooms }, Icons.Outlined.MeetingRoom, Icons.Filled.MeetingRoom),
+    TabItem(SettingsDestination, { it.tabSettings }, Icons.Outlined.Settings, Icons.Filled.Settings)
 )
 
 /**
@@ -92,7 +94,7 @@ fun WifiWeakspotNavigationSuite(backStack: NavBackStack<NavKey>, content: @Compo
                                     selected = selected,
                                     onClick = { select(tab.destination) },
                                     icon = { Icon(if (selected) tab.selectedIcon else tab.icon, null) },
-                                    label = { Text(tab.label) }
+                                    label = { Text(tab.label(strings.common)) }
                                 )
                             }
                         }
@@ -112,7 +114,7 @@ fun WifiWeakspotNavigationSuite(backStack: NavBackStack<NavKey>, content: @Compo
                                 selected = selected,
                                 onClick = { select(tab.destination) },
                                 icon = { Icon(if (selected) tab.selectedIcon else tab.icon, null) },
-                                label = { Text(tab.label) },
+                                label = { Text(tab.label(strings.common)) },
                                 railExpanded = false
                             )
                         }

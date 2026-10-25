@@ -55,6 +55,8 @@ import com.bernaferrari.wifiweakspot.core.lan.DeviceKind
 import com.bernaferrari.wifiweakspot.core.lan.identify
 import com.bernaferrari.wifiweakspot.core.lan.deviceWebUrl
 import com.bernaferrari.wifiweakspot.core.platform.PlatformActions
+import com.bernaferrari.wifiweakspot.core.i18n.strings
+import com.bernaferrari.wifiweakspot.feature.tools.serviceLabel
 import com.bernaferrari.wifiweakspot.feature.history.momentLabel
 import org.koin.compose.koinInject
 
@@ -95,9 +97,9 @@ fun LanDeviceDetailScreen(
                 title = { Text(identity?.name ?: ip) },
                 subtitle = { Text(identity?.kind?.takeIf { it != com.bernaferrari.wifiweakspot.core.lan.DeviceKind.Unknown }?.label ?: ip) },
                 scrollBehavior = scrollBehavior,
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, strings.common.back) } },
                 actions = {
-                    if (scanned) IconButton(onClick = { showRename = true }) { Icon(Icons.Rounded.Edit, "Rename") }
+                    if (scanned) IconButton(onClick = { showRename = true }) { Icon(Icons.Rounded.Edit, strings.common.rename) }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -108,6 +110,19 @@ fun LanDeviceDetailScreen(
     ) { padding ->
         if (current == null || identity == null) return@Scaffold
         val webPage = deviceWebUrl(ip, ports.map { it.first }, router = identity.kind == DeviceKind.Router)
+        val facts = listOfNotNull(
+            strings.common.address to current.ipAddress,
+            current.vendor?.let { strings.common.maker to it },
+            current.hostname?.let { strings.tools.factNetworkName to it },
+            strings.tools.factHardwareAddress to (current.macAddress ?: strings.tools.macHiddenByAndroid),
+            current.customName?.let { strings.tools.factYourName to it }
+        )
+        val detailsTitle = strings.tools.detailsTitle
+        val openPortsTitle = strings.common.openPorts
+        val notCheckedYet = strings.tools.portsNotCheckedYet
+        val noneOpen = scanTime?.let { strings.tools.portsNoneOpenWhenChecked(momentLabel(it)) }
+        val checkedAt = scanTime?.let { strings.tools.portsCheckedAt(momentLabel(it)) }
+        val portNames = ports.map { serviceLabel(it.second) }
         LazyColumn(
             Modifier.padding(padding).fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 32.dp)
@@ -122,9 +137,9 @@ fun LanDeviceDetailScreen(
                     Column(Modifier.weight(1f)) {
                         Text(
                             when {
-                                !scanned -> "Not found in a scan yet"
-                                current.isOnline -> "Answered the last scan"
-                                else -> "Seen on the network, but didn't answer"
+                                !scanned -> strings.tools.deviceNotScannedYet
+                                current.isOnline -> strings.tools.deviceAnsweredLastScan
+                                else -> strings.tools.deviceSeenButNoAnswer
                             },
                             style = MaterialTheme.typography.titleMedium
                         )
@@ -142,7 +157,7 @@ fun LanDeviceDetailScreen(
                     }
                     FilledTonalButton(onClick = { onPortScan(ip) }, shapes = ButtonDefaults.shapes(), modifier = Modifier.weight(1f)) {
                         Icon(Icons.Rounded.Shield, null, Modifier.size(ButtonDefaults.IconSize))
-                        Text("Check ports", Modifier.padding(start = ButtonDefaults.IconSpacing))
+                        Text(strings.tools.actionCheckPorts, Modifier.padding(start = ButtonDefaults.IconSpacing))
                     }
                 }
             }
@@ -155,7 +170,7 @@ fun LanDeviceDetailScreen(
                     ) {
                         Icon(Icons.Rounded.OpenInBrowser, null, Modifier.size(ButtonDefaults.IconSize))
                         Text(
-                            if (identity.kind == DeviceKind.Router) "Open router settings" else "Open its web page",
+                            if (identity.kind == DeviceKind.Router) strings.tools.openRouterSettings else strings.tools.openItsWebPage,
                             Modifier.padding(start = ButtonDefaults.IconSpacing)
                         )
                     }
@@ -165,30 +180,23 @@ fun LanDeviceDetailScreen(
                 item(key = "error") { Text(message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(8.dp)) }
             }
 
-            val facts = listOfNotNull(
-                "Address" to current.ipAddress,
-                current.vendor?.let { "Maker" to it },
-                current.hostname?.let { "Network name" to it },
-                "Hardware address" to (current.macAddress ?: "Hidden by Android"),
-                current.customName?.let { "Your name for it" to it }
-            )
-            item(key = "facts-title") { SectionTitle("Details") }
+            item(key = "facts-title") { SectionTitle(detailsTitle) }
             itemsIndexed(facts, key = { _, fact -> "fact-${fact.first}" }) { index, (label, value) ->
                 FactRow(label, value, segmentedShape(index, facts.size, outer = 20.dp, inner = 4.dp), Modifier.padding(top = if (index == 0) 0.dp else 2.dp))
             }
 
-            item(key = "ports-title") { SectionTitle("Open ports") }
+            item(key = "ports-title") { SectionTitle(openPortsTitle) }
             if (scanTime == null) {
                 item(key = "ports-none") {
-                    Note("Not checked yet.")
+                    Note(notCheckedYet)
                 }
             } else if (ports.isEmpty()) {
-                item(key = "ports-closed") { Note("None of the common ports were open when checked ${momentLabel(scanTime!!).replaceFirstChar { it.lowercase() }}.") }
+                item(key = "ports-closed") { Note(noneOpen!!) }
             } else {
                 itemsIndexed(ports, key = { _, port -> "port-${port.first}" }) { index, (port, service) ->
-                    FactRow(service, "TCP $port", segmentedShape(index, ports.size, outer = 20.dp, inner = 4.dp), Modifier.padding(top = if (index == 0) 0.dp else 2.dp))
+                    FactRow(portNames[index], "TCP $port", segmentedShape(index, ports.size, outer = 20.dp, inner = 4.dp), Modifier.padding(top = if (index == 0) 0.dp else 2.dp))
                 }
-                item(key = "ports-when") { Note("Checked ${momentLabel(scanTime!!).replaceFirstChar { it.lowercase() }}.") }
+                item(key = "ports-when") { Note(checkedAt!!) }
             }
         }
     }
@@ -196,19 +204,19 @@ fun LanDeviceDetailScreen(
         var name by remember { mutableStateOf(current.customName.orEmpty()) }
         AlertDialog(
             onDismissRequest = { showRename = false },
-            title = { Text("Rename device") },
+            title = { Text(strings.tools.renameDeviceTitle) },
             text = {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it.take(80) },
-                    label = { Text("Name") },
+                    label = { Text(strings.common.nameLabel) },
                     placeholder = { Text(identity?.name.orEmpty()) },
-                    supportingText = { Text("Leave empty to use the name WiFi\u00A0Weakspot found.") },
+                    supportingText = { Text(strings.tools.renameSupporting) },
                     singleLine = true
                 )
             },
-            confirmButton = { TextButton(onClick = { viewModel.rename(name); showRename = false }) { Text("Save") } },
-            dismissButton = { TextButton(onClick = { showRename = false }) { Text("Cancel") } }
+            confirmButton = { TextButton(onClick = { viewModel.rename(name); showRename = false }) { Text(strings.common.save) } },
+            dismissButton = { TextButton(onClick = { showRename = false }) { Text(strings.common.cancel) } }
         )
     }
 }

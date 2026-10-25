@@ -23,3 +23,6 @@ data class MonitorSettings(
 
     fun withIntervalMinutes(minutes: Float) = copy(scanIntervalMs = (minutes.coerceIn(0.5f, 10f) * 60_000).toLong())
 }
+
+/** Signal level named in a background signal-change alert. */
+enum class MonitorSignalLevel { Excellent, Good, Fair, Weak }

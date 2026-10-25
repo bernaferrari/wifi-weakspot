@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.feature.survey
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -72,7 +73,7 @@ fun SurveyCanvas(
         val platform: com.bernaferrari.wifiweakspot.core.platform.PlatformActions = org.koin.compose.koinInject()
         val floorplan = remember(imagePath) { imagePath?.let(platform::loadImage) }
         if (floorplan != null) androidx.compose.foundation.Image(
-            bitmap = floorplan, contentDescription = "Project floorplan",
+            bitmap = floorplan, contentDescription = strings.survey.floorplanDescription,
             contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize()
         )
         // Same palette and thresholds as every other signal reading in the app.
@@ -117,6 +118,7 @@ fun SurveyCanvas(
             progress.animateTo(1f, tween(expectedReadingMillis, easing = LinearEasing))
         }
         // While a reading is taken, soft rings pulse out from the spot, like sonar.
+        val mapDescription = strings.survey.coverageMapDescription(points.size)
         val ripple = if (livePosition != null && !reduceMotion) {
             rememberInfiniteTransition(label = "measuring").animateFloat(
                 0f, 1f, infiniteRepeatable(tween(2_800, easing = LinearEasing)), label = "ripple"
@@ -127,7 +129,7 @@ fun SurveyCanvas(
                 .fillMaxSize()
                 .onSizeChanged { canvasSize = it }
                 .background(if (imagePath == null) colorScheme.surface else Color.Transparent)
-                .semantics { contentDescription = "Coverage map with ${points.size} readings. Tap where you are standing to measure." }
+                .semantics { contentDescription = mapDescription }
                 .pointerInput(Unit) {
                     detectTapGestures { tap ->
                         if (!measureEnabled) return@detectTapGestures

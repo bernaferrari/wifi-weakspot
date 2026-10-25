@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import com.bernaferrari.wifiweakspot.navigation.open
 import com.bernaferrari.wifiweakspot.navigation.pop
 import com.bernaferrari.wifiweakspot.navigation.selectTab
@@ -53,7 +54,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
-fun App() {
+fun App(locale: androidx.compose.ui.text.intl.Locale = androidx.compose.ui.text.intl.Locale.current) {
     val settingsRepository: SettingsRepository = koinInject()
     val hapticsEnabled by settingsRepository.hapticsEnabled.collectAsState(initial = true)
     val signalDisplay by settingsRepository.signalDisplay.collectAsState(initial = com.bernaferrari.wifiweakspot.core.wifi.SignalDisplay.Percentage)
@@ -71,6 +72,7 @@ fun App() {
     val requestScanPermission = com.bernaferrari.wifiweakspot.core.platform.rememberScanPermissionRequest()
     WifiWeakspotTheme {
         CompositionLocalProvider(
+            com.bernaferrari.wifiweakspot.core.i18n.LocalStrings provides com.bernaferrari.wifiweakspot.core.i18n.stringsFor(locale),
             com.bernaferrari.wifiweakspot.core.designsystem.LocalHapticsEnabled provides hapticsEnabled,
             com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay provides signalDisplay
         ) {
@@ -103,7 +105,7 @@ fun PermissionRequiredScreen(
 ) {
     Scaffold(topBar = {
         TopAppBar(title = {}, navigationIcon = {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, strings.common.back) }
         })
     }) { padding ->
         Column(
@@ -118,19 +120,19 @@ fun PermissionRequiredScreen(
                 size = 120.dp, iconSize = 56.dp
             )
             Spacer(Modifier.height(24.dp))
-            Text("Allow access to nearby Wi-Fi", style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+            Text(strings.common.permissionScreenTitle, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
             Spacer(Modifier.height(8.dp))
             Text(
-                "The floor plan map needs to see your router's signal. Android asks for location access for that; WiFi\u00A0Weakspot never saves where you are.",
+                strings.analyze.scanPermissionBody,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(24.dp))
             Button(onClick = onRequestPermission, shapes = ButtonDefaults.shapes(), modifier = Modifier.fillMaxWidth().heightIn(min = ButtonDefaults.MediumContainerHeight)) {
-                Text("Allow access", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
+                Text(strings.common.permissionAllowAccess, style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
             }
-            TextButton(onClick = onOpenSettings) { Text("Open app settings") }
+            TextButton(onClick = onOpenSettings) { Text(strings.common.openAppSettings) }
         }
     }
 }

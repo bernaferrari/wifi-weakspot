@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.survey
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -116,11 +117,11 @@ fun SurveyScreen(
                 hasTarget = hasTarget,
                 // One instruction at a time; the map itself shows the result.
                 status = when {
-                    isSampling && !readingIsTimed -> "Scanning for ${project?.targetSsid ?: "this Wi-Fi"}… hold still"
-                    isSampling -> "Measuring… hold still"
-                    !hasTarget -> "Choose the Wi-Fi you want to map"
-                    points.isEmpty() -> "Tap the map where you're standing"
-                    else -> "Walk to another room and tap where you are"
+
+                    isSampling -> strings.survey.measuringHoldStill
+                    !hasTarget -> strings.survey.chooseWifi
+                    points.isEmpty() -> strings.survey.tapWhereYouAreStanding
+                    else -> strings.survey.tapWhereYouAreStanding
                 },
                 onUndo = viewModel::undoLastPoint,
                 onReadings = { showPoints = true },
@@ -135,13 +136,13 @@ fun SurveyScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(project?.name ?: "Floor plan", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(project?.name ?: strings.survey.floorPlanTitle, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (project != null) Text(
                             when {
-                                !hasTarget -> "Pick the Wi-Fi to measure"
+                                !hasTarget -> strings.survey.chooseWifi
                                 else -> listOfNotNull(
-                                    project?.targetSsid?.ifBlank { "Hidden network" },
-                                    if (points.size == 1) "1 reading" else "${points.size} readings",
+                                    project?.targetSsid?.ifBlank { strings.common.hiddenNetwork },
+                                    strings.survey.readingCount(points.size),
                                 ).joinToString(" · ")
                             },
                             style = MaterialTheme.typography.bodyMedium,
@@ -151,15 +152,16 @@ fun SurveyScreen(
                         )
                     }
                 },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, strings.common.back) } },
                 actions = {
                     // The finished map is worth sending: one tap shares it as a picture.
+                    val shareMapLabel = strings.common.share
                     if (points.isNotEmpty()) IconButton(onClick = {
                         haptics.click()
-                        scope.launch { platform.shareImage(mapLayer.toImageBitmap(), "Share map") }
-                    }) { Icon(Icons.Default.Share, "Share map") }
+                        scope.launch { platform.shareImage(mapLayer.toImageBitmap(), shareMapLabel) }
+                    }) { Icon(Icons.Default.Share, shareMapLabel) }
                     if (project != null) Box {
-                        IconButton(onClick = { actionsExpanded = true }, enabled = !isUpdatingProject) { Icon(Icons.Default.MoreVert, "Map options") }
+                        IconButton(onClick = { actionsExpanded = true }, enabled = !isUpdatingProject) { Icon(Icons.Default.MoreVert, strings.survey.mapOptions) }
                         DropdownMenu(expanded = actionsExpanded, onDismissRequest = { actionsExpanded = false }) {
                             if (projects.size > 1) {
                                 projects.forEach { item ->
@@ -171,15 +173,15 @@ fun SurveyScreen(
                                 }
                                 HorizontalDivider()
                             }
-                            DropdownMenuItem(text = { Text("New map") }, leadingIcon = { Icon(Icons.Default.Add, null) }, onClick = { actionsExpanded = false; viewModel.createMap() })
-                            DropdownMenuItem(text = { Text("Rename map") }, leadingIcon = { Icon(Icons.Default.Edit, null) }, onClick = { actionsExpanded = false; showRename = true })
-                            DropdownMenuItem(text = { Text("Wi-Fi to measure") }, leadingIcon = { Icon(Icons.Default.Router, null) }, onClick = { actionsExpanded = false; showNetworks = true; viewModel.refreshNetworks() })
+                            DropdownMenuItem(text = { Text(strings.survey.createMap) }, leadingIcon = { Icon(Icons.Default.Add, null) }, onClick = { actionsExpanded = false; viewModel.createMap() })
+                            DropdownMenuItem(text = { Text(strings.common.rename) }, leadingIcon = { Icon(Icons.Default.Edit, null) }, onClick = { actionsExpanded = false; showRename = true })
+                            DropdownMenuItem(text = { Text(strings.survey.chooseWifi) }, leadingIcon = { Icon(Icons.Default.Router, null) }, onClick = { actionsExpanded = false; showNetworks = true; viewModel.refreshNetworks() })
                             HorizontalDivider()
-                            DropdownMenuItem(text = { Text(if (project?.imagePath == null) "Use a photo of your plan" else "Change the photo") }, leadingIcon = { Icon(Icons.Default.Image, null) }, onClick = { actionsExpanded = false; importFloorplan(project?.id) })
-                            if (project?.imagePath != null) DropdownMenuItem(text = { Text("Remove the photo") }, leadingIcon = { Icon(Icons.Default.HideImage, null) }, onClick = { actionsExpanded = false; viewModel.setFloorplan(null, ::releaseOwnedFloorplan) })
-                            DropdownMenuItem(text = { Text("Export readings (CSV)") }, leadingIcon = { Icon(Icons.Default.IosShare, null) }, onClick = { actionsExpanded = false; viewModel.exportProject() })
+                            DropdownMenuItem(text = { Text(if (project?.imagePath == null) strings.survey.usePlanPhoto else strings.survey.changePhoto) }, leadingIcon = { Icon(Icons.Default.Image, null) }, onClick = { actionsExpanded = false; importFloorplan(project?.id) })
+                            if (project?.imagePath != null) DropdownMenuItem(text = { Text(strings.survey.removePhoto) }, leadingIcon = { Icon(Icons.Default.HideImage, null) }, onClick = { actionsExpanded = false; viewModel.setFloorplan(null, ::releaseOwnedFloorplan) })
+                            DropdownMenuItem(text = { Text(strings.survey.exportReadingsCsv) }, leadingIcon = { Icon(Icons.Default.IosShare, null) }, onClick = { actionsExpanded = false; viewModel.exportProject() })
                             HorizontalDivider()
-                            DropdownMenuItem(text = { Text("Delete this map") }, leadingIcon = { Icon(Icons.Default.DeleteOutline, null) }, onClick = { actionsExpanded = false; deletingProject = project })
+                            DropdownMenuItem(text = { Text(strings.common.delete) }, leadingIcon = { Icon(Icons.Default.DeleteOutline, null) }, onClick = { actionsExpanded = false; deletingProject = project })
                         }
                     }
                 }
@@ -245,24 +247,23 @@ fun SurveyScreen(
     }
 
     deletingFloor?.let { floor ->
-        val name = if (floor == 0) "the basement" else "floor $floor"
         val count = viewModel.floorReadingCount(floor)
         AlertDialog(
             onDismissRequest = { deletingFloor = null },
-            title = { Text("Delete ${name}?") },
-            text = { Text(if (count == 1) "Its 1 reading will be deleted." else "Its $count readings will be deleted.") },
-            confirmButton = { TextButton(onClick = { viewModel.deleteFloor(floor); deletingFloor = null }) { Text("Delete") } },
-            dismissButton = { TextButton(onClick = { deletingFloor = null }) { Text("Cancel") } }
+            title = { Text(strings.common.deleteItemTitle(strings.survey.floorName(floor))) },
+            text = { Text(strings.survey.deleteFloorBody(count)) },
+            confirmButton = { TextButton(onClick = { viewModel.deleteFloor(floor); deletingFloor = null }) { Text(strings.common.delete) } },
+            dismissButton = { TextButton(onClick = { deletingFloor = null }) { Text(strings.common.cancel) } }
         )
     }
     if (showRename) project?.let { current -> SurveyNameDialog(current.name, onDismiss = { showRename = false }) { name -> viewModel.renameProject(name); showRename = false } }
     if (showNetworks) AlertDialog(
-        onDismissRequest = { showNetworks = false }, title = { Text("Which Wi-Fi to map?") },
+        onDismissRequest = { showNetworks = false }, title = { Text(strings.survey.chooseWifi) },
         text = {
             Column {
-                Text("A map follows one router at a time. Mesh systems show each unit separately.", style = MaterialTheme.typography.bodySmall)
+                Text(strings.survey.oneRouterAtATime, style = MaterialTheme.typography.bodySmall)
                 LazyColumn(Modifier.heightIn(max = 360.dp)) {
-                    if (networks.isEmpty()) item { Text("No networks found yet. Check that Wi-Fi and location are on.", Modifier.padding(vertical = 16.dp)) }
+                    if (networks.isEmpty()) item { Text(strings.survey.noNetworksFound, Modifier.padding(vertical = 16.dp)) }
                     items(networks.distinctBy { it.bssid }.sortedByDescending { it.rssi }, key = { it.bssid }) { network ->
                         TextButton(onClick = {
                             if (projectPointCount > 0 && !project?.targetBssid.equals(network.bssid, true)) replacingTarget = network
@@ -270,7 +271,7 @@ fun SurveyScreen(
                             showNetworks = false
                         }, modifier = Modifier.fillMaxWidth()) {
                             Column(Modifier.fillMaxWidth()) {
-                                Text(network.ssid.ifBlank { "Hidden network" })
+                                Text(network.ssid.ifBlank { strings.common.hiddenNetwork })
                                 Text("${network.bssid} · ${network.rssi} dBm", style = MaterialTheme.typography.bodySmall)
                             }
                         }
@@ -278,29 +279,29 @@ fun SurveyScreen(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = viewModel::refreshNetworks, enabled = !isScanning) { Text(if (isScanning) "Scanning…" else "Refresh") } },
-        dismissButton = { TextButton(onClick = { showNetworks = false }) { Text("Close") } }
+        confirmButton = { TextButton(onClick = viewModel::refreshNetworks, enabled = !isScanning) { Text(if (isScanning) strings.survey.scanning else strings.survey.refresh) } },
+        dismissButton = { TextButton(onClick = { showNetworks = false }) { Text(strings.common.close) } }
     )
     replacingTarget?.let { network -> AlertDialog(
-        onDismissRequest = { replacingTarget = null }, title = { Text("Switch to another Wi-Fi?") },
-        text = { Text("This clears the readings on every floor of this map. Create a new map to keep both.") },
-        confirmButton = { TextButton(onClick = { viewModel.selectTarget(network); replacingTarget = null }) { Text("Clear and switch") } },
-        dismissButton = { TextButton(onClick = { replacingTarget = null }) { Text("Cancel") } }
+        onDismissRequest = { replacingTarget = null }, title = { Text(strings.survey.switchWifiTitle) },
+        text = { Text(strings.survey.switchWifiBody) },
+        confirmButton = { TextButton(onClick = { viewModel.selectTarget(network); replacingTarget = null }) { Text(strings.survey.clearAndSwitch) } },
+        dismissButton = { TextButton(onClick = { replacingTarget = null }) { Text(strings.common.cancel) } }
     ) }
     deletingProject?.let { item -> AlertDialog(
-        onDismissRequest = { deletingProject = null }, title = { Text("Delete ${item.name}?") }, text = { Text("All readings on every floor will be deleted.") },
-        confirmButton = { TextButton(onClick = { viewModel.deleteProject(item, ::releaseOwnedFloorplan); deletingProject = null }) { Text("Delete") } },
-        dismissButton = { TextButton(onClick = { deletingProject = null }) { Text("Cancel") } }
+        onDismissRequest = { deletingProject = null }, title = { Text(strings.common.deleteItemTitle(item.name)) }, text = { Text(strings.survey.deleteMapBody) },
+        confirmButton = { TextButton(onClick = { viewModel.deleteProject(item, ::releaseOwnedFloorplan); deletingProject = null }) { Text(strings.common.delete) } },
+        dismissButton = { TextButton(onClick = { deletingProject = null }) { Text(strings.common.cancel) } }
     ) }
     if (showPoints) ModalBottomSheet(onDismissRequest = { showPoints = false }, sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         val ranked = points.sortedBy { it.rssi }
         LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             item {
                 Column(Modifier.padding(start = 8.dp, bottom = 16.dp)) {
-                    Text(if (selectedFloor == 0) "Basement" else "Floor $selectedFloor", style = MaterialTheme.typography.headlineSmall)
+                    Text(strings.survey.floorName(selectedFloor), style = MaterialTheme.typography.headlineSmall)
                     Text(
-                        if (ranked.isEmpty()) "No readings here yet. Tap the map where you're standing."
-                        else "Weakest first, so problem spots are on top.",
+                        if (ranked.isEmpty()) strings.survey.noReadingsYet
+                        else strings.survey.weakestFirst,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -320,7 +321,7 @@ fun SurveyScreen(
                             Text("${quality.label} · ${display.reading(point.rssi)}", style = MaterialTheme.typography.bodyLarge)
                             Text(com.bernaferrari.wifiweakspot.core.util.relativeTime(point.timestamp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        IconButton(onClick = { viewModel.deletePoint(point) }, enabled = !isUpdatingProject) { Icon(Icons.Default.DeleteOutline, "Remove this reading") }
+                        IconButton(onClick = { viewModel.deletePoint(point) }, enabled = !isUpdatingProject) { Icon(Icons.Default.DeleteOutline, strings.survey.remove) }
                     }
                 }
             }
@@ -337,10 +338,10 @@ fun AnimatedEmptyState(onCreateProject: () -> Unit) {
     ) {
         com.bernaferrari.wifiweakspot.core.designsystem.component.SurveyIllustration()
         Spacer(Modifier.height(24.dp))
-        Text("Map your home", style = MaterialTheme.typography.headlineSmall)
+        Text(strings.survey.mapYourHome, style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         Text(
-            "See your Wi-Fi on a map of your home. Use a photo of your plan or a blank grid.",
+            strings.survey.mapYourHomeBody,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -353,17 +354,16 @@ fun AnimatedEmptyState(onCreateProject: () -> Unit) {
         ) {
             Icon(Icons.Default.Add, null)
             Spacer(Modifier.width(8.dp))
-            Text("Create a map", style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
+            Text(strings.survey.createMap, style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
         }
     }
 }
-
-private fun floorLabel(floor: Int) = if (floor == 0) "B" else "$floor"
 
 /** Floors as a connected button group on the map; "+" adds the next one up (then a basement). */
 @Composable
 private fun FloorButtons(floors: List<Int>, selected: Int, onSelect: (Int) -> Unit, enabled: Boolean, modifier: Modifier = Modifier, onLongPress: (Int) -> Unit = {}) {
     val next = ((1..3).firstOrNull { it !in floors }) ?: 0.takeIf { it !in floors }
+    val survey = strings.survey
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween), verticalAlignment = Alignment.CenterVertically) {
         floors.forEachIndexed { index, floor ->
             val shapes = when {
@@ -376,26 +376,26 @@ private fun FloorButtons(floors: List<Int>, selected: Int, onSelect: (Int) -> Un
             val buttonModifier = Modifier.heightIn(min = 40.dp)
                 .pointerInput(floor, enabled) { if (enabled) detectTapGestures(onLongPress = { onLongPress(floor) }) }
                 .semantics {
-                    contentDescription = if (floor == 0) "Basement" else "Floor $floor"
-                    onLongClick(label = "Delete this floor's readings") { onLongPress(floor); true }
+                    contentDescription = survey.floorName(floor)
+                    onLongClick(label = survey.deleteFloorReadingsAction) { onLongPress(floor); true }
                 }
             if (shapes == null) FilledTonalToggleButton(
                 checked = floor == selected,
                 onCheckedChange = { onSelect(floor) },
                 enabled = enabled,
                 modifier = buttonModifier
-            ) { Text("Floor ${floorLabel(floor)}") } else FilledTonalToggleButton(
+            ) { Text(strings.survey.floorButtonLabel(floor)) } else FilledTonalToggleButton(
                 checked = floor == selected,
                 onCheckedChange = { onSelect(floor) },
                 enabled = enabled,
                 shapes = shapes,
                 modifier = buttonModifier
-            ) { Text(if (floor == selected) (if (floor == 0) "Basement" else "Floor $floor") else floorLabel(floor)) }
+            ) { Text(if (floor == selected) strings.survey.floorName(floor) else strings.survey.floorShortLabel(floor)) }
         }
         if (next != null) {
             Spacer(Modifier.width(8.dp))
             FilledTonalIconButton(onClick = { onSelect(next) }, enabled = enabled, shapes = IconButtonDefaults.shapes()) {
-                Icon(Icons.Default.Add, if (next == 0) "Add a basement" else "Add floor $next")
+                Icon(Icons.Default.Add, strings.survey.addFloor(next))
             }
         }
     }
@@ -409,9 +409,9 @@ private fun SignalLegend() {
     val colors = remember(heat) { signalGradient(heat).let { blend -> (0..12).map { blend(-90f + it * 40f / 12f) } } }
     Surface(shape = com.bernaferrari.wifiweakspot.core.designsystem.WifiWeakspotShapes.full, color = scheme.surfaceContainerHigh.copy(alpha = 0.92f)) {
         Row(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Weak", style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+            Text(strings.analyze.axisWeak, style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
             Box(Modifier.size(64.dp, 8.dp).clip(com.bernaferrari.wifiweakspot.core.designsystem.WifiWeakspotShapes.full).background(androidx.compose.ui.graphics.Brush.horizontalGradient(colors)))
-            Text("Strong", style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+            Text(strings.analyze.axisStrong, style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
         }
     }
 }
@@ -430,10 +430,10 @@ private fun SurveyToolbar(
     Surface(modifier, shape = com.bernaferrari.wifiweakspot.core.designsystem.WifiWeakspotShapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
         Row(Modifier.padding(start = 20.dp, end = 8.dp, top = 8.dp, bottom = 8.dp).heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(status, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-            if (!hasTarget) Button(onClick = onChooseNetwork, shapes = ButtonDefaults.shapes()) { Text("Choose Wi-Fi") }
+            if (!hasTarget) Button(onClick = onChooseNetwork, shapes = ButtonDefaults.shapes()) { Text(strings.survey.chooseWifi) }
             else {
-                IconButton(onClick = onUndo, enabled = canUndo) { Icon(Icons.AutoMirrored.Filled.Undo, "Undo last reading") }
-                IconButton(onClick = onReadings) { Icon(Icons.AutoMirrored.Filled.List, "All readings") }
+                IconButton(onClick = onUndo, enabled = canUndo) { Icon(Icons.AutoMirrored.Filled.Undo, strings.survey.undoLastReading) }
+                IconButton(onClick = onReadings) { Icon(Icons.AutoMirrored.Filled.List, strings.survey.allReadings) }
             }
         }
     }

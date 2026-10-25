@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.analyze
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.*
@@ -50,8 +51,8 @@ internal fun ChartExplorer(
                 TopAppBar(
                     // The band is the title: switch without leaving, and the Networks screen follows.
                     title = { CompactBandSelector(band) { here = null; onBandChange(it) } },
-                    navigationIcon = { IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, "Close") } },
-                    actions = { IconButton(onClick = { showHelp = true }) { Icon(Icons.Outlined.Info, "How to read the chart") } }
+                    navigationIcon = { IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, strings.common.close) } },
+                    actions = { IconButton(onClick = { showHelp = true }) { Icon(Icons.Outlined.Info, strings.analyze.howToReadThisChart) } }
                 )
                 BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
                     // Landscape: chart on the left, the channel's networks beside it.
@@ -113,10 +114,12 @@ internal fun ChartExplorer(
 private fun ChannelNetworks(here: Pair<Int, List<WifiNetwork>>?, modifier: Modifier = Modifier, onOpen: (WifiNetwork) -> Unit = {}) {
     val display = com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay.current
     val (channel, list) = here ?: (0 to emptyList())
+    val common = strings.common
+    val s = strings.analyze
     LazyColumn(modifier, contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
         item(key = "header") {
             Text(
-                when (list.size) { 0 -> "Channel $channel is clear"; 1 -> "1 network overlaps channel $channel"; else -> "${list.size} networks overlap channel $channel" },
+                s.channelOverlapHeading(list.size, channel),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
             )
@@ -131,10 +134,10 @@ private fun ChannelNetworks(here: Pair<Int, List<WifiNetwork>>?, modifier: Modif
                 supportingContent = {
                     val home = frequencyToChannel(network.frequency)
                     // Wide networks reach this channel from another one; say where they actually sit.
-                    Text(if (home == channel) "${com.bernaferrari.wifiweakspot.core.wifi.SignalQuality.of(network.rssi).label} · ${display.reading(network.rssi)}" else "From channel $home · ${display.reading(network.rssi)}")
+                    Text(if (home == channel) listOf(com.bernaferrari.wifiweakspot.core.wifi.SignalQuality.of(network.rssi).label, display.reading(network.rssi)).joinToString(" · ") else s.fromChannel(home, display.reading(network.rssi)))
                 },
                 modifier = Modifier.animateItem()
-            ) { Text(network.ssid.ifEmpty { "Hidden network" }, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            ) { Text(network.ssid.ifEmpty { common.hiddenNetwork }, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
     }
 }

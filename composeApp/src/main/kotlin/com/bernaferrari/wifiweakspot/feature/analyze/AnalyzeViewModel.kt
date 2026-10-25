@@ -129,19 +129,20 @@ class AnalyzeViewModel(
 
     fun shareSummary(networks: List<WifiNetwork>) {
         viewModelScope.launch {
+            val s = com.bernaferrari.wifiweakspot.core.i18n.appStrings.analyze
             val summary = buildString {
-                appendLine("WiFi\u00A0Weakspot Scan Report")
+                appendLine(s.scanReportHeading)
                 appendLine("=========================")
-                appendLine("Time: ${com.bernaferrari.wifiweakspot.feature.history.formatDate(com.bernaferrari.wifiweakspot.core.util.nowMillis())}")
-                appendLine("Total Networks: ${networks.size}")
+                appendLine(s.scanReportTime(com.bernaferrari.wifiweakspot.feature.history.formatDate(com.bernaferrari.wifiweakspot.core.util.nowMillis())))
+                appendLine(s.scanReportTotal(networks.size))
                 appendLine()
-                appendLine("Networks:")
+                appendLine(s.scanReportNetworksHeading)
                 networks.sortedByDescending { it.rssi }.take(15).forEach { n ->
                     val ch = frequencyToChannel(n.frequency)
-                    appendLine("• ${n.ssid.ifEmpty { "Hidden" }} - ${n.rssi}dBm, Ch $ch, ${n.security}")
+                    appendLine(s.scanReportLine(n.ssid.ifEmpty { com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.hiddenNetworkShort }, n.rssi, ch, n.security))
                 }
             }
-            exportManager.shareReport(summary, "WiFi Scan Report")
+            exportManager.shareReport(summary, com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.share)
         }
     }
 

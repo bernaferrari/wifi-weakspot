@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.feature.analyze
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -40,7 +41,7 @@ fun CongestionInsightSheet(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                "Estimated channel overlap",
+                strings.analyze.estimatedChannelOverlap,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -103,13 +104,13 @@ fun CongestionInsightSheet(
                     Spacer(Modifier.width(16.dp))
                     Column {
                         Text(
-                            "Try channel ${bestChannel.channelNumber}",
+                            strings.analyze.tryChannel(bestChannel.channelNumber),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
-                            "Lowest estimated overlap for 20 MHz channels",
+                            strings.analyze.lowestOverlapFor20Mhz,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = WifiWeakspotAlpha.strong)
                         )
@@ -121,10 +122,7 @@ fun CongestionInsightSheet(
         Spacer(Modifier.height(24.dp))
 
         Text(
-            "Based on nearby access points and signal strength, not measured traffic. " +
-                "Check your router’s supported channels and local rules before changing settings. " +
-                "5 and 6 GHz suggestions require known router support; missing wide-channel centers " +
-                "show only the primary 20 MHz channel.",
+            strings.analyze.overlapDisclaimer,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -132,7 +130,7 @@ fun CongestionInsightSheet(
 
         // Chart
         Text(
-            "Overlap score",
+            strings.analyze.overlapScore,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold
         )

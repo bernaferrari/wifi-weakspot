@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.settings
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
@@ -86,10 +87,10 @@ fun SettingsScreen(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             MediumFlexibleTopAppBar(
-                title = { Text("Settings") },
+                title = { Text(strings.common.tabSettings) },
                 navigationIcon = {
                     if (onBack != null) {
-                        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
+                        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.common.back) }
                     }
                 },
                 scrollBehavior = scrollBehavior
@@ -108,16 +109,16 @@ fun SettingsScreen(
             // Only while there's something to do: Android still limits scans, or root is in use.
             item(key = "scanning") {
                 val scanSetup = com.bernaferrari.wifiweakspot.feature.setup.rememberScanSetupStatus()
-                if (!scanSetup.isUnlimited || scanSetup.rootScanning) SettingsSection("Scanning") {
+                if (!scanSetup.isUnlimited || scanSetup.rootScanning) SettingsSection(strings.settings.sectionScanning) {
                     // Shows the real state. Only Developer options (or root) can change it, so the
                     // switch opens the short guide rather than pretending to flip it.
                     SettingsToggle(
                         icon = Icons.Default.Bolt,
-                        title = "Faster scans",
+                        title = strings.common.fasterScans,
                         subtitle = when {
-                            scanSetup.rootScanning -> "Unlimited, using root"
-                            scanSetup.isUnlimited -> "Networks refresh every few seconds"
-                            else -> "Android allows 4 scans every 2 minutes"
+                            scanSetup.rootScanning -> strings.survey.unlimitedWithRootTitle
+                            scanSetup.isUnlimited -> strings.survey.unlimitedOnBody
+                            else -> strings.settings.fasterScansThrottled
                         },
                         checked = scanSetup.isUnlimited,
                         onCheckedChange = {
@@ -130,11 +131,11 @@ fun SettingsScreen(
 
             // Appearance Section
             item {
-                SettingsSection("Appearance") {
+                SettingsSection(strings.settings.sectionAppearance) {
                     val themes = listOf(
-                        Triple("Auto", null, Icons.Rounded.BrightnessAuto),
-                        Triple("Light", false, Icons.Rounded.LightMode),
-                        Triple("Dark", true, Icons.Rounded.DarkMode)
+                        Triple(strings.settings.themeAuto, null, Icons.Rounded.BrightnessAuto),
+                        Triple(strings.settings.themeLight, false, Icons.Rounded.LightMode),
+                        Triple(strings.settings.themeDark, true, Icons.Rounded.DarkMode)
                     )
                     Box(Modifier.fillMaxWidth().padding(16.dp)) {
                         SettingsChoices(themes, themes.first { it.second == darkMode }, onSelect = { (_, value, _) ->
@@ -163,7 +164,7 @@ fun SettingsScreen(
                     }
                     SettingsBlock(
                         icon = Icons.Default.SignalCellularAlt,
-                        title = "Show signal as",
+                        title = strings.settings.showSignalAs,
                         // The real network badge with your current signal (a sample 84% when offline),
                         // so each choice previews exactly what the lists will show.
                         leading = {
@@ -183,22 +184,23 @@ fun SettingsScreen(
             }
 
             item {
-                SettingsSection("Comfort") {
-                    SettingsToggle(icon = Icons.Default.Animation, title = "Reduce motion", subtitle = "Calmer animations", checked = reduceMotion,
+                SettingsSection(strings.settings.sectionComfort) {
+                    SettingsToggle(icon = Icons.Default.Animation, title = strings.settings.reduceMotionTitle, checked = reduceMotion,
                         onCheckedChange = { scope.launch { settingsRepository.setReduceMotion(it) } })
-                    SettingsToggle(icon = Icons.Default.Vibration, title = "Haptic feedback", subtitle = "Vibrate on taps and results", checked = hapticsEnabled,
+                    SettingsToggle(icon = Icons.Default.Vibration, title = strings.settings.hapticsSubtitle, checked = hapticsEnabled,
                         onCheckedChange = { scope.launch { settingsRepository.setHapticsEnabled(it) } })
                 }
             }
 
             // Background Monitoring Section
             item {
-                SettingsSection("Alerts") {
+                SettingsSection(strings.settings.sectionAlerts) {
                     // Main toggle
+                    val notificationsDenied = strings.settings.notificationsDenied
                     SettingsToggle(
                         icon = Icons.Default.Radar,
-                        title = "Background alerts",
-                        subtitle = "When nearby Wi-Fi changes",
+                        title = strings.settings.backgroundAlertsTitle,
+                        subtitle = strings.settings.backgroundAlertsSubtitle,
                         checked = isMonitoring,
                         onCheckedChange = { enabled ->
                             haptics.click()
@@ -209,7 +211,7 @@ fun SettingsScreen(
                             } else if (platform.needsNotificationPermission()) {
                                 launchers.notifications { granted ->
                                     if (granted) monitorManager.startMonitoring()
-                                    else platform.showMessage("Allow notifications to see monitoring status and alerts.")
+                                    else platform.showMessage(notificationsDenied)
                                 }
                             } else {
                                 monitorManager.startMonitoring()
@@ -225,10 +227,10 @@ fun SettingsScreen(
                         // Scan interval slider
                         SettingsBlock(
                             icon = Icons.Default.Schedule,
-                            title = "Check every",
+                            title = strings.settings.checkEvery,
                             trailing = {
                                 Text(
-                                    if (intervalMinutes < 1f) "30 sec" else "${intervalMinutes.roundToInt()} min",
+                                    if (intervalMinutes < 1f) strings.settings.intervalSeconds(30) else strings.settings.intervalMinutes(intervalMinutes.roundToInt()),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -246,8 +248,8 @@ fun SettingsScreen(
                         // Notification options
                         SettingsToggle(
                             icon = Icons.Default.Notifications,
-                            title = "New network alerts",
-                            subtitle = "When a network appears nearby",
+                            title = strings.settings.newNetworkAlertsTitle,
+
                             checked = monitorSettings.notifyNewNetworks,
                             onCheckedChange = {
                                 haptics.click()
@@ -257,8 +259,8 @@ fun SettingsScreen(
 
                         SettingsToggle(
                             icon = Icons.Default.SignalCellularAlt,
-                            title = "Signal change alerts",
-                            subtitle = "When your signal rises or drops a lot",
+                            title = strings.settings.signalChangeAlertsTitle,
+                            subtitle = strings.settings.signalChangeAlertsSubtitle,
                             checked = monitorSettings.notifySignalChange,
                             onCheckedChange = {
                                 haptics.click()
@@ -271,11 +273,11 @@ fun SettingsScreen(
 
             // About Section
             item {
-                SettingsSection("About") {
+                SettingsSection(strings.settings.sectionAbout) {
                     SettingsRow(
                         icon = Icons.Default.Info,
-                        title = "About WiFi\u00A0Weakspot",
-                        subtitle = "Version 1.0.0",
+                        title = strings.settings.aboutApp("WiFi\u00A0Weakspot"),
+                        subtitle = strings.settings.version("1.0.0"),
                         onClick = {
                             haptics.click()
                             onNavigateToAbout()
@@ -283,8 +285,8 @@ fun SettingsScreen(
                     )
                     SettingsRow(
                         icon = Icons.Default.School,
-                        title = "Show the introduction again",
-                        subtitle = "Replay the welcome and setup steps",
+                        title = strings.settings.replayIntroTitle,
+
                         onClick = {
                             haptics.click()
                             scope.launch { settingsRepository.setOnboardingDone(false) }
@@ -383,7 +385,7 @@ private val RowMinHeight = 72.dp
 fun SettingsRow(
     icon: ImageVector,
     title: String,
-    subtitle: String,
+    subtitle: String? = null,
     onClick: () -> Unit
 ) {
     Row(
@@ -405,7 +407,7 @@ fun SettingsRow(
 fun SettingsToggle(
     icon: ImageVector,
     title: String,
-    subtitle: String,
+    subtitle: String? = null,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {

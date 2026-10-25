@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.min
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bernaferrari.wifiweakspot.core.database.dao.WifiWeakspotDao
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import com.bernaferrari.wifiweakspot.core.designsystem.LocalReduceMotion
 import com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay
 import com.bernaferrari.wifiweakspot.core.designsystem.component.EmptyStateWithIllustration
@@ -108,7 +109,8 @@ fun HistoryScreen(
     dao: WifiWeakspotDao = koinInject(),
     onBack: (() -> Unit)? = null
 ) {
-    val data by remember(dao) {
+    val catalog = com.bernaferrari.wifiweakspot.core.i18n.strings
+    val data by remember(dao, catalog) {
         combine(dao.getRecentWifiScans(), dao.getAllLanDevices(), dao.getToolHistory(), dao.getSpeedTestHistory()) { scans, devices, tools, speed ->
             HistoryData(buildHistory(scans, devices, tools, speed), routerTests(speed))
         }.flowOn(Dispatchers.Default)
@@ -124,12 +126,12 @@ fun HistoryScreen(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text("History") },
+                title = { Text(strings.common.historyTitle) },
                 scrollBehavior = scrollBehavior,
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = strings.common.back)
                         }
                     }
                 },
@@ -145,8 +147,8 @@ fun HistoryScreen(
             Box(Modifier.padding(padding).fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
                 EmptyStateWithIllustration(
                     illustration = { HistoryIllustration() },
-                    title = "Nothing saved yet",
-                    subtitle = "Router checks, network scans and tool results show up here, so you can see how your Wi-Fi changes over time."
+                    title = strings.history.emptyTitle,
+                    subtitle = strings.history.emptySubtitle
                 )
             }
             return@Scaffold
@@ -216,7 +218,7 @@ private fun KindFilters(kinds: List<HistoryKind>, selected: HistoryKind?, onSele
             FilterChip(
                 selected = isSelected,
                 onClick = { onSelect(kind) },
-                label = { Text(kind?.label ?: "All") },
+                label = { Text(kind?.label ?: strings.history.filterAll) },
                 leadingIcon = if (isSelected) {
                     { Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
                 } else null
@@ -301,7 +303,7 @@ private fun RouterTrendCard(points: List<RouterTestPoint>, onClick: () -> Unit, 
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    latest.networkName ?: "Router check",
+                    latest.networkName ?: strings.common.routerCheck,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
@@ -318,7 +320,7 @@ private fun RouterTrendCard(points: List<RouterTestPoint>, onClick: () -> Unit, 
             Column {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        latest.responseMs?.fixed(0) ?: "No reply",
+                        latest.responseMs?.fixed(0) ?: strings.common.noReply,
                         style = MaterialTheme.typography.displayMedium.copy(fontFeatureSettings = "tnum"),
                         fontWeight = FontWeight.SemiBold
                     )
@@ -331,7 +333,7 @@ private fun RouterTrendCard(points: List<RouterTestPoint>, onClick: () -> Unit, 
                 }
                 // The verdict reads as a sentence, tinted by how it went, instead of a pill.
                 Text(
-                    latest.verdict.headline.removeSuffix(" here"),
+                    latest.verdict.headline,
                     style = MaterialTheme.typography.titleMedium,
                     color = signalColors(latest.verdict.quality).accent
                 )
@@ -358,7 +360,8 @@ fun RouterTrendBars(points: List<RouterTestPoint>, modifier: Modifier = Modifier
         if (reduceMotion) grow.snapTo(1f) else grow.animateTo(1f, growSpec)
     }
     val peak = points.mapNotNull { it.responseMs }.maxOrNull()?.coerceAtLeast(1f) ?: 1f
-    val description = "Last ${points.size} router tests: " + points.joinToString { it.responseMs?.let { ms -> "${ms.fixed(1)} ms" } ?: "no reply" }
+    val noReplyReading = strings.common.noReply
+    val description = strings.history.trendBarsDescription(points.size, points.joinToString { it.responseMs?.let { ms -> "${ms.fixed(1)} ms" } ?: noReplyReading })
     Canvas(modifier.semantics { contentDescription = description }) {
         // At least a week's worth of slots, so two tests don't become two giant slabs.
         val slots = points.size.coerceAtLeast(7)

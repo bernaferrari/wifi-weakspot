@@ -2,6 +2,8 @@
 
 package com.bernaferrari.wifiweakspot.feature.analyze
 
+import com.bernaferrari.wifiweakspot.core.i18n.AnalyzeStrings
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,7 +36,7 @@ import com.bernaferrari.wifiweakspot.core.designsystem.graphSeriesColors
 import kotlin.math.abs
 import kotlin.math.pow
 
-private class GuideItem(val title: String, val body: String, val draw: DrawScope.(List<Color>, Color) -> Unit)
+private class GuideItem(val body: AnalyzeStrings.() -> String, val draw: DrawScope.(List<Color>, Color) -> Unit)
 
 private fun DrawScope.hill(left: Float, right: Float, height: Float, color: Color, fill: Boolean = true) {
     val base = size.height - 2.dp.toPx()
@@ -54,26 +56,26 @@ private fun DrawScope.baseline(color: Color) =
     drawLine(color, Offset(0f, size.height - 1.dp.toPx()), Offset(size.width, size.height - 1.dp.toPx()), 1.dp.toPx())
 
 private val Items = listOf(
-    GuideItem("Taller is stronger", "Height is signal strength.") { c, line ->
+    GuideItem({ guideTallerBody }) { c, line ->
         baseline(line); hill(4.dp.toPx(), size.width * 0.45f, size.height * 0.85f, c[0]); hill(size.width * 0.55f, size.width - 4.dp.toPx(), size.height * 0.4f, c[1])
     },
-    GuideItem("Overlap means sharing", "Overlapping networks share spectrum and can compete for airtime.") { c, line ->
+    GuideItem({ guideOverlapBody }) { c, line ->
         baseline(line); hill(4.dp.toPx(), size.width * 0.65f, size.height * 0.7f, c[0]); hill(size.width * 0.35f, size.width - 4.dp.toPx(), size.height * 0.6f, c[2])
     },
-    GuideItem("Wider uses more spectrum", "A wider channel occupies more spectrum and can overlap more neighbors.") { c, line ->
+    GuideItem({ guideWiderBody }) { c, line ->
         baseline(line); hill(size.width * 0.05f, size.width * 0.3f, size.height * 0.7f, c[1]); hill(size.width * 0.38f, size.width * 0.97f, size.height * 0.7f, c[3])
     },
-    GuideItem("+1 is the same router", "Names that appear to come from the same radio share a hill.") { c, line ->
+    GuideItem({ guideSameRouterBody }) { c, line ->
         baseline(line); hill(size.width * 0.15f, size.width * 0.85f, size.height * 0.55f, c[0])
         drawRoundRect(c[0].copy(alpha = 0.3f), Offset(size.width * 0.3f, 0f), Size(size.width * 0.4f, size.height * 0.32f), CornerRadius(6.dp.toPx()))
     },
-    GuideItem("Green is calm, red is crowded", "The strip under 2.4 GHz shows overlap. Tap it for counts.") { c, _ ->
+    GuideItem({ guideCrowdBody }) { c, _ ->
         drawRoundRect(
             androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(Color(0xFF4CAF50), Color(0xFFFFC107), Color(0xFFE53935), Color(0xFF4CAF50))),
             Offset(0f, size.height / 2 - 4.dp.toPx()), Size(size.width, 8.dp.toPx()), CornerRadius(4.dp.toPx())
         )
     },
-    GuideItem("Flat lines are steady", "A jumpy line shows changing signal strength. Tap a line to pause, then slide sideways through time or vertically between networks. Resume live to watch new readings.") { c, line ->
+    GuideItem({ guideSteadyBody }) { c, line ->
         baseline(line)
         drawLine(c[1], Offset(0f, size.height * 0.3f), Offset(size.width, size.height * 0.3f), 2.dp.toPx(), cap = StrokeCap.Round)
         val zig = Path().apply {
@@ -82,7 +84,7 @@ private val Items = listOf(
         }
         drawPath(zig, c[2], style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
     },
-    GuideItem("Tap to highlight", "Tap a hill or row to highlight it. Drag horizontally across the chart to explore.") { c, line ->
+    GuideItem({ guideHighlightBody }) { c, line ->
         baseline(line); hill(4.dp.toPx(), size.width * 0.55f, size.height * 0.5f, line, fill = false); hill(size.width * 0.35f, size.width - 4.dp.toPx(), size.height * 0.85f, c[0])
     }
 )
@@ -92,10 +94,11 @@ private val Items = listOf(
 fun ChartGuideSheet(onDismiss: () -> Unit) {
     val colors = graphSeriesColors()
     val line = MaterialTheme.colorScheme.outlineVariant
+    val s = strings.analyze
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             item {
-                Text("Reading the charts", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 8.dp, bottom = 16.dp))
+                Text(s.chartGuideTitle, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 8.dp, bottom = 16.dp))
             }
             itemsIndexed(Items) { index, item ->
                 Surface(shape = segmentedShape(index, Items.size, outer = 24.dp, inner = 6.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
@@ -103,10 +106,7 @@ fun ChartGuideSheet(onDismiss: () -> Unit) {
                         Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceContainerHighest) {
                             Canvas(Modifier.padding(8.dp).size(width = 64.dp, height = 40.dp)) { item.draw(this, colors, line) }
                         }
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(item.title, style = MaterialTheme.typography.titleMedium)
-                            Text(item.body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        Text(item.body(s), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }

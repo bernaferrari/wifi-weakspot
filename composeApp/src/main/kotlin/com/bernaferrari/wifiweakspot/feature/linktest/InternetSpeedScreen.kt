@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import com.bernaferrari.wifiweakspot.core.platform.LocalWebContent
 
 /** Internet throughput is optional and runs on fast.com, kept apart from the local Wi-Fi test. */
@@ -23,8 +24,8 @@ fun InternetSpeedScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Internet speed · fast.com") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") } }
+                title = { Text(strings.history.internetSpeedTitle) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, strings.common.back) } }
             )
         }
     ) { padding ->

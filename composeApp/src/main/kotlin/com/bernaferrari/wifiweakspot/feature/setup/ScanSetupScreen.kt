@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.setup
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -124,9 +125,9 @@ fun ScanSetupScreen(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text("Faster scans") },
+                title = { Text(strings.common.fasterScans) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") }
+                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, strings.common.back) }
                 },
                 scrollBehavior = scrollBehavior
             )
@@ -149,11 +150,11 @@ fun ScanSetupScreen(
                     SetupStep(
                         number = 1,
                         shape = MaterialShapes.Cookie4Sided,
-                        title = "Turn on Developer options",
-                        body = "In Settings, open **About phone** and tap **Build number** 7 times. You may need to enter your screen lock.",
+                        title = strings.survey.stepDeveloperOptionsTitle,
+                        body = strings.survey.stepDeveloperOptionsBody,
                         done = status.developerOptionsEnabled || !status.throttlingEnabled,
                         enabled = true,
-                        actionLabel = "Open About phone",
+                        actionLabel = strings.survey.openAboutPhone,
                         onAction = { platform.openDeviceInfo() }
                     )
                 }
@@ -161,11 +162,11 @@ fun ScanSetupScreen(
                     SetupStep(
                         number = 2,
                         shape = MaterialShapes.Cookie6Sided,
-                        title = "Turn off Wi-Fi scan throttling",
-                        body = "In **Developer options**, scroll down to **Networking** and switch off **Wi-Fi scan throttling**.",
+                        title = strings.survey.stepThrottlingTitle,
+                        body = strings.survey.stepThrottlingBody,
                         done = !status.throttlingEnabled,
                         enabled = status.developerOptionsEnabled,
-                        actionLabel = "Open Developer options",
+                        actionLabel = strings.survey.openDeveloperOptions,
                         onAction = { platform.openDeveloperOptions() }
                     )
                 }
@@ -173,8 +174,8 @@ fun ScanSetupScreen(
                     SetupStep(
                         number = 3,
                         shape = MaterialShapes.Cookie9Sided,
-                        title = "Come back here",
-                        body = "WiFi\u00A0Weakspot checks automatically when you return. You can switch throttling back on at any time.",
+                        title = strings.survey.stepComeBackTitle,
+                        body = strings.survey.stepComeBackBody,
                         done = !status.throttlingEnabled,
                         enabled = true,
                         actionLabel = null,
@@ -186,7 +187,7 @@ fun ScanSetupScreen(
                         TextButton(onClick = { showAdb = !showAdb }) {
                             Icon(Icons.Rounded.Terminal, null, Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text(if (showAdb) "Hide computer method" else "Prefer a computer? Use ADB")
+                            Text(if (showAdb) strings.survey.hideComputerMethod else strings.survey.useAdbInstead)
                         }
                         AnimatedVisibility(showAdb) {
                             Card(
@@ -198,7 +199,8 @@ fun ScanSetupScreen(
                                         AdbCommand,
                                         style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
                                     )
-                                    CopyButton(onCopy = { platform.copyToClipboard("ADB command", AdbCommand) })
+                                    val clipLabel = strings.survey.adbCommandClipLabel
+                                    CopyButton(onCopy = { platform.copyToClipboard(clipLabel, AdbCommand) })
                                 }
                             }
                         }
@@ -213,7 +215,7 @@ fun ScanSetupScreen(
                             TextButton(onClick = { showRoot = !showRoot }) {
                                 Icon(Icons.Rounded.Terminal, null, Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text(if (showRoot) "Hide root option" else "Rooted device? Use root instead")
+                                Text(if (showRoot) strings.survey.hideRootOption else strings.survey.useRootInstead)
                             }
                         }
                         AnimatedVisibility(showRoot || status.rootScanning) {
@@ -237,7 +239,7 @@ fun ScanSetupScreen(
 
             item {
                 Text(
-                    "Android limits scans to save battery. You can switch the limit back on anytime.",
+                    strings.survey.scanLimitFootnote,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
@@ -251,13 +253,15 @@ fun ScanSetupScreen(
 private fun StatusHero(status: ScanSetupStatus) {
     val good = status.isUnlimited
     val colors = signalColors(if (good) SignalQuality.Excellent else SignalQuality.Fair)
+    val surveyCatalog = strings
+    val survey = strings.survey
     val (title, body) = when {
-        status.rootScanning -> "Unlimited scans with root" to "WiFi\u00A0Weakspot asks the system to scan, which Android never limits."
-        good && !status.throttlingApplies -> "No scan limit on this device" to "This Android version lets WiFi\u00A0Weakspot scan as often as it needs."
-        good -> "Unlimited scans are on" to "Nearby networks and channel graphs refresh every few seconds."
-        !status.canDisableThrottling -> "Scans are limited" to "Android 9 allows 4 scans every 2 minutes and can't turn this off. WiFi\u00A0Weakspot reuses recent results in between."
-        status.developerOptionsEnabled -> "Scans are limited" to "Android allows only 4 scans every 2 minutes, so lists lag as you move. One switch removes the limit."
-        else -> "Scans are limited" to "Android allows only 4 scans every 2 minutes, so lists lag as you move. Two quick steps remove the limit."
+        status.rootScanning -> survey.unlimitedWithRootTitle to survey.rootScanningBody
+        good && !status.throttlingApplies -> survey.unlimitedOnTitle to survey.unlimitedOnBody
+        good -> survey.unlimitedOnTitle to survey.unlimitedOnBody
+        !status.canDisableThrottling -> survey.scansLimitedTitle to survey.scansLimitedAndroid9Body
+        status.developerOptionsEnabled -> survey.scansLimitedTitle to surveyCatalog.settings.fasterScansThrottled
+        else -> survey.scansLimitedTitle to surveyCatalog.settings.fasterScansThrottled
     }
     Card(
         shape = WifiWeakspotShapes.extraExtraLarge,
@@ -317,7 +321,7 @@ private fun SetupStep(
                     if (done) {
                         Spacer(Modifier.width(8.dp))
                         Surface(shape = WifiWeakspotShapes.full, color = scheme.primaryContainer, contentColor = scheme.onPrimaryContainer) {
-                            Text("Done", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
+                            Text(strings.common.done, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
                         }
                     }
                 }
@@ -348,27 +352,27 @@ private fun RootCard(
             ShapeIcon(Icons.Rounded.Terminal, MaterialShapes.Clover8Leaf, scheme.tertiary, scheme.onTertiary, size = 44.dp)
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(if (status.rootScanning) "Using root" else "Your device is rooted", style = MaterialTheme.typography.titleMedium)
+                Text(if (status.rootScanning) strings.survey.usingRoot else strings.survey.deviceRooted, style = MaterialTheme.typography.titleMedium)
                 Text(
                     when {
-                        status.rootScanning -> "Scans go through the system shell, so there's nothing to change in Developer options."
-                        rootState == RootState.Denied -> "Root access was denied. Allow WiFi\u00A0Weakspot in your root manager and try again, or use Developer options below."
-                        status.isUnlimited -> "Scans are already unlimited. Root isn't needed."
-                        else -> "Skip Developer options and let WiFi\u00A0Weakspot scan through root. Your root manager will ask once."
+                        status.rootScanning -> strings.survey.rootScanningBody
+                        rootState == RootState.Denied -> strings.survey.rootDeniedBody
+                        status.isUnlimited -> strings.survey.rootNotNeededBody
+                        else -> strings.survey.rootOfferBody
                     },
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(Modifier.height(8.dp))
                 when {
-                    status.rootScanning -> TextButton(onClick = onStopRoot) { Text("Stop using root") }
+                    status.rootScanning -> TextButton(onClick = onStopRoot) { Text(strings.survey.stopUsingRoot) }
                     status.isUnlimited -> Unit
                     working -> Row(verticalAlignment = Alignment.CenterVertically) {
                         LoadingIndicator(Modifier.size(32.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Waiting for your root manager…", style = MaterialTheme.typography.labelLarge)
+                        Text(strings.survey.waitingForRootManager, style = MaterialTheme.typography.labelLarge)
                     }
                     else -> Button(onClick = onUseRoot, shapes = ButtonDefaults.shapes()) {
-                        Text(if (rootState == RootState.Denied) "Try root again" else "Use root")
+                        Text(if (rootState == RootState.Denied) strings.survey.tryRootAgain else strings.survey.useRoot)
                     }
                 }
             }
@@ -424,7 +428,7 @@ private fun CopyButton(onCopy: () -> Unit) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(if (done) Icons.Rounded.Check else Icons.Rounded.ContentCopy, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(if (done) "Copied" else "Copy command")
+                Text(if (done) strings.survey.copied else strings.survey.copyCommand)
             }
         }
     }

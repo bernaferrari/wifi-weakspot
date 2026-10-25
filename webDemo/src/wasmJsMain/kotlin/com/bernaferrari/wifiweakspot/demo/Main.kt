@@ -60,7 +60,7 @@ private fun ExternalPage(url: String, modifier: Modifier) {
     Box(modifier.padding(24.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(url.removePrefix("https://"), style = MaterialTheme.typography.titleLarge)
-            Button(onClick = { openTab(url) }, shapes = ButtonDefaults.shapes()) { Text("Open in a new tab") }
+            Button(onClick = { openTab(url) }, shapes = ButtonDefaults.shapes()) { Text(com.bernaferrari.wifiweakspot.core.i18n.strings.common.openInNewTab) }
         }
     }
 }

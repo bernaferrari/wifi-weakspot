@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.core.designsystem.component
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import com.bernaferrari.wifiweakspot.core.util.twoDigits
 
 import com.bernaferrari.wifiweakspot.core.designsystem.animateAccessibleFloat
@@ -223,14 +224,14 @@ fun ScanRadarIndicator(
                 when (throttleState) {
                     is ThrottleState.Ready -> {
                         Text(
-                            "READY",
+                            strings.common.scanReady,
                             style = MaterialTheme.typography.labelLarge,
                             color = stateColor,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "${throttleState.scansRemaining} scans",
+                            strings.common.scansCount(throttleState.scansRemaining),
                             style = MaterialTheme.typography.bodySmall,
                             color = onSurfaceColor.copy(alpha = 0.7f)
                         )
@@ -243,7 +244,7 @@ fun ScanRadarIndicator(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "left",
+                            strings.common.scansLeftCaption,
                             style = MaterialTheme.typography.labelSmall,
                             color = onSurfaceColor.copy(alpha = 0.7f)
                         )
@@ -258,7 +259,7 @@ fun ScanRadarIndicator(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "waiting",
+                            strings.common.scanWaitingCaption,
                             style = MaterialTheme.typography.labelSmall,
                             color = onSurfaceColor.copy(alpha = 0.7f)
                         )
@@ -271,7 +272,7 @@ fun ScanRadarIndicator(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "DEV MODE",
+                            strings.common.scanDevMode,
                             style = MaterialTheme.typography.labelSmall,
                             color = stateColor.copy(alpha = 0.8f),
                             fontWeight = FontWeight.Bold
@@ -288,7 +289,7 @@ fun ScanRadarIndicator(
                 throttleState is ThrottleState.LowQuota ||
                 throttleState is ThrottleState.Unlimited) {
                 Text(
-                    "Tap to scan",
+                    strings.analyze.scan,
                     style = MaterialTheme.typography.labelSmall,
                     color = onSurfaceColor.copy(alpha = 0.5f),
                     modifier = Modifier
@@ -334,15 +335,15 @@ fun ScanThrottleStatusBar(
             // Status info
             Column {
                 val statusText = when (throttleState) {
-                    is ThrottleState.Ready -> "Ready to scan"
-                    is ThrottleState.LowQuota -> "${throttleState.scansRemaining} scans remaining"
+                    is ThrottleState.Ready -> strings.common.readyToScan
+                    is ThrottleState.LowQuota -> strings.common.scansRemaining(throttleState.scansRemaining)
                     is ThrottleState.Exhausted -> {
                         val mins = throttleState.secondsUntilNextScan / 60
                         val secs = throttleState.secondsUntilNextScan % 60
-                        "Next scan in $mins:${"${secs.twoDigits()}"}"
+                        strings.common.nextScanIn("$mins:${secs.twoDigits()}")
                     }
-                    is ThrottleState.Unlimited -> "Developer Mode: Unlimited"
-                    is ThrottleState.Unknown -> "Checking..."
+                    is ThrottleState.Unlimited -> strings.survey.unlimitedOnTitle
+                    is ThrottleState.Unknown -> strings.common.checking
                 }
 
                 Text(
@@ -384,7 +385,7 @@ fun ScanThrottleStatusBar(
                     onClick = onScanNow,
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Scan Now")
+                    Text(strings.analyze.scan)
                 }
             }
         }

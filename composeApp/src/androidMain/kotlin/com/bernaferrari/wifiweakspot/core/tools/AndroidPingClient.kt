@@ -58,7 +58,7 @@ class AndroidPingClient : PingClient {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                emit(failure(host, sequence, e.message ?: "Ping failed"))
+                emit(failure(host, sequence, "Ping failed"))
             } finally {
                 process?.destroy()
             }

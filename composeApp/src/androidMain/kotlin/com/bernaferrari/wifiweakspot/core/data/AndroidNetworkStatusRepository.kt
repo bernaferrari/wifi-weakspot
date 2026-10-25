@@ -193,7 +193,7 @@ class AndroidNetworkStatusRepository(
             .orEmpty()
 
         return NetworkStatus(
-            ssid = if (hasValidSsid) ssidRaw!! else "Your Wi-Fi",
+            ssid = if (hasValidSsid) ssidRaw!! else "",
             bssid = info.bssid ?: "",
             frequency = info.frequency,
             channel = frequencyToChannel(info.frequency),

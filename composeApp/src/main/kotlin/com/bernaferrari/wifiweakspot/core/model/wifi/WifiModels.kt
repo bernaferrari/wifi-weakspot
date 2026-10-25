@@ -54,14 +54,6 @@ data class AccessPoint(
             else -> 0
         }
 
-    val signalQuality: String
-        get() = when (signalLevel) {
-            4 -> "Excellent"
-            3 -> "Good"
-            2 -> "Fair"
-            1 -> "Poor"
-            else -> "Very Poor"
-        }
 }
 
 @Serializable

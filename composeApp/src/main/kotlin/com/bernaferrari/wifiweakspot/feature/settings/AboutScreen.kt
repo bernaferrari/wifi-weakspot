@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.settings
 
+import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -41,7 +42,7 @@ fun AboutScreen(onBack: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     Scaffold(topBar = {
         TopAppBar(title = {}, navigationIcon = {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, strings.common.back) }
         })
     }) { padding ->
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
@@ -53,20 +54,20 @@ fun AboutScreen(onBack: () -> Unit) {
                     Icon(Icons.Rounded.Wifi, null, Modifier.size(60.dp), tint = scheme.onPrimaryContainer)
                 }
                 Text("WiFi Weakspot", Modifier.padding(top = 20.dp), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                Text("Find bad Wi-Fi at home", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.titleMedium, color = scheme.onSurfaceVariant)
+                Text(strings.settings.tagline, Modifier.padding(top = 6.dp), style = MaterialTheme.typography.titleMedium, color = scheme.onSurfaceVariant)
                 Surface(shape = CircleShape, color = scheme.surfaceContainerHighest, modifier = Modifier.padding(top = 16.dp)) {
-                    Text("Version 1.0", Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
+                    Text(strings.settings.version("1.0"), Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
                 }
 
                 Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(top = 24.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                     ActionCard(
-                        title = "GitHub", body = "Open source · Apache 2.0", icon = Icons.Rounded.Code,
+                        title = "GitHub", body = strings.settings.openSourceLicense, icon = Icons.Rounded.Code,
                         container = scheme.primaryContainer, content = scheme.onPrimaryContainer, badge = MaterialShapes.Cookie9Sided.toShape(),
                         shape = RoundedCornerShape(topStart = 32.dp, bottomStart = 32.dp, topEnd = 8.dp, bottomEnd = 8.dp),
                         onClick = { platform.openUrl(RepositoryUrl) }, modifier = Modifier.weight(1f)
                     )
                     ActionCard(
-                        title = "Feedback", body = "Ideas and bug reports", icon = Icons.Rounded.Email,
+                        title = strings.settings.feedbackTitle, body = strings.settings.feedbackBody, icon = Icons.Rounded.Email,
                         container = scheme.secondaryContainer, content = scheme.onSecondaryContainer, badge = MaterialShapes.Clover4Leaf.toShape(),
                         shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 32.dp, bottomEnd = 32.dp),
                         onClick = { platform.openUrl("mailto:$FeedbackEmail?subject=WiFi%20Weakspot") }, modifier = Modifier.weight(1f)
@@ -74,16 +75,16 @@ fun AboutScreen(onBack: () -> Unit) {
                 }
 
                 Text(
-                    "Elsewhere", Modifier.fillMaxWidth().padding(start = 8.dp, top = 24.dp, bottom = 8.dp),
+                    strings.settings.elsewhere, Modifier.fillMaxWidth().padding(start = 8.dp, top = 24.dp, bottom = 8.dp),
                     style = MaterialTheme.typography.titleSmall, color = scheme.primary
                 )
                 Elsewhere(onOpen = platform::openUrl)
 
                 Column(Modifier.padding(top = 24.dp, start = 16.dp, end = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(Icons.Outlined.VerifiedUser, null, Modifier.size(20.dp), tint = scheme.onSurfaceVariant)
-                    Text("Your results stay on your device unless you share them.", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    Text(strings.settings.privacySummary, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, textAlign = TextAlign.Center)
                     TextButton(onClick = { platform.openUrl("$RepositoryUrl/blob/main/PRIVACY.md") }) {
-                        Text("Privacy policy")
+                        Text(strings.settings.privacyPolicy)
                     }
                 }
             }
