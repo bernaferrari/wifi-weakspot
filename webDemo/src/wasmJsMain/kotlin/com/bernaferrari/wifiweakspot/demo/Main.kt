@@ -13,6 +13,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
@@ -22,6 +24,7 @@ import com.bernaferrari.wifiweakspot.core.platform.LocalWebContent
 import com.bernaferrari.wifiweakspot.core.platform.PermissionLaunchers
 import com.bernaferrari.wifiweakspot.di.sharedModule
 import kotlinx.browser.document
+import kotlinx.browser.window
 import org.koin.compose.koinInject
 import org.koin.core.context.startKoin
 
@@ -29,12 +32,19 @@ import org.koin.core.context.startKoin
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     startKoin { modules(sharedModule, webModule) }
+    // Render the real phone layout at store-quality pixel density without upscaling captures.
+    // Ordinary demo visits retain the browser's density.
+    val captureDensity = window.location.search.removePrefix("?").split('&')
+        .firstOrNull { it.startsWith("captureDensity=") }?.substringAfter('=')
+        ?.toFloatOrNull()?.takeIf { it.isFinite() && it in 1f..4f }
     ComposeViewport(document.body!!) {
         val gate = koinInject<SimulatedPermissionGate>()
         val launchers = remember(gate) {
             PermissionLaunchers(scan = { onResult -> gate.grant(); onResult(true) })
         }
+        val density = LocalDensity.current
         CompositionLocalProvider(
+            LocalDensity provides (captureDensity?.let { Density(it, density.fontScale) } ?: density),
             LocalPermissionLaunchers provides launchers,
             LocalWebContent provides { url, modifier -> ExternalPage(url, modifier) }
         ) {

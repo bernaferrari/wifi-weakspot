@@ -1,0 +1,125 @@
+{
+  "galleries": {
+    "phone": [
+      {
+        "file": "screenshots/v2-04-channels.jpg",
+        "width": 1080,
+        "height": 1920,
+        "bytes": 124159
+      },
+      {
+        "file": "screenshots/v2-01-signal.jpg",
+        "width": 1080,
+        "height": 1920,
+        "bytes": 116907
+      },
+      {
+        "file": "screenshots/v2-05-history.jpg",
+        "width": 1080,
+        "height": 1920,
+        "bytes": 112340
+      },
+      {
+        "file": "screenshots/v3-02-rooms.jpg",
+        "width": 1080,
+        "height": 1920,
+        "bytes": 115866
+      },
+      {
+        "file": "screenshots/v2-03-coverage.jpg",
+        "width": 1080,
+        "height": 1920,
+        "bytes": 97735
+      },
+      {
+        "file": "screenshots/v3-06-router.jpg",
+        "width": 1080,
+        "height": 1920,
+        "bytes": 100261
+      },
+      {
+        "file": "screenshots/v2-07-devices.jpg",
+        "width": 1080,
+        "height": 1920,
+        "bytes": 109461
+      },
+      {
+        "file": "screenshots/v3-08-appearance.jpg",
+        "width": 1080,
+        "height": 1920,
+        "bytes": 111589
+      }
+    ],
+    "tablet7": [
+      {
+        "file": "tablet/7-02-channels.jpg",
+        "width": 1080,
+        "height": 1920,
+        "bytes": 126579
+      },
+      {
+        "file": "tablet/7-01-home.jpg",
+        "width": 1080,
+        "height": 1920,
+        "bytes": 108373
+      },
+      {
+        "file": "tablet/7-03-coverage.jpg",
+        "width": 1080,
+        "height": 1920,
+        "bytes": 87840
+      },
+      {
+        "file": "tablet/7-04-appearance-v3.jpg",
+        "width": 1080,
+        "height": 1920,
+        "bytes": 109046
+      }
+    ],
+    "tablet10": [
+      {
+        "file": "tablet/10-02-channels.jpg",
+        "width": 1920,
+        "height": 1080,
+        "bytes": 120899
+      },
+      {
+        "file": "tablet/10-01-home.jpg",
+        "width": 1920,
+        "height": 1080,
+        "bytes": 105658
+      }
+    ],
+    "desktop": [
+      {
+        "file": "desktop/desktop-02-channels.jpg",
+        "width": 1920,
+        "height": 1080,
+        "bytes": 113798
+      },
+      {
+        "file": "desktop/desktop-01-home.jpg",
+        "width": 1920,
+        "height": 1080,
+        "bytes": 97923
+      },
+      {
+        "file": "desktop/desktop-03-history.jpg",
+        "width": 1920,
+        "height": 1080,
+        "bytes": 118792
+      },
+      {
+        "file": "desktop/desktop-04-appearance-v3.jpg",
+        "width": 1920,
+        "height": 1080,
+        "bytes": 90885
+      }
+    ]
+  },
+  "exampleReadings": true,
+  "featureGraphic": "graphics/feature-graphic.png",
+  "featurePrompt": "graphics/feature-graphic.prompt.txt",
+  "featureGenerator": "Built-in ImageGen",
+  "appIcon": "graphics/app-icon.png"
+}

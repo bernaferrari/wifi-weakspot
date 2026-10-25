@@ -90,6 +90,9 @@ private fun LinkVerdict.quality() = when (this) {
     LinkVerdict.Unreliable -> SignalQuality.DeadZone
 }
 
+/** Room for the largest stage, the 272 dp progress ring. */
+private val StageHeight = 280.dp
+
 private fun formatMs(ms: Float): String = if (!ms.isFinite()) "—" else if (ms >= 10) "${ms.fixed(0)}" else "${ms.fixed(1)}"
 
 @Composable
@@ -125,24 +128,26 @@ fun LinkTestScreen(
             )
         }
     ) { padding ->
-        BoxWithConstraints(Modifier.fillMaxSize()) {
-            // Keep the stage at the screen's vertical midpoint before scrolling. Deriving its
-            // space from the viewport also accommodates system insets and the expanded app bar.
-            val expandedTopPadding = padding.calculateTopPadding() - with(LocalDensity.current) {
-                scrollBehavior.state.heightOffset.toDp()
-            }
-            val stageHeight = (maxHeight - expandedTopPadding * 2 - 16.dp)
-                .coerceAtLeast(300.dp)
+        BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
+            // The stage and its text form one group, centered in the space between the app bar and
+            // the footer link; when the group outgrows the screen it simply scrolls.
             Column(
                 Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(padding)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .heightIn(min = maxHeight)
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+            Spacer(Modifier)
+            Column(
+                Modifier.fillMaxWidth().padding(vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Box(Modifier.fillMaxWidth().height(stageHeight), contentAlignment = Alignment.Center) {
+                // Fixed height, so the flower doesn't shift as GO gives way to the progress ring.
+                Box(Modifier.fillMaxWidth().height(StageHeight), contentAlignment = Alignment.Center) {
                     val stageFade = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
                     val stageScale = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
                     AnimatedContent(
@@ -218,13 +223,14 @@ fun LinkTestScreen(
                 }
 
                 message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                TextButton(
-                    onClick = onOpenInternetTest,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                ) {
-                    Icon(Icons.Rounded.Public, null, Modifier.size(18.dp))
-                    Text("  Test internet speed instead")
-                }
+            }
+            TextButton(
+                onClick = onOpenInternetTest,
+                modifier = Modifier.padding(bottom = 8.dp)
+            ) {
+                Icon(Icons.Rounded.Public, null, Modifier.size(18.dp))
+                Text("  Test internet speed instead")
+            }
             }
         }
     }

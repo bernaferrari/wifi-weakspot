@@ -2,6 +2,8 @@
 
 package com.bernaferrari.wifiweakspot.feature.walk
 
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+
 import kotlinx.coroutines.launch
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SnackbarDuration
@@ -178,8 +180,9 @@ fun WalkScreen(
         lastQuality = quality
     }
 
+    val scrollBehavior = androidx.compose.material3.TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = {
             Surface(color = MaterialTheme.colorScheme.surface) {
@@ -199,12 +202,10 @@ fun WalkScreen(
             }
         },
         topBar = {
-            androidx.compose.material3.TopAppBar(
+            // The same collapsing title as the other tabs.
+            androidx.compose.material3.MediumFlexibleTopAppBar(
                 title = { Text("Rooms") },
-                colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                    scrolledContainerColor = androidx.compose.ui.graphics.Color.Transparent
-                )
+                scrollBehavior = scrollBehavior
             )
         }
     ) { padding ->
@@ -215,7 +216,11 @@ fun WalkScreen(
         androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())) {
             // Draw below the transparent app bar; the whole page scrolls on short screens.
             // Anything under the meter (rooms or the network chips) gets room; an empty screen gives the meter most of it.
-            val stageHeight = ((maxHeight - padding.calculateTopPadding()) * if (hasList || showNetworks) 0.42f else 0.62f).coerceIn(180.dp, 420.dp)
+            // Sized from the expanded bar, so the meter doesn't resize while the title collapses.
+            val expandedTop = padding.calculateTopPadding() - with(androidx.compose.ui.platform.LocalDensity.current) {
+                scrollBehavior.state.heightOffset.toDp()
+            }
+            val stageHeight = ((maxHeight - expandedTop) * if (hasList || showNetworks) 0.42f else 0.62f).coerceIn(180.dp, 420.dp)
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 24.dp),

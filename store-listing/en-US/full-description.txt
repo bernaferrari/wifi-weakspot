@@ -1,0 +1,28 @@
+Find the rooms where your Wi-Fi gets weak. WiFi Weakspot is a Wi-Fi analyzer for checking signal strength, comparing networks, and mapping your home's coverage.
+
+Save readings where your connection feels unreliable, then compare them after moving your router or access point.
+
+Find your weak spots
+Check the signal where you actually use Wi-Fi. See a percentage and a plain-language verdict, or switch to signal bars or dBm. Save readings by room and recheck the same spots after making a change.
+
+Map your coverage
+Place readings on a grid or your own floor-plan image. Build an estimated coverage map, keep separate floors, and share a picture of the results. See the difference between a strong room and a weak corner at a glance.
+
+Understand nearby networks
+Use the channel analyzer to explore 2.4, 5, and 6 GHz networks supported by your device. Channel waves show where signals overlap. Inspect signal history to compare networks at the same point in time, with readings paused while you explore.
+
+Check the connection to your router
+Measure response time, variation, and missed replies. Compare a troublesome room with a spot near the router, and keep past checks for reference.
+
+Look inside your network
+Discover responding devices and the names they announce. Use ping, DNS lookups, and port checks when you need to investigate further.
+
+Make it yours
+Material 3 Expressive (M3 Expressive) design with light and dark themes, color palettes, and reduced-motion and haptic preferences. No account is needed. Saved readings, maps, and check history are stored on your device; sharing is your choice.
+
+A few things to know
+Signal strength is not internet speed. Coverage between measured points is an estimate. Channel overlap is a guide, not a measurement of network traffic or a promise of better performance. Internet speed testing opens fast.com separately.
+
+Android permissions and scan limits affect what the app can see and how often readings refresh. Some devices and routers do not respond to discovery or ping requests. Network tools may contact the devices or hosts being tested.
+
+Store screenshots show example networks and readings.

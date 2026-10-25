@@ -91,7 +91,7 @@ fun ColorPickerRow(
     val scheme = MaterialTheme.colorScheme
     val wallpaperChosen = useWallpaper && wallpaper != null
     Column(
-        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).selectableGroup(),
+        Modifier.fillMaxWidth().selectableGroup(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         androidx.compose.foundation.layout.FlowRow(
@@ -148,7 +148,7 @@ fun PaletteSwatch(
         spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
         label = "rotation"
     )
-    val ringColor by animateColorAsState(if (selected) MaterialTheme.colorScheme.surfaceContainerLow else Color.Transparent, label = "ringColor")
+    val ringColor by animateColorAsState(if (selected) MaterialTheme.colorScheme.surfaceContainer else Color.Transparent, label = "ringColor")
     val stops = if (colors.size == 1) colors + colors else colors
     val angle = -rotation * PI.toFloat() / 180f
     val brush = object : ShaderBrush() {
@@ -183,10 +183,14 @@ fun PaletteSwatch(
             .background(brush),
         contentAlignment = Alignment.Center
     ) {
-        // A sparkle on the wallpaper swatch: "colours picked for you", in whichever tone stands out.
-        if (icon != null) Icon(
-            icon, null, Modifier.size(size * 0.42f).rotate(-rotation),
-            tint = if (colors.first().luminance() > 0.5f) Color.Black.copy(alpha = 0.75f) else Color.White
-        )
+        // A sparkle on the wallpaper swatch: "colours picked for you", in a deep or pale shade of the
+        // swatch's own hue, so it stands out without the muddy grey of black over pastel.
+        if (icon != null) {
+            val base = colors.first()
+            Icon(
+                icon, null, Modifier.size(size * 0.42f).rotate(-rotation),
+                tint = if (base.luminance() > 0.4f) lerp(base, Color.Black, 0.7f) else lerp(base, Color.White, 0.9f)
+            )
+        }
     }
 }
