@@ -37,3 +37,9 @@ In capture mode, use screenshot-based clicks; Compose's accessibility hit rectan
 `en-US/graphics/feature-source.png` is the generated master. `feature-graphic.png` is the 1024 × 500 RGB export, and its exact prompt is saved beside it. The 512 × 512 RGBA store icon comes from `design/branding/weak-spot-icon-final.png`. Label the generated icon and feature artwork accurately in Play Console. The screenshot UI is captured from the app, with deterministic HTML/CSS captions and framing.
 
 Saved drafts are not publication. Sending changes for review happens separately in Publishing overview.
+
+## Keep the public README current
+
+After updating the captures and exporting the Play artwork, run `python3 store-listing/prepare.py`, then `python3 scripts/refresh_readme_assets.py` from the repository root. The second command copies the current gallery assets into the six README images, without rescaling or repainting the interface. It resolves filenames from `en-US/assets.json`, so new asset versions can replace old ones without editing the README.
+
+Run `python3 scripts/refresh_readme_assets.py --check` to check that every README image still matches the selected Play asset. Source paths and content hashes are recorded in `docs/screenshots/readme-assets.json`.

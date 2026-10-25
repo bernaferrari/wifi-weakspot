@@ -1,0 +1,32 @@
+[
+  {
+    "file": "docs/screenshots/readme-channels.jpg",
+    "source": "store-listing/en-US/screenshots/v2-04-channels.jpg",
+    "sha256": "377c6f5f444dcdb4b8c621a3e376f9a6d64e2496d74dcad73ef5c5598930446d"
+  },
+  {
+    "file": "docs/screenshots/readme-overtime.jpg",
+    "source": "store-listing/en-US/screenshots/v2-05-history.jpg",
+    "sha256": "468b43f7067a5cf6db328b1e0b3bbf19a730d6ccb576cf6c54162f02499a6497"
+  },
+  {
+    "file": "docs/screenshots/readme-rooms.jpg",
+    "source": "store-listing/en-US/screenshots/v3-02-rooms.jpg",
+    "sha256": "136cdb158434d799d62ea38dae53bf44a1395cf550af80ea470c30019ea78c6c"
+  },
+  {
+    "file": "docs/screenshots/readme-settings.jpg",
+    "source": "store-listing/en-US/screenshots/v3-08-appearance.jpg",
+    "sha256": "acecab00672880dea7e9fa1fc2898f55f195aaef71258c90c996c24b1e887de5"
+  },
+  {
+    "file": "docs/screenshots/readme-floorplan.jpg",
+    "source": "store-listing/en-US/screenshots/v2-03-coverage.jpg",
+    "sha256": "2650dec788a699dbec8a7906d855a3061c6e1af13b31b70691a9fae64c791776"
+  },
+  {
+    "file": "docs/screenshots/readme-wide.jpg",
+    "source": "store-listing/en-US/desktop/desktop-02-channels.jpg",
+    "sha256": "acd9af6d62696fe17a41cf48df9a6c84f4d52d112264aa233f0e2592a885ddc8"
+  }
+]

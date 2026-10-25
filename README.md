@@ -4,48 +4,55 @@
 
 <h1 align="center">WiFi Weakspot</h1>
 
-<p align="center"><b>Find the rooms where Wi-Fi gets weak. Compare before and after a change.</b><br>
-A Wi-Fi analyzer for Android that speaks plain language.</p>
+<p align="center"><b>See the signals around you. Find where yours gets weak.</b><br>
+A Material 3 Expressive Wi-Fi analyzer for Android.</p>
 
 <p align="center">
-  <img src="docs/screenshots/readme-home.png" alt="Home showing signal strength as a percentage and a plain-language verdict" width="24%">
-  <img src="docs/screenshots/readme-rooms.png" alt="Rooms with saved signal readings to compare" width="24%">
-  <img src="docs/screenshots/readme-overtime.png" alt="Signal history with an inspected reading" width="24%">
-  <img src="docs/screenshots/readme-channels.png" alt="Channel waves showing nearby Wi-Fi signal overlap" width="24%">
+  <a href="docs/screenshots/readme-channels.jpg"><img src="docs/screenshots/readme-channels.jpg" alt="Channel waves showing nearby Wi-Fi signal overlap" width="24%"></a>
+  <a href="docs/screenshots/readme-overtime.jpg"><img src="docs/screenshots/readme-overtime.jpg" alt="Signal history paused at a reading to compare nearby networks" width="24%"></a>
+  <a href="docs/screenshots/readme-rooms.jpg"><img src="docs/screenshots/readme-rooms.jpg" alt="Light-mode room comparison with saved readings of 64% and 98%" width="24%"></a>
+  <a href="docs/screenshots/readme-settings.jpg"><img src="docs/screenshots/readme-settings.jpg" alt="Light-mode appearance settings with color palettes and a live signal preview" width="24%"></a>
 </p>
-<p align="center"><sub>Screenshots use the browser demo with simulated Wi-Fi data. The demo shares the Android app’s interface; it does not measure your browser’s Wi-Fi.</sub></p>
+<p align="center"><sub>Real app UI, example networks and readings. Select an image for a closer look.</sub></p>
 
-## Find your weak spots
+## See what overlaps
 
-**Compare rooms.** Save a reading where the connection feels unreliable, then check another room. Clear signal labels and a fixed percentage scale make the differences easy to understand. Recheck after moving your router to see whether the signal improved.
+Explore nearby **2.4, 5, and 6 GHz** networks supported by your device. Channel waves make signal overlap visible; tap a wave for details or expand the chart for a closer look. Switch to signal history, pause a moment, and drag through readings to compare networks at the same point in time.
 
-**Map your coverage.** Tap where you are standing on a grid or your floor-plan image. Nearby readings blend into an estimated coverage map, with color fading farther from measured spots. Keep separate floors and share the map as a picture.
+## Find where Wi-Fi gets weak
 
-**Understand nearby networks.** Channel charts show observed signal overlap, while signal history lets you inspect changes over time. Use the scan as a guide when considering your router’s channel settings.
+Save a reading where the connection feels unreliable, then compare another room. A percentage, color, and plain-language verdict make the difference clear. Recheck the same spots after moving your router or access point to see what changed.
 
-**Check your router’s response.** Compare response times, variation, and missed replies here and near the router. Internet speed is a separate check through fast.com.
-
-**Explore connected devices.** Discover responding devices and the names they announce, then investigate with ping, DNS lookups, and port checks.
+**Put it on a map.** Place readings on a grid or your own floor-plan image to build an estimated coverage map. Keep separate floors, revisit weak corners, and share the results as a picture.
 
 <p align="center">
-  <img src="docs/screenshots/readme-floorplan.png" alt="Estimated home coverage map from saved readings" width="280">
+  <a href="docs/screenshots/readme-floorplan.jpg"><img src="docs/screenshots/readme-floorplan.jpg" alt="Light-mode estimated Wi-Fi coverage map built from 30 example readings" width="320"></a>
 </p>
 
-## Clear readings, expressive design
+## Look beyond signal strength
 
-- **Plain language first.** Percentage, color, and verdicts from Excellent to Dead zone. Choose signal bars or dBm when you prefer them.
-- **Useful comparisons.** Saved room readings and router-check history help you judge changes rather than rely on a single number.
-- **Personal appearance.** Light and dark themes, wallpaper colors, and nine palettes, with reduced-motion and haptic preferences.
-- **Local records.** Room readings, maps, and check history are stored on your device. Sharing is your choice. Website checks and internet-speed checks contact external hosts.
+- **Check your router.** Measure response time, variation, and missed replies. Compare a troublesome room with a spot near the router and keep past checks for reference.
+- **Meet your network.** Discover responding devices and the names they announce. Investigate with ping, DNS lookups, and port checks.
+- **Make it yours.** Light and dark themes, wallpaper colors, nine palettes, and a choice of percentages, signal bars, or dBm. Adjust motion and haptics to your preference.
 
-## What the readings mean
+## More room to explore
 
-Signal strength is not internet speed. The percentage uses a fixed scale from −100 dBm (0%) to −50 dBm (100%); it is not relative to the strongest network in a scan. How you hold the phone, walls, and interference can affect a reading, so compare rooms under similar conditions.
+The layout adapts to phones, tablets, and larger screens. On wide displays, the chart and network list sit side by side, with a navigation rail keeping the main tools in reach.
 
-Coverage colors between readings are estimates, not measurements of every point. Channel overlap does not measure actual network traffic, and a quieter-looking channel does not guarantee faster Wi-Fi. Some routers and devices ignore discovery requests or pings.
+<p align="center">
+  <a href="docs/screenshots/readme-wide.jpg"><img src="docs/screenshots/readme-wide.jpg" alt="Wide layout with a channel graph beside the nearby network list" width="100%"></a>
+</p>
 
-Android permissions and scan limits affect which networks appear and how often readings refresh. Device discovery may be unavailable through a VPN. Unrelated Wi-Fi networks with identical names can still share room history.
+## Private by design
 
-## Privacy
+**No accounts. No ads. No analytics.** Your saved readings, maps, and history stay on your device; they are not uploaded to the developer. Sharing is your choice. Optional network tests contact the devices or hosts being checked, and internet speed testing opens fast.com. Read the [privacy policy](PRIVACY.md) for permissions, storage, and deletion details.
 
-No accounts, ads, analytics, or uploads of your Wi-Fi results to the developer. Your saved readings and maps stay on your device; sharing is your choice. Optional network tests and external websites contact their destinations. Read the [privacy policy](PRIVACY.md) for permissions, storage, and deletion details.
+## Understand the readings
+
+Signal strength is not internet speed. The percentage uses a fixed scale from **−100 dBm (0%) to −50 dBm (100%)**, rather than comparing with the strongest network in a scan. Choose bars or dBm if you prefer.
+
+Coverage between measured points is an estimate. Channel overlap shows observed signals, not network traffic, and does not guarantee faster Wi-Fi. Walls, interference, and how you hold the phone can affect readings, so compare spots under similar conditions.
+
+Android permissions, scan limits, and device support affect what the app can see and how often it refreshes. Some devices hide from discovery or ignore pings; discovery may be unavailable through a VPN. Room comparisons use the network name, so unrelated networks with the same name can share history.
+
+<p align="center"><sub>Screenshots come from the browser demo, which shares the Android interface and simulates the phone's radios. The demo does not measure your browser's Wi-Fi.</sub></p>
