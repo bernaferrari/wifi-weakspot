@@ -56,6 +56,6 @@ No accounts, ads or analytics. Readings, maps and history stay on your device, a
 
 ## Good to know
 
-Signal strength is not internet speed. The percentage maps −100 dBm to 0% and −50 dBm to 100%; switch to bars or dBm anytime. Coverage between measured points is an estimate, and walls, interference and how you hold the phone all affect readings. Android's scan limits and device support affect what the app can see.
+Signal strength is not internet speed. The percentage follows the verdicts: Excellent is 90–100%, Good 70–89%, Fair 50–69%, Weak 30–49%, and below 30% is a dead zone, reaching 0% at −90 dBm. Switch to bars or dBm anytime. Coverage between measured points is an estimate, and walls, interference and how you hold the phone all affect readings. Android's scan limits and device support affect what the app can see.
 
 <sub>Screenshots are from the real app on an emulator, with example networks and readings. Building from source or contributing? See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).</sub>

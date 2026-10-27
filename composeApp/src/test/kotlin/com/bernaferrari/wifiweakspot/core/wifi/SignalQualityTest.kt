@@ -7,8 +7,8 @@ import org.junit.Test
 
 class SignalQualityTest {
     @Test
-    fun percentageUsesFixedEndpointsAndClamps() {
-        for ((rssi, percentage) in listOf(-100 to 0, -85 to 30, -80 to 40, -75 to 50, -67 to 66, -60 to 80, -50 to 100)) {
+    fun percentageFollowsTheVerdictBandsAndClamps() {
+        for ((rssi, percentage) in listOf(-100 to 0, -90 to 0, -86 to 15, -82 to 30, -75 to 50, -67 to 70, -60 to 82, -55 to 90, -50 to 100, -40 to 100)) {
             assertEquals(percentage, SignalQuality.percentage(rssi))
         }
         assertEquals(0, SignalQuality.percentage(Int.MIN_VALUE))
@@ -19,6 +19,14 @@ class SignalQualityTest {
     fun strongerSignalsNeverHaveLowerPercentages() {
         for (rssi in -110..-20) {
             assertTrue(SignalQuality.percentage(rssi + 1) >= SignalQuality.percentage(rssi))
+        }
+    }
+
+    @Test
+    fun verdictFloorsMapToRoundPercentages() {
+        for ((quality, floor) in listOf(SignalQuality.Excellent to 90, SignalQuality.Good to 70, SignalQuality.Fair to 50, SignalQuality.Weak to 30)) {
+            assertEquals(floor, SignalQuality.percentage(quality.minRssi))
+            assertTrue(SignalQuality.percentage(quality.minRssi - 1) < floor)
         }
     }
 

@@ -1,6 +1,7 @@
 package com.bernaferrari.wifiweakspot.core.wifi
 
 import com.bernaferrari.wifiweakspot.core.i18n.appStrings
+import kotlin.math.roundToInt
 /**
  * One plain-language scale for received signal strength, shared by every screen.
  *
@@ -53,11 +54,22 @@ enum class SignalQuality(val minRssi: Int) {
         fun of(rssi: Int): SignalQuality = entries.first { rssi >= it.minRssi }
 
         /**
-         * Fixed signal-level scale: -100 dBm = 0%, -50 dBm = 100%.
-         * Matches the Windows WLAN signal-quality mapping, not a power or speed percentage.
-         * https://learn.microsoft.com/en-us/windows/win32/api/wlanapi/ns-wlanapi-wlan_realtime_connection_quality
+         * Signal strength as a percentage of what Wi-Fi needs, not of power or speed.
+         *
+         * Anchored to the verdicts above so the number and the label always agree: Excellent is
+         * 90-100%, Good 70-89%, Fair 50-69%, Weak 30-49%, and a dead zone is below 30%. The curve
+         * is steeper toward the weak end, where each dB changes the experience most, and reaches
+         * 0% at -90 dBm, where Wi-Fi stops being usable. -50 dBm and stronger is 100%.
          */
-        fun percentage(rssi: Int): Int = 2 * (rssi.coerceIn(-100, -50) + 100)
+        fun percentage(rssi: Int): Int {
+            val dbm = rssi.coerceIn(-90, -50)
+            val (low, high) = scale.zipWithNext().first { (a, b) -> dbm in a.first..b.first }
+            val t = (dbm - low.first).toFloat() / (high.first - low.first)
+            return (low.second + t * (high.second - low.second)).roundToInt()
+        }
+
+        /** (dBm, percentage) anchors, weakest first; the verdict floors map to round numbers. */
+        private val scale = listOf(-90 to 0, -82 to 30, -75 to 50, -67 to 70, -55 to 90, -50 to 100)
 
         /** Maps -95..-35 dBm onto 0..1 for meters and gauges. */
         fun fraction(rssi: Int): Float = ((rssi + 95) / 60f).coerceIn(0f, 1f)
