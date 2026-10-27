@@ -7,14 +7,16 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import com.materialkolor.hct.Hct
-import com.materialkolor.ktx.harmonize
 import com.materialkolor.ktx.toColor
 import com.materialkolor.ktx.toHct
 import com.bernaferrari.wifiweakspot.core.wifi.SignalQuality
 
 // App colors come from the dynamic or seeded scheme in WifiWeakspotTheme.
-// Signal colors are the only fixed hues; they are harmonized toward the theme's primary
-// and toned like Material roles so they keep contrast in light and dark themes.
+// Signal colors are the only fixed hues. They share Re-Rethink's status pair: its "allowed"
+// green (seed #1E9E5A, hue ~156) and Material's error red (hue 25), with the middle verdicts
+// stepping between them through a muted sand, so the scale reads green -> red without the
+// loud yellow and orange of a traffic light. They are toned like Material roles (and not
+// harmonized to the theme, so green stays green on any seed) to keep contrast in both themes.
 
 @Immutable
 data class SignalColors(
@@ -24,67 +26,82 @@ data class SignalColors(
     val onContainer: Color
 )
 
-private val SignalHues = mapOf(
-    SignalQuality.Excellent to Color(0xFF1E8E3E),
-    SignalQuality.Good to Color(0xFF00897B),
-    SignalQuality.Fair to Color(0xFFF9AB00),
-    SignalQuality.Weak to Color(0xFFF57C00),
-    SignalQuality.DeadZone to Color(0xFFD93025)
+/**
+ * One verdict's place on the green-to-red scale. [chroma] is for tonal roles (text, badges,
+ * charts); [heatChroma] and the heat tones are for large map fields, which want more color.
+ */
+private class SignalTone(
+    val hue: Double,
+    val chroma: Double,
+    val heatChroma: Double,
+    val heatToneLight: Double,
+    val heatToneDark: Double,
 )
 
-private val signalColorCache = HashMap<Triple<SignalQuality, Int, Boolean>, SignalColors>()
+private val SignalTones = mapOf(
+    // Re-Rethink's allowed green.
+    SignalQuality.Excellent to SignalTone(hue = 156.0, chroma = 48.0, heatChroma = 120.0, heatToneLight = 66.0, heatToneDark = 64.0),
+    // A softer, lighter leaf green: still "fine", one step toward the middle.
+    SignalQuality.Good to SignalTone(hue = 145.0, chroma = 36.0, heatChroma = 64.0, heatToneLight = 80.0, heatToneDark = 76.0),
+    // Muted sand: the neutral midpoint between the two families, kept low in chroma.
+    SignalQuality.Fair to SignalTone(hue = 82.0, chroma = 26.0, heatChroma = 30.0, heatToneLight = 82.0, heatToneDark = 76.0),
+    // A soft coral, one step short of the full red.
+    SignalQuality.Weak to SignalTone(hue = 38.0, chroma = 50.0, heatChroma = 64.0, heatToneLight = 76.0, heatToneDark = 70.0),
+    // Material's error red, as Re-Rethink uses for "blocked".
+    SignalQuality.DeadZone to SignalTone(hue = 25.0, chroma = 84.0, heatChroma = 120.0, heatToneLight = 58.0, heatToneDark = 56.0),
+)
+
+private fun hct(hue: Double, chroma: Double, tone: Double): Color = Hct.from(hue, chroma, tone).toColor()
 
 private fun Hct.tone(tone: Double): Color = Hct.from(hue, chroma, tone).toColor()
+
+/**
+ * Tonal roles for a verdict, matching how Material builds `error`/`errorContainer`: accent at
+ * tone 40 (light) or 80 (dark), container at 90 or 30, and its text at 30 or 90 (about 7:1).
+ */
+internal fun signalColorsFor(quality: SignalQuality, dark: Boolean): SignalColors {
+    val t = SignalTones.getValue(quality)
+    return if (dark) {
+        SignalColors(accent = hct(t.hue, t.chroma, 80.0), container = hct(t.hue, t.chroma, 30.0), onContainer = hct(t.hue, t.chroma, 90.0))
+    } else {
+        SignalColors(accent = hct(t.hue, t.chroma, 40.0), container = hct(t.hue, t.chroma, 90.0), onContainer = hct(t.hue, t.chroma, 30.0))
+    }
+}
+
+private val LightSignalColors by lazy { SignalQuality.entries.associateWith { signalColorsFor(it, dark = false) } }
+private val DarkSignalColors by lazy { SignalQuality.entries.associateWith { signalColorsFor(it, dark = true) } }
 
 @Composable
 @ReadOnlyComposable
 fun signalColors(quality: SignalQuality): SignalColors {
-    val scheme = MaterialTheme.colorScheme
-    val dark = scheme.surface.luminance() < 0.5f
-    val primary = scheme.primary
-    val key = Triple(quality, primary.hashCode(), dark)
-    return signalColorCache.getOrPut(key) {
-        val hct = SignalHues.getValue(quality).harmonize(primary).toHct()
-        if (dark) SignalColors(accent = hct.tone(80.0), container = hct.tone(30.0), onContainer = hct.tone(90.0))
-        else SignalColors(accent = hct.tone(50.0), container = hct.tone(90.0), onContainer = hct.tone(10.0))
-    }
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    return (if (dark) DarkSignalColors else LightSignalColors).getValue(quality)
 }
 
 @Composable
 @ReadOnlyComposable
 fun signalColors(rssi: Int): SignalColors = signalColors(SignalQuality.of(rssi))
 
-private val heatColorCache = HashMap<Pair<Int, Boolean>, Map<SignalQuality, Color>>()
-
 /**
  * Vivid signal colors for large fields such as the floor-plan heatmap. Same hues as [signalColors],
- * but pushed to high chroma at a mid tone (HCT is perceptual, like OKLCH), so a whole map of them
- * reads as clear green-to-red instead of the pale tints that suit text and badges.
+ * but pushed to more chroma at a mid-to-high tone (HCT is perceptual, like OKLCH), so a whole map
+ * reads as clear green-to-red instead of the pale tints that suit text and badges. The two ends
+ * ask for the most the screen can show (HCT clamps to gamut); the middle stays soft on purpose.
  */
+internal fun signalHeatColorsFor(dark: Boolean): Map<SignalQuality, Color> =
+    SignalQuality.entries.associateWith { quality ->
+        val t = SignalTones.getValue(quality)
+        // Light mode keeps tones high so the map reads bright, not muddy, on a light surface.
+        hct(t.hue, t.heatChroma, if (dark) t.heatToneDark else t.heatToneLight)
+    }
+
+private val LightHeatColors by lazy { signalHeatColorsFor(dark = false) }
+private val DarkHeatColors by lazy { signalHeatColorsFor(dark = true) }
+
 @Composable
 @ReadOnlyComposable
-fun signalHeatColors(): Map<SignalQuality, Color> {
-    val scheme = MaterialTheme.colorScheme
-    val dark = scheme.surface.luminance() < 0.5f
-    return heatColorCache.getOrPut(0 to dark) {
-        // Not harmonized: on a map, green must stay green whatever the theme colour is.
-        // Each hue gets its own tone, because yellow only reads as yellow when it's bright;
-        // at one shared tone the middle of the scale turns olive.
-        SignalQuality.entries.associateWith { quality ->
-            val hue = SignalHues.getValue(quality).toHct().hue
-            // Light mode keeps tones high so the map reads bright, not muddy, on a light surface.
-            // Chroma asks for the most the screen can show at that tone (HCT clamps to gamut).
-            val (chroma, tone) = when (quality) {
-                SignalQuality.Excellent -> 120.0 to if (dark) 68.0 else 70.0
-                SignalQuality.Good -> 120.0 to if (dark) 70.0 else 74.0
-                SignalQuality.Fair -> 120.0 to if (dark) 82.0 else 84.0
-                SignalQuality.Weak -> 120.0 to if (dark) 66.0 else 72.0
-                SignalQuality.DeadZone -> 120.0 to if (dark) 56.0 else 62.0
-            }
-            Hct.from(hue, chroma, tone).toColor()
-        }
-    }
-}
+fun signalHeatColors(): Map<SignalQuality, Color> =
+    if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) DarkHeatColors else LightHeatColors
 
 /** Distinguishable series colors for graphs, toned for the light or dark theme. */
 @Composable
