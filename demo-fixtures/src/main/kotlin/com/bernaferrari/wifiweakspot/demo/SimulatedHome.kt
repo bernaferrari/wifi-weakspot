@@ -9,8 +9,8 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 /**
- * A believable apartment block for the browser build: your router plus ~30 neighbors,
- * with signal that drifts like the real thing. Every web service reads from this.
+ * A believable apartment block for the demo builds: your router plus ~30 neighbors,
+ * with signal that drifts like the real thing. Every simulated service reads from this.
  */
 object SimulatedHome {
     const val Ssid = "Home Wi-Fi"
@@ -58,11 +58,15 @@ object SimulatedHome {
         }
     }
 
+    /** Hold the connected sample steady for still Android marketing captures. */
+    var stationary: Boolean = false
+
     /**
      * Signal on the connected link. It mostly sits near the router, then fades on a slow
      * loop as if someone carried the phone to the far bedroom and back, so Walk has a story.
      */
     fun connectedRssi(): Int {
+        if (stationary) return -58
         val seconds = (nowMillis() - startedAt) / 1000.0
         val phase = (seconds % LoopSeconds) / LoopSeconds
         val dip = max(0.0, sin(phase * 2 * PI)).pow(3) * 32

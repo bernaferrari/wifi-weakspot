@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application android:name=".ScreenshotApplication" android:label="WiFi Weakspot screenshots"
+        tools:replace="android:name,android:label">
+        <activity android:name=".ScreenshotActivity" android:exported="true" />
+    </application>
+</manifest>

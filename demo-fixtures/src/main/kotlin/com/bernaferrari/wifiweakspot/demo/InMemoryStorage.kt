@@ -16,10 +16,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
-/** Preferences for one browser session. */
-class InMemoryPreferences : DataStore<Preferences> {
+/** Preferences for one demo session. */
+class InMemoryPreferences(var readDelayMillis: Long = 0) : DataStore<Preferences> {
     private val state = MutableStateFlow(emptyPreferences())
-    override val data: Flow<Preferences> = state
+    // Optional capture probe for asynchronous Android preference delivery. Normal demos use zero.
+    override val data: Flow<Preferences> = state.map {
+        if (readDelayMillis > 0) kotlinx.coroutines.delay(readDelayMillis)
+        it
+    }
 
     override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences {
         val updated = transform(state.value)
@@ -28,8 +32,15 @@ class InMemoryPreferences : DataStore<Preferences> {
     }
 }
 
-/** The app's Room tables, held in memory for one browser session. */
+/** The app's Room tables, held in memory for one demo session. */
 class InMemoryDao : WifiWeakspotDao {
+    private val backupImports = mutableMapOf<String, com.bernaferrari.wifiweakspot.core.database.entities.BackupImportEntity>()
+    override suspend fun insertBackupImport(record: com.bernaferrari.wifiweakspot.core.database.entities.BackupImportEntity) { backupImports[record.archiveId] = record }
+    override suspend fun getBackupImport(archiveId: String) = backupImports[archiveId]
+    override suspend fun getPendingBackupImports() = backupImports.values.filterNot { it.completed }
+    override suspend fun completeBackupImport(archiveId: String) {
+        backupImports[archiveId]?.let { backupImports[archiveId] = it.copy(completed = true, roomsJson = "[]") }
+    }
     private val seed = SeedHistory()
     private val scans = MutableStateFlow(seed.scans)
     private val lan = MutableStateFlow(seed.devices)
@@ -71,12 +82,15 @@ class InMemoryDao : WifiWeakspotDao {
         projects.update { listOf(project.copy(id = id)) + it }
         return id
     }
+    override suspend fun snapshotSurveyProjects() = projects.value.sortedByDescending { it.updatedAt }
+    override suspend fun snapshotSurveyPoints() = points.value
     override fun getAllProjects(): Flow<List<SurveyProjectEntity>> = projects.map { list -> list.sortedByDescending { it.updatedAt } }
     override suspend fun updateSurveyProject(project: SurveyProjectEntity) =
         projects.update { list -> list.map { if (it.id == project.id) project else it } }
     override suspend fun markSurveyProjectUsed(projectId: Long, timestamp: Long) =
         projects.update { list -> list.map { if (it.id == projectId) it.copy(updatedAt = timestamp) else it } }
     override suspend fun deleteSurveyPoint(pointId: Long) = points.update { list -> list.filterNot { it.id == pointId } }
+    override suspend fun updateSurveyPoint(point: SurveyPointEntity) = points.update { list -> list.map { if (it.id == point.id) point else it } }
     override suspend fun insertSurveyPoint(point: SurveyPointEntity) = points.update { it + point.copy(id = nextId++) }
     override fun getPointsForProject(projectId: Long): Flow<List<SurveyPointEntity>> = points.map { list -> list.filter { it.projectId == projectId } }
     override fun getAllPoints(): Flow<List<SurveyPointEntity>> = points
@@ -122,23 +136,24 @@ private class SeedHistory {
     }
 
     /**
-     * A finished survey of a 12 x 8 m flat: router in the living room on the left, signal falling
-     * with distance and with each wall crossed, so the far bedroom ends up the weak spot.
+     * A finished survey of an 8 x 12 m flat, upright like a phone so the map fills the screen: router
+     * in the living room at the bottom, signal falling with distance and with each wall crossed, so the
+     * far bedroom at the top ends up the weak spot.
      */
     val floorPlan = SurveyProjectEntity(
         id = 1, name = com.bernaferrari.wifiweakspot.core.i18n.appStrings.survey.defaultMapName(1), description = null, imagePath = null, createdAt = ago(3, 2.0), updatedAt = ago(0, 1.0),
-        targetSsid = SimulatedHome.Ssid, targetBssid = SimulatedHome.Bssid, widthMeters = 12f, heightMeters = 8f
+        targetSsid = SimulatedHome.Ssid, targetBssid = SimulatedHome.Bssid, widthMeters = 8f, heightMeters = 12f
     )
     val floorPlanPoints: List<SurveyPointEntity> = buildList {
-        val routerX = 0.22f; val routerY = 0.62f
+        val routerX = 0.30f; val routerY = 0.80f
         var id = 5_000L
         val random = kotlin.random.Random(7)
-        for (row in 0 until 6) for (col in 0 until 5) {
+        for (row in 0 until 7) for (col in 0 until 4) {
             // A loose grid with some wobble, the way people actually stop and measure.
-            val x = 0.10f + col * 0.20f + (random.nextFloat() - 0.5f) * 0.09f
-            val y = 0.09f + row * 0.165f + (random.nextFloat() - 0.5f) * 0.08f
-            val meters = kotlin.math.sqrt(((x - routerX) * 12f).let { it * it } + ((y - routerY) * 8f).let { it * it })
-            val walls = (if (x > 0.52f) 1 else 0) + (if (x > 0.52f && y < 0.42f) 1 else 0) + (if (x < 0.52f && y < 0.30f) 1 else 0)
+            val x = 0.12f + col * 0.25f + (random.nextFloat() - 0.5f) * 0.09f
+            val y = 0.07f + row * 0.143f + (random.nextFloat() - 0.5f) * 0.06f
+            val meters = kotlin.math.sqrt(((x - routerX) * 8f).let { it * it } + ((y - routerY) * 12f).let { it * it })
+            val walls = (if (y < 0.55f) 1 else 0) + (if (y < 0.55f && x > 0.5f) 1 else 0) + (if (y < 0.28f) 1 else 0)
             val rssi = (-36f - 21f * kotlin.math.log10(1f + meters * 1.6f) - walls * 9f).toInt().coerceIn(-92, -35)
             add(SurveyPointEntity(id = id++, projectId = 1, x = x, y = y, rssi = rssi, ssid = SimulatedHome.Ssid,
                 bssid = SimulatedHome.Bssid, timestamp = ago(0, 1.0) + id))

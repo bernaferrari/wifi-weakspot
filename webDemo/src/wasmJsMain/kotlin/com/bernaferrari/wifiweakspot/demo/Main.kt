@@ -33,7 +33,11 @@ import org.koin.core.context.startKoin
 fun main() {
     document.documentElement?.setAttribute("lang", androidx.compose.ui.text.intl.Locale.current.toLanguageTag())
     document.title = "WiFi Weakspot · ${com.bernaferrari.wifiweakspot.core.i18n.appStrings.settings.tagline}"
-    startKoin { modules(sharedModule, webModule) }
+    val koin = startKoin { modules(sharedModule, webModule) }.koin
+    // Exercise first-frame preference state across navigation with a simulated disk-read delay.
+    koin.get<InMemoryPreferences>().readDelayMillis = window.location.search.removePrefix("?").split('&')
+        .firstOrNull { it.startsWith("capturePreferencesDelay=") }?.substringAfter('=')
+        ?.toLongOrNull()?.coerceIn(0, 2_000) ?: 0
     // Render the real phone layout at store-quality pixel density without upscaling captures.
     // Ordinary demo visits retain the browser's density.
     val captureDensity = window.location.search.removePrefix("?").split('&')

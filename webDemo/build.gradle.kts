@@ -25,6 +25,7 @@ kotlin {
     sourceSets {
         commonMain {
             kotlin.srcDir("../composeApp/src/main/kotlin")
+            kotlin.srcDir("../demo-fixtures/src/main/kotlin")
             dependencies {
                 implementation(compose.runtime)
                 implementation(compose.foundation)

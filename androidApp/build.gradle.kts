@@ -42,7 +42,16 @@ android {
         }
     }
 
+    sourceSets.create("screenshots") {
+        kotlin.srcDir("../demo-fixtures/src/main/kotlin")
+    }
+
     buildTypes {
+        create("screenshots") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".screenshots"
+            matchingFallbacks += "debug"
+        }
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -66,5 +75,8 @@ dependencies {
     implementation(projects.composeApp)
     implementation(libs.androidx.activity.compose)
     implementation(compose.components.uiToolingPreview)
+    "screenshotsImplementation"(libs.koin.android)
+    "screenshotsImplementation"(libs.androidx.datastore.preferences.core)
+    "screenshotsImplementation"(libs.kotlinx.datetime)
     debugImplementation(compose.uiTooling)
 }
