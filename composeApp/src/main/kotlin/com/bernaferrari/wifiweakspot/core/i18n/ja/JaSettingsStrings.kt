@@ -21,6 +21,11 @@ object JaSettingsStrings : SettingsStrings {
     override val themeAuto = "自動"
     override val themeLight = "ライト"
     override val themeDark = "ダーク"
+    override val colorStyle = "配色スタイル"
+    override val styleExpressive = "表情豊か"
+    override val styleVibrant = "鮮やか"
+    override val styleTonal = "トーナル"
+    override val styleCmf = "CMF"
     override val showSignalAs = "信号の表示方法"
     override val sectionComfort = "使いやすさ"
 

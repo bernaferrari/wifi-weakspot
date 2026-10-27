@@ -79,7 +79,7 @@ val SeedPalettes: List<Pair<(SettingsStrings) -> String, Long>> = listOf(
 )
 
 /**
- * The app's palettes as one row of swatches; each swatch names itself for screen readers. [wallpaper] is
+ * The app's palettes as wrapping rows of swatches; each swatch names itself for screen readers. [wallpaper] is
  * null where the platform has no wallpaper colors, and then that option isn't offered.
  */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -91,23 +91,21 @@ fun ColorPickerRow(
     onWallpaper: () -> Unit,
     onSeed: (Int) -> Unit
 ) {
-    val scheme = MaterialTheme.colorScheme
     val wallpaperChosen = useWallpaper && wallpaper != null
     Column(
         Modifier.fillMaxWidth().selectableGroup(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         androidx.compose.foundation.layout.FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Wallpaper colors come first, marked with a sparkle.
             if (wallpaper != null) PaletteSwatch(
                 colors = wallpaper,
                 selected = wallpaperChosen,
                 label = strings.settings.wallpaperColors,
-                size = 44.dp,
                 icon = Icons.Rounded.AutoAwesome,
                 onClick = onWallpaper
             )
@@ -116,7 +114,6 @@ fun ColorPickerRow(
                     colors = listOf(Color(seed), lerp(Color(seed), Color.White, 0.45f)),
                     selected = !wallpaperChosen && seed.toInt() == currentSeed,
                     label = name(strings.settings),
-                    size = 44.dp,
                     onClick = { onSeed(seed.toInt()) }
                 )
             }

@@ -59,12 +59,15 @@ fun SettingsScreen(
     onRequestScanPermission: () -> Unit = {},
     settingsRepository: SettingsRepository = koinInject()
 ) {
-    val dynamicColor by settingsRepository.dynamicColor.collectAsState(initial = true)
-    val seedColor by settingsRepository.seedColor.collectAsState(initial = 0xFF3F51B5.toInt())
-    val darkMode by settingsRepository.isDarkMode.collectAsState(initial = null)
-    val reduceMotion by settingsRepository.reduceMotion.collectAsState(initial = false)
-    val hapticsEnabled by settingsRepository.hapticsEnabled.collectAsState(initial = true)
-    val signalDisplay by settingsRepository.signalDisplay.collectAsState(initial = com.bernaferrari.wifiweakspot.core.wifi.SignalDisplay.Percentage)
+    // The app theme stays composed between tabs and already owns the loaded preferences.
+    // Starting fresh collectors here briefly selected Auto/wallpaper/defaults on every visit.
+    val themeSettings = com.bernaferrari.wifiweakspot.core.designsystem.LocalThemeSettings.current
+    val dynamicColor = themeSettings.dynamicColor
+    val seedColor = themeSettings.seedColor
+    val darkMode = themeSettings.darkMode
+    val reduceMotion = themeSettings.reduceMotion
+    val hapticsEnabled = com.bernaferrari.wifiweakspot.core.designsystem.LocalHapticsEnabled.current
+    val signalDisplay = com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay.current
     val permissionGate: com.bernaferrari.wifiweakspot.core.permissions.PermissionGate = koinInject()
     val permissionState by permissionGate.state.collectAsState()
     val networkStatusRepository: com.bernaferrari.wifiweakspot.core.domain.NetworkStatusRepository = koinInject()
@@ -162,6 +165,16 @@ fun SettingsScreen(
                             }
                         )
                     }
+                    ColorStylePicker(
+                        selected = themeSettings.colorStyle,
+                        seedColor = themeSettings.resolvedSeed,
+                        dark = themeSettings.effectiveDark,
+                        onSelect = { style ->
+                            haptics.light()
+                            scope.launch { settingsRepository.setColorStyle(style) }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)
+                    )
                     SettingsBlock(
                         icon = Icons.Default.SignalCellularAlt,
                         title = strings.settings.showSignalAs,

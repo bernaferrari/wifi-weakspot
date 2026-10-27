@@ -21,6 +21,11 @@ object ZhHansSettingsStrings : SettingsStrings {
     override val themeAuto = "自动"
     override val themeLight = "浅色"
     override val themeDark = "深色"
+    override val colorStyle = "配色风格"
+    override val styleExpressive = "表现力"
+    override val styleVibrant = "鲜艳"
+    override val styleTonal = "柔和色调"
+    override val styleCmf = "CMF"
     override val showSignalAs = "信号显示方式"
     override val sectionComfort = "使用体验"
 

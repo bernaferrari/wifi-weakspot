@@ -21,6 +21,11 @@ object KoSettingsStrings : SettingsStrings {
     override val themeAuto = "자동"
     override val themeLight = "라이트"
     override val themeDark = "다크"
+    override val colorStyle = "색상 스타일"
+    override val styleExpressive = "표현적"
+    override val styleVibrant = "선명함"
+    override val styleTonal = "톤"
+    override val styleCmf = "CMF"
     override val showSignalAs = "신호 표시 방식"
     override val sectionComfort = "사용 편의"
 

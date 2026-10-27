@@ -34,6 +34,14 @@ interface SettingsStrings {
     /** Dark theme choice. Segmented button: keep very short. */
     val themeDark: String
 
+    /** Heading for the four visual color-style choices below the seed-color picker. */
+    val colorStyle: String
+    val styleExpressive: String
+    val styleVibrant: String
+    val styleTonal: String
+    /** Color, Material, Finish: keep the engine variant's acronym. */
+    val styleCmf: String
+
     /** Title above the buttons choosing how signal strength is shown (percent, dBm, ...). */
     val showSignalAs: String
 

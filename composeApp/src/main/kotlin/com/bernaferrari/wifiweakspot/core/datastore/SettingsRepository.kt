@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.core.datastore
 
+import com.bernaferrari.wifiweakspot.core.designsystem.ColorStyle
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import com.bernaferrari.wifiweakspot.core.wifi.SignalDisplay
@@ -14,6 +15,7 @@ class SettingsRepository(
         // val SHOW_6GHZ = booleanPreferencesKey("show_6ghz") // Unused for now
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val SEED_COLOR = intPreferencesKey("seed_color")
+        val COLOR_STYLE = stringPreferencesKey("color_style")
         val HAPTICS_ENABLED = booleanPreferencesKey("haptics_enabled")
         val REDUCE_MOTION = booleanPreferencesKey("reduce_motion")
         val FAVORITE_BSSIDS = stringSetPreferencesKey("favorite_bssids")
@@ -25,6 +27,7 @@ class SettingsRepository(
     val isDarkMode: Flow<Boolean?> = dataStore.data.map { it[Keys.DARK_MODE] }
     val dynamicColor: Flow<Boolean> = dataStore.data.map { it[Keys.DYNAMIC_COLOR] ?: true }
     val seedColor: Flow<Int> = dataStore.data.map { it[Keys.SEED_COLOR] ?: 0xFF3F51B5.toInt() } // Indigo Default
+    val colorStyle: Flow<ColorStyle> = dataStore.data.map { ColorStyle.fromPreference(it[Keys.COLOR_STYLE]) }
     val hapticsEnabled: Flow<Boolean> = dataStore.data.map { it[Keys.HAPTICS_ENABLED] ?: true }
     val reduceMotion: Flow<Boolean> = dataStore.data.map { it[Keys.REDUCE_MOTION] ?: false }
     /** New users get percentages; preserve an explicitly selected legacy display preference. */
@@ -55,6 +58,10 @@ class SettingsRepository(
 
     suspend fun setSeedColor(color: Int) {
         dataStore.edit { it[Keys.SEED_COLOR] = color }
+    }
+
+    suspend fun setColorStyle(style: ColorStyle) {
+        dataStore.edit { it[Keys.COLOR_STYLE] = style.name }
     }
 
     suspend fun setHapticsEnabled(enabled: Boolean) {
