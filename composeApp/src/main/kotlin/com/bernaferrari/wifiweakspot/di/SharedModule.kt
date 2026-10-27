@@ -18,6 +18,7 @@ import org.koin.dsl.module
  * module with its device services (Wi-Fi scanner, storage, sensors, [com.bernaferrari.wifiweakspot.core.platform.PlatformActions]).
  */
 val sharedModule = module {
+    factory { com.bernaferrari.wifiweakspot.feature.settings.BackupViewModel(get()) }
     factoryOf(::AnalyzeViewModel)
     factoryOf(::ToolsViewModel)
     factoryOf(::LanViewModel)

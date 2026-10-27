@@ -3,6 +3,17 @@ package com.bernaferrari.wifiweakspot.core.i18n.ko
 import com.bernaferrari.wifiweakspot.core.i18n.SettingsStrings
 
 object KoSettingsStrings : SettingsStrings {
+    override val sectionBackup = "백업"
+    override val backupScope = "지도, 평면도 이미지, 방 측정값을 선택한 파일에 저장합니다. 설정과 진단 기록은 포함되지 않습니다."
+    override val exportBackup = "백업 저장"
+    override val restoreBackup = "백업 복원"
+    override val restoreBackupExplanation = "WiFi Weakspot 백업을 선택하세요. 지도는 사본으로 추가되며 기존 방 측정값은 유지됩니다. 현재 데이터는 대체되지 않습니다."
+    override val backupSaved = "백업을 저장했습니다."
+    override val backupRestored = "백업을 복원했습니다."
+    override val backupAlreadyRestored = "이미 복원한 백업입니다."
+    override val backupExportFailed = "백업을 저장하지 못했습니다. 여유 공간을 확인하고 다시 시도하세요."
+    override val backupRestoreFailed = "복원을 완료하지 못했습니다. 파일과 여유 공간을 확인한 후 같은 파일로 다시 시도하세요."
+
     override val sectionScanning = "스캔"
 
     override val fasterScansThrottled = "Android 2분마다 4번 스캔 가능"

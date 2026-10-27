@@ -2,6 +2,18 @@ package com.bernaferrari.wifiweakspot.core.i18n
 
 /** Settings, About, the color picker, and the first-run onboarding screen. */
 interface SettingsStrings {
+    // Local backup of surveys and room readings.
+    val sectionBackup: String
+    val backupScope: String
+    val exportBackup: String
+    val restoreBackup: String
+    val restoreBackupExplanation: String
+    val backupSaved: String
+    val backupRestored: String
+    val backupAlreadyRestored: String
+    val backupExportFailed: String
+    val backupRestoreFailed: String
+
     // Settings screen
 
     /** Section header above the "Faster scans" row. Short. */

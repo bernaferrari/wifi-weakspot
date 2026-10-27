@@ -3,6 +3,17 @@ package com.bernaferrari.wifiweakspot.core.i18n.zhhans
 import com.bernaferrari.wifiweakspot.core.i18n.SettingsStrings
 
 object ZhHansSettingsStrings : SettingsStrings {
+    override val sectionBackup = "备份"
+    override val backupScope = "将地图、平面图图片和房间测量数据保存到您选择的文件。备份不包含设置和诊断历史记录。"
+    override val exportBackup = "保存备份"
+    override val restoreBackup = "恢复备份"
+    override val restoreBackupExplanation = "请选择 WiFi Weakspot 备份。地图将作为副本添加，现有房间测量数据将保留。当前数据不会被替换。"
+    override val backupSaved = "备份已保存。"
+    override val backupRestored = "备份已恢复。"
+    override val backupAlreadyRestored = "此备份已恢复过。"
+    override val backupExportFailed = "无法保存备份。请检查可用空间后重试。"
+    override val backupRestoreFailed = "无法完成恢复。请检查备份文件和可用空间，然后使用同一文件重试。"
+
     override val sectionScanning = "扫描"
 
     override val fasterScansThrottled = "Android 允许每 2 分钟扫描 4 次"

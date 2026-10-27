@@ -19,6 +19,9 @@ fun AndroidApp() {
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val locale = androidx.compose.ui.text.intl.Locale(configuration.locales[0].toLanguageTag())
     CompositionLocalProvider(
+        com.bernaferrari.wifiweakspot.core.backup.LocalBackupDocumentPicker provides { onExport, onRestore ->
+            com.bernaferrari.wifiweakspot.core.backup.rememberAndroidBackupDocumentPicker(onExport, onRestore)
+        },
         LocalPermissionLaunchers provides rememberAndroidPermissionLaunchers(),
         LocalBackHandler provides { enabled, onBack -> BackHandler(enabled, onBack) },
         LocalWebContent provides { url, modifier -> AndroidWebPage(url, modifier) }

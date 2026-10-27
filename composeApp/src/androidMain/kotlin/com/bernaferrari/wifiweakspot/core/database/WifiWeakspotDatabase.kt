@@ -11,9 +11,10 @@ import com.bernaferrari.wifiweakspot.core.database.entities.*
         ToolResultEntity::class,
         SpeedTestResultEntity::class,
         SurveyProjectEntity::class,
-        SurveyPointEntity::class
+        SurveyPointEntity::class,
+        BackupImportEntity::class
     ],
-    version = 6
+    version = 7
 )
 abstract class WifiWeakspotDatabase : RoomDatabase() {
     abstract fun dao(): WifiWeakspotDao

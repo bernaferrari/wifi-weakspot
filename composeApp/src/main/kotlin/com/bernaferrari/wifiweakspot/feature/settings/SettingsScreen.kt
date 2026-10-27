@@ -271,6 +271,8 @@ fun SettingsScreen(
                 }
             }
 
+            item(key = "backup") { BackupSettings() }
+
             // About Section
             item {
                 SettingsSection(strings.settings.sectionAbout) {
@@ -386,12 +388,13 @@ fun SettingsRow(
     icon: ImageVector,
     title: String,
     subtitle: String? = null,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
+            .clickable(enabled = enabled, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
             .heightIn(min = RowMinHeight)
             .padding(RowPadding),
         verticalAlignment = Alignment.CenterVertically,

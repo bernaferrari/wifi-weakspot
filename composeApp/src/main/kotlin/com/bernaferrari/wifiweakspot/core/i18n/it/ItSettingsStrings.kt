@@ -3,6 +3,17 @@ package com.bernaferrari.wifiweakspot.core.i18n.it
 import com.bernaferrari.wifiweakspot.core.i18n.SettingsStrings
 
 object ItSettingsStrings : SettingsStrings {
+    override val sectionBackup = "Backup"
+    override val backupScope = "Salva mappe, immagini delle planimetrie e misurazioni delle stanze in un file a tua scelta. Impostazioni e cronologia diagnostica non sono incluse."
+    override val exportBackup = "Salva backup"
+    override val restoreBackup = "Ripristina backup"
+    override val restoreBackupExplanation = "Scegli un backup di WiFi Weakspot. Le mappe vengono aggiunte come copie e le misurazioni esistenti vengono conservate. Il lavoro attuale non verrà sostituito."
+    override val backupSaved = "Backup salvato."
+    override val backupRestored = "Backup ripristinato."
+    override val backupAlreadyRestored = "Questo backup è già stato ripristinato."
+    override val backupExportFailed = "Impossibile salvare il backup. Controlla lo spazio libero e riprova."
+    override val backupRestoreFailed = "Impossibile completare il ripristino. Controlla il file e lo spazio libero, poi riprova con lo stesso file."
+
     override val sectionScanning = "Scansione"
     override val fasterScansThrottled = "Android consente 4 scansioni ogni 2 minuti"
     override val sectionAppearance = "Aspetto"

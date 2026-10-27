@@ -29,6 +29,16 @@ class SurveyMigrationTest {
             connection.execSQL("INSERT INTO survey_points VALUES (9, 7, 0.25, 0.75, -67, 'Home', 'radio', 2, 300)")
 
             SURVEY_TARGET_MIGRATION.migrate(connection)
+            com.bernaferrari.wifiweakspot.core.database.SURVEY_POINT_LABEL_MIGRATION.migrate(connection)
+            connection.prepare("SELECT label FROM survey_points WHERE id = 9").use { query ->
+                assertTrue(query.step())
+                assertTrue(query.isNull(0))
+            }
+            connection.execSQL("UPDATE survey_points SET label = 'Desk' WHERE id = 9")
+            connection.prepare("SELECT label FROM survey_points WHERE id = 9").use { query ->
+                assertTrue(query.step())
+                assertEquals("Desk", query.getText(0))
+            }
 
             connection.prepare("SELECT id, name, imagePath, createdAt, updatedAt, targetSsid, targetBssid, widthMeters, heightMeters, stepLengthMeters, mapTopBearingDegrees FROM survey_projects").use { query ->
                 assertTrue(query.step())

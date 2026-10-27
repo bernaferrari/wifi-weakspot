@@ -29,6 +29,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.dsl.bind
 import org.koin.dsl.module
+import kotlinx.coroutines.launch
 
 val appModule = module {
     // DataStore & Settings
@@ -41,6 +42,9 @@ val appModule = module {
             .build()
     }
     single { get<WifiWeakspotDatabase>().dao() }
+    single<com.bernaferrari.wifiweakspot.core.backup.BackupService> {
+        com.bernaferrari.wifiweakspot.core.backup.AndroidBackupService(androidContext(), get(), get())
+    }
 
     // WiFi
     single<com.bernaferrari.wifiweakspot.core.root.RootAccess> { com.bernaferrari.wifiweakspot.core.root.AndroidRootAccess(androidContext()) }
@@ -69,8 +73,16 @@ val appModule = module {
 }
 
 fun initKoin(application: Application) {
-    startKoin {
+    val koin = startKoin {
         androidContext(application)
         modules(sharedModule, appModule)
+    }.koin
+    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO).launch {
+        // Resume the durable Room -> DataStore handoff after an interrupted restore.
+        try {
+            (koin.get<com.bernaferrari.wifiweakspot.core.backup.BackupService>() as
+                com.bernaferrari.wifiweakspot.core.backup.AndroidBackupService).recoverPendingImports()
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { android.util.Log.w("Backup", "Pending restore will be retried when storage is available") }
     }
 }

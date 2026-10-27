@@ -41,5 +41,6 @@ data class SurveyPointEntity(
     val ssid: String?,
     val bssid: String?,
     val floorId: Int = 1, // Default to Floor 1
-    val timestamp: Long
+    val timestamp: Long,
+    val label: String? = null
 )

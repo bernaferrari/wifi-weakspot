@@ -12,7 +12,7 @@ fun getDatabaseBuilder(context: Context): RoomDatabase.Builder<WifiWeakspotDatab
     return Room.databaseBuilder<WifiWeakspotDatabase>(
         context = context,
         name = dbFile.absolutePath
-    ).addMigrations(SURVEY_TARGET_MIGRATION, SPEED_TEST_CONTEXT_MIGRATION, DEVICE_ANNOUNCEMENT_MIGRATION, SPEED_TEST_ROOM_MIGRATION, LAN_NETWORK_IDENTITY_MIGRATION)
+    ).addMigrations(SURVEY_TARGET_MIGRATION, SPEED_TEST_CONTEXT_MIGRATION, DEVICE_ANNOUNCEMENT_MIGRATION, SPEED_TEST_ROOM_MIGRATION, LAN_NETWORK_IDENTITY_MIGRATION, SURVEY_POINT_LABEL_MIGRATION)
 }
 
 /** Preserve v1 projects and points; legacy maps require choosing a target before new samples. */
@@ -73,5 +73,13 @@ val LAN_NETWORK_IDENTITY_MIGRATION = object : Migration(5, 6) {
         connection.execSQL("DROP TABLE lan_devices")
         connection.execSQL("ALTER TABLE lan_devices_scoped RENAME TO lan_devices")
         connection.execSQL("ALTER TABLE tool_results ADD COLUMN networkKey TEXT")
+    }
+}
+
+/** Existing readings keep their identity and measurements when labels become available. */
+val SURVEY_POINT_LABEL_MIGRATION = object : Migration(6, 7) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE survey_points ADD COLUMN label TEXT")
+        connection.execSQL("CREATE TABLE IF NOT EXISTS backup_imports (archiveId TEXT NOT NULL, roomsJson TEXT NOT NULL, completed INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(archiveId))")
     }
 }

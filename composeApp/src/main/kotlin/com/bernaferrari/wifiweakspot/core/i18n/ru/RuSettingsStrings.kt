@@ -3,6 +3,17 @@ package com.bernaferrari.wifiweakspot.core.i18n.ru
 import com.bernaferrari.wifiweakspot.core.i18n.SettingsStrings
 
 object RuSettingsStrings : SettingsStrings {
+    override val sectionBackup = "Резервная копия"
+    override val backupScope = "Сохраните карты, изображения планов и замеры комнат в выбранный файл. Настройки и история диагностики не включены."
+    override val exportBackup = "Сохранить копию"
+    override val restoreBackup = "Восстановить копию"
+    override val restoreBackupExplanation = "Выберите резервную копию WiFi Weakspot. Карты будут добавлены как копии, а существующие замеры сохранятся. Текущие данные не будут заменены."
+    override val backupSaved = "Копия сохранена."
+    override val backupRestored = "Копия восстановлена."
+    override val backupAlreadyRestored = "Эта копия уже восстановлена."
+    override val backupExportFailed = "Не удалось сохранить копию. Проверьте свободное место и повторите попытку."
+    override val backupRestoreFailed = "Не удалось завершить восстановление. Проверьте файл и свободное место, затем повторите попытку с тем же файлом."
+
     override val sectionScanning = "Сканирование"
     override val fasterScansThrottled = "Android позволяет 4 сканирования каждые 2 минуты."
     override val sectionAppearance = "Оформление"

@@ -6,6 +6,18 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WifiWeakspotDao {
+    @Insert
+    suspend fun insertBackupImport(record: BackupImportEntity)
+
+    @Query("SELECT * FROM backup_imports WHERE archiveId = :archiveId")
+    suspend fun getBackupImport(archiveId: String): BackupImportEntity?
+
+    @Query("SELECT * FROM backup_imports WHERE completed = 0")
+    suspend fun getPendingBackupImports(): List<BackupImportEntity>
+
+    @Query("UPDATE backup_imports SET completed = 1, roomsJson = '[]' WHERE archiveId = :archiveId")
+    suspend fun completeBackupImport(archiveId: String)
+
     // WiFi Scan Results
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWifiScan(result: WifiScanResultEntity)
@@ -58,6 +70,13 @@ interface WifiWeakspotDao {
 
     @Query("SELECT * FROM speed_test_results ORDER BY timestamp DESC")
     fun getSpeedTestHistory(): Flow<List<SpeedTestResultEntity>>
+
+    // Snapshot queries retain the caller's driver transaction; Flow collection is for observers.
+    @Query("SELECT * FROM survey_projects ORDER BY updatedAt DESC")
+    suspend fun snapshotSurveyProjects(): List<SurveyProjectEntity>
+
+    @Query("SELECT * FROM survey_points")
+    suspend fun snapshotSurveyPoints(): List<SurveyPointEntity>
 
     // Survey
     @Insert

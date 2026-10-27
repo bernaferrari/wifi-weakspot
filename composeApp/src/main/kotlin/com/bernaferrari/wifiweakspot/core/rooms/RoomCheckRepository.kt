@@ -92,6 +92,12 @@ class RoomCheckRepository(private val dataStore: DataStore<Preferences>) {
 
     suspend fun saveAll(readings: List<RoomReading>) = update { current -> readings.fold(current) { list, reading -> list.upsert(reading) } }
 
+    /** Import is additive and retry-safe; a local reading always wins an ID collision. */
+    suspend fun importMissing(readings: List<RoomReading>) = update { current ->
+        val existing = current.mapTo(mutableSetOf()) { it.id }
+        current + readings.filter { existing.add(it.id) }
+    }
+
     /** Remove the room's whole history in one write, so an older check cannot reappear. */
     suspend fun deleteSpot(spotKey: String) = update { list -> list.filterNot { it.spotKey == spotKey } }
 

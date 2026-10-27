@@ -48,6 +48,8 @@ Android, Google Play, your browser, and your email provider may separately proce
 
 Exporting, sharing, or copying a result is initiated by you. Reports, files, and images may contain network names, identifiers, device addresses, room names, or floor-plan details. Review them before choosing a recipient or another app. The receiving app or service controls what happens to its copy; copying also places the selected information on Android's clipboard.
 
+Settings → Backup lets you save a ZIP archive containing survey projects, floor-plan images, saved map points and names, and room readings to a location you choose with Android’s file picker. Settings and diagnostic history are not included. The app does not encrypt these archives. Choosing a cloud-backed document provider can upload the file under that provider’s policies. Restore reads the selected archive locally and adds maps as copies while preserving existing room readings. A local import record prevents duplicate restores and allows an interrupted import to finish when the app next starts.
+
 ## Storage, retention, and deletion
 
 Saved records remain on your device until you delete them using the available in-app controls or clear the app's storage in Android settings. Uninstalling normally removes app-private data, but Android may offer to keep it; choose removal if you want it deleted. Shared exports, original images, and copies saved in other apps must be deleted separately. Temporary export files may remain in the app's cache until it is cleared or Android removes them.
