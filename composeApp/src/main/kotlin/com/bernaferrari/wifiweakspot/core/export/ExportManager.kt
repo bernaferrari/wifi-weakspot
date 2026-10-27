@@ -73,5 +73,13 @@ interface ExportManager {
     }
 }
 
-/** RFC 4180 field: wrap in quotes and double any quote inside the value. */
-fun csvField(value: String): String = "\"${value.replace("\"", "\"\"")}\""
+/** Quote a text field and keep untrusted names from being interpreted as spreadsheet formulas.
+ * JSON exports retain the original value; the CSV apostrophe is intentional text protection.
+ */
+fun csvField(value: String): String {
+    val firstMeaningful = value.firstOrNull { !it.isWhitespace() && !it.isISOControl() && it != '\uFEFF' }
+    val unsafe = firstMeaningful in listOf('=', '+', '-', '@') ||
+        value.firstOrNull() in listOf('\t', '\r', '\n')
+    val text = if (unsafe) "'$value" else value
+    return "\"${text.replace("\"", "\"\"")}\""
+}
