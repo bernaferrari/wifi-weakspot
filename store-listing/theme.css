@@ -22,6 +22,7 @@ header p{margin:24px auto 0;font-size:38px;line-height:1.3;font-weight:450;color
 
 /* 2 · A phone leaning in from the edge. */
 .phone .zoomed .device{left:90px;top:500px;width:900px}
+.phone .center .device{left:230px;top:540px;width:620px}
 /* 3 · The heat map laid down like a floor plan. */
 .phone .floor .callout.floorplan{transform:perspective(1800px) rotateX(46deg) rotateZ(-24deg);top:600px;box-shadow:0 0 0 14px #ffffff12,0 90px 140px -30px #000000f0,0 0 200px -40px var(--accent)}
 /* 4 · Real room cards floating around the phone. */

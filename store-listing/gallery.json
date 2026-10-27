@@ -3,44 +3,15 @@
     {
       "feature": "channels",
       "file": "screenshots/v8-01-channels.jpg",
-      "layout": "hero",
-      "accent": "#7d8bff",
-      "callouts": [
-        {
-          "raw": "light/04-channels.jpg",
-          "x": 40,
-          "y": 380,
-          "w": 1000,
-          "h": 980,
-          "radius": 40,
-          "place": {
-            "left": 70,
-            "top": 620,
-            "width": 940
-          },
-          "role": "tilt3d"
-        },
-        {
-          "raw": "light/04-channels.jpg",
-          "x": 40,
-          "y": 1410,
-          "w": 533,
-          "h": 120,
-          "radius": 60,
-          "place": {
-            "left": 110,
-            "top": 1600,
-            "width": 620
-          },
-          "role": "pop"
-        }
-      ]
+      "raw": "light/04-channels.jpg",
+      "layout": "zoomed",
+      "accent": "#7d8bff"
     },
     {
       "feature": "history",
       "file": "screenshots/v8-02-history.jpg",
       "raw": "light/05-history.jpg",
-      "layout": "zoomed",
+      "layout": "center",
       "accent": "#b98cff"
     },
     {
@@ -121,23 +92,7 @@
       "file": "screenshots/v8-05-router.jpg",
       "raw": "light/06-router.jpg",
       "layout": "number",
-      "accent": "#5fb8ff",
-      "callouts": [
-        {
-          "raw": "light/06-router.jpg",
-          "x": 40,
-          "y": 1380,
-          "w": 1000,
-          "h": 180,
-          "radius": 90,
-          "place": {
-            "left": 60,
-            "top": 1240,
-            "width": 960
-          },
-          "role": "pop"
-        }
-      ]
+      "accent": "#5fb8ff"
     },
     {
       "feature": "network",

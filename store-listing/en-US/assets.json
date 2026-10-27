@@ -7,8 +7,10 @@
         "slide": 0,
         "width": 1080,
         "height": 1920,
-        "bytes": 228930,
-        "sources": []
+        "bytes": 236033,
+        "sources": [
+          "raw/light/04-channels.jpg"
+        ]
       },
       {
         "file": "screenshots/v8-02-history.jpg",
@@ -16,7 +18,7 @@
         "slide": 1,
         "width": 1080,
         "height": 1920,
-        "bytes": 228871,
+        "bytes": 219249,
         "sources": [
           "raw/light/05-history.jpg"
         ]
@@ -47,7 +49,7 @@
         "slide": 4,
         "width": 1080,
         "height": 1920,
-        "bytes": 204408,
+        "bytes": 193652,
         "sources": [
           "raw/light/06-router.jpg"
         ]

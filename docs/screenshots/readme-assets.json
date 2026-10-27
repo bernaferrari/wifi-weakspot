@@ -2,12 +2,12 @@
   {
     "file": "docs/screenshots/readme-channels.jpg",
     "source": "store-listing/en-US/screenshots/v8-01-channels.jpg",
-    "sha256": "a64d0194f6d7e2e24fa9cd68d288660406ce5734fc37eacf0abc27674d062ae4"
+    "sha256": "facd88a01dddbcd1a55c29118e56c3175c91b35388d0b316b70a2744a1007a06"
   },
   {
     "file": "docs/screenshots/readme-overtime.jpg",
     "source": "store-listing/en-US/screenshots/v8-02-history.jpg",
-    "sha256": "9bea54e6e2522ac57eb38c8e79a4cf1d33b1f49b1a8af266b3f85e387fecb0bc"
+    "sha256": "be6e278adafc8b29e93c6314328745de2f23a80a75d58f23e84028c0d3f0acce"
   },
   {
     "file": "docs/screenshots/readme-rooms.jpg",
@@ -17,7 +17,7 @@
   {
     "file": "docs/screenshots/readme-settings.jpg",
     "source": "store-listing/en-US/screenshots/v8-05-router.jpg",
-    "sha256": "abb0b92dc4f438c5827251a704ea4030acfd7eb2b6454bd45015a3d134fe5f0d"
+    "sha256": "419c510be6a93144261e65a00e733764c3aab1f6ef8e6a804ff774f0e094b921"
   },
   {
     "file": "docs/screenshots/readme-floorplan.jpg",
