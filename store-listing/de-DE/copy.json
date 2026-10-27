@@ -22,8 +22,7 @@
   "router": {
     "badge": "",
     "title": "Liegt es am Router?\n*Finde es schnell heraus*",
-    "body": "Antwortzeit, Stabilität und Paketverlust.",
-    "stat": ""
+    "body": "Antwortzeit, Stabilität und Paketverlust."
   },
   "appearance": {
     "badge": "",

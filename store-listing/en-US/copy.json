@@ -22,8 +22,7 @@
   "router": {
     "badge": "Router check",
     "title": "Is it the router?\n*Find out fast*",
-    "body": "Speed, stability and packet loss.",
-    "stat": "4.1 ms"
+    "body": "Speed, stability and packet loss."
   },
   "appearance": {
     "badge": "Material You",

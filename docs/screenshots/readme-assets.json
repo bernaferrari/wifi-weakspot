@@ -2,31 +2,31 @@
   {
     "file": "docs/screenshots/readme-channels.jpg",
     "source": "store-listing/en-US/screenshots/v8-01-channels.jpg",
-    "sha256": "790848a11a94e4fa3c50e173da9a1ec750676b5467bae68019e5208daab32d39"
+    "sha256": "a64d0194f6d7e2e24fa9cd68d288660406ce5734fc37eacf0abc27674d062ae4"
   },
   {
     "file": "docs/screenshots/readme-overtime.jpg",
     "source": "store-listing/en-US/screenshots/v8-02-history.jpg",
-    "sha256": "f733db7bec624a21c1f66861686f75dc2924c93982daec62870706598bba5cb3"
+    "sha256": "9bea54e6e2522ac57eb38c8e79a4cf1d33b1f49b1a8af266b3f85e387fecb0bc"
   },
   {
     "file": "docs/screenshots/readme-rooms.jpg",
     "source": "store-listing/en-US/screenshots/v8-04-rooms.jpg",
-    "sha256": "d43ebb2c5d179bfc9a0697fa27417dfae3c6a7064f46d9b08e348d78e51c5024"
+    "sha256": "b56928523ebe2b985e9ca35bf6a4da27debbff63e6c25b4155a1c21926847dfc"
   },
   {
     "file": "docs/screenshots/readme-settings.jpg",
     "source": "store-listing/en-US/screenshots/v8-05-router.jpg",
-    "sha256": "49a5f3a1c928e91e47ba9b51554e5a08c70a84c967402457ceb30d7e8f92fc5f"
+    "sha256": "abb0b92dc4f438c5827251a704ea4030acfd7eb2b6454bd45015a3d134fe5f0d"
   },
   {
     "file": "docs/screenshots/readme-floorplan.jpg",
     "source": "store-listing/en-US/screenshots/v8-03-coverage.jpg",
-    "sha256": "899517e35aa6fb12453717feb926c4ab03848d890a2b618b3a6ee13e7642f46f"
+    "sha256": "9e0bbc1372f54e6b2c7c703f229bfb5008dcf45a341f2b7750e891d49b4b94d6"
   },
   {
     "file": "docs/screenshots/readme-wide.jpg",
     "source": "store-listing/en-US/tablet/v8-10-01-channels.jpg",
-    "sha256": "08fc7d6f805cc3b6be9d149cae8548405b1728b56dbd6b3155859f1c6a0f6815"
+    "sha256": "4802cb374e9647acab67ac34b76b5ac5a37e1f0aa80a4cbc6e134a576ca8ab9e"
   }
 ]

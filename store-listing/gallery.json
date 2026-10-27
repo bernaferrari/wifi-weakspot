@@ -40,7 +40,7 @@
       "feature": "history",
       "file": "screenshots/v8-02-history.jpg",
       "raw": "light/05-history.jpg",
-      "layout": "bleed",
+      "layout": "zoomed",
       "accent": "#b98cff"
     },
     {
@@ -121,7 +121,23 @@
       "file": "screenshots/v8-05-router.jpg",
       "raw": "light/06-router.jpg",
       "layout": "number",
-      "accent": "#5fb8ff"
+      "accent": "#5fb8ff",
+      "callouts": [
+        {
+          "raw": "light/06-router.jpg",
+          "x": 40,
+          "y": 1380,
+          "w": 1000,
+          "h": 180,
+          "radius": 90,
+          "place": {
+            "left": 60,
+            "top": 1240,
+            "width": 960
+          },
+          "role": "pop"
+        }
+      ]
     },
     {
       "feature": "network",
@@ -130,11 +146,11 @@
       "accent": "#7d8bff",
       "devices": [
         {
-          "raw": "light/07-devices.jpg",
+          "raw": "light/04-channels.jpg",
           "role": "primary"
         },
         {
-          "raw": "light/01-signal.jpg",
+          "raw": "light/07-devices.jpg",
           "role": "secondary"
         }
       ]

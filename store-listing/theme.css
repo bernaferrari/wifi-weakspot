@@ -18,24 +18,23 @@ header p{margin:24px auto 0;font-size:38px;line-height:1.3;font-weight:450;color
 .callout.pop{z-index:7;box-shadow:0 26px 60px -10px #000000e0,0 0 0 2px var(--accent)}
 
 /* 1 · Hero: the graph itself, floating in 3D, with the real suggested-channel chip. */
-.phone .hero .callout.tilt3d{transform:perspective(2200px) rotateX(16deg) rotateY(-14deg) rotateZ(-2deg);box-shadow:0 60px 120px -20px #000000e6,0 0 160px -40px var(--accent)}
-.phone .hero .callout.pop{transform:rotate(-4deg)}
+.phone .hero .callout.tilt3d{transform:perspective(2400px) rotateX(10deg) rotateY(-10deg);box-shadow:0 60px 120px -20px #000000e6,0 0 160px -40px var(--accent)}
+
 /* 2 · A phone leaning in from the edge. */
-.phone .bleed .device{left:-60px;top:560px;width:820px;transform:rotate(-9deg)}
+.phone .zoomed .device{left:90px;top:500px;width:900px}
 /* 3 · The heat map laid down like a floor plan. */
 .phone .floor .callout.floorplan{transform:perspective(1800px) rotateX(46deg) rotateZ(-24deg);top:600px;box-shadow:0 0 0 14px #ffffff12,0 90px 140px -30px #000000f0,0 0 200px -40px var(--accent)}
 /* 4 · Real room cards floating around the phone. */
 .phone .float .device{left:290px;top:560px;width:520px}
-.phone .float .pop.tl{transform:rotate(-4deg)}
-.phone .float .pop.tr{transform:rotate(4deg)}
+
 /* 5 · One number behind the phone. */
 .stat{position:absolute;z-index:1;left:0;right:0;text-align:center;font-weight:800;letter-spacing:-.05em;color:var(--accent);opacity:.22;font-variation-settings:'opsz' 144,'ROND' 100}
 .phone .stat{top:520px;font-size:330px}
-.phone .number .device{left:250px;top:700px;width:580px}
+.phone .number .device{left:250px;top:560px;width:580px}
 /* 6 · Two phones, cut by the canvas top and bottom, the copy between them. */
 .phone .stack header{top:760px}
-.phone .stack .primary{left:230px;top:-880px;width:620px;transform:rotate(-4deg)}
-.phone .stack .secondary{left:230px;top:1250px;width:620px;transform:rotate(4deg)}
+.phone .stack .primary{left:230px;top:-880px;width:620px}
+.phone .stack .secondary{left:230px;top:1250px;width:620px}
 /* 7 · Light and dark, turned toward each other. */
 .phone .duo .device{width:480px;top:560px}
 .phone .duo .primary{left:80px;transform:perspective(2600px) rotateY(22deg) rotate(2deg)}
@@ -44,8 +43,6 @@ header p{margin:24px auto 0;font-size:38px;line-height:1.3;font-weight:450;color
 /* Tablets: the same family with simpler compositions. */
 .tablet7 h1{font-size:104px}
 .tablet7 .device{--bezel:20px;--radius:56px;left:220px;top:640px;width:760px}
-.right .device{transform:perspective(2600px) rotateY(-18deg) rotateX(5deg) rotate(-3deg)}
-.left .device{transform:perspective(2600px) rotateY(18deg) rotateX(5deg) rotate(3deg)}
 .tablet7 .small .device{left:340px;top:700px;width:520px}
 .tablet10 header{text-align:left;left:96px;right:auto;top:0;bottom:0;width:620px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
 .tablet10 h1{font-size:86px}
