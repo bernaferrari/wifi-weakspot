@@ -10,19 +10,29 @@
     "sha256": "7a288a95ff408d7c92658097f8ba449821fb3f24697140f21080c1b4ac71f1c2"
   },
   {
+    "file": "docs/screenshots/readme-floorplan.jpg",
+    "source": "store-listing/en-US/screenshots/v8-03-coverage.jpg",
+    "sha256": "1f2fa6fd6fdb8142f61f3c31baa27bbc48da81a4580c51cb71f65096bdc64e14"
+  },
+  {
     "file": "docs/screenshots/readme-rooms.jpg",
     "source": "store-listing/en-US/screenshots/v8-04-rooms.jpg",
     "sha256": "d00cb99cb064d08014ecb58165386c74a8532fdafbb4e2db97d179f65af3739e"
   },
   {
-    "file": "docs/screenshots/readme-settings.jpg",
+    "file": "docs/screenshots/readme-router.jpg",
     "source": "store-listing/en-US/screenshots/v8-05-router.jpg",
     "sha256": "90b01f0231a54aab23d51df4bb04578f3e22e949da4dc4ccca76cdfe6d511d5a"
   },
   {
-    "file": "docs/screenshots/readme-floorplan.jpg",
-    "source": "store-listing/en-US/screenshots/v8-03-coverage.jpg",
-    "sha256": "1f2fa6fd6fdb8142f61f3c31baa27bbc48da81a4580c51cb71f65096bdc64e14"
+    "file": "docs/screenshots/readme-network.jpg",
+    "source": "store-listing/en-US/screenshots/v8-06-network.jpg",
+    "sha256": "476b18dd8e6eb1978b905fdf36cec9fa07d67a8127064c3d075fa234ced4e48b"
+  },
+  {
+    "file": "docs/screenshots/readme-appearance.jpg",
+    "source": "store-listing/en-US/screenshots/v8-07-appearance.jpg",
+    "sha256": "c1b43415aa973a8fdbfa1d92c741af3bd3bf35427c50899fa6ec07c8e96d180a"
   },
   {
     "file": "docs/screenshots/readme-wide.jpg",

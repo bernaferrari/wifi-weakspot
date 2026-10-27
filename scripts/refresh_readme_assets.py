@@ -14,9 +14,11 @@ manifest = json.loads((listing / "assets.json").read_text())
 targets = [
     ("phone", "channels", "readme-channels.jpg"),
     ("phone", "history", "readme-overtime.jpg"),
-    ("phone", "rooms", "readme-rooms.jpg"),
-    ("phone", "router", "readme-settings.jpg"),
     ("phone", "coverage", "readme-floorplan.jpg"),
+    ("phone", "rooms", "readme-rooms.jpg"),
+    ("phone", "router", "readme-router.jpg"),
+    ("phone", "network", "readme-network.jpg"),
+    ("phone", "appearance", "readme-appearance.jpg"),
     ("tablet10", "channels", "readme-wide.jpg"),
 ]
 provenance = []
@@ -41,4 +43,4 @@ if args.check:
     assert json.loads(record.read_text()) == provenance, "README asset provenance is stale"
 else:
     record.write_text(json.dumps(provenance, indent=2) + "\n")
-print("Verified 6 README images match the current Play assets." if args.check else "Refreshed 6 README images from the current Play assets.")
+print(f"Verified {len(targets)} README images match the current Play assets." if args.check else f"Refreshed {len(targets)} README images from the current Play assets.")
