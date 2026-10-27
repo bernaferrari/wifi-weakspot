@@ -188,7 +188,7 @@ class AndroidScanThrottleManager(
         }.getOrDefault(false)
         val throttled = when {
             sdk < Build.VERSION_CODES.P -> false
-            sdk >= Build.VERSION_CODES.R -> runCatching {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> runCatching {
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager).isScanThrottleEnabled
             }.getOrElse { readThrottleSetting() }
             else -> readThrottleSetting()
