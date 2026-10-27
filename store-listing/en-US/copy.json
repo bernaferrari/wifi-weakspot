@@ -1,0 +1,46 @@
+{
+  "channels": {
+    "title": "See every network\n*around you*",
+    "body": "Find the clearest channel in seconds."
+  },
+  "rooms": {
+    "title": "Compare signal\n*room by room*",
+    "body": "Find the best spot to work."
+  },
+  "coverage": {
+    "title": "Map your home's\n*weak spots*",
+    "body": "Tap where you stand. The heat map fills in."
+  },
+  "history": {
+    "title": "Watch your signal\n*drop and recover*",
+    "body": "Walk around. See it change live."
+  },
+  "router": {
+    "title": "Is it the router?\n*Find out fast*",
+    "body": "Speed, stability and packet loss."
+  },
+  "appearance": {
+    "title": "Your colors,\n*your style*",
+    "body": "Material You, light and dark."
+  },
+  "desktop/channels": {
+    "title": "Pick the *clearest channel*"
+  },
+  "desktop/home": {
+    "title": "Find your Wi‑Fi *weak spots*"
+  },
+  "desktop/history": {
+    "title": "Watch your signal *change live*"
+  },
+  "desktop/appearance": {
+    "title": "Your colors, *your style*"
+  },
+  "home": {
+    "title": "Your signal,\n*at a glance*",
+    "body": "Strength, channel and speed, right now."
+  },
+  "devices": {
+    "title": "Who's on\n*your Wi‑Fi*",
+    "body": "Every device on your network."
+  }
+}

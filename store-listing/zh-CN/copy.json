@@ -1,0 +1,46 @@
+{
+  "home": {
+    "title": "",
+    "body": ""
+  },
+  "channels": {
+    "title": "",
+    "body": ""
+  },
+  "rooms": {
+    "title": "",
+    "body": ""
+  },
+  "coverage": {
+    "title": "",
+    "body": ""
+  },
+  "history": {
+    "title": "",
+    "body": ""
+  },
+  "router": {
+    "title": "",
+    "body": ""
+  },
+  "appearance": {
+    "title": "",
+    "body": ""
+  },
+  "desktop/channels": {
+    "title": ""
+  },
+  "desktop/home": {
+    "title": ""
+  },
+  "desktop/history": {
+    "title": ""
+  },
+  "desktop/appearance": {
+    "title": ""
+  },
+  "devices": {
+    "title": "",
+    "body": ""
+  }
+}

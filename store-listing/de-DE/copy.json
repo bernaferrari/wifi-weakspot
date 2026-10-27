@@ -1,0 +1,46 @@
+{
+  "home": {
+    "title": "Finde die\n*WLAN-Schwachstellen*",
+    "body": "Prüfe dein Signal überall zu Hause."
+  },
+  "channels": {
+    "title": "Wähle den\n*freiesten Kanal*",
+    "body": "Sieh alle Netzwerke in der Nähe und ihre Überschneidungen."
+  },
+  "rooms": {
+    "title": "Vergleiche das Signal\n*Raum für Raum*",
+    "body": "Speichere Messungen und finde den besten Arbeitsplatz."
+  },
+  "coverage": {
+    "title": "Erfasse die Abdeckung\n*in deinem Zuhause*",
+    "body": "Tippe auf deinen Standort. Sieh, wie die Karte wächst."
+  },
+  "history": {
+    "title": "Verfolge dein Signal\n*in Echtzeit*",
+    "body": "Beobachte jedes Netzwerk im Zeitverlauf."
+  },
+  "router": {
+    "title": "Liegt es am Router?\n*Finde es schnell heraus*",
+    "body": "Antwortzeit, Stabilität und Paketverlust."
+  },
+  "appearance": {
+    "title": "Deine Farben,\n*dein Stil*",
+    "body": "Material-You-Farben, vier Stile, hell und dunkel."
+  },
+  "desktop/channels": {
+    "title": "Wähle den *freiesten Kanal*"
+  },
+  "desktop/home": {
+    "title": "Finde die *WLAN-Schwachstellen*"
+  },
+  "desktop/history": {
+    "title": "Verfolge dein Signal *in Echtzeit*"
+  },
+  "desktop/appearance": {
+    "title": "Deine Farben, *dein Stil*"
+  },
+  "devices": {
+    "title": "",
+    "body": ""
+  }
+}

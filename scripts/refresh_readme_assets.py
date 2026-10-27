@@ -15,14 +15,15 @@ targets = [
     ("phone", "channels", "readme-channels.jpg"),
     ("phone", "history", "readme-overtime.jpg"),
     ("phone", "rooms", "readme-rooms.jpg"),
-    ("phone", "appearance", "readme-settings.jpg"),
+    ("phone", "router", "readme-settings.jpg"),
     ("phone", "coverage", "readme-floorplan.jpg"),
-    ("desktop", "channels", "readme-wide.jpg"),
+    ("tablet10", "channels", "readme-wide.jpg"),
 ]
 provenance = []
 for gallery, feature, filename in targets:
     matches = [item["file"] for item in manifest["galleries"][gallery]
-               if Path(item["file"]).stem.endswith("-" + feature)]
+               if item.get("feature") == feature or
+               ("feature" not in item and Path(item["file"]).stem.endswith("-" + feature))]
     assert len(matches) == 1, f"Expected one {gallery}/{feature} asset, found {matches}"
     source = listing / matches[0]
     destination = repo / "docs" / "screenshots" / filename

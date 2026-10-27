@@ -1,0 +1,11 @@
+{
+ "phone|2.4 GHz, 18 networks#0": "0.0.0.0.0.0.0.1.0.1.0.0",
+ "phone|Networks#0": "0.0.0.0.0.1.0.0.1.0",
+ "phone|Signal over time#0": "0.0.0.0.0.0.0.0.0.2.1.0",
+ "tablet10|2.4 GHz, 18 networks#0": "0.0.0.0.1.0.0.0.1.0.0",
+ "tablet10|Networks#0": "0.0.0.0.0.0.0.1.0",
+ "tablet10|Signal over time#0": "0.0.0.0.1.0.1.2.1.0",
+ "tablet7|2.4 GHz, 18 networks#0": "0.0.0.0.1.0.1.0.1.0.0",
+ "tablet7|Networks#0": "0.0.0.0.0.0.0.1.0",
+ "tablet7|Signal over time#0": "0.0.0.0.1.0.0.0.2.1.0"
+}

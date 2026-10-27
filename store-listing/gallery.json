@@ -1,0 +1,142 @@
+{
+  "phone": [
+    {
+      "feature": "channels",
+      "file": "screenshots/v7-01-channels.jpg",
+      "raw": "light/04-channels.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "history",
+      "file": "screenshots/v7-02-history.jpg",
+      "raw": "light/05-history.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "coverage",
+      "file": "screenshots/v7-03-coverage.jpg",
+      "raw": "light/03-coverage.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "rooms",
+      "file": "screenshots/v7-04-rooms.jpg",
+      "raw": "light/02-rooms.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "router",
+      "file": "screenshots/v7-05-router.jpg",
+      "raw": "light/06-router.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "devices",
+      "file": "screenshots/v7-06-devices.jpg",
+      "raw": "light/07-devices.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "home",
+      "file": "screenshots/v7-07-home.jpg",
+      "raw": "light/01-signal.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "appearance",
+      "file": "screenshots/v7-08-appearance.jpg",
+      "raw": "light/08-appearance.jpg",
+      "theme": "light"
+    }
+  ],
+  "tablet7": [
+    {
+      "feature": "channels",
+      "file": "tablet/v7-7-01-channels.jpg",
+      "raw": "light/tablet/7-02-channels.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "history",
+      "file": "tablet/v7-7-02-history.jpg",
+      "raw": "light/tablet/7-05-history.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "coverage",
+      "file": "tablet/v7-7-03-coverage.jpg",
+      "raw": "light/tablet/7-03-coverage.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "rooms",
+      "file": "tablet/v7-7-04-rooms.jpg",
+      "raw": "light/tablet/7-02-rooms.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "appearance",
+      "file": "tablet/v7-7-05-appearance.jpg",
+      "raw": "light/tablet/7-04-appearance.jpg",
+      "theme": "light"
+    }
+  ],
+  "tablet10": [
+    {
+      "feature": "channels",
+      "file": "tablet/v7-10-01-channels.jpg",
+      "raw": "light/tablet/10-02-channels.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "history",
+      "file": "tablet/v7-10-02-history.jpg",
+      "raw": "light/tablet/10-05-history.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "coverage",
+      "file": "tablet/v7-10-03-coverage.jpg",
+      "raw": "light/tablet/10-03-coverage.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "rooms",
+      "file": "tablet/v7-10-04-rooms.jpg",
+      "raw": "light/tablet/10-02-rooms.jpg",
+      "theme": "light"
+    },
+    {
+      "feature": "appearance",
+      "file": "tablet/v7-10-05-appearance.jpg",
+      "raw": "light/tablet/10-04-appearance.jpg",
+      "theme": "light"
+    }
+  ],
+  "desktop": [
+    {
+      "feature": "channels",
+      "file": "desktop/v7-01-channels.jpg",
+      "raw": "desktop/02-channels.jpg",
+      "theme": "dark"
+    },
+    {
+      "feature": "home",
+      "file": "desktop/v7-02-home.jpg",
+      "raw": "desktop/01-home.jpg",
+      "theme": "dark"
+    },
+    {
+      "feature": "history",
+      "file": "desktop/v7-03-history.jpg",
+      "raw": "desktop/03-history.jpg",
+      "theme": "dark"
+    },
+    {
+      "feature": "appearance",
+      "file": "desktop/v7-04-appearance.jpg",
+      "raw": "desktop/04-appearance.jpg",
+      "theme": "light"
+    }
+  ]
+}

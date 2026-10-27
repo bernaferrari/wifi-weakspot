@@ -1,0 +1,24 @@
+{
+  "app": "WiFi Weakspot",
+  "locales": [
+    "en-US",
+    "de-DE",
+    "es-ES",
+    "pt-BR",
+    "fr-FR",
+    "it-IT",
+    "ru-RU",
+    "ja-JP",
+    "ko-KR",
+    "zh-CN"
+  ],
+  "defaultLocale": "en-US",
+  "writeAssets": false,
+  "contactSheets": {
+    "phone": "gallery-contact-sheet.jpg",
+    "tablet7": "gallery-tablet7.jpg",
+    "tablet10": "gallery-tablet10.jpg",
+    "desktop": "gallery-desktop.jpg"
+  },
+  "supersample": 2
+}
