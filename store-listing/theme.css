@@ -13,11 +13,11 @@ header p{margin:28px auto 0;font-size:40px;line-height:1.3;letter-spacing:-.01em
 .device{--bezel:12px;--radius:70px;background:#16182a;
   box-shadow:inset 0 0 0 2px #3a3d52,0 2px 4px #15172b14,0 40px 80px -24px #2a2f6a40,0 80px 140px -60px #2a2f6a33}
 
-.phone .device{left:150px;top:600px;width:780px}
+.phone .device{left:250px;top:470px;width:580px}
 
 .tablet7 header{top:132px}
 .tablet7 h1{font-size:108px}
-.tablet7 .device{--bezel:20px;--radius:60px;left:150px;top:620px;width:900px}
+.tablet7 .device{--bezel:20px;--radius:56px;left:220px;top:560px;width:760px}
 
 .tablet10 header{text-align:left;left:96px;right:auto;top:0;bottom:0;width:600px;display:flex;flex-direction:column;justify-content:center}
 .tablet10 h1{font-size:90px}
@@ -30,14 +30,19 @@ header p{margin:28px auto 0;font-size:40px;line-height:1.3;letter-spacing:-.01em
 .desktop header p{margin-top:18px;font-size:32px}
 .desktop .device{left:220px;top:290px;width:1480px;box-shadow:inset 0 0 0 1px #ffffff1c,0 40px 90px -30px #2a2f6a40}
 
-/* Variety: every card shares the type and canvas, but each composes the product differently, so a
-   swipe through the carousel keeps revealing something new. */
-.callout.zoom{box-shadow:0 2px 4px #15172b14,0 40px 90px -30px #2a2f6a55,0 0 0 1px #15172b0d}
+
+/* Devices are whole and three-dimensional: turned in perspective, with a lit edge and a deep shadow.
+   Cards alternate the turn so a swipe through the carousel keeps moving. */
+.device{transform-style:preserve-3d;transform-origin:50% 40%;
+  box-shadow:inset 0 0 0 2px #3a3d52,inset 0 0 0 5px #0c0d18,0 2px 4px #15172b14,0 60px 110px -30px #1f2463aa,0 120px 180px -80px #1f246377}
+.right .device{transform:perspective(2600px) rotateY(-20deg) rotateX(6deg) rotate(-3deg)}
+.left .device{transform:perspective(2600px) rotateY(20deg) rotateX(6deg) rotate(3deg)}
+.right .device{box-shadow:inset 0 0 0 2px #3a3d52,inset 0 0 0 5px #0c0d18,14px 0 0 -2px #2a2d44,40px 70px 110px -30px #1f2463aa}
+.left .device{box-shadow:inset 0 0 0 2px #3a3d52,inset 0 0 0 5px #0c0d18,-14px 0 0 -2px #2a2d44,-40px 70px 110px -30px #1f2463aa}
 .indigo{--ink:#ffffff;--accent:#c7ccff;--muted:#d9dcff;color:var(--ink)}
-.indigo .device{box-shadow:inset 0 0 0 2px #5a5f86,0 50px 110px -20px #05082a99}
-.phone .bottom .device{top:-260px}
-.phone .bottom header{top:auto;bottom:110px}
-.phone .tilt .device{left:170px;top:640px;transform:rotate(-6deg)}
-.phone .duo .device{width:600px;top:640px}
-.phone .duo .primary{left:40px;transform:rotate(-5deg)}
-.phone .duo .secondary{left:440px;top:700px;transform:rotate(5deg)}
+.indigo .device{--edge:#11143a}
+/* Two phones, light and dark, turned toward each other. */
+.phone .duo .device{width:480px;top:520px}
+.phone .duo .primary{left:80px;transform:perspective(2600px) rotateY(22deg) rotate(2deg)}
+.phone .duo .secondary{left:520px;top:580px;transform:perspective(2600px) rotateY(-22deg) rotate(-2deg)}
+.tablet10 .right .device,.tablet10 .left .device{width:1020px;left:800px;top:250px}
