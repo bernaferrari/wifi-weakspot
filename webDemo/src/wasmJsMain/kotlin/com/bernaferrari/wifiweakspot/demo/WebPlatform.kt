@@ -18,7 +18,7 @@ class WebPlatformActions : PlatformActions {
     override fun showMessage(text: String) = logMessage(text)
     override fun copyToClipboard(label: String, text: String) = copyText(text)
     override fun needsNotificationPermission() = false
-    override fun loadImage(path: String): ImageBitmap? = null
+    override suspend fun loadImage(path: String): ImageBitmap? = null
     override fun deleteOwnedFile(path: String) = Unit
     override fun openUrl(url: String) = openTab(url)
     override fun shareImage(image: ImageBitmap, title: String) = logMessage(com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.mapSharingAndroidOnly)

@@ -3,6 +3,17 @@ package com.bernaferrari.wifiweakspot.core.i18n.ko
 import com.bernaferrari.wifiweakspot.core.i18n.SurveyStrings
 
 object KoSurveyStrings : SurveyStrings {
+    override val horizontalPosition = "왼쪽에서의 위치"
+    override val verticalPosition = "위에서의 위치"
+    override val measureHere = "여기서 측정"
+    override val recheckReading = "여기서 다시 측정"
+    override val moveLeft = "왼쪽으로 이동"
+    override val moveRight = "오른쪽으로 이동"
+    override val moveUp = "위로 이동"
+    override val moveDown = "아래로 이동"
+    override fun mapPosition(x: Int, y: Int) = "위치: 왼쪽에서 $x%, 위에서 $y%"
+    override fun pointName(id: Long) = "측정값 $id"
+
     override val measuringHoldStill = "측정 중입니다. 기기를 움직이지 마세요"
 
     override val tapWhereYouAreStanding = "평면도에서 현재 위치를 누르세요"

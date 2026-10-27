@@ -100,6 +100,9 @@ interface WifiWeakspotDao {
     @Query("DELETE FROM survey_points WHERE id = :pointId")
     suspend fun deleteSurveyPoint(pointId: Long)
 
+    @Update
+    suspend fun updateSurveyPoint(point: SurveyPointEntity)
+
     @Insert
     suspend fun insertSurveyPoint(point: SurveyPointEntity)
 

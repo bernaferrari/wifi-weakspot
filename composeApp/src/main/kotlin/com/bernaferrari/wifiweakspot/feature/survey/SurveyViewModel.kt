@@ -69,10 +69,11 @@ class SurveyViewModel(
     val isUpdatingProject = _isUpdatingProject.asStateFlow()
     private val projectWrites = Mutex()
     private var contextGeneration = 0L
+    private var lastRecheckedPoint: SurveyPointEntity? = null
     private val sampleRequests = Channel<SampleRequest>(Channel.CONFLATED)
     private data class SampleRequest(
         val projectId: Long, val floorId: Int, val targetBssid: String,
-        val position: SurveyPosition, val generation: Long
+        val position: SurveyPosition, val generation: Long, val pointId: Long? = null
     )
 
     init {
@@ -132,11 +133,19 @@ class SurveyViewModel(
                             return@withLock
                         }
                         val position = request.position
-                        dao.insertSurveyPoint(SurveyPointEntity(
-                            projectId = request.projectId, floorId = request.floorId,
+                        val previous = request.pointId?.let { id ->
+                            dao.getPointsForProject(request.projectId).first().find { it.id == id && it.floorId == request.floorId }
+                        }
+                        // A deleted/changed point must never be resurrected by a delayed recheck.
+                        if (request.pointId != null && previous == null) return@withLock
+                        val reading = SurveyPointEntity(
+                            id = previous?.id ?: 0, projectId = request.projectId, floorId = request.floorId,
                             x = position.x, y = position.y, rssi = measurement.rssi,
-                            ssid = measurement.ssid, bssid = measurement.bssid, timestamp = measurement.timestamp
-                        ))
+                            ssid = measurement.ssid, bssid = measurement.bssid, timestamp = measurement.timestamp,
+                            label = previous?.label
+                        )
+                        if (previous == null) dao.insertSurveyPoint(reading) else dao.updateSurveyPoint(reading)
+                        lastRecheckedPoint = previous
                         // The new spot on the map is the confirmation; no snackbar over the toolbar.
                     }
                 } catch (cancelled: CancellationException) {
@@ -296,7 +305,21 @@ class SurveyViewModel(
         }
     }
 
-    fun addPoint(x: Float, y: Float) {
+    fun recheckPoint(point: SurveyPointEntity) {
+        if (point.projectId != _currentProjectId.value || point.floorId != _selectedFloor.value) return
+        requestPoint(point.x, point.y, point.id)
+    }
+
+    fun renamePoint(point: SurveyPointEntity, name: String) {
+        mutateProject(point.projectId, appStrings.common.couldNotSaveChanges) {
+            val current = dao.getPointsForProject(point.projectId).first().find { it.id == point.id } ?: return@mutateProject
+            dao.updateSurveyPoint(current.copy(label = name.trim().take(60).ifBlank { null }))
+        }
+    }
+
+    fun addPoint(x: Float, y: Float) = requestPoint(x, y)
+
+    private fun requestPoint(x: Float, y: Float, pointId: Long? = null) {
         if (_isUpdatingProject.value) {
             _message.value = appStrings.survey.stillSavingMap
             return
@@ -310,7 +333,7 @@ class SurveyViewModel(
         if (!x.isFinite() || !y.isFinite()) return
         val position = SurveyPosition(x, y).clamped()
         _currentPosition.value = position
-        sampleRequests.trySend(SampleRequest(project.id, _selectedFloor.value, target, position, contextGeneration))
+        sampleRequests.trySend(SampleRequest(project.id, _selectedFloor.value, target, position, contextGeneration, pointId))
     }
 
     fun deletePoint(point: com.bernaferrari.wifiweakspot.core.database.entities.SurveyPointEntity) {
@@ -319,7 +342,15 @@ class SurveyViewModel(
 
     fun undoLastPoint() {
         val last = currentPoints.value.lastOrNull() ?: return
-        mutateProject(last.projectId, appStrings.common.couldNotDeleteItem) { dao.deleteSurveyPoint(last.id) }
+        val previous = lastRecheckedPoint?.takeIf { it.id == last.id && it.projectId == last.projectId }
+        mutateProject(last.projectId, appStrings.common.couldNotDeleteItem) {
+            if (previous == null) dao.deleteSurveyPoint(last.id)
+            else {
+                val current = dao.getPointsForProject(last.projectId).first().find { it.id == last.id }
+                if (current != null) dao.updateSurveyPoint(previous.copy(label = current.label))
+            }
+            lastRecheckedPoint = null
+        }
     }
 
     fun deleteProject(project: SurveyProjectEntity, onDeleted: (String?) -> Unit = {}) {
@@ -348,9 +379,9 @@ class SurveyViewModel(
                 } ?: return@launch
                 val (project, points) = snapshot
                 if (points.isEmpty()) { _message.value = appStrings.survey.saveMeasurementBeforeExport; return@launch }
-                val csv = mutableListOf("Timestamp,X_Ratio,Y_Ratio,RSSI_dBm,SSID,BSSID,Floor_ID")
+                val csv = mutableListOf("Timestamp,X_Ratio,Y_Ratio,RSSI_dBm,SSID,BSSID,Floor_ID,Label")
                 points.forEach { p -> csv += listOf(p.timestamp, p.x, p.y, p.rssi, csvField(p.ssid ?: ""),
-                    csvField(p.bssid ?: ""), p.floorId).joinToString(",") }
+                    csvField(p.bssid ?: ""), p.floorId, csvField(p.label ?: "")).joinToString(",") }
                 val safeName = project.name.replace(Regex("[^A-Za-z0-9._-]+"), "_")
                 exportManager.exportToCsv(csv, "Survey_${safeName}_${com.bernaferrari.wifiweakspot.core.util.nowMillis()}")
             } catch (cancelled: CancellationException) {

@@ -3,6 +3,17 @@ package com.bernaferrari.wifiweakspot.core.i18n.ru
 import com.bernaferrari.wifiweakspot.core.i18n.SurveyStrings
 
 object RuSurveyStrings : SurveyStrings {
+    override val horizontalPosition = "По горизонтали, слева"
+    override val verticalPosition = "По вертикали, сверху"
+    override val measureHere = "Измерить здесь"
+    override val recheckReading = "Повторить здесь"
+    override val moveLeft = "Сдвинуть влево"
+    override val moveRight = "Сдвинуть вправо"
+    override val moveUp = "Сдвинуть вверх"
+    override val moveDown = "Сдвинуть вниз"
+    override fun mapPosition(x: Int, y: Int) = "Позиция: $x% слева, $y% сверху"
+    override fun pointName(id: Long) = "Измерение $id"
+
     override val measuringHoldStill = "Измеряю… стой неподвижно"
     override val tapWhereYouAreStanding = "Коснитесь карты, где вы находитесь."
     override val chooseWifi = "Выберите Wi-Fi"

@@ -28,9 +28,7 @@ internal fun coverageGridForMap(
     widthMeters: Float,
     heightMeters: Float
 ): CoverageGrid {
-    val aspect = if (widthMeters.isFinite() && heightMeters.isFinite() && widthMeters > 0f && heightMeters > 0f) {
-        widthMeters / heightMeters
-    } else 1f
+    val aspect = mapAspectRatio(widthMeters, heightMeters)
     return coverageGrid(readings, aspect)
 }
 
@@ -138,4 +136,18 @@ private fun hueLerp(from: Color, to: Color, t: Float): Color {
 private fun smoothStep(edge0: Float, edge1: Float, x: Float): Float {
     val t = ((x - edge0) / (edge1 - edge0)).coerceIn(0f, 1f)
     return t * t * (3f - 2f * t)
+}
+
+/** A map keeps its calibrated aspect on every viewport. Invalid imported sizes fall back to a square. */
+internal fun mapAspectRatio(widthMeters: Float, heightMeters: Float): Float =
+    if (widthMeters.isFinite() && heightMeters.isFinite() && widthMeters > 0f && heightMeters > 0f)
+        (widthMeters / heightMeters).takeIf { it.isFinite() && it > 0f } ?: 1f
+    else 1f
+
+internal data class FittedMapSize(val width: Float, val height: Float)
+
+internal fun fittedMapSize(viewportWidth: Float, viewportHeight: Float, widthMeters: Float, heightMeters: Float): FittedMapSize {
+    val aspect = mapAspectRatio(widthMeters, heightMeters)
+    val width = minOf(viewportWidth.coerceAtLeast(0f), viewportHeight.coerceAtLeast(0f) * aspect)
+    return FittedMapSize(width, width / aspect)
 }

@@ -56,7 +56,7 @@ class AndroidPlatformActions(private val context: Context) : PlatformActions {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
 
-    override fun loadImage(path: String): ImageBitmap? = runCatching {
+    override suspend fun loadImage(path: String): ImageBitmap? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching {
         // Floor plans are often phone photos; decode near screen size, not at full resolution.
         val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
         android.graphics.BitmapFactory.decodeFile(path, bounds)
@@ -64,7 +64,7 @@ class AndroidPlatformActions(private val context: Context) : PlatformActions {
         while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= 2048) sample *= 2
         val options = android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }
         android.graphics.BitmapFactory.decodeFile(path, options)?.asImageBitmap()
-    }.getOrNull()
+    }.getOrNull() }
 
     override fun openUrl(url: String) = open(Intent.ACTION_VIEW, Uri.parse(url))
 

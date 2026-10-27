@@ -3,6 +3,17 @@ package com.bernaferrari.wifiweakspot.core.i18n.zhhans
 import com.bernaferrari.wifiweakspot.core.i18n.SurveyStrings
 
 object ZhHansSurveyStrings : SurveyStrings {
+    override val horizontalPosition = "横向位置，从左侧起"
+    override val verticalPosition = "纵向位置，从顶部起"
+    override val measureHere = "在此测量"
+    override val recheckReading = "在此重新测量"
+    override val moveLeft = "向左移动"
+    override val moveRight = "向右移动"
+    override val moveUp = "向上移动"
+    override val moveDown = "向下移动"
+    override fun mapPosition(x: Int, y: Int) = "位置：距左侧 $x%，距顶部 $y%"
+    override fun pointName(id: Long) = "读数 $id"
+
     override val measuringHoldStill = "正在测量，请保持不动"
 
     override val tapWhereYouAreStanding = "请在平面图上点击你所在的位置"

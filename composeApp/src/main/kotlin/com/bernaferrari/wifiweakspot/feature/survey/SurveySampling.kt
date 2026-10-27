@@ -46,3 +46,12 @@ fun linkSurveyMeasurement(readings: List<com.bernaferrari.wifiweakspot.core.mode
     val latest = readings.last()
     return WifiNetwork(latest.ssid, latest.bssid, rssi, latest.frequency, 20, latest.security, "", latest.sampledAtMillis)
 }
+
+/** Hit-testing uses the fitted map's coordinates, including after the graphics layer handles zoom. */
+internal fun nearestSurveyPoint(
+    points: List<com.bernaferrari.wifiweakspot.core.database.entities.SurveyPointEntity>,
+    x: Float, y: Float, width: Float, height: Float, radius: Float
+): com.bernaferrari.wifiweakspot.core.database.entities.SurveyPointEntity? = points
+    .map { it to ((it.x * width - x) * (it.x * width - x) + (it.y * height - y) * (it.y * height - y)) }
+    .filter { it.second <= radius * radius }
+    .minByOrNull { it.second }?.first

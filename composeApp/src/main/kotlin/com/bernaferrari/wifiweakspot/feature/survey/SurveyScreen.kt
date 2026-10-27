@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.ui.semantics.contentDescription
@@ -62,6 +63,10 @@ fun SurveyScreen(
     var deletingFloor by remember { mutableStateOf<Int?>(null) }
     val isUpdatingProject by viewModel.isUpdatingProject.collectAsStateWithLifecycle()
     val selectedFloor by viewModel.selectedFloor.collectAsStateWithLifecycle()
+    var selectedPointId by remember(project?.id, selectedFloor) { mutableStateOf<Long?>(null) }
+    var cursor by remember(project?.id, selectedFloor) { mutableStateOf(SurveyPosition(0.5f, 0.5f)) }
+    val selectedPoint = points.find { it.id == selectedPointId }
+    var renamingPoint by remember { mutableStateOf<com.bernaferrari.wifiweakspot.core.database.entities.SurveyPointEntity?>(null) }
     val networks by viewModel.availableNetworks.collectAsStateWithLifecycle()
     val isScanning by viewModel.isScanning.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
@@ -112,6 +117,7 @@ fun SurveyScreen(
     val window = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize
     val shortLandscape = with(androidx.compose.ui.platform.LocalDensity.current) { window.width > window.height && window.height.toDp() < 480.dp }
     val controls: @Composable (Modifier) -> Unit = { controlsModifier ->
+        Column(controlsModifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SurveyToolbar(
                 canUndo = points.isNotEmpty() && !isSampling && !isUpdatingProject,
                 hasTarget = hasTarget,
@@ -126,8 +132,18 @@ fun SurveyScreen(
                 onUndo = viewModel::undoLastPoint,
                 onReadings = { showPoints = true },
                 onChooseNetwork = { showNetworks = true; viewModel.refreshNetworks() },
-                modifier = controlsModifier
+                modifier = Modifier.fillMaxWidth()
             )
+        SurveyPlacementControls(
+            cursor = cursor,
+            selectedPoint = selectedPoint,
+            enabled = hasTarget && !isSampling && !isUpdatingProject,
+            canRename = !isSampling && !isUpdatingProject,
+            onPositionChanged = { cursor = it; selectedPointId = null },
+            onMeasure = { selectedPoint?.let(viewModel::recheckPoint) ?: viewModel.addPoint(cursor.x, cursor.y) },
+            onRename = { renamingPoint = selectedPoint }
+        )
+        }
     }
 
     Scaffold(
@@ -213,14 +229,20 @@ fun SurveyScreen(
                         drawLayer(mapLayer)
                     }
             ) {
-                SurveyCanvas(
+                key(project?.id, selectedFloor) { SurveyCanvas(
                     points = points, onPointAdded = viewModel::addPoint,
                     modifier = Modifier.fillMaxSize(),
                     canMeasure = !isSampling && !isUpdatingProject && hasTarget,
                     livePosition = position.takeIf { isSampling }, imagePath = project?.imagePath,
                     expectedReadingMillis = expectedReadingMillis,
-                    readingIsTimed = readingIsTimed
-                )
+                    readingIsTimed = readingIsTimed,
+                    widthMeters = project?.widthMeters ?: 10f,
+                    heightMeters = project?.heightMeters ?: 10f,
+                    cursor = cursor, selectedPointId = selectedPointId,
+                    onPositionChanged = { cursor = it },
+                    onPointSelected = { selectedPointId = it },
+                    onPointRecheck = { id -> points.find { it.id == id }?.let(viewModel::recheckPoint) }
+                ) }
                 // Floors on the left, legend on the right; with many floors the legend wraps below
                 // instead of colliding.
                 androidx.compose.foundation.layout.FlowRow(
@@ -293,6 +315,11 @@ fun SurveyScreen(
         confirmButton = { TextButton(onClick = { viewModel.deleteProject(item, ::releaseOwnedFloorplan); deletingProject = null }) { Text(strings.common.delete) } },
         dismissButton = { TextButton(onClick = { deletingProject = null }) { Text(strings.common.cancel) } }
     ) }
+    renamingPoint?.let { point ->
+        SurveyNameDialog(point.label.orEmpty(), onDismiss = { renamingPoint = null }, onSave = {
+            viewModel.renamePoint(point, it); renamingPoint = null
+        })
+    }
     if (showPoints) ModalBottomSheet(onDismissRequest = { showPoints = false }, sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         val ranked = points.sortedBy { it.rssi }
         LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -313,11 +340,16 @@ fun SurveyScreen(
                 Surface(
                     shape = com.bernaferrari.wifiweakspot.core.designsystem.component.segmentedShape(index, ranked.size, outer = 20.dp, inner = 4.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.fillMaxWidth().animateItem()
+                    modifier = Modifier.fillMaxWidth().animateItem().clickable {
+                        selectedPointId = point.id
+                        cursor = SurveyPosition(point.x, point.y)
+                        showPoints = false
+                    }
                 ) {
                     Row(Modifier.padding(start = 16.dp, top = 10.dp, bottom = 10.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         com.bernaferrari.wifiweakspot.core.designsystem.component.ShapeIcon(Icons.Default.Wifi, quality.polygon(), colors.container, colors.onContainer, size = 40.dp)
                         Column(Modifier.weight(1f)) {
+                            Text(point.label ?: strings.survey.pointName(point.id), style = MaterialTheme.typography.titleMedium)
                             Text("${quality.label} · ${display.reading(point.rssi)}", style = MaterialTheme.typography.bodyLarge)
                             Text(com.bernaferrari.wifiweakspot.core.util.relativeTime(point.timestamp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
@@ -433,8 +465,8 @@ private fun SurveyToolbar(
             if (!hasTarget) Button(onClick = onChooseNetwork, shapes = ButtonDefaults.shapes()) { Text(strings.survey.chooseWifi) }
             else {
                 IconButton(onClick = onUndo, enabled = canUndo) { Icon(Icons.AutoMirrored.Filled.Undo, strings.survey.undoLastReading) }
-                IconButton(onClick = onReadings) { Icon(Icons.AutoMirrored.Filled.List, strings.survey.allReadings) }
             }
+            IconButton(onClick = onReadings) { Icon(Icons.AutoMirrored.Filled.List, strings.survey.allReadings) }
         }
     }
 }

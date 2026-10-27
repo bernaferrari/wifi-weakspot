@@ -57,6 +57,10 @@ class SurveyViewModelTest {
         coEvery { dao.insertSurveyPoint(any()) } coAnswers {
             points.value = points.value + firstArg<SurveyPointEntity>().copy(id = points.value.size.toLong() + 1)
         }
+        coEvery { dao.updateSurveyPoint(any()) } coAnswers {
+            val updated = firstArg<SurveyPointEntity>()
+            points.value = points.value.map { if (it.id == updated.id) updated else it }
+        }
         coEvery { dao.deleteSurveyPoint(any()) } coAnswers {
             val id = firstArg<Long>()
             points.value = points.value.filterNot { it.id == id }
@@ -281,5 +285,68 @@ class SurveyViewModelTest {
         runCurrent()
         assertEquals(listOf(1), points.value.map { it.floorId })
         assertEquals(1, model.selectedFloor.value)
+    }
+
+    @Test fun recheckReplacesMeasurementButKeepsLocationNameAndIdentity() = runTest {
+        val original = SurveyPointEntity(9, 1, 0.25f, 0.75f, -90, "Home", "selected", 1, 1, "Desk")
+        points.value = listOf(original)
+        runCurrent()
+        model.recheckPoint(original)
+        runCurrent()
+        val updated = points.value.single()
+        assertEquals(9L, updated.id)
+        assertEquals("Desk", updated.label)
+        assertEquals(original.x, updated.x)
+        assertEquals(original.y, updated.y)
+        assertEquals(-75, updated.rssi)
+        coVerify(exactly = 0) { dao.insertSurveyPoint(any()) }
+    }
+
+    @Test fun failedRecheckPreservesPreviousReading() = runTest {
+        val original = SurveyPointEntity(9, 1, 0.25f, 0.75f, -90, "Home", "selected", 1, 1, "Desk")
+        points.value = listOf(original)
+        coEvery { scanner.awaitNextScan(any()) } returns null
+        runCurrent()
+        model.recheckPoint(original)
+        runCurrent()
+        assertEquals(original, points.value.single())
+        coVerify(exactly = 0) { dao.updateSurveyPoint(any()) }
+    }
+
+    @Test fun deletedPointCannotBeResurrectedByDelayedRecheck() = runTest {
+        val original = SurveyPointEntity(9, 1, 0.25f, 0.75f, -90, "Home", "selected", 1, 1, "Desk")
+        points.value = listOf(original)
+        val reply = CompletableDeferred<List<WifiNetwork>?>()
+        coEvery { scanner.awaitNextScan(any()) } coAnswers { reply.await() }
+        runCurrent()
+        model.recheckPoint(original)
+        runCurrent()
+        points.value = emptyList()
+        reply.complete(listOf(network()))
+        runCurrent()
+        assertTrue(points.value.isEmpty())
+        coVerify(exactly = 0) { dao.updateSurveyPoint(any()) }
+    }
+
+    @Test fun renamePreservesTheLatestMeasurementRatherThanStaleUiCopy() = runTest {
+        val stale = SurveyPointEntity(9, 1, 0.25f, 0.75f, -90, "Home", "selected", 1, 1)
+        points.value = listOf(stale.copy(rssi = -50, timestamp = 30))
+        runCurrent()
+        model.renamePoint(stale, "  Desk  ")
+        runCurrent()
+        assertEquals("Desk", points.value.single().label)
+        assertEquals(-50, points.value.single().rssi)
+        assertEquals(30L, points.value.single().timestamp)
+    }
+
+    @Test fun undoRecheckRestoresPriorMeasurementInsteadOfDeletingNamedSpot() = runTest {
+        val original = SurveyPointEntity(9, 1, 0.25f, 0.75f, -90, "Home", "selected", 1, 1, "Desk")
+        points.value = listOf(original)
+        runCurrent()
+        model.recheckPoint(original)
+        runCurrent()
+        model.undoLastPoint()
+        runCurrent()
+        assertEquals(original, points.value.single())
     }
 }

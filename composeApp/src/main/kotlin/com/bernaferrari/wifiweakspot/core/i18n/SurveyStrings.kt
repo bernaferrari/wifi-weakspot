@@ -5,6 +5,17 @@ package com.bernaferrari.wifiweakspot.core.i18n
  * Generic actions (Back, Cancel, Save, Delete, Close) live in [CommonStrings].
  */
 interface SurveyStrings {
+    val horizontalPosition: String
+    val verticalPosition: String
+    val measureHere: String
+    val recheckReading: String
+    val moveLeft: String
+    val moveRight: String
+    val moveUp: String
+    val moveDown: String
+    fun mapPosition(x: Int, y: Int): String
+    fun pointName(id: Long): String
+
     // Floor plan map: toolbar status, one instruction at a time.
 
     /** Toolbar status while a reading is being taken. */

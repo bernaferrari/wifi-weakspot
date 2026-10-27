@@ -25,7 +25,7 @@ interface PlatformActions {
     /** Android 13+ asks before an app may post notifications. */
     fun needsNotificationPermission(): Boolean
     /** Decodes an image the app saved earlier (for example a floor plan). */
-    fun loadImage(path: String): ImageBitmap?
+    suspend fun loadImage(path: String): ImageBitmap?
     /** Deletes a file the app owns, such as a replaced floor plan. */
     fun deleteOwnedFile(path: String)
     fun openUrl(url: String)

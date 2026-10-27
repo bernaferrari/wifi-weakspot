@@ -17,7 +17,9 @@ class CoverageFieldTest {
     @Test fun rotatingViewportDoesNotChangeThePhysicalCoverageField() {
         fun field(viewWidth: Float, viewHeight: Float): CoverageGrid {
             val readings = listOf(Triple(0.2f, 0.4f, -50), Triple(0.7f, 0.8f, -80)).map { (x, y, rssi) ->
-                val mapPosition = normalizedSurveyPosition(x * viewWidth, y * viewHeight, viewWidth, viewHeight)!!
+                val fitted = fittedMapSize(viewWidth, viewHeight, 20f, 10f)
+                assertEquals(2f, fitted.width / fitted.height, 0.001f)
+                val mapPosition = normalizedSurveyPosition(x * fitted.width, y * fitted.height, fitted.width, fitted.height)!!
                 PlanReading(mapPosition.x, mapPosition.y, rssi)
             }
             return coverageGridForMap(readings, widthMeters = 20f, heightMeters = 10f)
@@ -58,5 +60,20 @@ class CoverageFieldTest {
         // On a 2:1 plan, 0.15 across is the same distance as 0.3 down.
         val grid = coverageGrid(listOf(PlanReading(0.5f, 0.5f, -50)), aspect = 2f)
         assertEquals(grid.at(0.65f, 0.5f).second, grid.at(0.5f, 0.8f).second, 0.15f)
+    }
+
+    @Test fun mapFitsWithoutStretchingInPortraitLandscapeAndExportSizes() {
+        for ((width, height) in listOf(300f to 600f, 1200f to 400f, 2048f to 2048f)) {
+            val fitted = fittedMapSize(width, height, 20f, 10f)
+            assertEquals(2f, fitted.width / fitted.height, 0.001f)
+            assertTrue(fitted.width <= width && fitted.height <= height)
+        }
+    }
+
+    @Test fun tapSelectsNearestSavedPointAndLeavesEmptyAreasForNewReadings() {
+        val point = com.bernaferrari.wifiweakspot.core.database.entities.SurveyPointEntity(
+            4, 1, 0.25f, 0.75f, -60, "Home", "radio", timestamp = 1)
+        assertEquals(point, nearestSurveyPoint(listOf(point), 52f, 77f, 200f, 100f, 24f))
+        assertEquals(null, nearestSurveyPoint(listOf(point), 190f, 10f, 200f, 100f, 24f))
     }
 }

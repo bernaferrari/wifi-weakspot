@@ -3,6 +3,17 @@ package com.bernaferrari.wifiweakspot.core.i18n.ptbr
 import com.bernaferrari.wifiweakspot.core.i18n.SurveyStrings
 
 object PtBrSurveyStrings : SurveyStrings {
+    override val horizontalPosition = "Na horizontal, a partir da esquerda"
+    override val verticalPosition = "Na vertical, a partir de cima"
+    override val measureHere = "Medir aqui"
+    override val recheckReading = "Medir novamente aqui"
+    override val moveLeft = "Mover à esquerda"
+    override val moveRight = "Mover à direita"
+    override val moveUp = "Mover para cima"
+    override val moveDown = "Mover para baixo"
+    override fun mapPosition(x: Int, y: Int) = "Posição: $x% à direita, $y% abaixo"
+    override fun pointName(id: Long) = "Leitura $id"
+
     override val measuringHoldStill = "Medindo... fique quieto"
     override val tapWhereYouAreStanding = "Toque no mapa onde você está"
     override val chooseWifi = "Escolha Wi-Fi"
