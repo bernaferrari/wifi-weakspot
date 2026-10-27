@@ -86,7 +86,7 @@
         "slide": 0,
         "width": 1200,
         "height": 1920,
-        "bytes": 220820,
+        "bytes": 238919,
         "sources": [
           "raw/light/tablet/7-02-channels.jpg"
         ]
@@ -97,7 +97,7 @@
         "slide": 1,
         "width": 1200,
         "height": 1920,
-        "bytes": 220666,
+        "bytes": 236482,
         "sources": [
           "raw/light/tablet/7-05-history.jpg"
         ]
@@ -108,10 +108,8 @@
         "slide": 2,
         "width": 1200,
         "height": 1920,
-        "bytes": 170843,
-        "sources": [
-          "raw/light/tablet/7-03-coverage.jpg"
-        ]
+        "bytes": 177631,
+        "sources": []
       },
       {
         "file": "tablet/v8-7-04-rooms.jpg",
@@ -119,7 +117,7 @@
         "slide": 3,
         "width": 1200,
         "height": 1920,
-        "bytes": 200162,
+        "bytes": 203714,
         "sources": [
           "raw/light/tablet/7-02-rooms.jpg"
         ]
@@ -130,9 +128,10 @@
         "slide": 4,
         "width": 1200,
         "height": 1920,
-        "bytes": 190329,
+        "bytes": 213433,
         "sources": [
-          "raw/light/tablet/7-04-appearance.jpg"
+          "raw/light/tablet/7-04-appearance.jpg",
+          "raw/tablet/7-04-appearance.jpg"
         ]
       }
     ],
@@ -143,7 +142,7 @@
         "slide": 0,
         "width": 1920,
         "height": 1200,
-        "bytes": 207989,
+        "bytes": 223103,
         "sources": [
           "raw/light/tablet/10-02-channels.jpg"
         ]
@@ -154,7 +153,7 @@
         "slide": 1,
         "width": 1920,
         "height": 1200,
-        "bytes": 206328,
+        "bytes": 220813,
         "sources": [
           "raw/light/tablet/10-05-history.jpg"
         ]
@@ -165,10 +164,8 @@
         "slide": 2,
         "width": 1920,
         "height": 1200,
-        "bytes": 148091,
-        "sources": [
-          "raw/light/tablet/10-03-coverage.jpg"
-        ]
+        "bytes": 160137,
+        "sources": []
       },
       {
         "file": "tablet/v8-10-04-rooms.jpg",
@@ -176,7 +173,7 @@
         "slide": 3,
         "width": 1920,
         "height": 1200,
-        "bytes": 168949,
+        "bytes": 181548,
         "sources": [
           "raw/light/tablet/10-02-rooms.jpg"
         ]
@@ -187,9 +184,10 @@
         "slide": 4,
         "width": 1920,
         "height": 1200,
-        "bytes": 158240,
+        "bytes": 169587,
         "sources": [
-          "raw/light/tablet/10-04-appearance.jpg"
+          "raw/light/tablet/10-04-appearance.jpg",
+          "raw/tablet/10-04-appearance.jpg"
         ]
       }
     ],

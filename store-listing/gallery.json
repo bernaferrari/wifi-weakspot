@@ -132,41 +132,104 @@
       "feature": "channels",
       "file": "tablet/v8-7-01-channels.jpg",
       "raw": "light/tablet/7-02-channels.jpg",
-      "theme": "light",
-      "layout": "flat",
+      "layout": "zoomed",
       "accent": "#7d8bff"
     },
     {
       "feature": "history",
       "file": "tablet/v8-7-02-history.jpg",
       "raw": "light/tablet/7-05-history.jpg",
-      "theme": "light",
-      "layout": "right",
+      "layout": "zoomed",
       "accent": "#b98cff"
     },
     {
       "feature": "coverage",
       "file": "tablet/v8-7-03-coverage.jpg",
-      "raw": "light/tablet/7-03-coverage.jpg",
-      "theme": "light",
-      "layout": "indigo small",
-      "accent": "#3fe0b5"
+      "layout": "floor",
+      "accent": "#3fe0b5",
+      "callouts": [
+        {
+          "raw": "light/tablet/7-03-coverage.jpg",
+          "x": 160,
+          "y": 282,
+          "w": 880,
+          "h": 1230,
+          "radius": 30,
+          "place": {
+            "left": 230,
+            "top": 560,
+            "width": 740
+          },
+          "role": "mapcard"
+        }
+      ]
     },
     {
       "feature": "rooms",
       "file": "tablet/v8-7-04-rooms.jpg",
       "raw": "light/tablet/7-02-rooms.jpg",
-      "theme": "light",
-      "layout": "left",
-      "accent": "#ff9b6a"
+      "layout": "float",
+      "accent": "#ff9b6a",
+      "callouts": [
+        {
+          "raw": "light/tablet/7-02-rooms.jpg",
+          "x": 224,
+          "y": 1115,
+          "w": 944,
+          "h": 144,
+          "radius": 36,
+          "place": {
+            "left": 150,
+            "top": 1110,
+            "width": 900
+          },
+          "role": "pop"
+        },
+        {
+          "raw": "light/tablet/7-02-rooms.jpg",
+          "x": 224,
+          "y": 1263,
+          "w": 944,
+          "h": 144,
+          "radius": 36,
+          "place": {
+            "left": 170,
+            "top": 1255,
+            "width": 900
+          },
+          "role": "pop"
+        },
+        {
+          "raw": "light/tablet/7-02-rooms.jpg",
+          "x": 224,
+          "y": 1411,
+          "w": 944,
+          "h": 144,
+          "radius": 36,
+          "place": {
+            "left": 150,
+            "top": 1400,
+            "width": 900
+          },
+          "role": "pop"
+        }
+      ]
     },
     {
       "feature": "appearance",
       "file": "tablet/v8-7-05-appearance.jpg",
-      "raw": "light/tablet/7-04-appearance.jpg",
-      "theme": "light",
-      "layout": "flat",
-      "accent": "#ff7fb6"
+      "layout": "duo",
+      "accent": "#ff7fb6",
+      "devices": [
+        {
+          "raw": "light/tablet/7-04-appearance.jpg",
+          "role": "primary"
+        },
+        {
+          "raw": "tablet/7-04-appearance.jpg",
+          "role": "secondary"
+        }
+      ]
     }
   ],
   "tablet10": [
@@ -174,41 +237,90 @@
       "feature": "channels",
       "file": "tablet/v8-10-01-channels.jpg",
       "raw": "light/tablet/10-02-channels.jpg",
-      "theme": "light",
-      "layout": "flat",
+      "layout": "zoomed",
       "accent": "#7d8bff"
     },
     {
       "feature": "history",
       "file": "tablet/v8-10-02-history.jpg",
       "raw": "light/tablet/10-05-history.jpg",
-      "theme": "light",
-      "layout": "right",
+      "layout": "zoomed",
       "accent": "#b98cff"
     },
     {
       "feature": "coverage",
       "file": "tablet/v8-10-03-coverage.jpg",
-      "raw": "light/tablet/10-03-coverage.jpg",
-      "theme": "light",
-      "layout": "indigo small",
-      "accent": "#3fe0b5"
+      "layout": "floor",
+      "accent": "#3fe0b5",
+      "callouts": [
+        {
+          "raw": "light/tablet/10-03-coverage.jpg",
+          "x": 710,
+          "y": 144,
+          "w": 488,
+          "h": 750,
+          "radius": 30,
+          "place": {
+            "left": 1080,
+            "top": 150,
+            "width": 600
+          },
+          "role": "mapcard"
+        }
+      ]
     },
     {
       "feature": "rooms",
       "file": "tablet/v8-10-04-rooms.jpg",
       "raw": "light/tablet/10-02-rooms.jpg",
-      "theme": "light",
-      "layout": "left",
-      "accent": "#ff9b6a"
+      "layout": "float",
+      "accent": "#ff9b6a",
+      "callouts": [
+        {
+          "raw": "light/tablet/10-02-rooms.jpg",
+          "x": 516,
+          "y": 733,
+          "w": 1032,
+          "h": 108,
+          "radius": 24,
+          "place": {
+            "left": 900,
+            "top": 620,
+            "width": 880
+          },
+          "role": "pop"
+        },
+        {
+          "raw": "light/tablet/10-02-rooms.jpg",
+          "x": 516,
+          "y": 844,
+          "w": 1032,
+          "h": 108,
+          "radius": 24,
+          "place": {
+            "left": 930,
+            "top": 740,
+            "width": 880
+          },
+          "role": "pop"
+        }
+      ]
     },
     {
       "feature": "appearance",
       "file": "tablet/v8-10-05-appearance.jpg",
-      "raw": "light/tablet/10-04-appearance.jpg",
-      "theme": "light",
-      "layout": "flat",
-      "accent": "#ff7fb6"
+      "layout": "duo",
+      "accent": "#ff7fb6",
+      "devices": [
+        {
+          "raw": "light/tablet/10-04-appearance.jpg",
+          "role": "primary"
+        },
+        {
+          "raw": "tablet/10-04-appearance.jpg",
+          "role": "secondary"
+        }
+      ]
     }
   ],
   "desktop": [

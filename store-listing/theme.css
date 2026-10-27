@@ -41,18 +41,31 @@ header p{margin:24px auto 0;font-size:38px;line-height:1.3;font-weight:450;color
 .phone .duo .primary{left:80px;transform:perspective(2600px) rotateY(22deg) rotate(2deg)}
 .phone .duo .secondary{left:520px;top:620px;transform:perspective(2600px) rotateY(-22deg) rotate(-2deg)}
 
-/* Tablets: the same family with simpler compositions. */
+/* 7-inch portrait: the phone story at tablet scale. */
 .tablet7 h1{font-size:104px}
-.tablet7 .device{--bezel:20px;--radius:56px;left:220px;top:640px;width:760px}
-.tablet7 .small .device{left:340px;top:700px;width:520px}
-.tablet10 header{text-align:left;left:96px;right:auto;top:0;bottom:0;width:620px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
-.tablet10 h1{font-size:86px}
+.tablet7 .device{--bezel:20px;--radius:56px}
+.tablet7 .zoomed .device{left:100px;top:560px;width:1000px}
+.tablet7 .floor .callout.floorplan{transform:perspective(1800px) rotateX(46deg) rotateZ(-24deg);box-shadow:0 0 0 14px #ffffff12,0 90px 140px -30px #000000f0,0 0 200px -40px var(--accent)}
+.tablet7 .float .device{left:300px;top:600px;width:600px}
+.tablet7 .duo .device{width:560px;top:620px}
+.tablet7 .duo .primary{left:60px;transform:perspective(2600px) rotateY(20deg)}
+.tablet7 .duo .secondary{left:580px;top:680px;transform:perspective(2600px) rotateY(-20deg)}
+
+/* 10-inch landscape: copy on the left, the product bleeding off the right. */
+.tablet10 header{text-align:left;left:96px;right:auto;top:0;bottom:0;width:600px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.tablet10 h1{font-size:84px}
 .tablet10 h1 .line{white-space:normal}
 .tablet10 header p{margin:24px 0 0;font-size:34px}
-.tablet10 .device{--bezel:20px;--radius:54px;left:780px;top:220px;width:1060px}
-.tablet10 .small .device{width:840px;left:900px;top:320px}
+.tablet10 .device{--bezel:20px;--radius:54px}
+.tablet10 .zoomed .device{left:760px;top:190px;width:1320px}
+.tablet10 .floor .callout.floorplan{transform:perspective(1800px) rotateX(44deg) rotateZ(-22deg);box-shadow:0 0 0 12px #ffffff12,0 80px 120px -30px #000000f0,0 0 200px -40px var(--accent)}
+.tablet10 .float .device{left:780px;top:230px;width:1060px}
+.tablet10 .duo .device{width:900px}
+.tablet10 .duo .primary{left:700px;top:190px;transform:perspective(2600px) rotateY(16deg)}
+.tablet10 .duo .secondary{left:1060px;top:360px;transform:perspective(2600px) rotateY(-16deg)}
 
 .desktop header{top:70px}
 .desktop h1{font-size:80px}
 .desktop header p{margin-top:16px;font-size:30px}
 .desktop .device{left:220px;top:330px;width:1480px}
+.callout.mapcard{box-shadow:0 0 0 12px #ffffff14,0 60px 120px -20px #000000e6,0 0 180px -40px var(--accent)}
