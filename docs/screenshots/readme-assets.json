@@ -2,12 +2,12 @@
   {
     "file": "docs/screenshots/readme-channels.jpg",
     "source": "store-listing/en-US/screenshots/v8-01-channels.jpg",
-    "sha256": "e109bb0973793e0182478a0ebb05ccd8a31566434f74cea7e5d0bbe71c30feb8"
+    "sha256": "20c19f3da88c935ed21ed41f83fcd767436851f254150a847c5ab8d248771699"
   },
   {
     "file": "docs/screenshots/readme-overtime.jpg",
     "source": "store-listing/en-US/screenshots/v8-02-history.jpg",
-    "sha256": "7a288a95ff408d7c92658097f8ba449821fb3f24697140f21080c1b4ac71f1c2"
+    "sha256": "4d649b76bd8dee769739f798345694ec0092930a8e4e8100d15d438beab6143b"
   },
   {
     "file": "docs/screenshots/readme-floorplan.jpg",
@@ -17,26 +17,26 @@
   {
     "file": "docs/screenshots/readme-rooms.jpg",
     "source": "store-listing/en-US/screenshots/v8-04-rooms.jpg",
-    "sha256": "d00cb99cb064d08014ecb58165386c74a8532fdafbb4e2db97d179f65af3739e"
+    "sha256": "94f23b49362feac924a990b84b042777b702ddc8080c77e555657702a1ec5a06"
   },
   {
     "file": "docs/screenshots/readme-router.jpg",
     "source": "store-listing/en-US/screenshots/v8-05-router.jpg",
-    "sha256": "90b01f0231a54aab23d51df4bb04578f3e22e949da4dc4ccca76cdfe6d511d5a"
+    "sha256": "1bd17e32a0a8a45e3d3706191df40434d5a07ab40f9d7b7df7614bf28642193d"
   },
   {
     "file": "docs/screenshots/readme-network.jpg",
     "source": "store-listing/en-US/screenshots/v8-06-network.jpg",
-    "sha256": "476b18dd8e6eb1978b905fdf36cec9fa07d67a8127064c3d075fa234ced4e48b"
+    "sha256": "6255d0eb041df8435e5670e55b2e9dd7d4418ba362905d3d34f7e18f351fe175"
   },
   {
     "file": "docs/screenshots/readme-appearance.jpg",
     "source": "store-listing/en-US/screenshots/v8-07-appearance.jpg",
-    "sha256": "c1b43415aa973a8fdbfa1d92c741af3bd3bf35427c50899fa6ec07c8e96d180a"
+    "sha256": "6132d58d4eff350d6e7f12a6d5b70d606f5d10d9f8af232341c2a1d8d85b6ad8"
   },
   {
     "file": "docs/screenshots/readme-wide.jpg",
     "source": "store-listing/en-US/tablet/v8-10-01-channels.jpg",
-    "sha256": "fed6812e57e965e0cdd98424499fd5c52d67deb5f176477e3a89762298e8a765"
+    "sha256": "6c641742539df8de74d9ce53bff0b0ab8a2c7e22be4f325d5335b8d57dae5465"
   }
 ]
