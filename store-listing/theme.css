@@ -29,3 +29,15 @@ header p{margin:28px auto 0;font-size:40px;line-height:1.3;letter-spacing:-.01em
 .desktop h1{font-size:84px}
 .desktop header p{margin-top:18px;font-size:32px}
 .desktop .device{left:220px;top:290px;width:1480px;box-shadow:inset 0 0 0 1px #ffffff1c,0 40px 90px -30px #2a2f6a40}
+
+/* Variety: every card shares the type and canvas, but each composes the product differently, so a
+   swipe through the carousel keeps revealing something new. */
+.callout.zoom{box-shadow:0 2px 4px #15172b14,0 40px 90px -30px #2a2f6a55,0 0 0 1px #15172b0d}
+.indigo{--ink:#ffffff;--accent:#c7ccff;--muted:#d9dcff;color:var(--ink)}
+.indigo .device{box-shadow:inset 0 0 0 2px #5a5f86,0 50px 110px -20px #05082a99}
+.phone .bottom .device{top:-260px}
+.phone .bottom header{top:auto;bottom:110px}
+.phone .tilt .device{left:170px;top:640px;transform:rotate(-6deg)}
+.phone .duo .device{width:600px;top:640px}
+.phone .duo .primary{left:40px;transform:rotate(-5deg)}
+.phone .duo .secondary{left:440px;top:700px;transform:rotate(5deg)}

@@ -9,44 +9,75 @@
     {
       "feature": "history",
       "file": "screenshots/v7-02-history.jpg",
-      "raw": "light/05-history.jpg",
-      "theme": "light"
+      "layout": "zoom",
+      "theme": "light",
+      "callouts": [
+        {
+          "raw": "light/05-history.jpg",
+          "x": 40,
+          "y": 380,
+          "w": 1000,
+          "h": 960,
+          "radius": 44,
+          "place": {
+            "left": 40,
+            "top": 720,
+            "width": 1000
+          },
+          "role": "zoom"
+        }
+      ]
     },
     {
       "feature": "coverage",
       "file": "screenshots/v7-03-coverage.jpg",
       "raw": "light/03-coverage.jpg",
-      "theme": "light"
+      "theme": "light",
+      "layout": "indigo"
     },
     {
       "feature": "rooms",
       "file": "screenshots/v7-04-rooms.jpg",
       "raw": "light/02-rooms.jpg",
-      "theme": "light"
+      "theme": "light",
+      "layout": "bottom"
     },
     {
       "feature": "router",
       "file": "screenshots/v7-05-router.jpg",
       "raw": "light/06-router.jpg",
-      "theme": "light"
+      "theme": "light",
+      "layout": "tilt"
     },
     {
       "feature": "devices",
       "file": "screenshots/v7-06-devices.jpg",
       "raw": "light/07-devices.jpg",
-      "theme": "light"
+      "theme": "light",
+      "layout": "indigo"
     },
     {
       "feature": "home",
       "file": "screenshots/v7-07-home.jpg",
       "raw": "light/01-signal.jpg",
-      "theme": "light"
+      "theme": "light",
+      "layout": "bottom"
     },
     {
       "feature": "appearance",
       "file": "screenshots/v7-08-appearance.jpg",
-      "raw": "light/08-appearance.jpg",
-      "theme": "light"
+      "theme": "light",
+      "layout": "duo",
+      "devices": [
+        {
+          "raw": "light/08-appearance.jpg",
+          "role": "primary"
+        },
+        {
+          "raw": "08-appearance.jpg",
+          "role": "secondary"
+        }
+      ]
     }
   ],
   "tablet7": [

@@ -18,10 +18,8 @@
         "slide": 1,
         "width": 1080,
         "height": 1920,
-        "bytes": 213615,
-        "sources": [
-          "raw/light/05-history.jpg"
-        ]
+        "bytes": 189328,
+        "sources": []
       },
       {
         "file": "screenshots/v7-03-coverage.jpg",
@@ -29,7 +27,7 @@
         "slide": 2,
         "width": 1080,
         "height": 1920,
-        "bytes": 180151,
+        "bytes": 189493,
         "sources": [
           "raw/light/03-coverage.jpg"
         ]
@@ -40,7 +38,7 @@
         "slide": 3,
         "width": 1080,
         "height": 1920,
-        "bytes": 165029,
+        "bytes": 188832,
         "sources": [
           "raw/light/02-rooms.jpg"
         ]
@@ -51,7 +49,7 @@
         "slide": 4,
         "width": 1080,
         "height": 1920,
-        "bytes": 155003,
+        "bytes": 170040,
         "sources": [
           "raw/light/06-router.jpg"
         ]
@@ -62,7 +60,7 @@
         "slide": 5,
         "width": 1080,
         "height": 1920,
-        "bytes": 163344,
+        "bytes": 172741,
         "sources": [
           "raw/light/07-devices.jpg"
         ]
@@ -73,7 +71,7 @@
         "slide": 6,
         "width": 1080,
         "height": 1920,
-        "bytes": 173496,
+        "bytes": 193208,
         "sources": [
           "raw/light/01-signal.jpg"
         ]
@@ -84,9 +82,10 @@
         "slide": 7,
         "width": 1080,
         "height": 1920,
-        "bytes": 164920,
+        "bytes": 238805,
         "sources": [
-          "raw/light/08-appearance.jpg"
+          "raw/light/08-appearance.jpg",
+          "raw/08-appearance.jpg"
         ]
       }
     ],
