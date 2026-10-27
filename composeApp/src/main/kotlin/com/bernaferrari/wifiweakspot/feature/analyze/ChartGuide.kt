@@ -69,12 +69,6 @@ private val Items = listOf(
         baseline(line); hill(size.width * 0.15f, size.width * 0.85f, size.height * 0.55f, c[0])
         drawRoundRect(c[0].copy(alpha = 0.3f), Offset(size.width * 0.3f, 0f), Size(size.width * 0.4f, size.height * 0.32f), CornerRadius(6.dp.toPx()))
     },
-    GuideItem({ guideCrowdBody }) { c, _ ->
-        drawRoundRect(
-            androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(Color(0xFF4CAF50), Color(0xFFFFC107), Color(0xFFE53935), Color(0xFF4CAF50))),
-            Offset(0f, size.height / 2 - 4.dp.toPx()), Size(size.width, 8.dp.toPx()), CornerRadius(4.dp.toPx())
-        )
-    },
     GuideItem({ guideSteadyBody }) { c, line ->
         baseline(line)
         drawLine(c[1], Offset(0f, size.height * 0.3f), Offset(size.width, size.height * 0.3f), 2.dp.toPx(), cap = StrokeCap.Round)

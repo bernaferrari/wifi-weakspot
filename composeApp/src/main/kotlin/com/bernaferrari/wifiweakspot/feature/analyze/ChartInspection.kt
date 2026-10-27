@@ -13,13 +13,13 @@ internal fun chartLabelRect(anchor: Offset, label: Size, bounds: Rect, gap: Floa
     label
 )
 
-/** Histories are right-aligned: a radio discovered later has no earlier readings. */
-internal fun historyValueAt(values: List<Int>, index: Int, sampleCount: Int): Int? =
-    values.getOrNull(index - (sampleCount - values.size))
+/** Shared scan frames preserve missing readings at their actual positions. */
+internal fun historyValueAt(values: List<SignalObservation?>, index: Int, sampleCount: Int): Int? =
+    if (index in 0 until sampleCount) values.getOrNull(index)?.rssi else null
 
 /** Compare adjacent signals at one observation, skipping radios not yet observed then. */
 internal fun historyNeighborBssid(
-    history: Map<String, List<Int>>,
+    history: SignalTimeline,
     bssids: List<String>,
     index: Int,
     sampleCount: Int,

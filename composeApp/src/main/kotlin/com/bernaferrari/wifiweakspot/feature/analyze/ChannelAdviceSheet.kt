@@ -14,6 +14,8 @@ import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,7 +38,9 @@ internal fun ChannelAdviceSheet(snapshot: ChannelAdviceSnapshot, onDismiss: () -
     val scheme = MaterialTheme.colorScheme
     val comparisons = scores.filter { it.channelNumber in setOf(1, 6, 11, hint.channel) }
     val largest = comparisons.maxOfOrNull { it.score }?.coerceAtLeast(1.0) ?: 1.0
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -90,8 +94,12 @@ internal fun ChannelAdviceSheet(snapshot: ChannelAdviceSnapshot, onDismiss: () -
                 ChannelStep(3, Icons.Rounded.Save, s.channelApplyChange)
             }
             Text(s.channelChangeNote, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
-            FilledTonalButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                Text(strings.common.done)
+            FilledTonalButton(onClick = {
+                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                    if (!sheetState.isVisible) onDismiss()
+                }
+            }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                Text(strings.common.close)
             }
         }
     }

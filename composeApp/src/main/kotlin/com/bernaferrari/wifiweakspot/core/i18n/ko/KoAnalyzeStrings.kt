@@ -84,7 +84,6 @@ object KoAnalyzeStrings : AnalyzeStrings {
 
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
-    override val busyCaption = "혼잡"
     override val axisStrong = "강함"
     override val axisOkay = "보통"
     override val axisWeak = "약함"
@@ -104,7 +103,6 @@ object KoAnalyzeStrings : AnalyzeStrings {
 
     override val guideSameRouterBody = "+1: 같은 Wi-Fi 무선 모듈을 사용하는 것으로 보이는 네트워크 이름을 하나의 곡선으로 묶어 표시합니다."
 
-    override val guideCrowdBody = "녹색은 겹침이 적고 빨간색은 많다는 뜻입니다. 2.4 GHz 아래의 스트립은 겹치는 부분을 보여줍니다. 탭하여 계산해 보세요."
     override val guideSteadyBody = "선이 크게 오르내리면 신호 세기가 변하고 있다는 뜻입니다. 선을 눌러 일시정지한 뒤 좌우로 움직여 시점을, 위아래로 움직여 네트워크를 바꿔 보세요. 다시 시작하면 새 측정값이 표시됩니다."
 
     override val guideHighlightBody = "곡선이나 목록의 항목을 누르면 강조됩니다. 그래프를 좌우로 드래그해 살펴보세요."

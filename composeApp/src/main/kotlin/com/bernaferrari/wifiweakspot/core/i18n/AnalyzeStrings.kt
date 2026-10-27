@@ -169,8 +169,6 @@ interface AnalyzeStrings {
      */
     fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int): String
 
-    /** Caption left of the 2.4 GHz congestion strip. One very short word. */
-    val busyCaption: String
 
     /** Chart axis labels for signal strength, top to bottom. One very short word each. */
     val axisStrong: String
@@ -196,7 +194,6 @@ interface AnalyzeStrings {
     val guideWiderBody: String
 
     val guideSameRouterBody: String
-    val guideCrowdBody: String
     val guideSteadyBody: String
     val guideHighlightBody: String
 

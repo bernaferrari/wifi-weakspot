@@ -125,7 +125,7 @@ class CongestionAnalyzerTest {
         // Create networks on channels 1 and 6
         val networks = listOf(
             createNetwork("Net1", 2412, -50), // Channel 1
-            createNetwork("Net2", 2437, -50), // Channel 6
+            createNetwork("Net2", 2437, -50).copy(bssid = "00:10:20:30:40:20"), // Channel 6
         )
         
         val scores = CongestionAnalyzer.analyze(networks, FrequencyBand.BAND_2_4)
@@ -165,8 +165,8 @@ class CongestionAnalyzerTest {
         
         val multipleNetworks = listOf(
             createNetwork("Net1", 2437, -50),
-            createNetwork("Net2", 2437, -50),
-            createNetwork("Net3", 2437, -50),
+            createNetwork("Net2", 2437, -50).copy(bssid = "00:10:20:30:40:20"),
+            createNetwork("Net3", 2437, -50).copy(bssid = "00:10:20:30:40:30"),
         )
         
         val singleScore = CongestionAnalyzer.analyze(singleNetwork, FrequencyBand.BAND_2_4)
@@ -272,4 +272,47 @@ class CongestionAnalyzerTest {
             FrequencyBand.BAND_5, setOf(36, 40))
         assertEquals(40, scores.single { it.recommendation }.channelNumber)
     }
+    @Test fun partialOverlapContributesProportionally() {
+        val scores = CongestionAnalyzer.analyze(listOf(createNetwork(frequency = 2412, rssi = -50)), FrequencyBand.BAND_2_4)
+        val full = scores.single { it.channelNumber == 1 }
+        val quarter = scores.single { it.channelNumber == 4 }
+        val edge = scores.single { it.channelNumber == 5 }
+        assertEquals(full.score / 4, quarter.score, 0.001)
+        assertEquals(1, full.overlappingRadios)
+        assertEquals(1, quarter.overlappingRadios)
+        assertEquals(0, edge.overlappingRadios)
+        assertEquals(0.0, edge.score, 0.0)
+    }
+
+    @Test fun guestAndHiddenNamesCountAsOneRadio() {
+        val main = createNetwork(frequency = 2437, rssi = -50).copy(bssid = "00:11:22:33:44:10")
+        val guest = main.copy(ssid = "Guest", bssid = "00:11:22:33:44:11")
+        val hidden = main.copy(ssid = "", bssid = "02:11:22:33:44:10")
+        val one = CongestionAnalyzer.analyze(listOf(main), FrequencyBand.BAND_2_4)
+        val aliases = CongestionAnalyzer.analyze(listOf(main, guest, hidden), FrequencyBand.BAND_2_4)
+        assertEquals(one, aliases)
+        assertEquals(1, aliases.single { it.channelNumber == 6 }.overlappingRadios)
+    }
+
+    @Test fun weakObservationsCountWithoutTheOldAbruptMinus80Cutoff() {
+        val above = CongestionAnalyzer.analyze(listOf(createNetwork(frequency = 2437, rssi = -79)), FrequencyBand.BAND_2_4).single { it.channelNumber == 6 }
+        val below = CongestionAnalyzer.analyze(listOf(createNetwork(frequency = 2437, rssi = -81)), FrequencyBand.BAND_2_4).single { it.channelNumber == 6 }
+        assertEquals(1, above.overlappingRadios)
+        assertEquals(1, below.overlappingRadios)
+        assertTrue(above.score > below.score)
+        assertTrue(below.score > 0)
+    }
+
+    @Test fun invalidSignalDoesNotCountAsAnOverlappingRadio() {
+        val scores = CongestionAnalyzer.analyze(listOf(-127, 0, 127).map { createNetwork(frequency = 2437, rssi = it) }, FrequencyBand.BAND_2_4)
+        assertTrue(scores.all { it.score == 0.0 && it.overlappingRadios == 0 && !it.recommendation })
+    }
+
+    @Test fun invalidAliasDoesNotHideAValidRadio() {
+        val valid = createNetwork(frequency = 2437, rssi = -50)
+        val expected = CongestionAnalyzer.analyze(listOf(valid), FrequencyBand.BAND_2_4)
+        val actual = CongestionAnalyzer.analyze(listOf(valid, valid.copy(rssi = 127)), FrequencyBand.BAND_2_4)
+        assertEquals(expected, actual)
+    }
+
 }

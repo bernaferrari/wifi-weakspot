@@ -63,7 +63,6 @@ object EnAnalyzeStrings : AnalyzeStrings {
             (if (busiestChannel != null) " Busiest channel $busiestChannel with $busiestCount." else "")
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
-    override val busyCaption = "Busy"
     override val axisStrong = "Strong"
     override val axisOkay = "Okay"
     override val axisWeak = "Weak"
@@ -78,7 +77,6 @@ object EnAnalyzeStrings : AnalyzeStrings {
     override val guideWiderBody = "A wider channel occupies more spectrum and can overlap more neighbors."
     override val guideSameRouterBody = "+1: Network names that appear to use the same Wi-Fi radio share one hill."
 
-    override val guideCrowdBody = "Green means less overlap; red means more overlap. The strip under 2.4 GHz shows overlap. Tap it for counts."
     override val guideSteadyBody = "A jumpy line shows changing signal strength. Tap a line to pause, then slide sideways through time or vertically between networks. Resume live to watch new readings."
     override val guideHighlightBody = "Tap a hill or row to highlight it. Drag horizontally across the chart to explore."
 

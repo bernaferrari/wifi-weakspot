@@ -64,7 +64,6 @@ object DeAnalyzeStrings : AnalyzeStrings {
             (if (busiestChannel != null) " Belebtester Kanal ${busiestChannel} mit ${busiestCount}." else "")
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
-    override val busyCaption = "Belegt"
     override val axisStrong = "Stark"
     override val axisOkay = "Mittel"
     override val axisWeak = "Schwach"
@@ -79,7 +78,6 @@ object DeAnalyzeStrings : AnalyzeStrings {
     override val guideWiderBody = "Ein breiterer Kanal belegt mehr Spektrum und kann mehr Nachbarn überlappen."
     override val guideSameRouterBody = "+1: Netzwerknamen, die offenbar dasselbe WLAN-Funkmodul nutzen, teilen sich eine Kurve."
 
-    override val guideCrowdBody = "Grün bedeutet weniger Überlappung, Rot mehr. Der Streifen unter 2.4 GHz zeigt Überlappung. Tippen Sie darauf, um zu zählen."
     override val guideSteadyBody = "Eine stark schwankende Linie zeigt Änderungen der Signalstärke. Tippen Sie zum Pausieren auf eine Linie. Wischen Sie horizontal durch die Zeit oder vertikal zwischen Netzwerken. Setzen Sie die Live-Anzeige für neue Messwerte fort."
 
     override val guideHighlightBody = "Tippen Sie auf einen Hügel oder eine Reihe, um ihn hervorzuheben. Ziehen Sie zum Erkunden horizontal über das Diagramm."

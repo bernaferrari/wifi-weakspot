@@ -3,6 +3,13 @@
 package com.bernaferrari.wifiweakspot.feature.analyze
 
 import com.bernaferrari.wifiweakspot.core.i18n.strings
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.snap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -40,6 +47,8 @@ internal fun ChannelContext(
     band: FrequencyBand,
     connected: NetworkStatus,
     selectedNetwork: WifiNetwork?,
+    palette: NetworkPalette,
+    showRecommendation: Boolean,
     onClearSelection: () -> Unit
 ) {
     val competitors = remember(networks, connected.bssid, connected.frequency) {
@@ -53,60 +62,72 @@ internal fun ChannelContext(
     val hint = channelHint(scores, connected.channel.takeIf { connectedHere })
     val scheme = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    val display = LocalSignalDisplay.current
+    val reduceMotion = com.bernaferrari.wifiweakspot.core.designsystem.LocalReduceMotion.current
     val common = strings.common
     val s = strings.analyze
-    // Reserve the two-line selection's height even at large font sizes. The recommendation
-    // can swap with it without displacing the list or the finger's next target.
-    val rowHeight = with(LocalDensity.current) {
-        maxOf(56.dp, typography.labelLarge.lineHeight.toDp() + typography.bodySmall.lineHeight.toDp() + 10.dp)
+    // Match the band buttons, while allowing larger accessibility text to grow.
+    // Keep the recommendation and selection in the same stable-height slot.
+    val channelBadgeSize = with(LocalDensity.current) {
+        maxOf(32.dp, typography.labelLarge.lineHeight.toDp() + 8.dp)
     }
+    val rowHeight = channelBadgeSize + 16.dp
     Box(
         Modifier.fillMaxWidth().padding(top = 6.dp).heightIn(min = rowHeight),
         contentAlignment = Alignment.CenterStart
     ) {
-        if (selectedNetwork != null) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = WifiWeakspotShapes.full,
-                color = scheme.secondaryContainer,
-                contentColor = scheme.onSecondaryContainer
-            ) {
-                Row(Modifier.heightIn(min = rowHeight).padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(selectedNetwork.ssid.ifBlank { common.hiddenNetwork }, style = typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(
-                            s.selectedNetworkSummary(display.reading(selectedNetwork.rssi), SignalQuality.of(selectedNetwork.rssi).label, frequencyToChannel(selectedNetwork.frequency)),
-                            style = typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    IconButton(onClick = onClearSelection, modifier = Modifier.size(48.dp)) {
-                        Icon(Icons.Rounded.Close, s.clearSelectedNetwork)
+        AnimatedContent(
+            targetState = selectedNetwork,
+            contentKey = { it?.bssid },
+            contentAlignment = Alignment.CenterStart,
+            label = "chartSelection",
+            transitionSpec = {
+                val enter = if (reduceMotion) androidx.compose.animation.EnterTransition.None else fadeIn(tween(150))
+                val exit = if (reduceMotion) androidx.compose.animation.ExitTransition.None else fadeOut(tween(100))
+                (enter togetherWith exit).using(SizeTransform(clip = false) { _, _ -> if (reduceMotion) snap() else tween(180) })
+            }
+        ) { selection ->
+            if (selection != null) {
+                InputChip(
+                    selected = true,
+                    onClick = onClearSelection,
+                    modifier = Modifier.heightIn(min = rowHeight).semantics {
+                        contentDescription = "${s.clearSelectedNetwork}: ${selection.ssid.ifBlank { common.hiddenNetwork }}"
+                    },
+                    label = { Text(selection.ssid.ifBlank { common.hiddenNetwork }, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    leadingIcon = {
+                        Box(Modifier.size(10.dp).clip(androidx.compose.foundation.shape.CircleShape).background(palette.color(selection.bssid)))
+                    },
+                    trailingIcon = { Icon(Icons.Rounded.Close, null, Modifier.size(18.dp)) },
+                    colors = InputChipDefaults.inputChipColors(
+                        selectedContainerColor = scheme.surfaceContainerHigh,
+                        selectedLabelColor = scheme.onSurface,
+                        selectedTrailingIconColor = scheme.onSurfaceVariant
+                    )
+                )
+            } else if (hint != null && showRecommendation) {
+                Surface(
+                    onClick = { explaining = ChannelAdviceSnapshot(hint, band, scores) },
+                    shape = WifiWeakspotShapes.full,
+                    color = scheme.tertiaryContainer,
+                    contentColor = scheme.onTertiaryContainer,
+                    modifier = Modifier.semantics { contentDescription = s.channelAdviceDescription(hint.label, hint.channel) }
+                ) {
+                    Row(Modifier.clearAndSetSemantics { }.heightIn(min = rowHeight).padding(start = 8.dp, end = 12.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(channelBadgeSize).clip(MaterialShapes.Cookie9Sided.toShape()).background(scheme.onTertiaryContainer), contentAlignment = Alignment.Center) {
+                            Text("${hint.channel}", style = typography.labelLarge, fontWeight = FontWeight.Bold, color = scheme.tertiaryContainer)
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Text(hint.label, style = typography.labelLarge, modifier = Modifier.weight(1f, fill = false))
+                        Spacer(Modifier.width(8.dp))
+                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, Modifier.size(20.dp))
                     }
                 }
+            } else if (showRecommendation) {
+                Text(s.tapWaveForDetails, modifier = Modifier.padding(start = 4.dp), style = typography.bodySmall, color = scheme.onSurfaceVariant)
             }
-        } else if (hint != null) {
-            Surface(
-                onClick = { explaining = ChannelAdviceSnapshot(hint, band, scores) },
-                shape = WifiWeakspotShapes.full,
-                color = scheme.tertiaryContainer,
-                contentColor = scheme.onTertiaryContainer,
-                modifier = Modifier.semantics { contentDescription = s.channelAdviceDescription(hint.label, hint.channel) }
-            ) {
-                Row(Modifier.clearAndSetSemantics { }.heightIn(min = rowHeight).padding(start = 8.dp, end = 12.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(40.dp).clip(MaterialShapes.Cookie9Sided.toShape()).background(scheme.onTertiaryContainer), contentAlignment = Alignment.Center) {
-                        Text("${hint.channel}", style = typography.labelLarge, fontWeight = FontWeight.Bold, color = scheme.tertiaryContainer)
-                    }
-                    Spacer(Modifier.width(10.dp))
-                    Text(hint.label, style = typography.labelLarge, modifier = Modifier.weight(1f, fill = false))
-                    Spacer(Modifier.width(8.dp))
-                    Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, Modifier.size(20.dp))
-                }
-            }
-        } else {
-            Text(s.tapWaveForDetails, modifier = Modifier.padding(start = 4.dp), style = typography.bodySmall, color = scheme.onSurfaceVariant)
         }
     }
+
     explaining?.let { advice ->
         ChannelAdviceSheet(advice, onDismiss = { explaining = null })
     }

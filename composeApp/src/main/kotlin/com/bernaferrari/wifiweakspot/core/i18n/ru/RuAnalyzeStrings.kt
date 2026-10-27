@@ -63,7 +63,6 @@ object RuAnalyzeStrings : AnalyzeStrings {
             (if (busiestChannel != null) " Самый загруженный канал ${busiestChannel} с ${busiestCount}." else "")
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
-    override val busyCaption = "Загрузка"
     override val axisStrong = "Сильный"
     override val axisOkay = "Средний"
     override val axisWeak = "Слабый"
@@ -78,7 +77,6 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override val guideWiderBody = "Более широкий канал занимает больший спектр и может перекрывать большее количество соседей."
     override val guideSameRouterBody = "+1: Имена сетей, которые, вероятно, используют один радиомодуль Wi-Fi, объединены на одной кривой."
 
-    override val guideCrowdBody = "Зелёный означает меньше перекрытий, красный — больше. Полоса под 2.4 GHz показывает перекрытие. Нажмите на него для подсчета."
     override val guideSteadyBody = "Колебания линии показывают изменения силы сигнала. Нажмите на линию для паузы, затем перемещайтесь по горизонтали между моментами времени или по вертикали между сетями. Возобновите показ, чтобы видеть новые измерения."
 
     override val guideHighlightBody = "Коснитесь холма или ряда, чтобы выделить его. Перетащите горизонтально по диаграмме, чтобы изучить ее."

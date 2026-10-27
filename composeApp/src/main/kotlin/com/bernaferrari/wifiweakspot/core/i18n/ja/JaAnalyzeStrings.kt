@@ -84,7 +84,6 @@ object JaAnalyzeStrings : AnalyzeStrings {
 
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
-    override val busyCaption = "混雑"
     override val axisStrong = "強い"
     override val axisOkay = "普通"
     override val axisWeak = "弱い"
@@ -104,7 +103,6 @@ object JaAnalyzeStrings : AnalyzeStrings {
 
     override val guideSameRouterBody = "+1：同じWi-Fi無線モジュールを使っていると推定されるネットワーク名を、1つの山にまとめて表示します。"
 
-    override val guideCrowdBody = "緑は重なりが少なく、赤は多いことを表します。2.4 GHz の下のストリップはオーバーラップを示しています。タップするとカウントされます。"
     override val guideSteadyBody = "線が大きく上下するほど、信号の強さが変動しています。線をタップして一時停止し、左右に動かすと時点を、上下に動かすとネットワークを切り替えられます。再開すると最新の測定値が表示されます。"
 
     override val guideHighlightBody = "山の形や一覧の行をタップすると強調表示されます。グラフ上を左右にドラッグして確認できます。"

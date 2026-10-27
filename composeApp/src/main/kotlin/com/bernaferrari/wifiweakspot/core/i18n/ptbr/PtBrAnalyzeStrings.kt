@@ -63,7 +63,6 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
             (if (busiestChannel != null) " Canal mais movimentado ${busiestChannel} com ${busiestCount}." else "")
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
-    override val busyCaption = "Ocupado"
     override val axisStrong = "Forte"
     override val axisOkay = "Médio"
 
@@ -79,7 +78,6 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
     override val guideWiderBody = "Um canal mais amplo ocupa mais espectro e pode sobrepor mais vizinhos."
     override val guideSameRouterBody = "+1: Nomes de redes que parecem usar o mesmo rádio Wi-Fi compartilham uma curva."
 
-    override val guideCrowdBody = "Verde indica menos sobreposição; vermelho, mais. A faixa abaixo de 2,4 GHz mostra sobreposição. Toque nele para contar."
     override val guideSteadyBody = "Uma linha que sobe e desce indica variações no sinal. Toque para pausar; arraste para os lados para mudar o instante ou para cima e para baixo para mudar de rede. Retome para ver novas medições."
 
     override val guideHighlightBody = "Toque em uma colina ou linha para destacá-la. Arraste horizontalmente pelo gráfico para explorar."

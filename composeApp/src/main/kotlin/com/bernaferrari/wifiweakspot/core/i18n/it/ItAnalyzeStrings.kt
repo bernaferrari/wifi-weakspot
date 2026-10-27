@@ -63,7 +63,6 @@ object ItAnalyzeStrings : AnalyzeStrings {
             (if (busiestChannel != null) " Canale più occupato ${busiestChannel} con ${busiestCount}." else "")
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
-    override val busyCaption = "Affollato"
     override val axisStrong = "Forte"
     override val axisOkay = "Medio"
 
@@ -79,7 +78,6 @@ object ItAnalyzeStrings : AnalyzeStrings {
     override val guideWiderBody = "Un canale più ampio occupa più spettro e può sovrapporsi a più vicini."
     override val guideSameRouterBody = "+1: I nomi di rete che sembrano usare lo stesso modulo Wi-Fi condividono una curva."
 
-    override val guideCrowdBody = "Il verde indica meno sovrapposizioni, il rosso di più. La striscia sotto 2.4 GHz mostra una sovrapposizione. Toccalo per i conteggi."
     override val guideSteadyBody = "Una linea che oscilla indica variazioni del segnale. Toccala per mettere in pausa, poi trascina orizzontalmente per cambiare istante o verticalmente per cambiare rete. Riprendi la visualizzazione live per vedere nuove misurazioni."
 
     override val guideHighlightBody = "Tocca una collina o una riga per evidenziarla. Trascina orizzontalmente sul grafico per esplorare."

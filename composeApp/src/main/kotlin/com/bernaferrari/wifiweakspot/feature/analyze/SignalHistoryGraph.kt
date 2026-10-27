@@ -49,7 +49,7 @@ private const val MaxLines = 8
 /** Tap or scrub to inspect frozen readings; live charts leave vertical gestures to page scrolling. */
 @Composable
 fun SignalHistoryGraph(
-    history: Map<String, List<Int>>,
+    history: SignalTimeline,
     networks: List<WifiNetwork>,
     selectedNetwork: WifiNetwork? = null,
     connectedBssid: String? = null,
@@ -72,12 +72,12 @@ fun SignalHistoryGraph(
     val leads = remember(displayNetworks, connectedBssid) { com.bernaferrari.wifiweakspot.core.wifi.groupByRadio(displayNetworks, connectedBssid) }
     val selected = selectedNetwork?.let { pick -> leads.firstOrNull { group -> group.members.any { it.bssid == pick.bssid } }?.lead }
     // Freeze the observations while inspecting: a new scan must not move the value under a finger.
-    var snapshot by remember { mutableStateOf<Map<String, List<Int>>?>(null) }
+    var snapshot by remember { mutableStateOf<SignalTimeline?>(null) }
     var cursor by remember { mutableStateOf<Float?>(null) }
     var inspectedBssid by remember { mutableStateOf<String?>(null) }
     val readings = snapshot ?: history
     val shown = leads.map { it.lead }
-        .filter { !readings[it.bssid].isNullOrEmpty() }
+        .filter { readings[it.bssid]?.any { value -> value != null } == true }
         .sortedWith(compareByDescending<WifiNetwork> { it.bssid == inspectedBssid || it.bssid == selected?.bssid }
             .thenByDescending { it.bssid.equals(connectedBssid, true) }.thenByDescending { it.rssi })
         .take(MaxLines)
@@ -97,6 +97,15 @@ fun SignalHistoryGraph(
         snapshotNetworks = null
         inspectedBssid = null
         onNetworkSelected?.invoke(null)
+    }
+    // Clearing a selection externally also clears the frozen inspection and its highlight.
+    LaunchedEffect(selectedNetwork?.bssid) {
+        if (selectedNetwork == null) {
+            cursor = null
+            snapshot = null
+            snapshotNetworks = null
+            inspectedBssid = null
+        }
     }
     /** [sticky] keeps the inspected line until the finger is clearly closer to another, so crowded lines don't flicker. */
     fun inspect(at: Offset, sticky: Boolean) {
@@ -125,6 +134,7 @@ fun SignalHistoryGraph(
         if (inspectedBssid == null) inspectedBssid = selected?.bssid
             ?: shown.firstOrNull { it.bssid.equals(connectedBssid, true) }?.bssid ?: shown.firstOrNull()?.bssid
         cursor = requested.coerceIn(0, samples - 1) / (samples - 1f)
+        if (inspectedBssid != selected?.bssid) shown.firstOrNull { it.bssid == inspectedBssid }?.let { onNetworkSelected?.invoke(it) }
         return true
     }
 
@@ -205,19 +215,35 @@ fun SignalHistoryGraph(
             val labels = mutableListOf<Rect>()
             shown.reversed().forEach { network ->
                 val values = readings[network.bssid].orEmpty()
-                val offset = samples - values.size
                 val emphasized = network.bssid == focus || network.bssid.equals(connectedBssid, true)
                 val color = palette.color(network.bssid).copy(alpha = if (focus != null && network.bssid != focus) 0.25f else 1f)
-                fun point(i: Int) = Offset(plot.left + (i + offset) * step, plot.bottom - plot.height * dbmToFraction(values[i].toFloat()))
+                fun point(i: Int, rssi: Int) = Offset(plot.left + i * step, plot.bottom - plot.height * dbmToFraction(rssi.toFloat()))
                 val path = Path().apply {
-                    moveTo(point(0).x, point(0).y)
-                    for (i in 1 until values.size) {
-                        val previous = point(i - 1); val current = point(i); val midX = (previous.x + current.x) / 2
-                        cubicTo(midX, previous.y, midX, current.y, current.x, current.y)
+                    var previous: Offset? = null
+                    values.forEachIndexed { i, observation ->
+                    val rssi = observation?.rssi
+                        if (rssi == null) {
+                            previous = null
+                        } else {
+                            val current = point(i, rssi)
+                            val before = previous
+                            if (before == null) moveTo(current.x, current.y)
+                            else {
+                                val midX = (before.x + current.x) / 2
+                                cubicTo(midX, before.y, midX, current.y, current.x, current.y)
+                            }
+                            previous = current
+                        }
                     }
                 }
                 drawPath(path, color, style = Stroke((if (emphasized) 3f else 2f).dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
-                drawCircle(color, (if (emphasized) 5f else 3.5f).dp.toPx(), point(values.lastIndex))
+                // Isolated observations still show up; a gap never becomes a connecting line.
+                values.forEachIndexed { i, observation ->
+                    val rssi = observation?.rssi
+                    if (rssi != null && (i == values.lastIndex || values.getOrNull(i - 1) == null || values.getOrNull(i + 1) == null)) {
+                        drawCircle(color, (if (emphasized) 5f else 3.5f).dp.toPx(), point(i, rssi))
+                    }
+                }
                 if (index != null) historyValueAt(values, index, samples)?.let { rssi ->
                     drawCircle(color, 5.dp.toPx(), Offset(plot.left + index * step, plot.bottom - plot.height * dbmToFraction(rssi.toFloat())))
                 }
@@ -229,10 +255,13 @@ fun SignalHistoryGraph(
             shown.forEach { network ->
                 if (focus != null && network.bssid != focus) return@forEach
                 val values = readings[network.bssid].orEmpty()
+                val lastIndex = values.indexOfLast { it != null }
+                if (lastIndex < 0) return@forEach
+                val lastValue = values[lastIndex]?.rssi ?: return@forEach
                 val name = s.chartNetworkLabel(network.ssid.ifEmpty { common.hiddenNetwork }, network.bssid.equals(connectedBssid, true), 0)
                 val layout = measurer.measure(name, nameStyle.copy(color = palette.color(network.bssid)), maxLines = 1,
                     overflow = TextOverflow.Ellipsis, constraints = Constraints(maxWidth = (plot.width - 16.dp.toPx()).toInt().coerceAtLeast(1)))
-                val end = Offset(plot.right - layout.size.width / 2f - 8.dp.toPx(), plot.bottom - plot.height * dbmToFraction(values.last().toFloat()))
+                val end = Offset(plot.left + lastIndex * step - layout.size.width / 2f - 8.dp.toPx(), plot.bottom - plot.height * dbmToFraction(lastValue.toFloat()))
                 val bounds = Rect(plot.left + 4.dp.toPx(), 4.dp.toPx(), plot.right - 4.dp.toPx(), plot.bottom)
                 val above = chartLabelRect(end, Size(layout.size.width.toFloat(), layout.size.height.toFloat()), bounds, 6.dp.toPx())
                 val below = above.translate(0f, layout.size.height + 12.dp.toPx())

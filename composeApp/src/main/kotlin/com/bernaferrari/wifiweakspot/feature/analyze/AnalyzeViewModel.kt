@@ -31,7 +31,7 @@ class AnalyzeViewModel(
 
     // BSSID -> History of RSSI (single source of truth, updated only in init)
     private val signalHistory = SignalHistory()
-    private val _history = MutableStateFlow<Map<String, List<Int>>>(emptyMap())
+    private val _history = MutableStateFlow<SignalTimeline>(emptyMap())
 
     // Pure combination - no side effects
     val uiState: StateFlow<AnalyzeUiState> = combine(
@@ -165,7 +165,7 @@ sealed interface AnalyzeUiState {
     data class Success(
         val networks: List<WifiNetwork>,
         val isScanning: Boolean,
-        val history: Map<String, List<Int>> = emptyMap(),
+        val history: SignalTimeline = emptyMap(),
         val throttleState: com.bernaferrari.wifiweakspot.core.wifi.ThrottleState = com.bernaferrari.wifiweakspot.core.wifi.ThrottleState.Unknown
     ) : AnalyzeUiState
 }

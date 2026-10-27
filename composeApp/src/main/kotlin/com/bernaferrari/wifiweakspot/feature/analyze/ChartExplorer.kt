@@ -33,7 +33,7 @@ internal fun ChartExplorer(
     onBandChange: (FrequencyBand) -> Unit,
     connectedBssid: String?,
     connectedFrequency: Int?,
-    history: Map<String, List<Int>> = emptyMap(),
+    history: SignalTimeline = emptyMap(),
     showHistory: Boolean = false,
     onDismiss: () -> Unit
 ) {

@@ -3,7 +3,6 @@
 package com.bernaferrari.wifiweakspot.feature.analyze
 
 import com.bernaferrari.wifiweakspot.core.i18n.strings
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ToggleButtonDefaults
@@ -17,10 +16,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -76,6 +75,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -91,6 +91,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.selected
@@ -145,104 +146,128 @@ fun AnalyzeScreen(
     viewModel: AnalyzeViewModel = koinViewModel(),
     onNavigateToPowerTools: () -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val connected by viewModel.connected.collectAsStateWithLifecycle()
-    val permissionGate: PermissionGate = koinInject()
-    val permissions by permissionGate.state.collectAsStateWithLifecycle()
-    val throttleManager: ScanThrottleManager = koinInject()
-    val throttle by throttleManager.throttleState.collectAsStateWithLifecycle()
-    val radios = rememberRadioState()
-    val platform: com.bernaferrari.wifiweakspot.core.platform.PlatformActions = org.koin.compose.koinInject()
-    val haptics = rememberWifiWeakspotHapticFeedback()
-    val reduceMotion = LocalReduceMotion.current
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val canScan = permissions.canScanWifi && radios.wifiEnabled && radios.locationEnabled
+    BoxWithConstraints(modifier.fillMaxSize()) {
+        val wideScreen = maxWidth >= com.bernaferrari.wifiweakspot.core.designsystem.WindowWidth.Expanded
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        val connected by viewModel.connected.collectAsStateWithLifecycle()
+        val permissionGate: PermissionGate = koinInject()
+        val permissions by permissionGate.state.collectAsStateWithLifecycle()
+        val throttleManager: ScanThrottleManager = koinInject()
+        val throttle by throttleManager.throttleState.collectAsStateWithLifecycle()
+        val radios = rememberRadioState()
+        val platform: com.bernaferrari.wifiweakspot.core.platform.PlatformActions = org.koin.compose.koinInject()
+        val haptics = rememberWifiWeakspotHapticFeedback()
+        val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+        val canScan = permissions.canScanWifi && radios.wifiEnabled && radios.locationEnabled
 
-    // Refresh while the screen is visible, paced to what Android allows.
-    LaunchedEffect(canScan) {
-        if (!canScan) return@LaunchedEffect
-        while (isActive) {
-            if (throttleManager.throttleState.value !is ThrottleState.Exhausted) viewModel.startScan()
-            delay(throttleIntervalMs(throttleManager.throttleState.value))
+        // Refresh while the screen is visible, paced to what Android allows.
+        LaunchedEffect(canScan) {
+            if (!canScan) return@LaunchedEffect
+            while (isActive) {
+                if (throttleManager.throttleState.value !is ThrottleState.Exhausted) viewModel.startScan()
+                delay(throttleIntervalMs(throttleManager.throttleState.value))
+            }
         }
-    }
 
-    val requestPermission = com.bernaferrari.wifiweakspot.core.platform.rememberScanPermissionRequest()
+        val requestPermission = com.bernaferrari.wifiweakspot.core.platform.rememberScanPermissionRequest()
 
-    val networks = (uiState as? AnalyzeUiState.Success)?.networks.orEmpty()
-    val isScanning = (uiState as? AnalyzeUiState.Success)?.isScanning == true || uiState is AnalyzeUiState.Loading
-    // The band lives here so the collapsed top bar can switch it too.
-    var chosenBand by rememberSaveable { mutableStateOf<FrequencyBand?>(null) }
-    val band = analyzerBand(connected, chosenBand)
-    val counts = remember(networks) { FrequencyBand.entries.associateWith { b -> networks.count { b.contains(it.frequency) } } }
-    val collapsed by remember { androidx.compose.runtime.derivedStateOf { scrollBehavior.state.collapsedFraction > 0.6f } }
+        val networks = (uiState as? AnalyzeUiState.Success)?.networks.orEmpty()
+        val isScanning = (uiState as? AnalyzeUiState.Success)?.isScanning == true || uiState is AnalyzeUiState.Loading
+        // The band lives here so the collapsed top bar can switch it too.
+        var chosenBand by rememberSaveable { mutableStateOf<FrequencyBand?>(null) }
+        val band = analyzerBand(connected, chosenBand)
+        val counts = remember(networks) { FrequencyBand.entries.associateWith { b -> networks.count { b.contains(it.frequency) } } }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            MediumFlexibleTopAppBar(
-                title = { Text(strings.common.tabNetworks) },
-                actions = {
-                    // Scrolled down, the bands stay one tap away in the bar.
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = collapsed && canScan && networks.isNotEmpty(),
-                        enter = if (reduceMotion) androidx.compose.animation.EnterTransition.None else androidx.compose.animation.fadeIn() + androidx.compose.animation.scaleIn(initialScale = 0.9f),
-                        exit = if (reduceMotion) androidx.compose.animation.ExitTransition.None else androidx.compose.animation.fadeOut() + androidx.compose.animation.scaleOut(targetScale = 0.9f)
-                    ) {
-                        CompactBandSelector(band) { haptics.light(); chosenBand = it }
-                    }
-                    // Scanning is automatic; the only thing worth a button is lifting Android's limit.
-                    if (canScan && throttle !is ThrottleState.Unlimited) {
-                        IconButton(onClick = { haptics.click(); onNavigateToPowerTools() }) {
-                            Icon(Icons.Rounded.Bolt, strings.common.fasterScans, tint = if (throttle is ThrottleState.Exhausted) MaterialTheme.colorScheme.primary else androidx.compose.material3.LocalContentColor.current)
-                        }
-                    }
-                },
-                scrollBehavior = scrollBehavior
-            )
-        }
-    ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            when {
-                !permissions.canScanWifi -> CenteredMessage(
-                    icon = Icons.Rounded.WifiFind,
-                    title = strings.common.permissionScreenTitle,
-                    body = strings.analyze.scanPermissionBody,
-                    action = strings.common.permissionAllowAccess,
-                    onAction = requestPermission
-                )
-                !radios.wifiEnabled -> CenteredMessage(Icons.Rounded.WifiOff, strings.analyze.wifiOffTitle, strings.analyze.wifiOffBody, strings.common.openWifiSettings) { platform.openWifiSettings() }
-                !radios.locationEnabled -> CenteredMessage(Icons.Rounded.LocationOff, strings.analyze.locationOffTitle, strings.analyze.locationOffBody, strings.analyze.turnOnLocation) { platform.openLocationSettings() }
-                networks.isEmpty() && uiState !is AnalyzeUiState.Success -> {
-                    if (uiState is AnalyzeUiState.Loading) {
-                        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                            LoadingIndicator(Modifier.size(96.dp))
-                            Spacer(Modifier.height(16.dp))
-                            Text(strings.survey.scanning, style = MaterialTheme.typography.titleMedium)
-                        }
-                    } else {
-                        val exhausted = throttle as? ThrottleState.Exhausted
-                        CenteredMessage(
-                            icon = Icons.Rounded.WifiFind,
-                            title = if (exhausted != null) strings.analyze.scanPausedTitle else strings.common.readyToScan,
-                            body = if (exhausted != null) strings.analyze.scanPausedBody(exhausted.secondsUntilNextScan)
-                            else strings.analyze.readyToScanBody,
-                            action = if (exhausted != null) strings.analyze.turnOffThrottling else strings.analyze.scan,
-                            onAction = { if (exhausted != null) onNavigateToPowerTools() else viewModel.startScan() }
-                        )
-                    }
+        val appBarActions: @Composable RowScope.() -> Unit = {
+            if (canScan && throttle !is ThrottleState.Unlimited) {
+                IconButton(onClick = { haptics.click(); onNavigateToPowerTools() }) {
+                    Icon(Icons.Rounded.Bolt, strings.common.fasterScans,
+                        tint = if (throttle is ThrottleState.Exhausted) MaterialTheme.colorScheme.primary else androidx.compose.material3.LocalContentColor.current)
                 }
-                else -> NetworksContent(
-                    networks = networks,
-                    history = (uiState as? AnalyzeUiState.Success)?.history.orEmpty(),
-                    connected = connected,
-                    band = band,
-                    counts = counts,
-                    onBandChange = { haptics.light(); chosenBand = it }
+            }
+        }
+        val changeBand: (FrequencyBand) -> Unit = { haptics.light(); chosenBand = it }
+        val showBands = canScan && networks.isNotEmpty()
+        Scaffold(
+            modifier = Modifier.fillMaxSize().then(if (wideScreen) Modifier else Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)),
+            topBar = {
+                if (!wideScreen || !showBands) NetworksHeader(
+                    band, counts, showBands, false, scrollBehavior, canScan && throttle !is ThrottleState.Unlimited, appBarActions, changeBand
                 )
+            }
+        ) { padding ->
+            Box(Modifier.fillMaxSize().padding(padding)) {
+                when {
+                    !permissions.canScanWifi -> CenteredMessage(
+                        icon = Icons.Rounded.WifiFind,
+                        title = strings.common.permissionScreenTitle,
+                        body = strings.analyze.scanPermissionBody,
+                        action = strings.common.permissionAllowAccess,
+                        onAction = requestPermission
+                    )
+                    !radios.wifiEnabled -> CenteredMessage(Icons.Rounded.WifiOff, strings.analyze.wifiOffTitle, strings.analyze.wifiOffBody, strings.common.openWifiSettings) { platform.openWifiSettings() }
+                    !radios.locationEnabled -> CenteredMessage(Icons.Rounded.LocationOff, strings.analyze.locationOffTitle, strings.analyze.locationOffBody, strings.analyze.turnOnLocation) { platform.openLocationSettings() }
+                    networks.isEmpty() && uiState !is AnalyzeUiState.Success -> {
+                        if (uiState is AnalyzeUiState.Loading) {
+                            Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                                LoadingIndicator(Modifier.size(96.dp))
+                                Spacer(Modifier.height(16.dp))
+                                Text(strings.survey.scanning, style = MaterialTheme.typography.titleMedium)
+                            }
+                        } else {
+                            val exhausted = throttle as? ThrottleState.Exhausted
+                            CenteredMessage(
+                                icon = Icons.Rounded.WifiFind,
+                                title = if (exhausted != null) strings.analyze.scanPausedTitle else strings.common.readyToScan,
+                                body = if (exhausted != null) strings.analyze.scanPausedBody(exhausted.secondsUntilNextScan)
+                                else strings.analyze.readyToScanBody,
+                                action = if (exhausted != null) strings.analyze.turnOffThrottling else strings.analyze.scan,
+                                onAction = { if (exhausted != null) onNavigateToPowerTools() else viewModel.startScan() }
+                            )
+                        }
+                    }
+                    else -> NetworksContent(
+                        networks = networks,
+                        history = (uiState as? AnalyzeUiState.Success)?.history.orEmpty(),
+                        connected = connected,
+                        band = band,
+                        leftHeader = { NetworksHeader(band, counts, true, true, null, canScan && throttle !is ThrottleState.Unlimited, appBarActions, changeBand) },
+                        onBandChange = changeBand
+                    )
+                }
             }
         }
     }
+}
+
+
+/** Standard app-bar actions own the same band controls throughout the collapse. */
+@Composable
+private fun NetworksHeader(
+    band: FrequencyBand,
+    counts: Map<FrequencyBand, Int>,
+    showBands: Boolean,
+    tablet: Boolean,
+    scrollBehavior: TopAppBarScrollBehavior?,
+    extraAction: Boolean,
+    actions: @Composable RowScope.() -> Unit,
+    onBandChange: (FrequencyBand) -> Unit
+) {
+    val windowWidth = with(androidx.compose.ui.platform.LocalDensity.current) {
+        androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.width.toDp()
+    }
+    val expandedWidth = minOf(272.dp, windowWidth - if (extraAction) 80.dp else 32.dp)
+    MediumFlexibleTopAppBar(
+        title = { Text(strings.common.tabNetworks, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        actions = {
+            Row(Modifier.padding(end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (showBands) AppBarBandSelector(band, counts, scrollBehavior?.state?.collapsedFraction ?: 0f, expandedWidth, onBandChange)
+                actions()
+            }
+        },
+        windowInsets = if (tablet) androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0) else TopAppBarDefaults.windowInsets,
+        scrollBehavior = scrollBehavior
+    )
 }
 
 
@@ -268,10 +293,10 @@ private fun CenteredMessage(icon: ImageVector, title: String, body: String, acti
 @Composable
 private fun NetworksContent(
     networks: List<WifiNetwork>,
-    history: Map<String, List<Int>>,
+    history: SignalTimeline,
     connected: NetworkStatus,
     band: FrequencyBand,
-    counts: Map<FrequencyBand, Int>,
+    leftHeader: @Composable () -> Unit,
     onBandChange: (FrequencyBand) -> Unit
 ) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -303,89 +328,90 @@ private fun NetworksContent(
 
         val windowWidth = maxWidth
         val wide = maxWidth >= com.bernaferrari.wifiweakspot.core.designsystem.WindowWidth.Expanded
-        // Size the graph to the available landscape height; advice lives beside it.
-        val minimumGraphHeight = 140.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale
-        val graphHeight = if (wide) (maxHeight - 200.dp).coerceIn(minimumGraphHeight, maxOf(minimumGraphHeight, 440.dp)) else 340.dp
-        val channelContext: @Composable () -> Unit = {
-            ChannelContext(
-                networks = networks,
-                band = band,
-                connected = connected,
-                selectedNetwork = selected?.let { pick -> inBand.firstOrNull { it.bssid == pick.bssid } ?: pick },
-                onClearSelection = { toggle(null) }
-            )
-        }
         val palette = rememberNetworkPalette(inBand, connected.bssid.takeIf { connected.isConnected })
-        val controls: LazyListScope.() -> Unit = {
-            item(key = "bands") {
-                BandSelector(band, counts) { onBandChange(it) }
+        val channelContext: @Composable (Modifier) -> Unit = { contextModifier ->
+            androidx.compose.animation.AnimatedVisibility(
+                visible = !showHistory || selected != null,
+                modifier = contextModifier,
+                enter = if (reduceMotion) androidx.compose.animation.EnterTransition.None else
+                    androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(150)) + androidx.compose.animation.expandVertically(androidx.compose.animation.core.tween(180)),
+                exit = if (reduceMotion) androidx.compose.animation.ExitTransition.None else
+                    androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(100)) + androidx.compose.animation.shrinkVertically(androidx.compose.animation.core.tween(150))
+            ) {
+                ChannelContext(
+                    networks = networks, band = band, connected = connected,
+                    selectedNetwork = selected?.let { pick -> inBand.firstOrNull { it.bssid == pick.bssid } ?: pick },
+                    palette = palette,
+                    showRecommendation = !showHistory,
+                    onClearSelection = { toggle(null) }
+                )
             }
-            item(key = "chart") {
-                Card(shape = WifiWeakspotShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-                    Column(Modifier.padding(vertical = 12.dp)) {
-                        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                                Text(if (showHistory) strings.analyze.signalOverTime else strings.analyze.channels, style = if (windowWidth < 360.dp) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f, fill = false), maxLines = 2)
-                                IconButton(onClick = { haptics.click(); showHelp = true }) {
-                                    Icon(Icons.Outlined.Info, strings.analyze.howToReadThisChart, Modifier.size(18.dp))
-                                }
+        }
+        val chart: @Composable (Modifier) -> Unit = { chartModifier ->
+            Card(modifier = chartModifier, shape = WifiWeakspotShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+                Column((if (wide) Modifier.fillMaxSize() else Modifier).padding(vertical = 12.dp)) {
+                    Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                            Text(if (showHistory) strings.common.historyTitle else strings.analyze.channels, style = if (windowWidth < 360.dp) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            IconButton(onClick = { haptics.click(); showHelp = true }) {
+                                Icon(Icons.Outlined.Info, strings.analyze.howToReadThisChart, Modifier.size(18.dp))
                             }
-                            // Match the band selector's visible gap; each segment fills its 48 dp width.
-                            Row(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
-                                    listOf(false to (NetworksIcons.Filled to strings.analyze.channels), true to (Icons.AutoMirrored.Rounded.ShowChart to strings.analyze.signalOverTime))
-                                        .forEachIndexed { index, (history, look) ->
-                                            ToggleButton(
-                                                checked = showHistory == history,
-                                                onCheckedChange = { haptics.light(); showHistory = history },
-                                                shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes() else ButtonGroupDefaults.connectedTrailingButtonShapes(),
-                                                contentPadding = PaddingValues(horizontal = 12.dp),
-                                                colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-                                                modifier = Modifier.size(48.dp)
-                                            ) { Icon(look.first, look.second, Modifier.size(20.dp)) }
-                                        }
-                            }
-                            IconButton(onClick = { haptics.click(); showExplorer = true }) { Icon(Icons.Rounded.Fullscreen, if (showHistory) strings.analyze.expandSignalHistory else strings.analyze.expandChannels) }
                         }
-                        Box(Modifier.fillMaxWidth().height(graphHeight)) {
-                            if (inBand.isEmpty()) {
-                                Text(
-                                    strings.analyze.noBandNetworksNearby(band.label),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
-                            } else if (showHistory) {
-                                SignalHistoryGraph(
-                                    history = history.filterKeys { bssid -> inBand.any { it.bssid == bssid } },
-                                    networks = inBand,
-                                    selectedNetwork = selected,
-                                    connectedBssid = connected.bssid.takeIf { connected.isConnected },
-                                    onNetworkSelected = toggle,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            } else {
-                                ChannelGraph(
-                                    networks = inBand,
-                                    selectedBand = band,
-                                    selectedNetwork = selected,
-                                    connectedBssid = connected.bssid.takeIf { connected.isConnected },
-                                    onNetworkSelected = toggle,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
+                        // Match the band selector's visible gap; each segment fills its 48 dp width.
+                        Row(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                                listOf(false to (NetworksIcons.Filled to strings.analyze.channels), true to (Icons.AutoMirrored.Rounded.ShowChart to strings.analyze.signalOverTime))
+                                    .forEachIndexed { index, (history, look) ->
+                                        ToggleButton(
+                                            checked = showHistory == history,
+                                            onCheckedChange = { haptics.light(); showHistory = history },
+                                            shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes() else ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                                            contentPadding = PaddingValues(horizontal = 12.dp),
+                                            colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+                                            modifier = Modifier.size(48.dp)
+                                        ) { Icon(look.first, look.second, Modifier.size(20.dp)) }
+                                    }
+                        }
+                        IconButton(onClick = { haptics.click(); showExplorer = true }) { Icon(Icons.Rounded.Fullscreen, if (showHistory) strings.analyze.expandSignalHistory else strings.analyze.expandChannels) }
+                    }
+                    Box(Modifier.fillMaxWidth().then(if (wide) Modifier.weight(1f) else Modifier.height(340.dp))) {
+                        if (inBand.isEmpty()) {
+                            Text(
+                                strings.analyze.noBandNetworksNearby(band.label),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        } else if (showHistory) {
+                            SignalHistoryGraph(
+                                history = history.filterKeys { bssid -> inBand.any { it.bssid == bssid } },
+                                networks = inBand,
+                                selectedNetwork = selected,
+                                connectedBssid = connected.bssid.takeIf { connected.isConnected },
+                                onNetworkSelected = { selected = it },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            ChannelGraph(
+                                networks = inBand,
+                                selectedBand = band,
+                                selectedNetwork = selected,
+                                connectedBssid = connected.bssid.takeIf { connected.isConnected },
+                                onNetworkSelected = toggle,
+                                modifier = Modifier.fillMaxSize()
+                            )
                         }
                     }
                 }
             }
-            if (!wide && !showHistory) item(key = "advice") {
-                channelContext()
+        }
+        val controls: LazyListScope.() -> Unit = {
+            item(key = "chart") {
+                chart(Modifier)
             }
+            item(key = "advice") { channelContext(Modifier) }
         }
         var showWeak by rememberSaveable(band) { mutableStateOf(false) }
         val list: LazyListScope.() -> Unit = {
-            if (wide && !showHistory) item(key = "advice") {
-                channelContext()
-            }
             item(key = "listHeader") {
                 Text(
                     strings.analyze.networksOnBand(inBand.size, band.label),
@@ -427,8 +453,18 @@ private fun NetworksContent(
             val padding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 32.dp)
             if (wide) {
                 Row(Modifier.fillMaxSize()) {
-                    LazyColumn(Modifier.weight(1.2f), contentPadding = padding, verticalArrangement = Arrangement.spacedBy(12.dp), content = controls)
-                    LazyColumn(Modifier.weight(1f), contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap), content = list)
+                    Column(
+                        Modifier.weight(1.2f).fillMaxSize().padding(bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        leftHeader()
+                        chart(Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp))
+                    }
+                    Column(Modifier.weight(1f).fillMaxSize()) {
+                        channelContext(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 4.dp, bottom = 8.dp))
+                        LazyColumn(Modifier.fillMaxWidth().weight(1f), contentPadding = padding,
+                            verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap), content = list)
+                    }
                 }
             } else {
                 LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = padding, verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
@@ -486,14 +522,19 @@ private fun NetworksContent(
 
 
 @Composable
-private fun BandSelector(band: FrequencyBand, counts: Map<FrequencyBand, Int>, onSelect: (FrequencyBand) -> Unit) {
+private fun AppBarBandSelector(band: FrequencyBand, counts: Map<FrequencyBand, Int>, collapse: Float, expandedWidth: androidx.compose.ui.unit.Dp, onSelect: (FrequencyBand) -> Unit) {
+    val fraction = collapse.coerceIn(0f, 1f)
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val unitStyle = MaterialTheme.typography.labelSmall
+    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val unitWidth = with(density) { measurer.measure("GHz", unitStyle).size.width.toDp() + 4.dp }
+    val includeCounts = expandedWidth >= 256.dp && density.fontScale <= 1.2f
     Row(
-        Modifier.fillMaxWidth().padding(vertical = 6.dp).selectableGroup(),
+        Modifier.width(androidx.compose.ui.unit.lerp(expandedWidth, 152.dp, fraction)).selectableGroup(),
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
     ) {
         FrequencyBand.entries.forEachIndexed { index, entry ->
-            val count = counts[entry] ?: 0
-            val description = "${entry.label}, ${strings.analyze.bandNetworkCount(count)}"
+            val description = "${entry.label}, ${strings.analyze.bandNetworkCount(counts[entry] ?: 0)}"
             ToggleButton(
                 checked = band == entry,
                 onCheckedChange = { onSelect(entry) },
@@ -502,21 +543,23 @@ private fun BandSelector(band: FrequencyBand, counts: Map<FrequencyBand, Int>, o
                     FrequencyBand.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
                     else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                 },
+                contentPadding = PaddingValues(horizontal = 6.dp),
                 colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-                modifier = Modifier.weight(1f).heightIn(min = 56.dp).semantics { contentDescription = description }
+                modifier = Modifier.weight(1f).height(48.dp).semantics { contentDescription = description }
             ) {
-                // Counts sit beside the band, wrapping underneath only when text needs more room.
-                FlowRow(
-                    modifier = Modifier.clearAndSetSemantics { },
-                    horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    itemVerticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(entry.label, style = MaterialTheme.typography.labelLarge)
-                    val ink = androidx.compose.material3.LocalContentColor.current
-                    Badge(containerColor = ink.copy(alpha = 0.12f), contentColor = ink) {
-                        Text(count.toString(), style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"))
+                Row(Modifier.clearAndSetSemantics { }, verticalAlignment = Alignment.CenterVertically) {
+                    Text(entry.label.removeSuffix(" GHz"), style = MaterialTheme.typography.labelLarge)
+                    Box(Modifier.width(androidx.compose.ui.unit.lerp(unitWidth, 0.dp, fraction))
+                        .graphicsLayer { alpha = 1f - fraction; clip = true }, contentAlignment = Alignment.CenterEnd) {
+                        Text("GHz", style = unitStyle, maxLines = 1, softWrap = false)
+                    }
+                    Spacer(Modifier.width(if (includeCounts) androidx.compose.ui.unit.lerp(4.dp, 0.dp, fraction) else 0.dp))
+                    Box(Modifier.width(if (includeCounts) androidx.compose.ui.unit.lerp(24.dp, 0.dp, fraction) else 0.dp)
+                        .then(Modifier.graphicsLayer { alpha = 1f - fraction; clip = true }), contentAlignment = Alignment.Center) {
+                        val ink = androidx.compose.material3.LocalContentColor.current
+                        Badge(containerColor = ink.copy(alpha = 0.12f), contentColor = ink) {
+                            Text((counts[entry] ?: 0).toString(), maxLines = 1, softWrap = false, style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"))
+                        }
                     }
                 }
             }
@@ -580,7 +623,7 @@ private fun NetworkRow(
         // The Wi-Fi symbol shares the same quality scale as Home and Rooms.
         leadingContent = { com.bernaferrari.wifiweakspot.core.designsystem.component.WifiBadge(network.rssi) },
         trailingContent = {
-            IconButton(onClick = onDetails) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, s.detailsForNetwork(network.ssid)) }
+            IconButton(onClick = onDetails) { Icon(Icons.Outlined.Info, s.detailsForNetwork(network.ssid)) }
         },
         supportingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {

@@ -2,7 +2,7 @@
 
 The shared Android/web UI uses `core/i18n/Strings.kt`. English lives in `core/i18n/en/`; screens read the `strings` composition local, while services, exports, and view models use `appStrings`. Android supplies the current configuration locale at the app root so a per-app language change refreshes the catalog.
 
-The target languages are English (`en`), Spanish (`es`), Brazilian Portuguese (`pt-BR`), French (`fr`), German (`de`), Italian (`it`), Russian (`ru`), Japanese (`ja`), Korean (`ko`), and Simplified Chinese (`zh-Hans`). All ten catalogs are implemented and registered in Android’s per-app language settings. The nine new catalogs began as machine-translation drafts and received a substantial editorial and technical review, including terminology, sentence meaning, placeholders, date order, room names, grammatical agreement, and Russian plurals. All ten languages have browser rendering checks at normal and enlarged text sizes. Independent native-speaker and physical Android-device validation have not been performed. No translation service is called at runtime.
+The target languages are English (`en`), Spanish (`es`), Brazilian Portuguese (`pt-BR`), French (`fr`), German (`de`), Italian (`it`), Russian (`ru`), Japanese (`ja`), Korean (`ko`), and Simplified Chinese (`zh-Hans`). All ten catalogs are implemented and registered in Android’s per-app language settings. The nine new catalogs began as machine-translation drafts and received a substantial editorial and technical review, including terminology, sentence meaning, placeholders, date order, room names, grammatical agreement, and Russian plurals. All ten languages have browser rendering checks at normal and enlarged text sizes. Independent native-speaker validation remains outstanding. Follow-up English UI checks now also cover a physical Android phone and an emulator; this is not a native-device review of all ten translations. No translation service is called at runtime.
 
 ## Adding a catalog
 
@@ -65,43 +65,40 @@ loads, and the Android app-name resource uses the same brand. No catalog entries
 Network names, hostnames, protocol names, and stable stored/export formats remain data.
 
 
-### Tablet channel layout
+### Networks layout and channel advice
 
-Wide Networks layouts place the channel context above the network list in the right column,
-leaving the graph its own column. Narrow layouts keep context below the graph. The same
-available-width breakpoint controls both the columns and context placement. Recommendation
-copy wraps, graph height follows available height and font scale, and the channel graph measures
-localized axis labels to reserve enough room for them. Graph hit testing uses that same gutter.
-The Channels toggle reuses the Networks navigation icon.
+The band selector is in the `MediumFlexibleTopAppBar.actions` slot from the start, matching
+the app-bar component and title placement of Home, Rooms, and Settings. Its width, GHz units, and count
+badges interpolate from the Material scroll behavior’s collapse fraction, using the same controls
+throughout. Buttons remain 48 dp high with a 16 dp trailing inset; counts yield first at large text sizes.
+Phone bars collapse normally. In side-by-side layouts, only the left pane owns the
+app bar and graph; the right list scrolls independently. The graph fills the available height.
+The selection context stays above the right list so its clear action remains reachable.
 
-Verified the shared Compose browser layout at 390 × 844, 720 × 1280, 960 × 540, and
-1280 × 720 logical pixels, plus all ten languages at 150% text on the landscape tablet.
-No browser runtime errors occurred. Android assembly and all 214 unit tests pass. Home and
-Networks artwork was recaptured for phone, portrait tablet, landscape tablet, and desktop;
-README assets pass their provenance check. Simulated signals now cap at 84%, with real
-Android signal mapping unchanged. These are browser layout checks, not physical-device checks.
+Chart channel numbers use one color and weight. Network-wave colors identify networks, not
+channel quality. The old Busy gradient and its help card were removed because a scan cannot
+measure actual channel traffic and the second color scale obscured the recommendation.
+The History heading is a single line; the mode button retains its full accessible name.
+A trailing Info button opens network details; the row itself selects a network on the chart.
+Both modes expose the animated clear-selection control. Clearing history also exits its frozen
+inspection. Reduced motion disables the selection transition.
 
-Band buttons display the frequency with a numeric count badge, avoiding repeated visible
-“networks” labels. Their localized accessible descriptions retain the full count phrase;
-checked-state semantics remain on the toggle. The count wraps below the frequency when
-needed, verified at 320 dp with 150% text as well as tablet and desktop widths.
+Channel advice matches the band buttons at a 48 dp minimum container height and opens a scrollable Material sheet.
+The sheet shows a channel badge, a relative comparison, and three translated router steps.
+Its immutable snapshot keeps the opened scan’s comparison stable while new scans arrive.
+Scores group guest/hidden SSIDs by radio, discard invalid signal readings, and weight the shared
+portion of a candidate’s 20 MHz band rather than counting any overlap as a full collision.
+The score remains a relative scan heuristic; it does not measure airtime or promise throughput.
+Unknown 5/6 GHz router support still prevents an invented channel recommendation.
 
+Follow-up verification includes catalog completeness, all ten locales opening and closing the
+advice sheet at 150% text, phone/narrow/tablet/desktop collapse and selection interactions,
+independent right-list scrolling, and signal-history clearing after inspection. Native English
+checks on a Samsung SM-S931B (Android 17) and an API 36 resizable emulator confirm the app
+runs with real system bars, the tablet chart stays fixed, Info opens details without selecting,
+and history selection can be cleared. Device Wi-Fi names stay in ignored `build/qa/` captures;
+public gallery artwork uses the browser’s simulated networks, capped at 84% signal.
 
-Channel advice uses a 56 dp minimum container height, with larger text allowed to grow.
-The number badge accompanies “Suggested channel”; comparisons use “Less crowded than
-channel …”, and ties never imply that changing channels will improve performance. All ten
-catalogs carry the updated messages, without adding entries.
-
-
-The channel-advice pill is now an accessible button that opens a dismissible, scrollable
-Material bottom sheet. It explains the scan comparison and gives router instructions using
-the selected channel and band. The sheet preserves the advice shown at opening while
-scans continue. Two new catalog entries provide the complete explanation and instructions
-in every language; no fragments are stitched into translated sentences.
-
-
-The advice sheet presents a channel badge, measured overlap bars, and three numbered router
-steps. Bars compare channels 1, 6, and 11 (plus the inspected channel if different), normalized
-to the largest observed overlap score in that snapshot. They are not invented performance
-percentages. The suggested channel has both a check mark and an accessible state description.
-The snapshot includes scores, so live scans cannot change the comparison while it is open.
+The earlier catalog-reduction and browser-verification sections record the initial 551-entry
+quality pass. Channel-advice features subsequently added five entries, while removal of the
+Busy strip removed two obsolete entries. Catalogs remain complete and symmetric.

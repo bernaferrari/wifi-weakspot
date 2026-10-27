@@ -84,7 +84,6 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
 
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
-    override val busyCaption = "拥挤"
     override val axisStrong = "强"
     override val axisOkay = "一般"
     override val axisWeak = "弱"
@@ -104,7 +103,6 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
 
     override val guideSameRouterBody = "+1：可能使用同一 Wi-Fi 无线模块的网络名称会合并显示在同一条曲线上。"
 
-    override val guideCrowdBody = "绿色表示重叠较少，红色表示重叠较多。2.4 GHz 下面的条带显示重叠。点击它进行计数。"
     override val guideSteadyBody = "曲线上下波动表示信号强度在变化。点击曲线暂停，左右拖动切换时间点，上下拖动切换网络。恢复实时显示后可继续查看新读数。"
 
     override val guideHighlightBody = "点击曲线或列表项即可高亮显示，也可在图表上左右拖动查看。"
