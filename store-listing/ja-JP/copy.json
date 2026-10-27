@@ -1,49 +1,49 @@
 {
   "channels": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "近くに18件のネットワーク",
+    "title": "周りのネットワークを\n*すべて表示*",
+    "body": "最も空いたチャンネルを数秒で。"
   },
   "rooms": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "部屋ごとに",
+    "title": "信号が最も強い\n*部屋を見つける*",
+    "body": "測定値を保存して比較。"
   },
   "coverage": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "ヒートマップ",
+    "title": "家の中の\n*弱い場所をマップに*",
+    "body": "立っている場所をタップ。マップが埋まります。"
   },
   "history": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "リアルタイム",
+    "title": "信号の\n*低下と回復を確認*",
+    "body": "歩き回って、変化を見る。"
   },
   "router": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "ルーターをテスト",
+    "title": "原因はルーター？\n*すぐにわかる*",
+    "body": "速度、安定性、パケットロス。"
   },
   "appearance": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Material You",
+    "title": "あなたの色、\n*あなたのスタイル*",
+    "body": "ライト、ダーク、すべてのパレット。"
   },
   "desktop/channels": {
-    "title": ""
+    "title": "*最も空いたチャンネル*を選ぶ"
   },
   "desktop/home": {
-    "title": ""
+    "title": "Wi‑Fiの*弱い場所*を探す"
   },
   "desktop/history": {
-    "title": ""
+    "title": "信号の*変化をリアルタイムで*"
   },
   "desktop/appearance": {
-    "title": ""
+    "title": "あなたの色、*あなたのスタイル*"
   },
   "network": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "あなたのネットワーク",
+    "title": "すべてのデバイスを\n*ひと目で*",
+    "body": "誰が接続中で、信号はどのくらいか。"
   }
 }

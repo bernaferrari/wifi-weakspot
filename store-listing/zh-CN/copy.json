@@ -1,49 +1,49 @@
 {
   "channels": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "附近 18 个网络",
+    "title": "查看你身边的\n*每一个网络*",
+    "body": "几秒内找到最空闲的信道。"
   },
   "rooms": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "逐个房间",
+    "title": "找到\n*信号最好的房间*",
+    "body": "保存读数并比较。"
   },
   "coverage": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "热力图",
+    "title": "绘制家中的\n*信号薄弱处*",
+    "body": "点按你所在的位置，地图随之填充。"
   },
   "history": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "实时",
+    "title": "看着信号\n*下降又恢复*",
+    "body": "四处走走，看它变化。"
   },
   "router": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "检查路由器",
+    "title": "是路由器的问题吗？\n*快速查明*",
+    "body": "速度、稳定性和丢包。"
   },
   "appearance": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Material You",
+    "title": "你的配色，\n*你的风格*",
+    "body": "浅色、深色和各种调色板。"
   },
   "desktop/channels": {
-    "title": ""
+    "title": "选择*最空闲的信道*"
   },
   "desktop/home": {
-    "title": ""
+    "title": "找出 Wi‑Fi *信号薄弱处*"
   },
   "desktop/history": {
-    "title": ""
+    "title": "实时查看*信号变化*"
   },
   "desktop/appearance": {
-    "title": ""
+    "title": "你的配色，*你的风格*"
   },
   "network": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "你的网络",
+    "title": "所有设备\n*一目了然*",
+    "body": "谁在线，信号有多强。"
   }
 }

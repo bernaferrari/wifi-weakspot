@@ -1,49 +1,49 @@
 {
   "channels": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "18 reti vicine",
+    "title": "Vedi tutte le reti\n*intorno a te*",
+    "body": "Trova il canale più libero in pochi secondi."
   },
   "rooms": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Stanza per stanza",
+    "title": "Trova la stanza\n*con il segnale migliore*",
+    "body": "Salva le misurazioni e confronta."
   },
   "coverage": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Mappa di calore",
+    "title": "Mappa i punti deboli\n*di casa tua*",
+    "body": "Tocca dove ti trovi. La mappa si riempie."
   },
   "history": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "In diretta",
+    "title": "Guarda il segnale\n*calare e riprendersi*",
+    "body": "Muoviti. Guardalo cambiare."
   },
   "router": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Verifica router",
+    "title": "È colpa del router?\n*Scoprilo subito*",
+    "body": "Velocità, stabilità e perdita di pacchetti."
   },
   "appearance": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Material You",
+    "title": "I tuoi colori,\n*il tuo stile*",
+    "body": "Chiaro, scuro e ogni palette."
   },
   "desktop/channels": {
-    "title": ""
+    "title": "Scegli il *canale più libero*"
   },
   "desktop/home": {
-    "title": ""
+    "title": "Trova i *punti deboli* del Wi‑Fi"
   },
   "desktop/history": {
-    "title": ""
+    "title": "Guarda il segnale *cambiare in diretta*"
   },
   "desktop/appearance": {
-    "title": ""
+    "title": "I tuoi colori, *il tuo stile*"
   },
   "network": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "La tua rete",
+    "title": "Ogni dispositivo,\n*a colpo d’occhio*",
+    "body": "Chi è online e con che segnale."
   }
 }

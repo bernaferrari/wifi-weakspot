@@ -1,31 +1,31 @@
 {
   "channels": {
-    "badge": "",
+    "badge": "18 Netzwerke in der Nähe",
     "title": "Wähle den\n*freiesten Kanal*",
     "body": "Sieh alle Netzwerke in der Nähe und ihre Überschneidungen."
   },
   "rooms": {
-    "badge": "",
+    "badge": "Jeder Raum",
     "title": "Vergleiche das Signal\n*Raum für Raum*",
     "body": "Speichere Messungen und finde den besten Arbeitsplatz."
   },
   "coverage": {
-    "badge": "",
+    "badge": "Heatmap",
     "title": "Erfasse die Abdeckung\n*in deinem Zuhause*",
     "body": "Tippe auf deinen Standort. Sieh, wie die Karte wächst."
   },
   "history": {
-    "badge": "",
+    "badge": "Live",
     "title": "Verfolge dein Signal\n*in Echtzeit*",
     "body": "Beobachte jedes Netzwerk im Zeitverlauf."
   },
   "router": {
-    "badge": "",
+    "badge": "Router prüfen",
     "title": "Liegt es am Router?\n*Finde es schnell heraus*",
     "body": "Antwortzeit, Stabilität und Paketverlust."
   },
   "appearance": {
-    "badge": "",
+    "badge": "Material You",
     "title": "Deine Farben,\n*dein Stil*",
     "body": "Material-You-Farben, vier Stile, hell und dunkel."
   },
@@ -42,8 +42,8 @@
     "title": "Deine Farben, *dein Stil*"
   },
   "network": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Dein Netzwerk",
+    "title": "Jedes Gerät\n*auf einen Blick*",
+    "body": "Wer online ist und wie stark."
   }
 }

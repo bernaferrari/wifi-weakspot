@@ -1,49 +1,49 @@
 {
   "channels": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "주변 네트워크 18개",
+    "title": "내 주변\n*모든 네트워크 보기*",
+    "body": "가장 한산한 채널을 몇 초 만에 찾으세요."
   },
   "rooms": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "방마다",
+    "title": "방을 비교해\n*신호 좋은 곳 찾기*",
+    "body": "측정값을 저장하고 비교하세요."
   },
   "coverage": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "히트맵",
+    "title": "우리 집의\n*약한 곳을 지도로*",
+    "body": "서 있는 곳을 누르면 지도가 채워집니다."
   },
   "history": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "실시간",
+    "title": "신호가 떨어지고\n*회복되는 모습 보기*",
+    "body": "걸어 다니며 변화를 확인하세요."
   },
   "router": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "공유기 확인",
+    "title": "공유기 문제일까?\n*빠르게 확인*",
+    "body": "속도, 안정성, 패킷 손실."
   },
   "appearance": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Material You",
+    "title": "나만의 색상,\n*나만의 스타일*",
+    "body": "라이트, 다크, 모든 팔레트."
   },
   "desktop/channels": {
-    "title": ""
+    "title": "*가장 한산한 채널* 선택"
   },
   "desktop/home": {
-    "title": ""
+    "title": "Wi‑Fi *약한 곳* 찾기"
   },
   "desktop/history": {
-    "title": ""
+    "title": "신호 변화를 *실시간으로*"
   },
   "desktop/appearance": {
-    "title": ""
+    "title": "나만의 색상, *나만의 스타일*"
   },
   "network": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "내 네트워크",
+    "title": "모든 기기를\n*한눈에*",
+    "body": "누가 접속 중이고 신호는 얼마나 강한지."
   }
 }

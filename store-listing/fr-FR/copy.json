@@ -1,49 +1,49 @@
 {
   "channels": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "18 réseaux à proximité",
+    "title": "Voyez tous les réseaux\n*autour de vous*",
+    "body": "Trouvez le canal le plus libre en quelques secondes."
   },
   "rooms": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Pièce par pièce",
+    "title": "Trouvez la pièce\n*au meilleur signal*",
+    "body": "Enregistrez des mesures et comparez."
   },
   "coverage": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Carte thermique",
+    "title": "Cartographiez\n*vos zones faibles*",
+    "body": "Touchez l’endroit où vous êtes. La carte se remplit."
   },
   "history": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "En direct",
+    "title": "Voyez votre signal\n*chuter et remonter*",
+    "body": "Déplacez-vous. Voyez-le changer."
   },
   "router": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Tester le routeur",
+    "title": "Est-ce le routeur ?\n*Vérifiez vite*",
+    "body": "Vitesse, stabilité et perte de paquets."
   },
   "appearance": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Material You",
+    "title": "Vos couleurs,\n*votre style*",
+    "body": "Clair, sombre et toutes les palettes."
   },
   "desktop/channels": {
-    "title": ""
+    "title": "Choisissez le *canal le plus libre*"
   },
   "desktop/home": {
-    "title": ""
+    "title": "Trouvez les *points faibles* du Wi‑Fi"
   },
   "desktop/history": {
-    "title": ""
+    "title": "Voyez votre signal *changer en direct*"
   },
   "desktop/appearance": {
-    "title": ""
+    "title": "Vos couleurs, *votre style*"
   },
   "network": {
-    "badge": "",
-    "title": "",
-    "body": ""
+    "badge": "Votre réseau",
+    "title": "Chaque appareil,\n*d’un coup d’œil*",
+    "body": "Qui est en ligne, et avec quel signal."
   }
 }
