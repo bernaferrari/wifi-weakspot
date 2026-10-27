@@ -44,7 +44,7 @@ val appModule = module {
 
     // WiFi
     single<com.bernaferrari.wifiweakspot.core.root.RootAccess> { com.bernaferrari.wifiweakspot.core.root.AndroidRootAccess(androidContext()) }
-    single { AndroidWifiScanner(androidContext(), get()) } bind WifiScanner::class
+    single { AndroidWifiScanner(androidContext(), get(), get<ScanThrottleManager>()::recordScan) } bind WifiScanner::class
     single { AndroidScanThrottleManager(androidContext(), get()) } bind ScanThrottleManager::class
 
     // Network Tools

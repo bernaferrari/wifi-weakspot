@@ -29,7 +29,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 @SuppressLint("MissingPermission")
 class AndroidWifiScanner(
     private val context: Context,
-    private val root: com.bernaferrari.wifiweakspot.core.root.RootAccess
+    private val root: com.bernaferrari.wifiweakspot.core.root.RootAccess,
+    private val onScanAccepted: () -> Unit
 ) : WifiScanner {
 
     private val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
@@ -105,6 +106,8 @@ class AndroidWifiScanner(
             finishScan(null)
             return@synchronized null
         }
+        // Every accepted request consumes the shared platform quota, regardless of its caller.
+        onScanAccepted()
         timeoutJob?.cancel()
         timeoutJob = scope.launch {
             delay(timeoutMs.coerceAtLeast(1))

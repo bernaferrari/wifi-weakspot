@@ -102,9 +102,7 @@ class AnalyzeViewModel(
 
     fun startScan() {
         if (throttleManager.throttleState.value is ThrottleState.Exhausted) return
-        if (wifiScanner.startScan()) {
-            throttleManager.recordScan()
-        }
+        wifiScanner.startScan()
     }
 
     fun stopScan() {
