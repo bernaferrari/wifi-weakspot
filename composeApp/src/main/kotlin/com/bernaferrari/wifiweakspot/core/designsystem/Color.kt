@@ -72,13 +72,14 @@ fun signalHeatColors(): Map<SignalQuality, Color> {
         // at one shared tone the middle of the scale turns olive.
         SignalQuality.entries.associateWith { quality ->
             val hue = SignalHues.getValue(quality).toHct().hue
+            // Light mode keeps tones high so the map reads bright, not muddy, on a light surface.
             // Chroma asks for the most the screen can show at that tone (HCT clamps to gamut).
             val (chroma, tone) = when (quality) {
-                SignalQuality.Excellent -> 120.0 to if (dark) 68.0 else 56.0
-                SignalQuality.Good -> 120.0 to if (dark) 70.0 else 60.0
-                SignalQuality.Fair -> 120.0 to if (dark) 82.0 else 78.0
-                SignalQuality.Weak -> 120.0 to if (dark) 66.0 else 64.0
-                SignalQuality.DeadZone -> 120.0 to if (dark) 56.0 else 52.0
+                SignalQuality.Excellent -> 120.0 to if (dark) 68.0 else 70.0
+                SignalQuality.Good -> 120.0 to if (dark) 70.0 else 74.0
+                SignalQuality.Fair -> 120.0 to if (dark) 82.0 else 84.0
+                SignalQuality.Weak -> 120.0 to if (dark) 66.0 else 72.0
+                SignalQuality.DeadZone -> 120.0 to if (dark) 56.0 else 62.0
             }
             Hct.from(hue, chroma, tone).toColor()
         }

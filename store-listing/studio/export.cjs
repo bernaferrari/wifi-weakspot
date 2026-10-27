@@ -61,19 +61,18 @@ const defaultLocale = config.defaultLocale || 'en-US';
           assert.equal(errors.length, 0, errors.join('\n'));
           const png = file.endsWith('.png');
           const quality = config.jpegQuality || 94;
-          const shot = await page.screenshot({type: png || supersample > 1 ? 'png' : 'jpeg', omitBackground: png && !!slide.transparent, ...(png || supersample > 1 ? {} : {quality})});
-          // Re-encode through a canvas when downsampling, and for transparent-capable art (an app icon): stores want it
-          // as 32-bit PNG even when every pixel is opaque, and a canvas always writes RGBA.
-          const bytes = supersample > 1 || (png && slide.transparent) ? Buffer.from(await page.evaluate(async ({data, width, height, type, quality}) => {
+          // scale: 'css' downsamples a supersampled render to the canvas size, keeping opaque PNGs opaque.
+          const shot = await page.screenshot({type: png ? 'png' : 'jpeg', scale: 'css', omitBackground: png && !!slide.transparent, ...(png ? {} : {quality})});
+          // Stores want transparent-capable art (an app icon) as 32-bit PNG even when every pixel is opaque;
+          // re-encoding through a canvas always writes RGBA.
+          const bytes = png && slide.transparent ? Buffer.from(await page.evaluate(async data => {
             const image = new Image();
             image.src = `data:image/png;base64,${data}`;
             await image.decode();
-            const canvas = Object.assign(document.createElement('canvas'), {width, height});
-            const context = canvas.getContext('2d');
-            context.imageSmoothingQuality = 'high';
-            context.drawImage(image, 0, 0, width, height);
-            return canvas.toDataURL(type, quality / 100).split(',')[1];
-          }, {data: shot.toString('base64'), width, height, type: png ? 'image/png' : 'image/jpeg', quality}), 'base64') : shot;
+            const canvas = Object.assign(document.createElement('canvas'), {width: image.naturalWidth, height: image.naturalHeight});
+            canvas.getContext('2d').drawImage(image, 0, 0);
+            return canvas.toDataURL('image/png').split(',')[1];
+          }, shot.toString('base64')), 'base64') : shot;
           fs.mkdirSync(path.dirname(path.join(dir, file)), {recursive: true});
           fs.writeFileSync(path.join(dir, file), bytes);
           await page.close();
