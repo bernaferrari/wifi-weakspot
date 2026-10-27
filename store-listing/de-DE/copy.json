@@ -1,29 +1,32 @@
 {
-  "home": {
-    "title": "Finde die\n*WLAN-Schwachstellen*",
-    "body": "Prüfe dein Signal überall zu Hause."
-  },
   "channels": {
+    "badge": "",
     "title": "Wähle den\n*freiesten Kanal*",
     "body": "Sieh alle Netzwerke in der Nähe und ihre Überschneidungen."
   },
   "rooms": {
+    "badge": "",
     "title": "Vergleiche das Signal\n*Raum für Raum*",
     "body": "Speichere Messungen und finde den besten Arbeitsplatz."
   },
   "coverage": {
+    "badge": "",
     "title": "Erfasse die Abdeckung\n*in deinem Zuhause*",
     "body": "Tippe auf deinen Standort. Sieh, wie die Karte wächst."
   },
   "history": {
+    "badge": "",
     "title": "Verfolge dein Signal\n*in Echtzeit*",
     "body": "Beobachte jedes Netzwerk im Zeitverlauf."
   },
   "router": {
+    "badge": "",
     "title": "Liegt es am Router?\n*Finde es schnell heraus*",
-    "body": "Antwortzeit, Stabilität und Paketverlust."
+    "body": "Antwortzeit, Stabilität und Paketverlust.",
+    "stat": ""
   },
   "appearance": {
+    "badge": "",
     "title": "Deine Farben,\n*dein Stil*",
     "body": "Material-You-Farben, vier Stile, hell und dunkel."
   },
@@ -39,7 +42,8 @@
   "desktop/appearance": {
     "title": "Deine Farben, *dein Stil*"
   },
-  "devices": {
+  "network": {
+    "badge": "",
     "title": "",
     "body": ""
   }

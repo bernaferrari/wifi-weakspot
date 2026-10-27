@@ -1,27 +1,34 @@
 {
   "channels": {
+    "badge": "18 networks nearby",
     "title": "See every network\n*around you*",
     "body": "Find the clearest channel in seconds."
   },
   "rooms": {
-    "title": "Compare signal\n*room by room*",
-    "body": "Find the best spot to work."
+    "badge": "Room by room",
+    "title": "Find the room\n*with the best signal*",
+    "body": "Save readings and compare."
   },
   "coverage": {
+    "badge": "Heat map",
     "title": "Map your home's\n*weak spots*",
-    "body": "Tap where you stand. The heat map fills in."
+    "body": "Tap where you stand. The map fills in."
   },
   "history": {
+    "badge": "Live",
     "title": "Watch your signal\n*drop and recover*",
-    "body": "Walk around. See it change live."
+    "body": "Walk around. See it change."
   },
   "router": {
+    "badge": "Router check",
     "title": "Is it the router?\n*Find out fast*",
-    "body": "Speed, stability and packet loss."
+    "body": "Speed, stability and packet loss.",
+    "stat": "4.1 ms"
   },
   "appearance": {
+    "badge": "Material You",
     "title": "Your colors,\n*your style*",
-    "body": "Material You, light and dark."
+    "body": "Light, dark and every palette."
   },
   "desktop/channels": {
     "title": "Pick the *clearest channel*"
@@ -35,12 +42,9 @@
   "desktop/appearance": {
     "title": "Your colors, *your style*"
   },
-  "home": {
-    "title": "Your signal,\n*at a glance*",
-    "body": "Strength, channel and speed, right now."
-  },
-  "devices": {
-    "title": "Who's on\n*your Wi‑Fi*",
-    "body": "Every device on your network."
+  "network": {
+    "badge": "Your network",
+    "title": "Every device,\n*at a glance*",
+    "body": "Who's online, and how strong."
   }
 }

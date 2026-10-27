@@ -1,29 +1,32 @@
 {
-  "home": {
-    "title": "",
-    "body": ""
-  },
   "channels": {
+    "badge": "",
     "title": "",
     "body": ""
   },
   "rooms": {
+    "badge": "",
     "title": "",
     "body": ""
   },
   "coverage": {
+    "badge": "",
     "title": "",
     "body": ""
   },
   "history": {
+    "badge": "",
     "title": "",
     "body": ""
   },
   "router": {
+    "badge": "",
     "title": "",
-    "body": ""
+    "body": "",
+    "stat": ""
   },
   "appearance": {
+    "badge": "",
     "title": "",
     "body": ""
   },
@@ -39,7 +42,8 @@
   "desktop/appearance": {
     "title": ""
   },
-  "devices": {
+  "network": {
+    "badge": "",
     "title": "",
     "body": ""
   }

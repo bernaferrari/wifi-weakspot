@@ -1,34 +1,75 @@
-// WiFi Weakspot: an off-white canvas with a faint tint that drifts across the gallery, Wi-Fi waves
-// radiating from behind each device, and a scatter of signal dots. Indigo cards punctuate the set.
-import {panoramaGradient} from './studio/shapes.js';
-
-const tint = ['#eef1ff', '#f6f6fb', '#eef7f3', '#f7f3fb', '#f1f3ff'];
-
-// A deterministic scatter, so every export of a card is identical.
+// WiFi Weakspot: a night-sky family where each card has its own glow and motif (a lit floor grid,
+// flowing signal lines, radiating waves, a constellation of readings), plus a small label above
+// the title and, on the router card, one big number.
 const random = seed => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+const hex = (c, a) => c + Math.round(a * 255).toString(16).padStart(2, '0');
+
+const motifs = {
+  // A perspective grid floor under the floating graph.
+  grid({W, H, accent}) {
+    let lines = '';
+    const horizon = H * .5, vx = W / 2;
+    for (let i = -10; i <= 10; i++) lines += `<line x1="${vx}" y1="${horizon}" x2="${vx + i * W * .18}" y2="${H}" stroke="${accent}" stroke-opacity=".16" stroke-width="2"/>`;
+    for (let k = 1; k <= 9; k++) { const y = horizon + (H - horizon) * (k / 9) ** 1.8; lines += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="${accent}" stroke-opacity="${.05 + k * .015}" stroke-width="2"/>`; }
+    return lines;
+  },
+  // Flowing signal lines, one dipping like a walk through a weak spot.
+  flow({W, H, accent, next}) {
+    let paths = '';
+    for (let l = 0; l < 7; l++) {
+      const base = H * (.42 + l * .07), pts = [];
+      for (let x = -40; x <= W + 40; x += 20) {
+        const dip = l === 3 ? -H * .12 * Math.exp(-(((x / W) - .55) ** 2) * 40) : 0;
+        pts.push(`${x},${(base + Math.sin(x / W * 5 + l) * H * .015 - dip).toFixed(1)}`);
+      }
+      paths += `<path d="M${pts.join('L')}" fill="none" stroke="${accent}" stroke-opacity="${l === 3 ? .55 : .12 + next() * .1}" stroke-width="${l === 3 ? 6 : 3}"/>`;
+    }
+    return paths;
+  },
+  // Radiating waves from behind the device.
+  waves({W, H, accent}) {
+    return [.22, .38, .54, .7, .86].map((r, i) => `<circle cx="${W / 2}" cy="${H * .66}" r="${r * H}" fill="none" stroke="${accent}" stroke-opacity="${.22 - i * .035}" stroke-width="${10 - i}"/>`).join('');
+  },
+  // A constellation of readings joined by faint lines.
+  stars({W, H, accent, next}) {
+    const pts = Array.from({length: 26}, () => [next() * W, H * .3 + next() * H * .7]);
+    let out = '';
+    pts.forEach(([x, y], i) => {
+      const [x2, y2] = pts[(i * 7 + 3) % pts.length];
+      if (Math.hypot(x - x2, y - y2) < W * .5) out += `<line x1="${x}" y1="${y}" x2="${x2}" y2="${y2}" stroke="${accent}" stroke-opacity=".12" stroke-width="2"/>`;
+      out += `<circle cx="${x}" cy="${y}" r="${3 + next() * 7}" fill="${accent}" opacity="${.25 + next() * .5}"/>`;
+    });
+    return out;
+  }
+};
+const motifFor = {hero: 'grid', bleed: 'flow', floor: 'stars', float: 'stars', number: 'waves', stack: 'flow', duo: 'waves'};
 
 export default {
   art(ctx) {
     const {W, H, slide, index, kind} = ctx;
-    const deep = (slide.layout || '').includes('indigo');
-    const wave = deep ? '#ffffff' : '#4150d0';
-    const portrait = H > W;
-    // Waves rise from behind the device, like a signal leaving the phone.
-    const cx = portrait ? W / 2 : W * .7, cy = portrait ? H * .62 : H * .55;
-    const rings = [.28, .46, .64, .82, 1.0].map((r, i) => {
-      const radius = r * Math.max(W, H) * .62;
-      return `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="${wave}" stroke-opacity="${(deep ? .16 : .09) - i * .015}" stroke-width="${portrait ? 46 - i * 6 : 40 - i * 5}"/>`;
-    }).join('');
-    const next = random(index * 97 + (kind.length * 13) + 7);
-    const dots = Array.from({length: 22}, () => {
-      const x = next() * W, y = H * .35 + next() * H * .65, r = 4 + next() * 10;
-      const colors = deep ? ['#ffffff', '#c7ccff', '#9ff2d7'] : ['#4150d0', '#55cf9c', '#ff9b68', '#b8a4ff'];
-      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${colors[Math.floor(next() * colors.length)]}" opacity="${(.25 + next() * .4).toFixed(2)}"/>`;
-    }).join('');
-    const field = deep
-      ? `<defs><radialGradient id="deep" cx=".5" cy=".55" r=".8"><stop offset="0" stop-color="#5563ea"/><stop offset="1" stop-color="#2a3198"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#deep)"/>`
-      : `<defs>${panoramaGradient(ctx, 'tint', tint)}<radialGradient id="glow" cx=".5" cy=".62" r=".6"><stop offset="0" stop-color="#4150d0" stop-opacity=".12"/><stop offset="1" stop-color="#4150d0" stop-opacity="0"/></radialGradient></defs>
-         <rect width="${W}" height="${H}" fill="url(#tint)"/><rect width="${W}" height="${H}" fill="url(#glow)"/>`;
-    return field + rings + dots;
+    const accent = slide.accent || '#7d8bff';
+    const layout = (slide.layout || '').split(' ')[0];
+    const next = random(index * 131 + kind.length * 17 + 3);
+    const glowY = layout === 'stack' ? .5 : .62;
+    const glow = `<radialGradient id="g" cx="${index % 2 ? .35 : .65}" cy="${glowY}" r=".75"><stop offset="0" stop-color="${hex(accent, .55)}"/><stop offset=".55" stop-color="${hex(accent, .12)}"/><stop offset="1" stop-color="${hex(accent, 0)}"/></radialGradient>`;
+    const motif = motifs[motifFor[layout] || (index % 2 ? 'stars' : 'waves')]({W, H, accent, next});
+    return `<defs>${glow}<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0e26"/><stop offset="1" stop-color="#121640"/></linearGradient></defs>
+      <rect width="${W}" height="${H}" fill="url(#sky)"/><rect width="${W}" height="${H}" fill="url(#g)"/>${motif}`;
+  },
+  compose({slide, main}) {
+    if (slide.accent) main.style.setProperty('--accent', slide.accent);
+    const header = main.querySelector('header');
+    if (header && slide.badge) {
+      const badge = document.createElement('div');
+      badge.className = 'badge';
+      badge.textContent = slide.badge;
+      header.prepend(badge);
+    }
+    if (slide.stat) {
+      const stat = document.createElement('div');
+      stat.className = 'stat';
+      stat.textContent = slide.stat;
+      main.append(stat);
+    }
   }
 };

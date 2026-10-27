@@ -1,32 +1,32 @@
 [
   {
     "file": "docs/screenshots/readme-channels.jpg",
-    "source": "store-listing/en-US/screenshots/v7-01-channels.jpg",
-    "sha256": "350de5b638eea53b8816d5d37b773601e9c352954bdd9464dbf3e4cbafec0e95"
+    "source": "store-listing/en-US/screenshots/v8-01-channels.jpg",
+    "sha256": "790848a11a94e4fa3c50e173da9a1ec750676b5467bae68019e5208daab32d39"
   },
   {
     "file": "docs/screenshots/readme-overtime.jpg",
-    "source": "store-listing/en-US/screenshots/v7-02-history.jpg",
-    "sha256": "051d736b3544e961406acb516826d3b107f0323540573431d1002983ee041385"
+    "source": "store-listing/en-US/screenshots/v8-02-history.jpg",
+    "sha256": "f733db7bec624a21c1f66861686f75dc2924c93982daec62870706598bba5cb3"
   },
   {
     "file": "docs/screenshots/readme-rooms.jpg",
-    "source": "store-listing/en-US/screenshots/v7-04-rooms.jpg",
-    "sha256": "d7f830b78780a22d91813df3af3e787dac60ae18ec2e46f899c98f0459c566a4"
+    "source": "store-listing/en-US/screenshots/v8-04-rooms.jpg",
+    "sha256": "d43ebb2c5d179bfc9a0697fa27417dfae3c6a7064f46d9b08e348d78e51c5024"
   },
   {
     "file": "docs/screenshots/readme-settings.jpg",
-    "source": "store-listing/en-US/screenshots/v7-05-router.jpg",
-    "sha256": "02371290b49a77a93e25ff7a31c84dfa8db0252fb220d2dcc39e5553b78b45b5"
+    "source": "store-listing/en-US/screenshots/v8-05-router.jpg",
+    "sha256": "49a5f3a1c928e91e47ba9b51554e5a08c70a84c967402457ceb30d7e8f92fc5f"
   },
   {
     "file": "docs/screenshots/readme-floorplan.jpg",
-    "source": "store-listing/en-US/screenshots/v7-03-coverage.jpg",
-    "sha256": "51e7ea363d3b22b992405f6c91bef2731abffbf9a73f78556a0f091609b10fd6"
+    "source": "store-listing/en-US/screenshots/v8-03-coverage.jpg",
+    "sha256": "899517e35aa6fb12453717feb926c4ab03848d890a2b618b3a6ee13e7642f46f"
   },
   {
     "file": "docs/screenshots/readme-wide.jpg",
-    "source": "store-listing/en-US/tablet/v7-10-01-channels.jpg",
-    "sha256": "4ceeccbcf0139a61a84b7a374c8dca0bc00070e3a31faba6e4ac40be9411027a"
+    "source": "store-listing/en-US/tablet/v8-10-01-channels.jpg",
+    "sha256": "08fc7d6f805cc3b6be9d149cae8548405b1728b56dbd6b3155859f1c6a0f6815"
   }
 ]
