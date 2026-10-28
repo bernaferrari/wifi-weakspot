@@ -7,7 +7,7 @@
         "slide": 0,
         "width": 1080,
         "height": 1920,
-        "bytes": 185279,
+        "bytes": 194097,
         "sources": [
           "raw/light/01-signal.jpg"
         ]
@@ -18,8 +18,10 @@
         "slide": 1,
         "width": 1080,
         "height": 1920,
-        "bytes": 165419,
-        "sources": []
+        "bytes": 168463,
+        "sources": [
+          "raw/light/03-coverage.jpg"
+        ]
       },
       {
         "file": "screenshots/v9-03-channels.jpg",
@@ -27,7 +29,7 @@
         "slide": 2,
         "width": 1080,
         "height": 1920,
-        "bytes": 201599,
+        "bytes": 211150,
         "sources": [
           "raw/light/04-channels.jpg"
         ]
@@ -38,7 +40,7 @@
         "slide": 3,
         "width": 1080,
         "height": 1920,
-        "bytes": 197868,
+        "bytes": 209246,
         "sources": [
           "raw/light/05-history.jpg"
         ]
@@ -49,7 +51,7 @@
         "slide": 4,
         "width": 1080,
         "height": 1920,
-        "bytes": 173834,
+        "bytes": 177629,
         "sources": [
           "raw/light/02-rooms.jpg"
         ]
@@ -60,7 +62,7 @@
         "slide": 5,
         "width": 1080,
         "height": 1920,
-        "bytes": 138300,
+        "bytes": 145314,
         "sources": [
           "raw/light/06-router.jpg"
         ]
@@ -71,7 +73,7 @@
         "slide": 6,
         "width": 1080,
         "height": 1920,
-        "bytes": 164602,
+        "bytes": 172948,
         "sources": [
           "raw/light/07-devices.jpg"
         ]
@@ -82,7 +84,7 @@
         "slide": 7,
         "width": 1080,
         "height": 1920,
-        "bytes": 158631,
+        "bytes": 179875,
         "sources": [
           "raw/01-signal.jpg",
           "raw/light/08-appearance.jpg"
@@ -96,7 +98,7 @@
         "slide": 0,
         "width": 1200,
         "height": 1920,
-        "bytes": 186350,
+        "bytes": 196939,
         "sources": [
           "raw/light/tablet/7-01-home.jpg"
         ]
@@ -107,8 +109,10 @@
         "slide": 1,
         "width": 1200,
         "height": 1920,
-        "bytes": 162611,
-        "sources": []
+        "bytes": 164191,
+        "sources": [
+          "raw/light/tablet/7-03-coverage.jpg"
+        ]
       },
       {
         "file": "tablet/v9-7-03-channels.jpg",
@@ -116,7 +120,7 @@
         "slide": 2,
         "width": 1200,
         "height": 1920,
-        "bytes": 209642,
+        "bytes": 220216,
         "sources": [
           "raw/light/tablet/7-02-channels.jpg"
         ]
@@ -127,7 +131,7 @@
         "slide": 3,
         "width": 1200,
         "height": 1920,
-        "bytes": 212146,
+        "bytes": 223204,
         "sources": [
           "raw/light/tablet/7-05-history.jpg"
         ]
@@ -138,7 +142,7 @@
         "slide": 4,
         "width": 1200,
         "height": 1920,
-        "bytes": 166319,
+        "bytes": 165520,
         "sources": [
           "raw/light/tablet/7-02-rooms.jpg"
         ]
@@ -151,7 +155,7 @@
         "slide": 0,
         "width": 1920,
         "height": 1200,
-        "bytes": 156910,
+        "bytes": 171283,
         "sources": [
           "raw/light/tablet/10-01-home.jpg"
         ]
@@ -162,8 +166,10 @@
         "slide": 1,
         "width": 1920,
         "height": 1200,
-        "bytes": 139671,
-        "sources": []
+        "bytes": 144801,
+        "sources": [
+          "raw/light/tablet/10-03-coverage.jpg"
+        ]
       },
       {
         "file": "tablet/v9-10-03-channels.jpg",
@@ -171,7 +177,7 @@
         "slide": 2,
         "width": 1920,
         "height": 1200,
-        "bytes": 205262,
+        "bytes": 216022,
         "sources": [
           "raw/light/tablet/10-02-channels.jpg"
         ]
@@ -182,7 +188,7 @@
         "slide": 3,
         "width": 1920,
         "height": 1200,
-        "bytes": 195589,
+        "bytes": 204977,
         "sources": [
           "raw/light/tablet/10-05-history.jpg"
         ]
@@ -193,7 +199,7 @@
         "slide": 4,
         "width": 1920,
         "height": 1200,
-        "bytes": 134260,
+        "bytes": 144809,
         "sources": [
           "raw/light/tablet/10-02-rooms.jpg"
         ]
@@ -206,7 +212,7 @@
         "slide": 0,
         "width": 1920,
         "height": 1080,
-        "bytes": 181241,
+        "bytes": 189724,
         "sources": [
           "raw/desktop/02-channels.jpg"
         ]
@@ -217,7 +223,7 @@
         "slide": 1,
         "width": 1920,
         "height": 1080,
-        "bytes": 154231,
+        "bytes": 161968,
         "sources": [
           "raw/desktop/01-home.jpg"
         ]
@@ -228,7 +234,7 @@
         "slide": 2,
         "width": 1920,
         "height": 1080,
-        "bytes": 190100,
+        "bytes": 196142,
         "sources": [
           "raw/desktop/03-history.jpg"
         ]
@@ -239,7 +245,7 @@
         "slide": 3,
         "width": 1920,
         "height": 1080,
-        "bytes": 122423,
+        "bytes": 134096,
         "sources": [
           "raw/desktop/04-appearance.jpg"
         ]
@@ -252,7 +258,7 @@
         "slide": 0,
         "width": 2400,
         "height": 1260,
-        "bytes": 306343,
+        "bytes": 319060,
         "sources": [
           "raw/light/tablet/10-02-channels.jpg",
           "raw/light/05-history.jpg"

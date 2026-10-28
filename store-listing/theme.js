@@ -1,28 +1,34 @@
-// WiFi Weakspot: a faint dot grid (the coverage map's floor plan) in panorama coordinates, a coloured block per card,
-// and on the hero card the app's scalloped signal badge, redrawn in vector and lifted off the screen.
-import {shapes} from './studio/shapes.js';
-
-function badge(main, {value, label, colour}) {
-  const node = document.createElement('figure');
-  node.className = 'badge';
-  node.style.margin = '0';
-  node.setAttribute('role', 'img');
-  node.setAttribute('aria-label', `${label}, ${value}`);
-  node.innerHTML = `<svg viewBox="0 0 400 400"><circle cx="200" cy="200" r="196" fill="#ffffff"/><g fill="${colour}">${shapes.cookie(200, 200, 168, .1)}</g>` +
-    `<text x="200" y="230" text-anchor="middle" font-family="Google Sans Flex" font-weight="760" font-size="104" letter-spacing="-3" fill="#ffffff">${value}</text></svg>`;
-  main.append(node);
-}
+// WiFi Weakspot: one night sky under the whole strip. Its stars are the networks around you, scattered evenly through
+// every card and drawn in panorama coordinates so they cross each seam; one soft indigo glow lights every phone.
+const random = seed => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 
 export default {
-  art({W, H, index}) {
-    const gap = Math.round(Math.min(W, H) / 16), x0 = -index * W, off = ((x0 % gap) + gap) % gap;
-    return `<defs><pattern id="dots" width="${gap}" height="${gap}" patternUnits="userSpaceOnUse" x="${off}"><circle cx="${gap / 2}" cy="${gap / 2}" r="2.6" fill="#3f46c8" fill-opacity=".13"/></pattern></defs>` +
-      `<rect width="${W}" height="${H}" fill="#f7f6fb"/><rect width="${W}" height="${H}" fill="url(#dots)"/>`;
+  art({W, H, index, slides, slide}) {
+    const landscape = W > H;
+    let stars = '';
+    for (let k = index - 1; k <= index + 1; k++) {
+      if (k < 0 || k >= slides.length) continue;
+      const next = random(k * 131 + 7), x0 = (k - index) * W;
+      for (let i = 0; i < 46; i++) {
+        const x = x0 + next() * W, y = next() * H, r = .9 + next() * 2.6, o = .25 + next() * .6;
+        stars += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="#ffffff" fill-opacity="${o.toFixed(2)}"/>`;
+      }
+      // A few brighter stars with a halo: the strongest networks.
+      for (let i = 0; i < 3; i++) {
+        const x = x0 + next() * W, y = next() * H;
+        stars += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="14" fill="#a9b4ff" fill-opacity=".18"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#ffffff"/>`;
+      }
+    }
+    // The glow sits where the phone is: low on most cards, high when the phone hangs from the top.
+    const high = /drop/.test(slide.layout || ''), mid = /stack/.test(slide.layout || '');
+    const gx = landscape ? W * .7 : W * .5, gy = landscape ? H * .55 : H * (high ? .25 : mid ? .5 : .72);
+    const R = Math.max(W, H) * .55;
+    return `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#090b22"/><stop offset="1" stop-color="#141945"/></linearGradient>
+      <radialGradient id="glow" gradientUnits="userSpaceOnUse" cx="${gx}" cy="${gy}" r="${R}"><stop offset="0" stop-color="#5b63ff" stop-opacity=".42"/><stop offset=".55" stop-color="#5b63ff" stop-opacity=".1"/><stop offset="1" stop-color="#5b63ff" stop-opacity="0"/></radialGradient></defs>
+      <rect width="${W}" height="${H}" fill="url(#sky)"/><rect width="${W}" height="${H}" fill="url(#glow)"/>${stars}`;
   },
 
-  compose({slide, main, index, kind}) {
-    if (slide.deep) main.style.setProperty('--deep', slide.deep);
-    if (slide.block) main.style.setProperty('--block', slide.block);
+  compose({main, index, kind}) {
     if (index === 0 && kind !== 'readme' && kind !== 'desktop') {
       const brand = document.createElement('div');
       brand.className = 'brand';
@@ -30,13 +36,6 @@ export default {
       brand.innerHTML = '<img src="../../docs/app-icon.png" alt="">WiFi Weakspot';
       main.append(brand);
     }
-    if (slide.block && !/map/.test(slide.layout || '')) {
-      const block = document.createElement('div');
-      block.className = 'block';
-      block.setAttribute('aria-hidden', 'true');
-      main.append(block);
-    }
-    if (slide.lift) badge(main, slide.lift);
   },
 
   /** Bezel and corners scale with the device width. */
