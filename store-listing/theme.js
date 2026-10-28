@@ -13,9 +13,11 @@ const cookie = (cx, cy, r, colour, label) => {
 // green, blurred like the map, with the map's reading points scattered over it.
 function heatField(W, H, slide) {
   const blobs = slide.field || [[.1, .2, '#ff8a78'], [.35, .85, '#ffc46b'], [.62, .25, '#ffd98a'], [.85, .8, '#6fd6a0'], [1.0, .15, '#8fe0b4']];
+  // The map's reading points: a loose grid, each point a small ring, exactly as the coverage map draws them.
   const next = random(W + (slide.file || '').length * 31);
   let dots = '';
-  for (let i = 0; i < 26; i++) dots += `<circle cx="${(next() * W).toFixed(1)}" cy="${(next() * H).toFixed(1)}" r="9" fill="#ffffff" fill-opacity=".9" stroke="#ffffff" stroke-opacity=".45" stroke-width="9"/>`;
+  for (let y = 70; y < H; y += 150) for (let x = 60 + (y / 150 % 2) * 75; x < W; x += 150)
+    dots += `<circle cx="${(x + (next() - .5) * 40).toFixed(1)}" cy="${(y + (next() - .5) * 40).toFixed(1)}" r="8" fill="none" stroke="#ffffff" stroke-opacity=".55" stroke-width="3.5"/>`;
   return `<defs><filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="160"/></filter></defs>
     <rect width="${W}" height="${H}" fill="#fff4ea"/><g filter="url(#soft)">${blobs.map(([x, y, c]) => `<circle cx="${W * x}" cy="${H * y}" r="${H * .55}" fill="${c}" fill-opacity=".8"/>`).join('')}</g>${dots}`;
 }

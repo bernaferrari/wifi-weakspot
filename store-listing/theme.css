@@ -67,10 +67,10 @@ header p{margin:30px 0 0;font-size:40px;line-height:1.25;font-weight:450;color:#
 .readme .wide header p{margin:18px auto 0;font-size:38px}
 .readme .wide .slate{--bezel:16px;--radius:44px;left:200px;top:380px;width:1560px}
 .readme .wide .front{--bezel:12px;--radius:58px;left:1640px;top:470px;width:500px;z-index:4}
-/* Trio: three phones side by side at one size, each under its own short headline, like the store cards. */
-.readme .trio .device{--bezel:12px;--radius:58px;top:330px;width:580px}
-.readme .trio .one{left:170px}
-.readme .trio .two{left:910px}
-.readme .trio .three{left:1650px}
-.readme .trio .device-label{transform:translateY(calc(-100% - 34px));text-align:left;font-size:56px;line-height:1.05;font-weight:720;letter-spacing:-.025em;color:var(--ink)}
+/* Trio: three phones in a staggered rhythm, the middle one raised, each under its own short headline. */
+.readme .trio .device{--bezel:12px;--radius:60px;width:620px}
+.readme .trio .one{left:110px;top:380px}
+.readme .trio .two{left:890px;top:250px}
+.readme .trio .three{left:1670px;top:380px}
+.readme .trio .device-label{transform:translateY(calc(-100% - 30px));text-align:left;font-size:62px;line-height:1.02;font-weight:720;letter-spacing:-.03em;color:var(--ink)}
 .readme .trio .device-label em{font-style:normal;color:#c2410c}

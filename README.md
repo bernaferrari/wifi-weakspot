@@ -12,15 +12,7 @@ A Wi-Fi analyzer for Android 8.0 and newer.</p>
 </p>
 
 <p align="center">
-  <img src="store-listing/en-US/readme/big-screen.jpg" width="100%" alt="Find your weak spots: a coverage map of a home from weak red to strong green on a tablet, and the Rooms screen comparing saved readings">
-</p>
-
-Tap where you stand and the map fills in from red to green. Save a reading in each room to see which one wins, and recheck after moving your router.
-
-## See what overlaps
-
-<p align="center">
-  <img src="store-listing/en-US/readme/channels.jpg" width="100%" alt="Every nearby network as channel waves on a tablet, with the signal history of a walk through a weak spot on a phone">
+  <img src="store-listing/en-US/readme/channels.jpg" width="100%" alt="Pick a quiet channel: every nearby network as channel waves on a tablet, with the signal history of a walk through a weak spot on a phone">
 </p>
 
 Every nearby 2.4, 5 and 6 GHz network as a wave, so crowded channels are obvious. Get a suggested channel, or switch to history and watch each signal as you move.
@@ -31,7 +23,18 @@ Every nearby 2.4, 5 and 6 GHz network as a wave, so crowded channels are obvious
   <img src="store-listing/en-US/readme/tools.jpg" width="100%" alt="Router check answering in 4.1 ms, the devices on your Wi-Fi, and dark-mode appearance settings">
 </p>
 
-Check how fast your router answers, see every device on your Wi-Fi, and make it yours with light and dark, wallpaper colors and four styles.
+- **Check your router.** How fast it answers, how steady, and whether replies go missing.
+- **Meet your network.** Every device on your Wi-Fi, then ping, DNS lookups and port checks.
+- **Make it yours.** Light or dark, wallpaper colors, four styles, and percent, bars or dBm.
+- **Room for tablets.** Graphs and lists sit side by side on tablets and foldables.
+
+## Find where Wi-Fi gets weak
+
+<p align="center">
+  <img src="store-listing/en-US/readme/big-screen.jpg" width="100%" alt="Find your weak spots: a coverage map of a home from weak red to strong green on a tablet, and the Rooms screen comparing saved readings">
+</p>
+
+Tap where you stand and the map fills in from red to green. Save a reading in each room to see which one wins, and recheck after moving your router.
 
 ## Private by design
 
