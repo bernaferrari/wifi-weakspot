@@ -1,31 +1,25 @@
 {
   "channels": {
-    "badge": "18 Netzwerke in der Nähe",
-    "title": "Wähle den\n*freiesten Kanal*",
-    "body": "Sieh alle Netzwerke in der Nähe und ihre Überschneidungen."
+    "title": "Wähle einen\n*freien Kanal.*",
+    "body": "Alle Netze in der Nähe, als Wellen."
   },
   "rooms": {
-    "badge": "Jeder Raum",
-    "title": "Vergleiche das Signal\n*Raum für Raum*",
-    "body": "Speichere Messungen und finde den besten Arbeitsplatz."
+    "title": "Welcher Raum\n*gewinnt?*",
+    "body": "Miss jeden Raum und vergleiche."
   },
   "coverage": {
-    "badge": "Heatmap",
-    "title": "Finde die\n*Funklöcher*",
-    "body": "Tippe auf deinen Standort. Die Karte füllt sich."
+    "title": "Sieh, wo es\n*schwächelt.*",
+    "body": "Tippe, wo du stehst. Die Karte füllt sich."
   },
   "history": {
-    "badge": "Live",
-    "title": "Verfolge dein Signal\n*in Echtzeit*",
-    "body": "Beobachte jedes Netzwerk im Zeitverlauf."
+    "title": "Geh los.\n*Sieh zu.*",
+    "body": "Signalverlauf, live beim Gehen."
   },
   "router": {
-    "badge": "Router prüfen",
-    "title": "Liegt es am Router?\n*Finde es schnell heraus*",
-    "body": "Antwortzeit, Stabilität und Paketverlust."
+    "title": "Liegt's am\n*Router?*",
+    "body": "Tempo, Stabilität und Paketverlust."
   },
   "appearance": {
-    "badge": "Material You",
     "title": "Deine Farben,\n*dein Stil*",
     "body": "Material-You-Farben, vier Stile, hell und dunkel."
   },
@@ -42,8 +36,11 @@
     "title": "Deine Farben, *dein Stil*"
   },
   "network": {
-    "badge": "Dein Netzwerk",
-    "title": "Jedes Gerät\n*auf einen Blick*",
-    "body": "Wer online ist und wie stark."
+    "title": "Wer ist in\n*deinem WLAN?*",
+    "body": "Jedes Gerät auf einen Blick."
+  },
+  "home": {
+    "title": "Finde deine\n*Funklöcher.*",
+    "body": "Sieh, wie gut dein WLAN wirklich ist."
   }
 }

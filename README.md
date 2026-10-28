@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/hero-v2.png" alt="WiFi Weakspot: find your weak spots" width="100%">
+  <img src="store-listing/en-US/readme/big-screen.jpg" width="100%" alt="Find your weak spots: WiFi Weakspot on a tablet with the channel graph and nearby networks, and a phone showing signal history">
 </p>
 
 <h1 align="center">WiFi Weakspot</h1>
@@ -12,7 +12,7 @@ A Wi-Fi analyzer for Android 8.0 and newer, built with Material 3 Expressive.</p
 </p>
 
 <p align="center">
-  <img src="store-listing/en-US/readme/strip-1.jpg" width="100%" alt="See every network around you; watch your signal drop and recover; map your home's weak spots">
+  <img src="store-listing/en-US/readme/strip-1.jpg" width="100%" alt="Find your weak spots; see where it fades; pick a quiet channel; walk and watch it change">
 </p>
 
 ## See what overlaps
@@ -26,20 +26,12 @@ Save a reading in each room and compare them with a percentage, a color and a pl
 ## Look beyond signal strength
 
 <p align="center">
-  <img src="store-listing/en-US/readme/strip-2.jpg" width="100%" alt="Find the room with the best signal; is it the router? Find out fast; every device at a glance">
+  <img src="store-listing/en-US/readme/strip-2.jpg" width="100%" alt="Which room wins; is it the router; who's on your Wi-Fi; your colors, your style">
 </p>
 
 - **Check your router.** Response time, variation and missed replies, with past checks kept for comparison.
 - **Meet your network.** See responding devices and the names they announce, then dig in with ping, DNS lookups and port checks.
 - **Make it yours.** Light and dark, wallpaper colors, nine palettes, four styles, and percentages, bars or dBm.
-
-## Made for bigger screens
-
-On tablets the graph and the network list sit side by side.
-
-<p align="center">
-  <img src="store-listing/en-US/readme/big-screen.jpg" width="100%" alt="WiFi Weakspot on a landscape tablet with the channel graph beside the nearby networks, and a phone in front showing signal history">
-</p>
 
 ## Private by design
 

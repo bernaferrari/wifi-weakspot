@@ -1,31 +1,25 @@
 {
   "channels": {
-    "badge": "18 redes próximas",
-    "title": "Veja todas as redes\n*ao seu redor*",
-    "body": "Encontre o canal mais livre em segundos."
+    "title": "Escolha um\n*canal livre.*",
+    "body": "Todas as redes por perto, em ondas."
   },
   "rooms": {
-    "badge": "Cômodo por cômodo",
-    "title": "Encontre o cômodo\n*com o melhor sinal*",
-    "body": "Salve medições e compare."
+    "title": "Qual cômodo\n*ganha?*",
+    "body": "Meça cada cômodo e compare."
   },
   "coverage": {
-    "badge": "Mapa de calor",
-    "title": "Mapeie os pontos fracos\n*da sua casa*",
+    "title": "Veja onde\n*ele enfraquece.*",
     "body": "Toque onde você está. O mapa se completa."
   },
   "history": {
-    "badge": "Ao vivo",
-    "title": "Veja seu sinal\n*cair e se recuperar*",
-    "body": "Ande pela casa. Veja o sinal mudar."
+    "title": "Ande.\n*Veja mudar.*",
+    "body": "Histórico do sinal, ao vivo."
   },
   "router": {
-    "badge": "Verificar roteador",
-    "title": "É o roteador?\n*Descubra rápido*",
-    "body": "Velocidade, estabilidade e perda de pacotes."
+    "title": "É\n*o roteador?*",
+    "body": "Velocidade, estabilidade e perda."
   },
   "appearance": {
-    "badge": "Material You",
     "title": "Suas cores,\n*seu estilo*",
     "body": "Claro, escuro e todas as paletas."
   },
@@ -42,8 +36,11 @@
     "title": "Suas cores, *seu estilo*"
   },
   "network": {
-    "badge": "Sua rede",
-    "title": "Todos os dispositivos,\n*num relance*",
-    "body": "Quem está on-line e com que sinal."
+    "title": "Quem está no\n*seu Wi-Fi?*",
+    "body": "Todos os aparelhos, num relance."
+  },
+  "home": {
+    "title": "Ache seus\n*pontos fracos.*",
+    "body": "Veja como seu Wi-Fi está de verdade."
   }
 }

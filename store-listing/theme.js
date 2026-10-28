@@ -1,45 +1,42 @@
-// WiFi Weakspot: faint Wi-Fi ripples drawn in panorama coordinates (so they continue across every seam), and one
-// big Material 3 Expressive shape per card in that card's soft colour, sitting behind the phone.
-import {panoramaX, shapes} from './studio/shapes.js';
+// WiFi Weakspot: a faint dot grid (the coverage map's floor plan) in panorama coordinates, a coloured block per card,
+// and on the hero card the app's scalloped signal badge, redrawn in vector and lifted off the screen.
+import {shapes} from './studio/shapes.js';
 
-const order = ['cookie', 'sunny', 'flower', 'clover', 'cookie', 'sunny', 'flower'];
-
-// Where the shape sits on each layout, as fractions of the card.
-const anchor = (layout, landscape) =>
-  landscape ? {x: .7, y: .55, r: .44}
-  : /drop/.test(layout) ? {x: .5, y: .28, r: .6}
-  : {x: .5, y: .64, r: .6};
+function badge(main, {value, label, colour}) {
+  const node = document.createElement('figure');
+  node.className = 'badge';
+  node.style.margin = '0';
+  node.setAttribute('role', 'img');
+  node.setAttribute('aria-label', `${label}, ${value}`);
+  node.innerHTML = `<svg viewBox="0 0 400 400"><circle cx="200" cy="200" r="196" fill="#ffffff"/><g fill="${colour}">${shapes.cookie(200, 200, 168, .1)}</g>` +
+    `<text x="200" y="230" text-anchor="middle" font-family="Google Sans Flex" font-weight="760" font-size="104" letter-spacing="-3" fill="#ffffff">${value}</text></svg>`;
+  main.append(node);
+}
 
 export default {
-  art(ctx) {
-    const {W, H, index, slides, slide} = ctx;
-    const landscape = W > H, unit = Math.max(W, H);
-    let body = `<rect width="${W}" height="${H}" fill="#f6f5fc"/>`;
-    // Ripples centred on every other seam, alternating high and low, so neighbouring cards share them.
-    for (let k = 0; k <= slides.length; k += 1) {
-      const cx = panoramaX(ctx, k), cy = H * (k % 2 ? .12 : .9);
-      if (cx < -unit * 1.2 || cx > W + unit * 1.2) continue;
-      for (let i = 1; i <= 7; i++) body += `<circle cx="${cx}" cy="${cy}" r="${i * unit * .13}" fill="none" stroke="#5a55c8" stroke-opacity="${(.1 - i * .008).toFixed(3)}" stroke-width="3"/>`;
-    }
-    if (slide.title) {
-      const a = anchor(slide.layout || '', landscape);
-      const shape = shapes[order[index % order.length]];
-      body += `<g fill="var(--soft)">${shape(W * a.x, H * a.y, Math.min(W, H) * a.r * (landscape ? 1.4 : 1), index * .4)}</g>`;
-    }
-    return body;
+  art({W, H, index}) {
+    const gap = Math.round(Math.min(W, H) / 16), x0 = -index * W, off = ((x0 % gap) + gap) % gap;
+    return `<defs><pattern id="dots" width="${gap}" height="${gap}" patternUnits="userSpaceOnUse" x="${off}"><circle cx="${gap / 2}" cy="${gap / 2}" r="2.6" fill="#3f46c8" fill-opacity=".13"/></pattern></defs>` +
+      `<rect width="${W}" height="${H}" fill="#f7f6fb"/><rect width="${W}" height="${H}" fill="url(#dots)"/>`;
   },
 
   compose({slide, main, index, kind}) {
     if (slide.deep) main.style.setProperty('--deep', slide.deep);
-    if (slide.soft) main.style.setProperty('--soft', slide.soft);
+    if (slide.block) main.style.setProperty('--block', slide.block);
     if (index === 0 && kind !== 'readme' && kind !== 'desktop') {
-      main.classList.add('first');
       const brand = document.createElement('div');
       brand.className = 'brand';
       brand.dataset.checkBounds = '';
       brand.innerHTML = '<img src="../../docs/app-icon.png" alt="">WiFi Weakspot';
       main.append(brand);
     }
+    if (slide.block && !/map/.test(slide.layout || '')) {
+      const block = document.createElement('div');
+      block.className = 'block';
+      block.setAttribute('aria-hidden', 'true');
+      main.append(block);
+    }
+    if (slide.lift) badge(main, slide.lift);
   },
 
   /** Bezel and corners scale with the device width. */

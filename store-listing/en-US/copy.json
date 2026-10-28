@@ -1,31 +1,25 @@
 {
   "channels": {
-    "badge": "18 networks nearby",
-    "title": "See every network\n*around you*",
-    "body": "Find the clearest channel in seconds."
+    "title": "Pick a\n*quiet channel.*",
+    "body": "Every nearby network, drawn as waves."
   },
   "rooms": {
-    "badge": "Room by room",
-    "title": "Find the room\n*with the best signal*",
-    "body": "Save readings and compare."
+    "title": "Which room\n*wins?*",
+    "body": "Save a reading in each room and compare."
   },
   "coverage": {
-    "badge": "Heat map",
-    "title": "Map your home's\n*weak spots*",
+    "title": "See where\n*it fades.*",
     "body": "Tap where you stand. The map fills in."
   },
   "history": {
-    "badge": "Live",
-    "title": "Watch your signal\n*drop and recover*",
-    "body": "Walk around. See it change."
+    "title": "Walk.\n*Watch it change.*",
+    "body": "Signal history, live as you move."
   },
   "router": {
-    "badge": "Router check",
-    "title": "Is it the router?\n*Find out fast*",
+    "title": "Is it\n*the router?*",
     "body": "Speed, stability and packet loss."
   },
   "appearance": {
-    "badge": "Material You",
     "title": "Your colors,\n*your style*",
     "body": "Light, dark and every palette."
   },
@@ -42,13 +36,15 @@
     "title": "Your colors, *your style*"
   },
   "network": {
-    "badge": "Your network",
-    "title": "Every device,\n*at a glance*",
-    "body": "Who's online, and how strong."
+    "title": "Who's on\n*your Wi-Fi?*",
+    "body": "Every device, and how it connects."
   },
   "readme-spread": {
-    "badge": "Tablets & foldables",
-    "title": "Room for\n*every network*",
-    "body": "Graph and list, side by side."
+    "title": "Find your\n*weak spots.*",
+    "body": "Every network around you, and how\nstrong your signal really is."
+  },
+  "home": {
+    "title": "Find your\n*weak spots.*",
+    "body": "See how good your Wi-Fi really is."
   }
 }

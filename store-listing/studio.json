@@ -28,7 +28,8 @@
       "cards": [
         0,
         1,
-        2
+        2,
+        3
       ],
       "height": 1200
     },
@@ -36,9 +37,10 @@
       "file": "readme/strip-2.jpg",
       "kind": "phone",
       "cards": [
-        3,
         4,
-        5
+        5,
+        6,
+        7
       ],
       "height": 1200
     }

@@ -1,57 +1,79 @@
 {
   "phone": [
     {
-      "feature": "channels",
-      "file": "screenshots/v8-01-channels.jpg",
-      "raw": "light/04-channels.jpg",
-      "layout": "one",
-      "soft": "#dcdcff",
-      "deep": "#4a4fd0"
-    },
-    {
-      "feature": "history",
-      "file": "screenshots/v8-02-history.jpg",
-      "raw": "light/05-history.jpg",
-      "layout": "one",
-      "soft": "#ead9ff",
-      "deep": "#7a3fd0"
+      "feature": "home",
+      "layout": "hero",
+      "deep": "#0b7a4f",
+      "raw": "light/01-signal.jpg",
+      "block": "#c9efd9",
+      "file": "screenshots/v9-01-home.jpg"
     },
     {
       "feature": "coverage",
-      "file": "screenshots/v8-03-coverage.jpg",
+      "layout": "map",
+      "deep": "#0b7a4f",
+      "callouts": [
+        {
+          "raw": "light/03-coverage.jpg",
+          "x": 40,
+          "y": 270,
+          "w": 1000,
+          "h": 1220,
+          "radius": 0,
+          "place": {
+            "left": 0,
+            "top": 600,
+            "width": 1080
+          },
+          "role": "map"
+        }
+      ],
+      "file": "screenshots/v9-02-coverage.jpg"
+    },
+    {
+      "feature": "channels",
       "layout": "one",
-      "soft": "#c9f1de",
-      "deep": "#0d8a5c",
-      "raw": "light/03-coverage.jpg"
+      "deep": "#3f46c8",
+      "raw": "light/04-channels.jpg",
+      "block": "#d9dbff",
+      "file": "screenshots/v9-03-channels.jpg"
+    },
+    {
+      "feature": "history",
+      "layout": "one",
+      "deep": "#7a3fd0",
+      "raw": "light/05-history.jpg",
+      "block": "#e6d8ff",
+      "file": "screenshots/v9-04-history.jpg"
     },
     {
       "feature": "rooms",
-      "file": "screenshots/v8-04-rooms.jpg",
-      "raw": "light/02-rooms.jpg",
       "layout": "drop",
-      "soft": "#ffdcca",
-      "deep": "#c2540f"
+      "deep": "#c2540f",
+      "raw": "light/02-rooms.jpg",
+      "block": "#ffdcc6",
+      "file": "screenshots/v9-05-rooms.jpg"
     },
     {
       "feature": "router",
-      "file": "screenshots/v8-05-router.jpg",
-      "raw": "light/06-router.jpg",
       "layout": "one",
-      "soft": "#cfe8ff",
-      "deep": "#1f6fc0"
+      "deep": "#1f6fc0",
+      "raw": "light/06-router.jpg",
+      "block": "#cde5ff",
+      "file": "screenshots/v9-06-router.jpg"
     },
     {
       "feature": "network",
-      "file": "screenshots/v8-06-network.jpg",
       "layout": "one",
+      "deep": "#8a5a00",
       "raw": "light/07-devices.jpg",
-      "soft": "#fff0b8",
-      "deep": "#9a6400"
+      "block": "#ffeeb0",
+      "file": "screenshots/v9-07-network.jpg"
     },
     {
       "feature": "appearance",
-      "file": "screenshots/v8-07-appearance.jpg",
-      "layout": "pair",
+      "layout": "stack",
+      "deep": "#c2185b",
       "devices": [
         {
           "raw": "01-signal.jpg",
@@ -62,110 +84,120 @@
           "role": "secondary"
         }
       ],
-      "soft": "#ffd6e7",
-      "deep": "#c2185b"
+      "block": "#ffd6e6",
+      "file": "screenshots/v9-08-appearance.jpg"
     }
   ],
   "tablet7": [
     {
-      "feature": "channels",
-      "file": "tablet/v8-7-01-channels.jpg",
-      "raw": "light/tablet/7-02-channels.jpg",
-      "layout": "one",
-      "soft": "#dcdcff",
-      "deep": "#4a4fd0"
-    },
-    {
-      "feature": "history",
-      "file": "tablet/v8-7-02-history.jpg",
-      "raw": "light/tablet/7-05-history.jpg",
-      "layout": "one",
-      "soft": "#ead9ff",
-      "deep": "#7a3fd0"
+      "feature": "home",
+      "layout": "hero",
+      "deep": "#0b7a4f",
+      "raw": "light/tablet/7-01-home.jpg",
+      "block": "#c9efd9",
+      "file": "tablet/v9-7-01-home.jpg"
     },
     {
       "feature": "coverage",
-      "file": "tablet/v8-7-03-coverage.jpg",
+      "layout": "map",
+      "deep": "#0b7a4f",
+      "callouts": [
+        {
+          "raw": "light/tablet/7-03-coverage.jpg",
+          "x": 160,
+          "y": 390,
+          "w": 880,
+          "h": 990,
+          "radius": 0,
+          "place": {
+            "left": 0,
+            "top": 560,
+            "width": 1200
+          },
+          "role": "map"
+        }
+      ],
+      "file": "tablet/v9-7-02-coverage.jpg"
+    },
+    {
+      "feature": "channels",
       "layout": "one",
-      "soft": "#c9f1de",
-      "deep": "#0d8a5c",
-      "raw": "light/tablet/7-03-coverage.jpg"
+      "deep": "#3f46c8",
+      "raw": "light/tablet/7-02-channels.jpg",
+      "block": "#d9dbff",
+      "file": "tablet/v9-7-03-channels.jpg"
+    },
+    {
+      "feature": "history",
+      "layout": "one",
+      "deep": "#7a3fd0",
+      "raw": "light/tablet/7-05-history.jpg",
+      "block": "#e6d8ff",
+      "file": "tablet/v9-7-04-history.jpg"
     },
     {
       "feature": "rooms",
-      "file": "tablet/v8-7-04-rooms.jpg",
+      "layout": "drop",
+      "deep": "#c2540f",
       "raw": "light/tablet/7-02-rooms.jpg",
-      "layout": "one",
-      "soft": "#ffdcca",
-      "deep": "#c2540f"
-    },
-    {
-      "feature": "appearance",
-      "file": "tablet/v8-7-05-appearance.jpg",
-      "layout": "pair",
-      "devices": [
-        {
-          "raw": "tablet/7-04-appearance.jpg",
-          "role": "primary"
-        },
-        {
-          "raw": "light/tablet/7-04-appearance.jpg",
-          "role": "secondary"
-        }
-      ],
-      "soft": "#ffd6e7",
-      "deep": "#c2185b"
+      "block": "#ffdcc6",
+      "file": "tablet/v9-7-05-rooms.jpg"
     }
   ],
   "tablet10": [
     {
-      "feature": "channels",
-      "file": "tablet/v8-10-01-channels.jpg",
-      "raw": "light/tablet/10-02-channels.jpg",
-      "layout": "one",
-      "soft": "#dcdcff",
-      "deep": "#4a4fd0"
-    },
-    {
-      "feature": "history",
-      "file": "tablet/v8-10-02-history.jpg",
-      "raw": "light/tablet/10-05-history.jpg",
-      "layout": "one",
-      "soft": "#ead9ff",
-      "deep": "#7a3fd0"
+      "feature": "home",
+      "layout": "hero",
+      "deep": "#0b7a4f",
+      "raw": "light/tablet/10-01-home.jpg",
+      "block": "#c9efd9",
+      "file": "tablet/v9-10-01-home.jpg"
     },
     {
       "feature": "coverage",
-      "file": "tablet/v8-10-03-coverage.jpg",
+      "layout": "map",
+      "deep": "#0b7a4f",
+      "callouts": [
+        {
+          "raw": "light/tablet/10-03-coverage.jpg",
+          "x": 710,
+          "y": 144,
+          "w": 488,
+          "h": 680,
+          "radius": 0,
+          "place": {
+            "left": 1060,
+            "top": 0,
+            "width": 860
+          },
+          "role": "map"
+        }
+      ],
+      "file": "tablet/v9-10-02-coverage.jpg"
+    },
+    {
+      "feature": "channels",
       "layout": "one",
-      "soft": "#c9f1de",
-      "deep": "#0d8a5c",
-      "raw": "light/tablet/10-03-coverage.jpg"
+      "deep": "#3f46c8",
+      "raw": "light/tablet/10-02-channels.jpg",
+      "block": "#d9dbff",
+      "file": "tablet/v9-10-03-channels.jpg"
+    },
+    {
+      "feature": "history",
+      "layout": "one",
+      "deep": "#7a3fd0",
+      "raw": "light/tablet/10-05-history.jpg",
+      "block": "#e6d8ff",
+      "file": "tablet/v9-10-04-history.jpg"
     },
     {
       "feature": "rooms",
-      "file": "tablet/v8-10-04-rooms.jpg",
-      "raw": "light/tablet/10-02-rooms.jpg",
       "layout": "one",
-      "soft": "#ffdcca",
-      "deep": "#c2540f"
-    },
-    {
-      "feature": "appearance",
-      "file": "tablet/v8-10-05-appearance.jpg",
-      "layout": "pair",
-      "devices": [
-        {
-          "raw": "tablet/10-04-appearance.jpg",
-          "role": "primary"
-        },
-        {
-          "raw": "light/tablet/10-04-appearance.jpg",
-          "role": "secondary"
-        }
-      ],
-      "soft": "#ffd6e7",
-      "deep": "#c2185b"
+      "deep": "#c2540f",
+      "raw": "light/tablet/10-02-rooms.jpg",
+      "block": "#ffdcc6",
+      "file": "tablet/v9-10-05-rooms.jpg"
     }
   ],
   "desktop": [
@@ -199,7 +231,9 @@
       "feature": "readme-spread",
       "layout": "spread",
       "file": "readme/big-screen.jpg",
-      "alt": "WiFi Weakspot on a landscape tablet with the channel graph beside the nearby networks, and a phone in front showing signal history",
+      "block": "#d9dbff",
+      "deep": "#3f46c8",
+      "alt": "WiFi Weakspot on a landscape tablet with the channel graph beside nearby networks, and a phone showing signal history",
       "devices": [
         {
           "raw": "light/tablet/10-02-channels.jpg",
@@ -210,9 +244,7 @@
           "raw": "light/05-history.jpg",
           "role": "phone"
         }
-      ],
-      "soft": "#dcdcff",
-      "deep": "#4a4fd0"
+      ]
     }
   ]
 }
