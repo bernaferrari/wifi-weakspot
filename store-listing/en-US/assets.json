@@ -2,62 +2,62 @@
   "galleries": {
     "phone": [
       {
-        "file": "screenshots/v9-01-home.jpg",
-        "feature": "home",
+        "file": "screenshots/v10-01-channels.jpg",
+        "feature": "channels",
         "slide": 0,
         "width": 1080,
         "height": 1920,
-        "bytes": 207738,
-        "sources": [
-          "raw/light/01-signal.jpg"
-        ]
-      },
-      {
-        "file": "screenshots/v9-02-coverage.jpg",
-        "feature": "coverage",
-        "slide": 1,
-        "width": 1080,
-        "height": 1920,
-        "bytes": 189611,
-        "sources": [
-          "raw/light/03-coverage.jpg"
-        ]
-      },
-      {
-        "file": "screenshots/v9-03-channels.jpg",
-        "feature": "channels",
-        "slide": 2,
-        "width": 1080,
-        "height": 1920,
-        "bytes": 224738,
+        "bytes": 230546,
         "sources": [
           "raw/light/04-channels.jpg"
         ]
       },
       {
-        "file": "screenshots/v9-04-history.jpg",
+        "file": "screenshots/v10-02-history.jpg",
         "feature": "history",
-        "slide": 3,
+        "slide": 1,
         "width": 1080,
         "height": 1920,
-        "bytes": 217268,
+        "bytes": 223033,
         "sources": [
           "raw/light/05-history.jpg"
         ]
       },
       {
-        "file": "screenshots/v9-05-rooms.jpg",
-        "feature": "rooms",
-        "slide": 4,
+        "file": "screenshots/v10-03-coverage.jpg",
+        "feature": "coverage",
+        "slide": 2,
         "width": 1080,
         "height": 1920,
-        "bytes": 148786,
+        "bytes": 187434,
+        "sources": [
+          "raw/light/03-coverage.jpg"
+        ]
+      },
+      {
+        "file": "screenshots/v10-04-rooms.jpg",
+        "feature": "rooms",
+        "slide": 3,
+        "width": 1080,
+        "height": 1920,
+        "bytes": 148623,
         "sources": [
           "raw/light/02-rooms.jpg"
         ]
       },
       {
-        "file": "screenshots/v9-06-router.jpg",
+        "file": "screenshots/v10-05-home.jpg",
+        "feature": "home",
+        "slide": 4,
+        "width": 1080,
+        "height": 1920,
+        "bytes": 196407,
+        "sources": [
+          "raw/light/01-signal.jpg"
+        ]
+      },
+      {
+        "file": "screenshots/v10-06-router.jpg",
         "feature": "router",
         "slide": 5,
         "width": 1080,
@@ -68,7 +68,7 @@
         ]
       },
       {
-        "file": "screenshots/v9-07-network.jpg",
+        "file": "screenshots/v10-07-network.jpg",
         "feature": "network",
         "slide": 6,
         "width": 1080,
@@ -79,7 +79,7 @@
         ]
       },
       {
-        "file": "screenshots/v9-08-appearance.jpg",
+        "file": "screenshots/v10-08-appearance.jpg",
         "feature": "appearance",
         "slide": 7,
         "width": 1080,
@@ -92,115 +92,115 @@
     ],
     "tablet7": [
       {
-        "file": "tablet/v9-7-01-home.jpg",
-        "feature": "home",
+        "file": "tablet/v10-7-01-channels.jpg",
+        "feature": "channels",
         "slide": 0,
         "width": 1200,
         "height": 1920,
-        "bytes": 203355,
-        "sources": [
-          "raw/light/tablet/7-01-home.jpg"
-        ]
-      },
-      {
-        "file": "tablet/v9-7-02-coverage.jpg",
-        "feature": "coverage",
-        "slide": 1,
-        "width": 1200,
-        "height": 1920,
-        "bytes": 197826,
-        "sources": [
-          "raw/light/tablet/7-03-coverage.jpg"
-        ]
-      },
-      {
-        "file": "tablet/v9-7-03-channels.jpg",
-        "feature": "channels",
-        "slide": 2,
-        "width": 1200,
-        "height": 1920,
-        "bytes": 221139,
+        "bytes": 234485,
         "sources": [
           "raw/light/tablet/7-02-channels.jpg"
         ]
       },
       {
-        "file": "tablet/v9-7-04-history.jpg",
+        "file": "tablet/v10-7-02-history.jpg",
         "feature": "history",
-        "slide": 3,
+        "slide": 1,
         "width": 1200,
         "height": 1920,
-        "bytes": 223317,
+        "bytes": 225207,
         "sources": [
           "raw/light/tablet/7-05-history.jpg"
         ]
       },
       {
-        "file": "tablet/v9-7-05-rooms.jpg",
+        "file": "tablet/v10-7-03-coverage.jpg",
+        "feature": "coverage",
+        "slide": 2,
+        "width": 1200,
+        "height": 1920,
+        "bytes": 193345,
+        "sources": [
+          "raw/light/tablet/7-03-coverage.jpg"
+        ]
+      },
+      {
+        "file": "tablet/v10-7-04-rooms.jpg",
         "feature": "rooms",
+        "slide": 3,
+        "width": 1200,
+        "height": 1920,
+        "bytes": 155520,
+        "sources": [
+          "raw/light/tablet/7-02-rooms.jpg"
+        ]
+      },
+      {
+        "file": "tablet/v10-7-05-home.jpg",
+        "feature": "home",
         "slide": 4,
         "width": 1200,
         "height": 1920,
-        "bytes": 158026,
+        "bytes": 196937,
         "sources": [
-          "raw/light/tablet/7-02-rooms.jpg"
+          "raw/light/tablet/7-01-home.jpg"
         ]
       }
     ],
     "tablet10": [
       {
-        "file": "tablet/v9-10-01-home.jpg",
-        "feature": "home",
+        "file": "tablet/v10-10-01-channels.jpg",
+        "feature": "channels",
         "slide": 0,
         "width": 1920,
         "height": 1200,
-        "bytes": 177560,
-        "sources": [
-          "raw/light/tablet/10-01-home.jpg"
-        ]
-      },
-      {
-        "file": "tablet/v9-10-02-coverage.jpg",
-        "feature": "coverage",
-        "slide": 1,
-        "width": 1920,
-        "height": 1200,
-        "bytes": 161394,
-        "sources": [
-          "raw/light/tablet/10-03-coverage.jpg"
-        ]
-      },
-      {
-        "file": "tablet/v9-10-03-channels.jpg",
-        "feature": "channels",
-        "slide": 2,
-        "width": 1920,
-        "height": 1200,
-        "bytes": 212621,
+        "bytes": 226724,
         "sources": [
           "raw/light/tablet/10-02-channels.jpg"
         ]
       },
       {
-        "file": "tablet/v9-10-04-history.jpg",
+        "file": "tablet/v10-10-02-history.jpg",
         "feature": "history",
-        "slide": 3,
+        "slide": 1,
         "width": 1920,
         "height": 1200,
-        "bytes": 203152,
+        "bytes": 205411,
         "sources": [
           "raw/light/tablet/10-05-history.jpg"
         ]
       },
       {
-        "file": "tablet/v9-10-05-rooms.jpg",
+        "file": "tablet/v10-10-03-coverage.jpg",
+        "feature": "coverage",
+        "slide": 2,
+        "width": 1920,
+        "height": 1200,
+        "bytes": 157550,
+        "sources": [
+          "raw/light/tablet/10-03-coverage.jpg"
+        ]
+      },
+      {
+        "file": "tablet/v10-10-04-rooms.jpg",
         "feature": "rooms",
+        "slide": 3,
+        "width": 1920,
+        "height": 1200,
+        "bytes": 136784,
+        "sources": [
+          "raw/light/tablet/10-02-rooms.jpg"
+        ]
+      },
+      {
+        "file": "tablet/v10-10-05-home.jpg",
+        "feature": "home",
         "slide": 4,
         "width": 1920,
         "height": 1200,
-        "bytes": 139114,
+        "bytes": 166388,
         "sources": [
-          "raw/light/tablet/10-02-rooms.jpg"
+          "raw/light/tablet/10-01-home.jpg"
         ]
       }
     ],
