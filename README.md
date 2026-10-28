@@ -12,7 +12,7 @@ A Wi-Fi analyzer for Android 8.0 and newer, built with Material 3 Expressive.</p
 </p>
 
 <p align="center">
-  <img src="store-listing/en-US/readme/strip-1.jpg" width="100%" alt="See every network around you; watch your signal drop and recover; map your home's weak spots; find the room with the best signal">
+  <img src="store-listing/en-US/readme/strip-1.jpg" width="100%" alt="See every network around you; watch your signal drop and recover; map your home's weak spots">
 </p>
 
 ## See what overlaps
@@ -26,7 +26,7 @@ Save a reading in each room and compare them with a percentage, a color and a pl
 ## Look beyond signal strength
 
 <p align="center">
-  <img src="store-listing/en-US/readme/strip-2.jpg" width="100%" alt="Is it the router? Find out fast; every device at a glance; your colors, your style">
+  <img src="store-listing/en-US/readme/strip-2.jpg" width="100%" alt="Find the room with the best signal; is it the router? Find out fast; every device at a glance">
 </p>
 
 - **Check your router.** Response time, variation and missed replies, with past checks kept for comparison.

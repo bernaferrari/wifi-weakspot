@@ -40,52 +40,8 @@
       "feature": "rooms",
       "file": "screenshots/v8-04-rooms.jpg",
       "raw": "light/02-rooms.jpg",
-      "layout": "float",
-      "accent": "#ff9b6a",
-      "callouts": [
-        {
-          "raw": "light/02-rooms.jpg",
-          "x": 40,
-          "y": 1308,
-          "w": 1000,
-          "h": 180,
-          "radius": 40,
-          "place": {
-            "left": 180,
-            "top": 1150,
-            "width": 720
-          },
-          "role": "pop tl"
-        },
-        {
-          "raw": "light/02-rooms.jpg",
-          "x": 40,
-          "y": 1493,
-          "w": 1000,
-          "h": 180,
-          "radius": 40,
-          "place": {
-            "left": 200,
-            "top": 1290,
-            "width": 720
-          },
-          "role": "pop tr"
-        },
-        {
-          "raw": "light/02-rooms.jpg",
-          "x": 40,
-          "y": 1678,
-          "w": 1000,
-          "h": 180,
-          "radius": 40,
-          "place": {
-            "left": 180,
-            "top": 1430,
-            "width": 720
-          },
-          "role": "pop tl"
-        }
-      ]
+      "layout": "drop",
+      "accent": "#ff9b6a"
     },
     {
       "feature": "router",
@@ -97,31 +53,22 @@
     {
       "feature": "network",
       "file": "screenshots/v8-06-network.jpg",
-      "layout": "stack",
+      "layout": "lean",
       "accent": "#7d8bff",
-      "devices": [
-        {
-          "raw": "light/04-channels.jpg",
-          "role": "primary"
-        },
-        {
-          "raw": "light/07-devices.jpg",
-          "role": "secondary"
-        }
-      ]
+      "raw": "light/07-devices.jpg"
     },
     {
       "feature": "appearance",
       "file": "screenshots/v8-07-appearance.jpg",
-      "layout": "duo",
+      "layout": "pair",
       "accent": "#ff7fb6",
       "devices": [
         {
-          "raw": "light/08-appearance.jpg",
+          "raw": "01-signal.jpg",
           "role": "primary"
         },
         {
-          "raw": "08-appearance.jpg",
+          "raw": "light/08-appearance.jpg",
           "role": "secondary"
         }
       ]
@@ -168,52 +115,8 @@
       "feature": "rooms",
       "file": "tablet/v8-7-04-rooms.jpg",
       "raw": "light/tablet/7-02-rooms.jpg",
-      "layout": "float",
-      "accent": "#ff9b6a",
-      "callouts": [
-        {
-          "raw": "light/tablet/7-02-rooms.jpg",
-          "x": 224,
-          "y": 1115,
-          "w": 944,
-          "h": 144,
-          "radius": 36,
-          "place": {
-            "left": 150,
-            "top": 1110,
-            "width": 900
-          },
-          "role": "pop"
-        },
-        {
-          "raw": "light/tablet/7-02-rooms.jpg",
-          "x": 224,
-          "y": 1263,
-          "w": 944,
-          "h": 144,
-          "radius": 36,
-          "place": {
-            "left": 170,
-            "top": 1255,
-            "width": 900
-          },
-          "role": "pop"
-        },
-        {
-          "raw": "light/tablet/7-02-rooms.jpg",
-          "x": 224,
-          "y": 1411,
-          "w": 944,
-          "h": 144,
-          "radius": 36,
-          "place": {
-            "left": 150,
-            "top": 1400,
-            "width": 900
-          },
-          "role": "pop"
-        }
-      ]
+      "layout": "zoomed",
+      "accent": "#ff9b6a"
     },
     {
       "feature": "appearance",
@@ -273,38 +176,8 @@
       "feature": "rooms",
       "file": "tablet/v8-10-04-rooms.jpg",
       "raw": "light/tablet/10-02-rooms.jpg",
-      "layout": "float",
-      "accent": "#ff9b6a",
-      "callouts": [
-        {
-          "raw": "light/tablet/10-02-rooms.jpg",
-          "x": 516,
-          "y": 733,
-          "w": 1032,
-          "h": 108,
-          "radius": 24,
-          "place": {
-            "left": 900,
-            "top": 620,
-            "width": 880
-          },
-          "role": "pop"
-        },
-        {
-          "raw": "light/tablet/10-02-rooms.jpg",
-          "x": 516,
-          "y": 844,
-          "w": 1032,
-          "h": 108,
-          "radius": 24,
-          "place": {
-            "left": 930,
-            "top": 740,
-            "width": 880
-          },
-          "role": "pop"
-        }
-      ]
+      "layout": "zoomed",
+      "accent": "#ff9b6a"
     },
     {
       "feature": "appearance",
