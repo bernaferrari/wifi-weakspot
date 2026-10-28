@@ -258,7 +258,7 @@
         "slide": 0,
         "width": 2400,
         "height": 1260,
-        "bytes": 267806,
+        "bytes": 259531,
         "sources": [
           "raw/light/tablet/7-03-coverage.jpg",
           "raw/light/02-rooms.jpg"
@@ -270,7 +270,7 @@
         "slide": 1,
         "width": 2400,
         "height": 1260,
-        "bytes": 320367,
+        "bytes": 308728,
         "sources": [
           "raw/light/tablet/10-02-channels.jpg",
           "raw/light/05-history.jpg"
@@ -282,7 +282,7 @@
         "slide": 2,
         "width": 2400,
         "height": 1260,
-        "bytes": 312360,
+        "bytes": 321476,
         "sources": [
           "raw/light/06-router.jpg",
           "raw/light/07-devices.jpg",

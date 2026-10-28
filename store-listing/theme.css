@@ -53,7 +53,8 @@ header p{margin:30px 0 0;font-size:40px;line-height:1.25;font-weight:450;color:#
 
 /* README art: the coverage-map field, dark ink copy, and the real app large. */
 .readme{--ink:#231a17}
-.readme h1 em{color:#c2410c}
+.readme h1 em,.readme .device-label em{font-style:normal;color:inherit;padding:0 .08em;margin:0 -.04em;
+  background:linear-gradient(176deg,transparent 54%,var(--hl,#ffc46b) 55%,var(--hl,#ffc46b) 90%,transparent 91%)}
 .readme header p{color:#5b4a40;white-space:pre-line}
 .readme .device{background:#ffffff;box-shadow:inset 0 0 0 2px #00000008,0 50px 100px -40px #5a321e99,0 14px 30px -14px #5a321e44}
 /* Hero: the headline on the left, the full coverage map on a portrait tablet, the room comparison in front. */
@@ -69,8 +70,11 @@ header p{margin:30px 0 0;font-size:40px;line-height:1.25;font-weight:450;color:#
 .readme .wide .front{--bezel:12px;--radius:58px;left:1640px;top:470px;width:500px;z-index:4}
 /* Trio: three phones in a staggered rhythm, the middle one raised, each under its own short headline. */
 .readme .trio .device{--bezel:12px;--radius:60px;width:620px}
-.readme .trio .one{left:110px;top:380px}
-.readme .trio .two{left:890px;top:250px}
-.readme .trio .three{left:1670px;top:380px}
-.readme .trio .device-label{transform:translateY(calc(-100% - 30px));text-align:left;font-size:62px;line-height:1.02;font-weight:720;letter-spacing:-.03em;color:var(--ink)}
-.readme .trio .device-label em{font-style:normal;color:#c2410c}
+.readme .trio .one{left:110px;top:420px}
+.readme .trio .two{left:890px;top:330px}
+.readme .trio .three{left:1670px;top:420px}
+.readme .trio .device-label{top:84px !important;transform:none;text-align:left;font-size:60px;line-height:1.15;font-weight:720;letter-spacing:-.03em;color:var(--ink)}
+.readme .trio .device-label::after{display:block;margin-top:10px;font-size:34px;line-height:1.3;font-weight:450;letter-spacing:0;color:#6b5a50}
+.readme .trio .device-label.one{--hl:#ffc46b}.readme .trio .device-label.one::after{content:"How fast it answers, and how steady."}
+.readme .trio .device-label.two{--hl:#8fe0b4}.readme .trio .device-label.two::after{content:"Every device, then ping and DNS."}
+.readme .trio .device-label.three{--hl:#ff9e8c}.readme .trio .device-label.three::after{content:"Wallpaper colors and four styles."}

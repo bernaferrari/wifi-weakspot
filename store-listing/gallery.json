@@ -164,7 +164,8 @@
           "raw": "light/02-rooms.jpg",
           "role": "front"
         }
-      ]
+      ],
+      "hl": "#ffc46b"
     },
     {
       "feature": "readme-channels",
@@ -203,7 +204,8 @@
           "raw": "light/05-history.jpg",
           "role": "front"
         }
-      ]
+      ],
+      "hl": "#8fe0b4"
     },
     {
       "feature": "readme-tools",

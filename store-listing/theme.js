@@ -17,9 +17,9 @@ function heatField(W, H, slide) {
   const next = random(W + (slide.file || '').length * 31);
   let dots = '';
   for (let y = 70; y < H; y += 150) for (let x = 60 + (y / 150 % 2) * 75; x < W; x += 150)
-    dots += `<circle cx="${(x + (next() - .5) * 40).toFixed(1)}" cy="${(y + (next() - .5) * 40).toFixed(1)}" r="8" fill="none" stroke="#ffffff" stroke-opacity=".55" stroke-width="3.5"/>`;
+    dots += `<circle cx="${(x + (next() - .5) * 40).toFixed(1)}" cy="${(y + (next() - .5) * 40).toFixed(1)}" r="8" fill="none" stroke="#c9b8a6" stroke-opacity=".35" stroke-width="3"/>`;
   return `<defs><filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="160"/></filter></defs>
-    <rect width="${W}" height="${H}" fill="#fff4ea"/><g filter="url(#soft)">${blobs.map(([x, y, c]) => `<circle cx="${W * x}" cy="${H * y}" r="${H * .55}" fill="${c}" fill-opacity=".8"/>`).join('')}</g>${dots}`;
+    <rect width="${W}" height="${H}" fill="#fbf6ef"/><g filter="url(#soft)">${blobs.map(([x, y, c]) => `<circle cx="${W * x}" cy="${H * y}" r="${H * .55}" fill="${c}" fill-opacity=".42"/>`).join('')}</g>${dots}`;
 }
 
 export default {
@@ -50,6 +50,7 @@ export default {
   },
 
   compose({main, index, kind, slide}) {
+    if (typeof slide.hl === 'string') main.style.setProperty('--hl', slide.hl);
     if (index === 0 && kind !== 'readme' && kind !== 'desktop') {
       const brand = document.createElement('div');
       brand.className = 'brand';
