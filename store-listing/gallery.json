@@ -4,64 +4,54 @@
       "feature": "channels",
       "file": "screenshots/v8-01-channels.jpg",
       "raw": "light/04-channels.jpg",
-      "layout": "zoomed",
-      "accent": "#7d8bff"
+      "layout": "one",
+      "soft": "#dcdcff",
+      "deep": "#4a4fd0"
     },
     {
       "feature": "history",
       "file": "screenshots/v8-02-history.jpg",
       "raw": "light/05-history.jpg",
-      "layout": "zoomed",
-      "accent": "#b98cff"
+      "layout": "one",
+      "soft": "#ead9ff",
+      "deep": "#7a3fd0"
     },
     {
       "feature": "coverage",
       "file": "screenshots/v8-03-coverage.jpg",
-      "layout": "floor",
-      "accent": "#3fe0b5",
-      "callouts": [
-        {
-          "raw": "light/03-coverage.jpg",
-          "x": 30,
-          "y": 280,
-          "w": 1020,
-          "h": 1530,
-          "radius": 40,
-          "place": {
-            "left": 250,
-            "top": 560,
-            "width": 580
-          },
-          "role": "floorplan"
-        }
-      ]
+      "layout": "one",
+      "soft": "#c9f1de",
+      "deep": "#0d8a5c",
+      "raw": "light/03-coverage.jpg"
     },
     {
       "feature": "rooms",
       "file": "screenshots/v8-04-rooms.jpg",
       "raw": "light/02-rooms.jpg",
       "layout": "drop",
-      "accent": "#ff9b6a"
+      "soft": "#ffdcca",
+      "deep": "#c2540f"
     },
     {
       "feature": "router",
       "file": "screenshots/v8-05-router.jpg",
       "raw": "light/06-router.jpg",
-      "layout": "number",
-      "accent": "#5fb8ff"
+      "layout": "one",
+      "soft": "#cfe8ff",
+      "deep": "#1f6fc0"
     },
     {
       "feature": "network",
       "file": "screenshots/v8-06-network.jpg",
-      "layout": "lean",
-      "accent": "#7d8bff",
-      "raw": "light/07-devices.jpg"
+      "layout": "one",
+      "raw": "light/07-devices.jpg",
+      "soft": "#fff0b8",
+      "deep": "#9a6400"
     },
     {
       "feature": "appearance",
       "file": "screenshots/v8-07-appearance.jpg",
       "layout": "pair",
-      "accent": "#ff7fb6",
       "devices": [
         {
           "raw": "01-signal.jpg",
@@ -71,7 +61,9 @@
           "raw": "light/08-appearance.jpg",
           "role": "secondary"
         }
-      ]
+      ],
+      "soft": "#ffd6e7",
+      "deep": "#c2185b"
     }
   ],
   "tablet7": [
@@ -79,60 +71,50 @@
       "feature": "channels",
       "file": "tablet/v8-7-01-channels.jpg",
       "raw": "light/tablet/7-02-channels.jpg",
-      "layout": "zoomed",
-      "accent": "#7d8bff"
+      "layout": "one",
+      "soft": "#dcdcff",
+      "deep": "#4a4fd0"
     },
     {
       "feature": "history",
       "file": "tablet/v8-7-02-history.jpg",
       "raw": "light/tablet/7-05-history.jpg",
-      "layout": "zoomed",
-      "accent": "#b98cff"
+      "layout": "one",
+      "soft": "#ead9ff",
+      "deep": "#7a3fd0"
     },
     {
       "feature": "coverage",
       "file": "tablet/v8-7-03-coverage.jpg",
-      "layout": "floor",
-      "accent": "#3fe0b5",
-      "callouts": [
-        {
-          "raw": "light/tablet/7-03-coverage.jpg",
-          "x": 160,
-          "y": 282,
-          "w": 880,
-          "h": 1230,
-          "radius": 30,
-          "place": {
-            "left": 230,
-            "top": 560,
-            "width": 740
-          },
-          "role": "mapcard"
-        }
-      ]
+      "layout": "one",
+      "soft": "#c9f1de",
+      "deep": "#0d8a5c",
+      "raw": "light/tablet/7-03-coverage.jpg"
     },
     {
       "feature": "rooms",
       "file": "tablet/v8-7-04-rooms.jpg",
       "raw": "light/tablet/7-02-rooms.jpg",
-      "layout": "zoomed",
-      "accent": "#ff9b6a"
+      "layout": "one",
+      "soft": "#ffdcca",
+      "deep": "#c2540f"
     },
     {
       "feature": "appearance",
       "file": "tablet/v8-7-05-appearance.jpg",
-      "layout": "duo",
-      "accent": "#ff7fb6",
+      "layout": "pair",
       "devices": [
         {
-          "raw": "light/tablet/7-04-appearance.jpg",
+          "raw": "tablet/7-04-appearance.jpg",
           "role": "primary"
         },
         {
-          "raw": "tablet/7-04-appearance.jpg",
+          "raw": "light/tablet/7-04-appearance.jpg",
           "role": "secondary"
         }
-      ]
+      ],
+      "soft": "#ffd6e7",
+      "deep": "#c2185b"
     }
   ],
   "tablet10": [
@@ -140,60 +122,50 @@
       "feature": "channels",
       "file": "tablet/v8-10-01-channels.jpg",
       "raw": "light/tablet/10-02-channels.jpg",
-      "layout": "zoomed",
-      "accent": "#7d8bff"
+      "layout": "one",
+      "soft": "#dcdcff",
+      "deep": "#4a4fd0"
     },
     {
       "feature": "history",
       "file": "tablet/v8-10-02-history.jpg",
       "raw": "light/tablet/10-05-history.jpg",
-      "layout": "zoomed",
-      "accent": "#b98cff"
+      "layout": "one",
+      "soft": "#ead9ff",
+      "deep": "#7a3fd0"
     },
     {
       "feature": "coverage",
       "file": "tablet/v8-10-03-coverage.jpg",
-      "layout": "floor",
-      "accent": "#3fe0b5",
-      "callouts": [
-        {
-          "raw": "light/tablet/10-03-coverage.jpg",
-          "x": 710,
-          "y": 144,
-          "w": 488,
-          "h": 750,
-          "radius": 30,
-          "place": {
-            "left": 1080,
-            "top": 150,
-            "width": 600
-          },
-          "role": "mapcard"
-        }
-      ]
+      "layout": "one",
+      "soft": "#c9f1de",
+      "deep": "#0d8a5c",
+      "raw": "light/tablet/10-03-coverage.jpg"
     },
     {
       "feature": "rooms",
       "file": "tablet/v8-10-04-rooms.jpg",
       "raw": "light/tablet/10-02-rooms.jpg",
-      "layout": "zoomed",
-      "accent": "#ff9b6a"
+      "layout": "one",
+      "soft": "#ffdcca",
+      "deep": "#c2540f"
     },
     {
       "feature": "appearance",
       "file": "tablet/v8-10-05-appearance.jpg",
-      "layout": "duo",
-      "accent": "#ff7fb6",
+      "layout": "pair",
       "devices": [
         {
-          "raw": "light/tablet/10-04-appearance.jpg",
+          "raw": "tablet/10-04-appearance.jpg",
           "role": "primary"
         },
         {
-          "raw": "tablet/10-04-appearance.jpg",
+          "raw": "light/tablet/10-04-appearance.jpg",
           "role": "secondary"
         }
-      ]
+      ],
+      "soft": "#ffd6e7",
+      "deep": "#c2185b"
     }
   ],
   "desktop": [
@@ -227,7 +199,6 @@
       "feature": "readme-spread",
       "layout": "spread",
       "file": "readme/big-screen.jpg",
-      "accent": "#7dd3fc",
       "alt": "WiFi Weakspot on a landscape tablet with the channel graph beside the nearby networks, and a phone in front showing signal history",
       "devices": [
         {
@@ -239,7 +210,9 @@
           "raw": "light/05-history.jpg",
           "role": "phone"
         }
-      ]
+      ],
+      "soft": "#dcdcff",
+      "deep": "#4a4fd0"
     }
   ]
 }

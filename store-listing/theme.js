@@ -1,65 +1,53 @@
-// WiFi Weakspot: a night-sky family where each card has its own glow and a scatter of light points
-// (waves only on the router card), plus a small label above the title and one big router number.
-const random = seed => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-const hex = (c, a) => c + Math.round(a * 255).toString(16).padStart(2, '0');
+// WiFi Weakspot: faint Wi-Fi ripples drawn in panorama coordinates (so they continue across every seam), and one
+// big Material 3 Expressive shape per card in that card's soft colour, sitting behind the phone.
+import {panoramaX, shapes} from './studio/shapes.js';
 
-const motifs = {
-  // Points of light, like readings or nearby networks; no lines.
-  points({W, H, accent, next}) {
-    return Array.from({length: 34}, () => {
-      const r = 2 + next() * 6;
-      return `<circle cx="${(next() * W).toFixed(1)}" cy="${(H * .28 + next() * H * .72).toFixed(1)}" r="${r.toFixed(1)}" fill="${next() < .7 ? '#ffffff' : accent}" opacity="${(.12 + next() * .4).toFixed(2)}"/>`;
-    }).join('');
-  },
-  // Radiating waves, only where a signal leaves a device.
-  waves({W, H, accent}) {
-    return [.22, .38, .54, .7].map((r, i) => `<circle cx="${W / 2}" cy="${H * .66}" r="${r * H}" fill="none" stroke="${accent}" stroke-opacity="${.18 - i * .04}" stroke-width="${8 - i}"/>`).join('');
-  }
-};
-const motifFor = {number: 'waves'};
+const order = ['cookie', 'sunny', 'flower', 'clover', 'cookie', 'sunny', 'flower'];
 
-// Every card draws its own glow, points and waves plus its neighbours', all in panorama coordinates,
-// so colour and light spill across each seam and adjacent cards share their edges.
-function layer(ctx, k, x0) {
-  const {W, H, slides, kind} = ctx;
-  const s = slides[k];
-  if (!s) return {defs: '', body: ''};
-  const accent = s.accent || '#7d8bff';
-  const cx = x0 + k * W + W * (k % 2 ? .38 : .62), cy = H * (k % 2 ? .48 : .66);
-  const R = Math.max(W, H) * .62;
-  const defs = `<radialGradient id="glow${k}" gradientUnits="userSpaceOnUse" cx="${cx}" cy="${cy}" r="${R}"><stop offset="0" stop-color="${hex(accent, .5)}"/><stop offset=".5" stop-color="${hex(accent, .14)}"/><stop offset="1" stop-color="${hex(accent, 0)}"/></radialGradient>`;
-  let body = `<rect x="${x0 + (k - 1) * W}" width="${W * 3}" height="${H}" fill="url(#glow${k})"/>`;
-  const next = random(k * 131 + kind.length * 17 + 3);
-  for (let i = 0; i < 34; i++) {
-    const x = x0 + k * W + next() * W, y = H * .25 + next() * H * .75, r = 2 + next() * 6;
-    body += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${next() < .7 ? '#ffffff' : accent}" opacity="${(.12 + next() * .4).toFixed(2)}"/>`;
-  }
-  if ((s.layout || '').startsWith('number')) body += [.22, .38, .54, .7].map((r, i) => `<circle cx="${x0 + k * W + W / 2}" cy="${H * .66}" r="${r * H}" fill="none" stroke="${accent}" stroke-opacity="${.18 - i * .04}" stroke-width="${8 - i}"/>`).join('');
-  return {defs, body};
-}
+// Where the shape sits on each layout, as fractions of the card.
+const anchor = (layout, landscape) =>
+  landscape ? {x: .7, y: .55, r: .44}
+  : /drop/.test(layout) ? {x: .5, y: .28, r: .6}
+  : {x: .5, y: .64, r: .6};
 
 export default {
   art(ctx) {
-    const {W, H, index} = ctx;
-    const x0 = -index * W;
-    const layers = [index - 1, index, index + 1].map(k => layer(ctx, k, x0));
-    return `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0e26"/><stop offset="1" stop-color="#121640"/></linearGradient>${layers.map(l => l.defs).join('')}</defs>
-      <rect width="${W}" height="${H}" fill="url(#sky)"/>${layers.map(l => l.body).join('')}`;
-  },
-  compose({slide, main}) {
-    if (slide.accent) main.style.setProperty('--accent', slide.accent);
-    const header = main.querySelector('header');
-    if (header && slide.badge) {
-      const badge = document.createElement('div');
-      badge.className = 'badge';
-      badge.textContent = slide.badge;
-      header.prepend(badge);
+    const {W, H, index, slides, slide} = ctx;
+    const landscape = W > H, unit = Math.max(W, H);
+    let body = `<rect width="${W}" height="${H}" fill="#f6f5fc"/>`;
+    // Ripples centred on every other seam, alternating high and low, so neighbouring cards share them.
+    for (let k = 0; k <= slides.length; k += 1) {
+      const cx = panoramaX(ctx, k), cy = H * (k % 2 ? .12 : .9);
+      if (cx < -unit * 1.2 || cx > W + unit * 1.2) continue;
+      for (let i = 1; i <= 7; i++) body += `<circle cx="${cx}" cy="${cy}" r="${i * unit * .13}" fill="none" stroke="#5a55c8" stroke-opacity="${(.1 - i * .008).toFixed(3)}" stroke-width="3"/>`;
     }
-    if (slide.stat) {
-      const stat = document.createElement('div');
-      stat.className = 'stat';
-      stat.textContent = slide.stat;
-      main.append(stat);
+    if (slide.title) {
+      const a = anchor(slide.layout || '', landscape);
+      const shape = shapes[order[index % order.length]];
+      body += `<g fill="var(--soft)">${shape(W * a.x, H * a.y, Math.min(W, H) * a.r * (landscape ? 1.4 : 1), index * .4)}</g>`;
+    }
+    return body;
+  },
+
+  compose({slide, main, index, kind}) {
+    if (slide.deep) main.style.setProperty('--deep', slide.deep);
+    if (slide.soft) main.style.setProperty('--soft', slide.soft);
+    if (index === 0 && kind !== 'readme' && kind !== 'desktop') {
+      main.classList.add('first');
+      const brand = document.createElement('div');
+      brand.className = 'brand';
+      brand.dataset.checkBounds = '';
+      brand.innerHTML = '<img src="../../docs/app-icon.png" alt="">WiFi Weakspot';
+      main.append(brand);
+    }
+  },
+
+  /** Bezel and corners scale with the device width. */
+  layout({main}) {
+    for (const node of main.querySelectorAll('.device')) {
+      const image = node.querySelector('img'), width = node.clientWidth, landscape = image.naturalWidth > image.naturalHeight;
+      node.style.setProperty('--bezel', `${Math.round(width * (landscape ? .011 : .02))}px`);
+      node.style.setProperty('--radius', `${Math.round(width * (landscape ? .035 : .09))}px`);
     }
   }
 };
