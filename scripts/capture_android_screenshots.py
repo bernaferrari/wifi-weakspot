@@ -113,7 +113,7 @@ def back():
 
 profiles = {name: (p['captureWidth'], p['captureHeight'], p['captureDensity'])
             for name, p in json.loads((repo / 'store-listing/profiles.json').read_text()).items()
-            if name != 'desktop'}
+            if name != 'desktop' and 'captureWidth' in p}
 original_size = adb('shell', 'wm', 'size').decode()
 original_density = adb('shell', 'wm', 'density').decode()
 assert 'Override' not in original_size + original_density, 'Start from a dedicated emulator with no display overrides.'

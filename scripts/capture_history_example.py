@@ -58,7 +58,7 @@ try:
     set_app_locale(lambda *w: adb(*w),package,locale)
     adb('shell','settings','put','global','sysui_demo_allowed','1')
     for name, profile in profiles.items():
-        if name == 'desktop' or args.profile not in ('all', name):
+        if name == 'desktop' or 'captureWidth' not in profile or args.profile not in ('all', name):
             continue
         current=name
         width,height=profile['captureWidth'],profile['captureHeight']
