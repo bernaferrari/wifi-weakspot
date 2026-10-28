@@ -51,28 +51,21 @@ header p{margin:30px 0 0;font-size:40px;line-height:1.25;font-weight:450;color:#
 .desktop header p{margin-top:16px;font-size:30px}
 .desktop .device{--bezel:0px;--radius:20px;left:220px;top:330px;width:1480px}
 
-/* README spread: the headline on the left, the tablet running off the right edge, a phone in front. */
-.readme .spread header{left:140px;right:auto;top:0;bottom:0;width:760px;display:flex;flex-direction:column;justify-content:center}
-.readme .spread h1{font-size:124px}
-.readme .spread header p{white-space:pre-line}
-.readme .spread .tablet{--bezel:18px;--radius:48px;left:1060px;top:180px;width:1600px}
-.readme .spread .phone{--bezel:12px;--radius:60px;left:900px;top:540px;width:420px;z-index:4}
-
-
-/* README steps: a centred headline, then two phones side by side, each under a numbered step. */
-.readme .steps header{left:0;right:0;top:56px;text-align:center}
-.readme .steps h1{font-size:110px}
-.readme .steps header p{display:none}
-.readme .steps .device{--bezel:12px;--radius:58px;top:400px;width:600px}
-.readme .steps .one{left:520px}
-.readme .steps .two{left:1280px}
-.readme .steps .device-label{transform:translateY(calc(-100% - 26px));text-align:left;font-size:38px;font-weight:600;color:#c3c7e8}
-/* README rings: mirrored. Phones fanned on the left with the router check in front and rings spreading from it;
-   the headline on the right. */
-.readme .rings header{left:auto;right:90px;top:0;bottom:0;width:740px;display:flex;flex-direction:column;justify-content:center}
-.readme .rings h1{font-size:100px}
-.readme .rings header p{white-space:pre-line}
-.readme .rings .front{--bezel:13px;--radius:62px;left:520px;top:140px;width:580px;z-index:4}
-.readme .rings .left{--bezel:10px;--radius:48px;left:120px;top:340px;width:460px;z-index:2;filter:brightness(.92)}
-.readme .rings .right{--bezel:10px;--radius:48px;left:1010px;top:340px;width:460px;z-index:2;filter:brightness(.92)}
-.rings-art{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+/* README art: the coverage-map field, dark ink copy, and the real app large. */
+.readme{--ink:#231a17}
+.readme h1 em{color:#c2410c}
+.readme header p{color:#5b4a40;white-space:pre-line}
+.readme .device{background:#ffffff;box-shadow:inset 0 0 0 2px #00000008,0 50px 100px -40px #5a321e99,0 14px 30px -14px #5a321e44}
+/* Hero: the headline on the left, the full coverage map on a portrait tablet, the room comparison in front. */
+.readme .hero header{left:140px;right:auto;top:0;bottom:0;width:800px;display:flex;flex-direction:column;justify-content:center}
+.readme .hero h1{font-size:128px}
+.readme .hero .slate{--bezel:16px;--radius:44px;left:1000px;top:90px;width:760px}
+.readme .hero .front{--bezel:12px;--radius:58px;left:1640px;top:300px;width:560px;z-index:4}
+/* Wide: channel waves large on a landscape tablet, the signal walk on a phone in front. No words. */
+.readme .wide .slate{--bezel:16px;--radius:44px;left:110px;top:110px;width:1720px}
+.readme .wide .front{--bezel:12px;--radius:58px;left:1700px;top:250px;width:540px;z-index:4}
+/* Trio: three phones side by side at one size, each screen readable. No words. */
+.readme .trio .device{--bezel:12px;--radius:58px;top:110px;width:600px}
+.readme .trio .one{left:160px}
+.readme .trio .two{left:900px}
+.readme .trio .three{left:1640px}

@@ -150,57 +150,95 @@
   ],
   "readme": [
     {
-      "feature": "readme-spread",
-      "layout": "spread",
+      "feature": "readme-hero",
+      "layout": "hero",
       "file": "readme/big-screen.jpg",
-      "alt": "WiFi Weakspot on a landscape tablet with the channel graph beside nearby networks, and a phone showing signal history",
+      "alt": "Find your weak spots: a coverage map of a home from weak red to strong green on a tablet, and the Rooms screen comparing saved readings",
       "devices": [
         {
-          "raw": "light/tablet/10-02-channels.jpg",
-          "role": "tablet",
+          "raw": "light/tablet/7-03-coverage.jpg",
+          "role": "slate",
           "frame": "tablet"
         },
         {
-          "raw": "light/05-history.jpg",
-          "role": "phone"
+          "raw": "light/02-rooms.jpg",
+          "role": "front"
         }
       ]
     },
     {
-      "feature": "readme-weak",
-      "layout": "steps",
-      "file": "readme/rooms-map.jpg",
-      "alt": "Two steps: tap where you stand to build a coverage map of your home, then compare saved room readings",
+      "feature": "readme-channels",
+      "layout": "wide",
+      "file": "readme/channels.jpg",
+      "field": [
+        [
+          0.05,
+          0.75,
+          "#8fe0b4"
+        ],
+        [
+          0.35,
+          0.15,
+          "#ffd98a"
+        ],
+        [
+          0.7,
+          0.85,
+          "#ffc46b"
+        ],
+        [
+          0.98,
+          0.25,
+          "#ff8a78"
+        ]
+      ],
+      "alt": "Every nearby network as channel waves on a tablet, with the signal history of a walk through a weak spot on a phone",
       "devices": [
         {
-          "raw": "light/03-coverage.jpg",
-          "role": "one",
-          "label": "1   Tap where you stand"
+          "raw": "light/tablet/10-02-channels.jpg",
+          "role": "slate",
+          "frame": "tablet"
         },
         {
-          "raw": "light/02-rooms.jpg",
-          "role": "two",
-          "label": "2   Compare the rooms"
+          "raw": "light/05-history.jpg",
+          "role": "front"
         }
       ]
     },
     {
       "feature": "readme-tools",
-      "layout": "rings",
+      "layout": "trio",
       "file": "readme/tools.jpg",
-      "alt": "Router check answering in 4.1 ms in front, with the devices on your Wi-Fi and the appearance settings behind it",
+      "field": [
+        [
+          0.1,
+          0.8,
+          "#ffc46b"
+        ],
+        [
+          0.5,
+          0.1,
+          "#8fe0b4"
+        ],
+        [
+          0.9,
+          0.85,
+          "#ff8a78"
+        ]
+      ],
+      "alt": "Router check answering in 4.1 ms, the devices on your Wi-Fi, and dark-mode appearance settings with the color style previews",
       "devices": [
         {
-          "raw": "light/07-devices.jpg",
-          "role": "left"
-        },
-        {
-          "raw": "light/08-appearance.jpg",
-          "role": "right"
-        },
-        {
           "raw": "light/06-router.jpg",
-          "role": "front"
+          "role": "one"
+        },
+        {
+          "raw": "light/07-devices.jpg",
+          "role": "two"
+        },
+        {
+          "raw": "readme-dark-settings.jpg",
+          "role": "three"
         }
       ]
     }

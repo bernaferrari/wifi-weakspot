@@ -21,6 +21,7 @@
  "phone|dark|full|Settings#0": "0.0.0.0.0.1.0.0.3.0",
  "phone|dark|full|Signal over time#0": "0.0.0.0.0.0.0.0.0.2.1.0",
  "phone|dark|full|Suggested channel.*#0": "0.0.0.0.0.0.0.0.1.0.0.0",
+ "phone|dark|settings|Settings#0": "0.0.0.0.0.1.0.0.3.0",
  "phone|dark|store|2\\.4 GHz, 18 networks#0": "0.0.0.0.0.0.0.1.0.1.0.0",
  "phone|dark|store|Networks#0": "0.0.0.0.0.1.0.0.1.0",
  "phone|dark|store|Signal over time#0": "0.0.0.0.0.0.0.0.0.2.1.0",

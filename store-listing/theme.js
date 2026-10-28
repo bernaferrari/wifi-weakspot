@@ -9,14 +9,20 @@ const cookie = (cx, cy, r, colour, label) => {
   return `<path d="M${pts.join('L')}Z" fill="${colour}"/><text x="${cx}" y="${cy + r * .26}" text-anchor="middle" font-family="Google Sans Flex" font-weight="760" font-size="${r * .72}" fill="#fff">${label}</text>`;
 };
 
-// Wi-Fi rings spreading from the router check's answer across the whole image.
-function rings() {
-  return `<svg class="rings-art" viewBox="0 0 2400 1260" aria-hidden="true">${[180, 330, 480, 640, 810, 990, 1180].map((r, i) =>
-    `<circle cx="810" cy="620" r="${r}" fill="none" stroke="#aab3ff" stroke-opacity="${(.55 - i * .06).toFixed(2)}" stroke-width="${8 - i * .8}"/>`).join('')}</svg>`;
+// README art sits on the app's own coverage-map colours: a soft field from weak coral through amber to strong
+// green, blurred like the map, with the map's reading points scattered over it.
+function heatField(W, H, slide) {
+  const blobs = slide.field || [[.1, .2, '#ff8a78'], [.35, .85, '#ffc46b'], [.62, .25, '#ffd98a'], [.85, .8, '#6fd6a0'], [1.0, .15, '#8fe0b4']];
+  const next = random(W + (slide.file || '').length * 31);
+  let dots = '';
+  for (let i = 0; i < 26; i++) dots += `<circle cx="${(next() * W).toFixed(1)}" cy="${(next() * H).toFixed(1)}" r="9" fill="#ffffff" fill-opacity=".9" stroke="#ffffff" stroke-opacity=".45" stroke-width="9"/>`;
+  return `<defs><filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="160"/></filter></defs>
+    <rect width="${W}" height="${H}" fill="#fff4ea"/><g filter="url(#soft)">${blobs.map(([x, y, c]) => `<circle cx="${W * x}" cy="${H * y}" r="${H * .55}" fill="${c}" fill-opacity=".8"/>`).join('')}</g>${dots}`;
 }
 
 export default {
   art({W, H, index, slides, slide}) {
+    if (W === 2400 && H === 1260) return heatField(W, H, slide);
     const landscape = W > H;
     let stars = '';
     for (let k = index - 1; k <= index + 1; k++) {
@@ -42,7 +48,6 @@ export default {
   },
 
   compose({main, index, kind, slide}) {
-    if (slide.layout === 'rings') main.insertAdjacentHTML('beforeend', rings());
     if (index === 0 && kind !== 'readme' && kind !== 'desktop') {
       const brand = document.createElement('div');
       brand.className = 'brand';

@@ -1,44 +1,44 @@
 <p align="center">
-  <img src="store-listing/en-US/readme/big-screen.jpg" width="100%" alt="Find your weak spots: WiFi Weakspot on a tablet with the channel graph and nearby networks, and a phone showing signal history">
+  <img src="docs/app-icon.png" width="96" alt="WiFi Weakspot icon">
 </p>
 
 <h1 align="center">WiFi Weakspot</h1>
 
-<p align="center"><b>See the signals around you. Find where yours gets weak.</b><br>
-A Wi-Fi analyzer for Android 8.0 and newer, built with Material 3 Expressive.</p>
+<p align="center"><b>See where your Wi-Fi gets weak, room by room.</b><br>
+A Wi-Fi analyzer for Android 8.0 and newer.</p>
 
 <p align="center">
   <a href="https://play.google.com/store/apps/details?id=com.bernaferrari.wifiweakspot"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="80" alt="Get it on Google Play"></a>
 </p>
 
+<p align="center">
+  <img src="store-listing/en-US/readme/big-screen.jpg" width="100%" alt="Find your weak spots: a coverage map of a home from weak red to strong green on a tablet, and the Rooms screen comparing saved readings">
+</p>
+
+Tap where you stand and the map fills in from red to green. Save a reading in each room to see which one wins, and recheck after moving your router.
+
 ## See what overlaps
 
-Every nearby 2.4, 5 and 6 GHz network, drawn as channel waves so overlap is obvious. Tap a wave for details, get a suggested channel, or switch to history and watch each signal change as you walk around.
-
-## Find where Wi-Fi gets weak
-
 <p align="center">
-  <img src="store-listing/en-US/readme/rooms-map.jpg" width="100%" alt="See where it fades: tap where you stand to build a coverage map, then compare the rooms">
+  <img src="store-listing/en-US/readme/channels.jpg" width="100%" alt="Every nearby network as channel waves on a tablet, with the signal history of a walk through a weak spot on a phone">
 </p>
 
-Save a reading in each room and compare them with a percentage, a color and a plain-language verdict. Then tap where you stand on a grid or your own floor plan to build a coverage map, keep separate floors, and share the result as a picture. Recheck the same spots after moving your router to see what changed.
+Every nearby 2.4, 5 and 6 GHz network as a wave, so crowded channels are obvious. Get a suggested channel, or switch to history and watch each signal as you move.
 
-## Look beyond signal strength
+## Beyond signal strength
 
 <p align="center">
-  <img src="store-listing/en-US/readme/tools.jpg" width="100%" alt="Look beyond the signal: router check in front of the devices on your Wi-Fi and the appearance settings">
+  <img src="store-listing/en-US/readme/tools.jpg" width="100%" alt="Router check answering in 4.1 ms, the devices on your Wi-Fi, and dark-mode appearance settings">
 </p>
 
-- **Check your router.** Response time, variation and missed replies, with past checks kept for comparison.
-- **Meet your network.** See responding devices and the names they announce, then dig in with ping, DNS lookups and port checks.
-- **Make it yours.** Light and dark, wallpaper colors, nine palettes, four styles, and percentages, bars or dBm.
+Check how fast your router answers, see every device on your Wi-Fi, and make it yours with light and dark, wallpaper colors and four styles.
 
 ## Private by design
 
-No accounts, ads or analytics. Readings, maps and history stay on your device, and sharing is always your choice. Back up your maps and readings to a ZIP file from Settings. Read the [privacy policy](PRIVACY.md) for permissions, storage and deletion.
+No accounts, ads or analytics. Readings, maps and history stay on your device. See the [privacy policy](PRIVACY.md).
 
 ## Good to know
 
-Signal strength is not internet speed. The percentage follows the verdicts: Excellent is 90–100%, Good 70–89%, Fair 50–69%, Weak 30–49%, and below 30% is a dead zone, reaching 0% at −90 dBm. Switch to bars or dBm anytime. Coverage between measured points is an estimate, and walls, interference and how you hold the phone all affect readings. Android's scan limits and device support affect what the app can see.
+Signal strength is not internet speed. The percentage follows the verdicts (Excellent 90–100%, Good 70–89%, Fair 50–69%, Weak 30–49%), and coverage between readings is an estimate.
 
 <sub>Screenshots are from the real app on an emulator, with example networks and readings. Building from source or contributing? See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).</sub>

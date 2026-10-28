@@ -254,26 +254,26 @@
     "readme": [
       {
         "file": "readme/big-screen.jpg",
-        "feature": "readme-spread",
+        "feature": "readme-hero",
         "slide": 0,
         "width": 2400,
         "height": 1260,
-        "bytes": 313049,
+        "bytes": 253853,
         "sources": [
-          "raw/light/tablet/10-02-channels.jpg",
-          "raw/light/05-history.jpg"
+          "raw/light/tablet/7-03-coverage.jpg",
+          "raw/light/02-rooms.jpg"
         ]
       },
       {
-        "file": "readme/rooms-map.jpg",
-        "feature": "readme-weak",
+        "file": "readme/channels.jpg",
+        "feature": "readme-channels",
         "slide": 1,
         "width": 2400,
         "height": 1260,
-        "bytes": 215749,
+        "bytes": 315002,
         "sources": [
-          "raw/light/03-coverage.jpg",
-          "raw/light/02-rooms.jpg"
+          "raw/light/tablet/10-02-channels.jpg",
+          "raw/light/05-history.jpg"
         ]
       },
       {
@@ -282,11 +282,11 @@
         "slide": 2,
         "width": 2400,
         "height": 1260,
-        "bytes": 308998,
+        "bytes": 303097,
         "sources": [
+          "raw/light/06-router.jpg",
           "raw/light/07-devices.jpg",
-          "raw/light/08-appearance.jpg",
-          "raw/light/06-router.jpg"
+          "raw/readme-dark-settings.jpg"
         ]
       }
     ]

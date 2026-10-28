@@ -39,20 +39,12 @@
     "title": "Who's on\n*your Wi-Fi?*",
     "body": "Every device, and how it connects."
   },
-  "readme-spread": {
-    "title": "Find your\n*weak spots.*",
-    "body": "Every network around you, and how\nstrong your signal really is."
-  },
   "home": {
     "title": "Find your\n*weak spots.*",
     "body": "See how good your Wi-Fi really is."
   },
-  "readme-weak": {
-    "title": "See where *it fades.*",
-    "body": ""
-  },
-  "readme-tools": {
-    "title": "Look beyond\n*the signal.*",
-    "body": "Check your router, see every\ndevice, make it yours."
+  "readme-hero": {
+    "title": "Find your\n*weak spots.*",
+    "body": "Walk around. The map shows\nwhere your Wi-Fi fades."
   }
 }
