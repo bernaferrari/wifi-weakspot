@@ -41,9 +41,12 @@ export default {
   },
 
   compose({main, index, kind, slide}) {
-    // Each key phrase in the colour of what it describes, from the app's signal scale.
-    const sig = {channels: '#178a4c', history: '#c2410c', coverage: '#d23b2a', rooms: '#178a4c', home: '#d23b2a', router: '#c2410c', network: '#4f46c8', appearance: '#7e3fbf', 'readme-hero': '#d23b2a', 'readme-channels': '#178a4c'}[slide.feature];
-    if (sig) main.style.setProperty('--sig', sig);
+    // The highlighter under each key phrase: one channel wave, repeated, in the colour of what the words describe.
+    const wave = colour => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><path d='M0 58 C25 58 25 40 50 40 S75 58 100 58 L100 92 C75 92 75 74 50 74 S25 92 0 92 Z' fill='${colour}'/></svg>`)}")`;
+    const colours = {coral: '#ff8f7a', green: '#6fd796', amber: '#ffc24f', violet: '#b4a8ff'};
+    for (const [name, colour] of Object.entries(colours)) main.style.setProperty(`--wave-${name}`, wave(colour));
+    const tone = {channels: 'green', history: 'amber', coverage: 'coral', rooms: 'green', home: 'coral', router: 'amber', network: 'violet', appearance: 'violet', 'readme-hero': 'coral', 'readme-channels': 'green'}[slide.feature];
+    if (tone) main.style.setProperty('--wave', `var(--wave-${tone})`);
     if (index === 0 && kind !== 'readme' && kind !== 'desktop') {
       main.classList.add('first');
       const brand = document.createElement('div');
