@@ -184,17 +184,17 @@
         {
           "raw": "light/06-router.jpg",
           "role": "one",
-          "label": "Router speed"
+          "label": "Router *speed*"
         },
         {
           "raw": "light/07-devices.jpg",
           "role": "two",
-          "label": "Who's connected"
+          "label": "Who's *connected*"
         },
         {
           "raw": "readme-dark-settings.jpg",
           "role": "three",
-          "label": "Light or dark"
+          "label": "Light or *dark*"
         }
       ],
       "wash": [
