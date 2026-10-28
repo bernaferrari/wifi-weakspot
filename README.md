@@ -28,7 +28,7 @@ Every nearby 2.4, 5 and 6 GHz network as a wave, so crowded channels are obvious
 - **Make it yours.** Light or dark, wallpaper colors, four styles, and percent, bars or dBm.
 - **Room for tablets.** Graphs and lists sit side by side on tablets and foldables.
 
-## Find where Wi-Fi gets weak
+## Map your home
 
 <p align="center">
   <img src="store-listing/en-US/readme/big-screen.jpg" width="100%" alt="Find your weak spots: a coverage map of a home from weak red to strong green on a tablet, and the Rooms screen comparing saved readings">
