@@ -8,7 +8,7 @@ header{left:84px;right:84px;top:150px;z-index:5}
 h1{font-size:132px;line-height:.98;font-weight:640;letter-spacing:-4px;word-spacing:8px}
 /* For people who only skim: the key words ride a highlighter whose top edge rolls like the app's channel waves,
    in the colour of what they describe on the signal scale (coral for dead zones, green for a quiet channel). */
-h1 em,.device-label em{font-style:normal;font-weight:860;color:var(--ink);padding:0 .06em;margin:0 -.03em;
+h1 em,.device-label em{font-style:normal;color:var(--ink);padding:0 .06em;margin:0 -.03em;
   -webkit-box-decoration-break:clone;box-decoration-break:clone;
   background:var(--wave) repeat-x 0 0/1.15em 100%}
 header p{margin:26px 0 0;font-size:40px;line-height:1.24;font-weight:400;letter-spacing:-.5px;max-width:760px;opacity:.82}
