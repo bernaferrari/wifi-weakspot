@@ -179,7 +179,7 @@
       "feature": "readme-tools",
       "layout": "trio",
       "file": "readme/tools.jpg",
-      "alt": "Router check answering in 4.1 ms, the devices on your Wi-Fi, and dark-mode appearance settings with the color style previews",
+      "alt": "More than a signal meter: Router check answering in 4.1 ms, and the devices connected to your Wi-Fi",
       "devices": [
         {
           "raw": "light/06-router.jpg",
@@ -190,11 +190,6 @@
           "raw": "light/07-devices.jpg",
           "role": "two",
           "label": "Who's *connected*"
-        },
-        {
-          "raw": "readme-dark-settings.jpg",
-          "role": "three",
-          "label": "Light or *dark*"
         }
       ],
       "wash": [

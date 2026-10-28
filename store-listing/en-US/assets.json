@@ -259,11 +259,10 @@
         "slide": 2,
         "width": 2400,
         "height": 1260,
-        "bytes": 292241,
+        "bytes": 215518,
         "sources": [
           "raw/light/06-router.jpg",
-          "raw/light/07-devices.jpg",
-          "raw/readme-dark-settings.jpg"
+          "raw/light/07-devices.jpg"
         ]
       }
     ]

@@ -14,7 +14,7 @@ Every nearby 2.4, 5 and 6 GHz network as a wave, so crowded channels are obvious
 ## Tools
 
 <p align="center">
-  <img src="store-listing/en-US/readme/tools.jpg" width="100%" alt="More than a signal meter: Router check answering in 4.1 ms, the devices connected to your Wi-Fi, and light or dark appearance settings">
+  <img src="store-listing/en-US/readme/tools.jpg" width="100%" alt="More than a signal meter: Router check answering in 4.1 ms, and the devices connected to your Wi-Fi">
 </p>
 
 - **Check your router.** How fast it answers, how steady, and whether replies go missing.
