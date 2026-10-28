@@ -1,6 +1,6 @@
-<p align="center">
-  <img src="store-listing/en-US/readme/channels.jpg" width="100%" alt="WiFi Weakspot: every nearby network as channel waves on a tablet, with the signal history of a walk on a phone">
-</p>
+<h1 align="center">
+  <img src="store-listing/en-US/readme/channels.jpg" width="100%" alt="WiFi Weakspot">
+</h1>
 
 <p align="center"><b>See where your Wi-Fi gets weak, room by room.</b><br>
 A Wi-Fi analyzer for Android 8.0 and newer.</p>

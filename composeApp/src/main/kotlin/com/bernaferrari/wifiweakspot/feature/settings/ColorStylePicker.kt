@@ -4,39 +4,49 @@ package com.bernaferrari.wifiweakspot.feature.settings
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.*
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.graphics.shapes.Morph
-import com.bernaferrari.wifiweakspot.core.designsystem.component.MorphShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bernaferrari.wifiweakspot.core.designsystem.ColorStyle
 import com.bernaferrari.wifiweakspot.core.i18n.strings
 import com.materialkolor.material3.rememberDynamicMaterialThemeState
+import com.materialkolor.hct.Hct
 
 /**
- * The color style as four miniature app screens, each painted by that style from the chosen seed: the
- * signal badge and the channel waves. No labels. Every badge is
- * an outlined circle until chosen, when it fills into the app's scalloped cookie with a check, and the
- * screen lifts inside a ring. Style names stay for screen readers only.
+ * The color style as a connected button group, like Auto, Light and Dark above it, with no words: each segment
+ * is its style's three accents blended into one soft mesh, so it shows the style's mood for the chosen color.
+ * The chosen segment widens into a pill with a frosted check. Names stay for screen readers.
  */
 @Composable
 internal fun ColorStylePicker(
@@ -44,84 +54,80 @@ internal fun ColorStylePicker(
     seedColor: Color,
     dark: Boolean,
     onSelect: (ColorStyle) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val s = strings.settings
+    val title = s.colorStyle
     Row(
-        modifier.selectableGroup().semantics { contentDescription = s.colorStyle },
-        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
+        modifier.height(56.dp).selectableGroup().semantics { contentDescription = title },
+        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
     ) {
-        ColorStyle.entries.forEach { style ->
-            val preview = rememberDynamicMaterialThemeState(seedColor = seedColor, isDark = dark, style = style.palette).colorScheme
-            StylePreview(
+        ColorStyle.entries.forEachIndexed { index, style ->
+            val scheme = rememberDynamicMaterialThemeState(seedColor = seedColor, isDark = dark, style = style.palette).colorScheme
+            val mood = remember(scheme, dark) { mood(listOf(scheme.primary, scheme.secondary, scheme.tertiary), dark) }
+            Segment(
                 label = style.label(s),
-                colors = preview,
+                mood = mood,
                 selected = style == selected,
+                first = index == 0,
+                last = index == ColorStyle.entries.lastIndex,
                 onClick = { onSelect(style) },
-                modifier = Modifier.weight(1f, fill = false).widthIn(max = 96.dp)
             )
         }
     }
 }
 
-private typealias Color = androidx.compose.ui.graphics.Color
+/** The three accents at one bright tone (a deeper one in dark mode), so every style is compared fairly. */
+private fun mood(accents: List<Color>, dark: Boolean): List<Color> =
+    accents.zip(if (dark) listOf(62.0, 68.0, 64.0) else listOf(72.0, 78.0, 74.0)) { color, tone ->
+        Color(Hct.fromInt(color.toArgb()).withTone(tone).toInt())
+    }
 
 @Composable
-private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, onClick: () -> Unit, modifier: Modifier) {
-    val ring = MaterialTheme.colorScheme.primary
-    val spatial = MaterialTheme.motionScheme.fastSpatialSpec<androidx.compose.ui.unit.Dp>()
-    val corner by animateDpAsState(if (selected) 28.dp else 18.dp, spatial, label = "styleCorner")
-    val scale by animateFloatAsState(if (selected) 1f else 0.94f, MaterialTheme.motionScheme.fastSpatialSpec(), label = "styleScale")
+private fun RowScope.Segment(
+    label: String,
+    mood: List<Color>,
+    selected: Boolean,
+    first: Boolean,
+    last: Boolean,
+    onClick: () -> Unit,
+) {
+    val width by animateFloatAsState(if (selected) 1.7f else 1f, MaterialTheme.motionScheme.fastSpatialSpec(), label = "styleWidth")
+    // Outer ends stay round; inner corners open into a pill when chosen.
+    val dpSpec = MaterialTheme.motionScheme.fastSpatialSpec<Dp>()
+    val start by animateDpAsState(if (selected || first) 28.dp else 8.dp, dpSpec, label = "styleStart")
+    val end by animateDpAsState(if (selected || last) 28.dp else 8.dp, dpSpec, label = "styleEnd")
+    val shape = RoundedCornerShape(topStart = start, bottomStart = start, topEnd = end, bottomEnd = end)
     Box(
-        modifier
-            .aspectRatio(1f)
-            .graphicsLayer { scaleX = scale; scaleY = scale }
-            .semantics { contentDescription = label }
-            // Clip first so the press and hover highlight follows the card's rounded shape.
-            .clip(RoundedCornerShape(corner))
+        Modifier
+            .weight(width)
+            .fillMaxHeight()
+            .clip(shape)
             .selectable(selected = selected, role = Role.RadioButton, onClick = { if (!selected) onClick() })
+            .semantics { contentDescription = label }
+            .drawBehind {
+                // A soft mesh: primary to secondary across, tertiary glowing from the lower right, primary from the
+                // upper left, and a little light along the top.
+                val (primary, secondary, tertiary) = mood
+                drawRect(Brush.horizontalGradient(listOf(primary, secondary)))
+                val low = Offset(size.width * .85f, size.height)
+                drawCircle(Brush.radialGradient(listOf(tertiary, tertiary.copy(alpha = 0f)), low, size.width * .7f), size.width * .7f, low)
+                val high = Offset(size.width * .1f, 0f)
+                drawCircle(Brush.radialGradient(listOf(primary, primary.copy(alpha = 0f)), high, size.width * .6f), size.width * .6f, high)
+                drawRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = .35f), Color.Transparent), endY = size.height * .55f))
+            },
+        contentAlignment = Alignment.Center,
     ) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .then(if (selected) Modifier.border(3.dp, ring, RoundedCornerShape(corner)) else Modifier)
-                .padding(if (selected) 5.dp else 0.dp)
-                .clip(RoundedCornerShape((corner.value - 5f).coerceAtLeast(12f).dp))
-                .background(colors.surfaceContainerHigh)
-                .padding(top = 10.dp)
-        ) {
-            // A miniature of the app in this style: the signal badge, and channel waves below it.
-            Column(
-                Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally
+        // The frosted check grows in with the pill.
+        val shown by animateFloatAsState(if (selected) 1f else 0f, MaterialTheme.motionScheme.fastSpatialSpec(), label = "styleCheck")
+        if (shown > .01f) {
+            Box(
+                Modifier.size(28.dp)
+                    .graphicsLayer { alpha = shown.coerceIn(0f, 1f); scaleX = .6f + .4f * shown; scaleY = .6f + .4f * shown }
+                    .clip(CircleShape).background(Color.White.copy(alpha = .78f)),
+                contentAlignment = Alignment.Center,
             ) {
-                // Outlined circle until chosen; the chosen one fills into the app's scalloped cookie with a check.
-                val shape by animateFloatAsState(if (selected) 1f else 0f, MaterialTheme.motionScheme.slowSpatialSpec(), label = "badgeMorph")
-                val morph = remember { Morph(MaterialShapes.Circle, MaterialShapes.Cookie9Sided) }
-                Box(
-                    Modifier.fillMaxWidth(0.46f).aspectRatio(1f)
-                        .border(2.5.dp, colors.primary.copy(alpha = 1f - shape), MorphShape(morph, shape))
-                        .clip(MorphShape(morph, shape)).background(colors.primary.copy(alpha = shape)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (selected) Icon(Icons.Rounded.Check, contentDescription = null, tint = colors.onPrimary, modifier = Modifier.fillMaxSize(0.5f))
-                }
-                Spacer(Modifier.weight(1f))
-                // Overlapping channel waves in the style's three accents, like the Networks chart.
-                Canvas(Modifier.fillMaxWidth().fillMaxHeight(0.42f)) {
-                    listOf(Triple(.3f, .95f, colors.tertiary), Triple(.7f, .75f, colors.secondary), Triple(.5f, 1f, colors.primary)).forEach { (cx, h, c) ->
-                        val half = size.width * .36f
-                        val top = size.height * (1f - h)
-                        val path = androidx.compose.ui.graphics.Path().apply {
-                            moveTo(size.width * cx - half, size.height)
-                            cubicTo(size.width * cx - half * .45f, size.height, size.width * cx - half * .5f, top, size.width * cx, top)
-                            cubicTo(size.width * cx + half * .5f, top, size.width * cx + half * .45f, size.height, size.width * cx + half, size.height)
-                            close()
-                        }
-                        drawPath(path, c.copy(alpha = .35f))
-                        drawPath(path, c, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
-                    }
-                }
+                Icon(Icons.Rounded.Check, contentDescription = null, tint = Color(0xFF1B1B1F), modifier = Modifier.size(18.dp))
             }
         }
     }
