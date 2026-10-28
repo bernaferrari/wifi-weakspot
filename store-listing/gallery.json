@@ -143,8 +143,7 @@
           "raw": "light/02-rooms.jpg",
           "role": "front"
         }
-      ],
-      "hl": "#ffc46b"
+      ]
     },
     {
       "feature": "readme-channels",
@@ -183,8 +182,7 @@
           "raw": "light/05-history.jpg",
           "role": "front"
         }
-      ],
-      "hl": "#8fe0b4"
+      ]
     },
     {
       "feature": "readme-tools",
@@ -212,12 +210,12 @@
         {
           "raw": "light/06-router.jpg",
           "role": "one",
-          "label": "Check *your router.*"
+          "label": "Is your *router* slow?"
         },
         {
           "raw": "light/07-devices.jpg",
           "role": "two",
-          "label": "See *every device.*"
+          "label": "*Who's on* your Wi\u2011Fi?"
         },
         {
           "raw": "readme-dark-settings.jpg",

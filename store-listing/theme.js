@@ -41,7 +41,6 @@ export default {
   },
 
   compose({main, index, kind, slide}) {
-    if (typeof slide.hl === 'string') main.style.setProperty('--hl', slide.hl);
     if (index === 0 && kind !== 'readme' && kind !== 'desktop') {
       main.classList.add('first');
       const brand = document.createElement('div');

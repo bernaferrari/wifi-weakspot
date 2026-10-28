@@ -43,18 +43,8 @@ header p{margin:26px 0 0;font-size:40px;line-height:1.24;font-weight:400;letter-
 .desktop header p{margin-top:16px;font-size:30px}
 .desktop .device{--bezel:0px;--radius:20px;left:220px;top:330px;width:1480px}
 
-/* README art keeps its light/heavy headline with a highlighter band. */
-.readme h1{font-size:128px;line-height:.98;letter-spacing:-.025em;font-weight:330;font-variation-settings:'opsz' 144}
-.readme{--ink:#2b2d6b}
-.readme header p{font-size:40px;line-height:1.25;font-weight:450;letter-spacing:0;max-width:820px;opacity:1}
-.readme h1 em{font-weight:820;letter-spacing:-.03em}
-.readme h1{color:var(--ink)}
-.readme h1 em,.readme .device-label em{font-style:normal;color:inherit;padding:0 .08em;margin:0 -.04em;
-  background:linear-gradient(176deg,transparent 54%,var(--hl,#ffc46b) 55%,var(--hl,#ffc46b) 90%,transparent 91%)}
-.readme .device{box-shadow:inset 0 0 0 2px #00000008,0 50px 100px -40px #5a321e99,0 14px 30px -14px #5a321e44}
-
-/* README art: the coverage-map field, dark ink copy, and the real app large. */
-.readme header p{color:#5b4a40;white-space:pre-line}
+/* README art: the coverage-map field, the real app large, and the same two-tone ink type as the store cards. */
+.readme header p{font-size:40px;line-height:1.25;white-space:pre-line}
 .readme .device{background:#ffffff;box-shadow:inset 0 0 0 2px #00000008,0 50px 100px -40px #5a321e99,0 14px 30px -14px #5a321e44}
 /* Hero: the headline on the left, the full coverage map on a portrait tablet, the room comparison in front. */
 .readme .hero header{left:140px;right:auto;top:0;bottom:0;width:800px;display:flex;flex-direction:column;justify-content:center}
@@ -72,7 +62,5 @@ header p{margin:26px 0 0;font-size:40px;line-height:1.24;font-weight:400;letter-
 .readme .trio .one{left:110px;top:400px}
 .readme .trio .two{left:890px;top:270px}
 .readme .trio .three{left:1670px;top:400px}
-.readme .trio .device-label{transform:translateY(calc(-100% - 28px));text-align:left;font-size:60px;line-height:1.1;font-weight:720;letter-spacing:-.03em;color:var(--ink)}
-.readme .trio .device-label.one{--hl:#ffc46b}
-.readme .trio .device-label.two{--hl:#8fe0b4}
-.readme .trio .device-label.three{--hl:#ff9e8c}
+.readme .trio .device-label{transform:translateY(calc(-100% - 28px));text-align:left;font-size:64px;line-height:1;font-weight:700;letter-spacing:-2px;word-spacing:4px;color:#22307f70}
+.readme .trio .device-label em{font-style:normal;color:var(--ink)}
