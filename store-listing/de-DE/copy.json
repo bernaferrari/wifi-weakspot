@@ -4,11 +4,11 @@
     "body": "Alle Netze in der Nähe, als Wellen."
   },
   "rooms": {
-    "title": "Welcher Raum\n*gewinnt?*",
+    "title": "Vergleiche\n*jeden Raum.*",
     "body": "Miss jeden Raum und vergleiche."
   },
   "coverage": {
-    "title": "Sieh, wo es\n*schwächelt.*",
+    "title": "Kartiere\n*tote Zonen.*",
     "body": "Tippe, wo du stehst. Die Karte füllt sich."
   },
   "history": {
@@ -16,7 +16,7 @@
     "body": "Signalverlauf, live beim Gehen."
   },
   "router": {
-    "title": "Prüfe\n*deinen Router.*",
+    "title": "Ist dein\n*Router lahm?*",
     "body": "Wie schnell und stabil er antwortet."
   },
   "appearance": {
@@ -36,8 +36,8 @@
     "title": "Deine Farben, *dein Stil*"
   },
   "network": {
-    "title": "Sieh\n*jedes Gerät.*",
-    "body": "Wer in deinem WLAN ist."
+    "title": "Wer ist in\n*deinem WLAN?*",
+    "body": "Jedes Gerät, und wie es verbunden ist."
   },
   "home": {
     "title": "Finde deine\n*Funklöcher.*",

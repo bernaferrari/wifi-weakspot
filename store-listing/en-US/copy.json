@@ -4,11 +4,11 @@
     "body": "Every nearby network, drawn as waves."
   },
   "rooms": {
-    "title": "Which room\n*wins?*",
+    "title": "Compare\n*every room.*",
     "body": "Save a reading in each room and compare."
   },
   "coverage": {
-    "title": "See where\n*it fades.*",
+    "title": "Map your\n*dead zones.*",
     "body": "Tap where you stand. The map fills in."
   },
   "history": {
@@ -16,7 +16,7 @@
     "body": "Signal history, live as you move."
   },
   "router": {
-    "title": "Check\n*your router.*",
+    "title": "Is your\n*router slow?*",
     "body": "How fast it answers, and how steady."
   },
   "appearance": {
@@ -36,8 +36,8 @@
     "title": "Your colors, *your style*"
   },
   "network": {
-    "title": "See\n*every device.*",
-    "body": "Who's on your Wi-Fi, and how it connects."
+    "title": "Who's on\n*your Wi‑Fi?*",
+    "body": "Every device, and how it connects."
   },
   "home": {
     "title": "Find your\n*weak spots.*",

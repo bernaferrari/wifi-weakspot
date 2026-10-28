@@ -4,11 +4,11 @@
     "body": "Tous les réseaux voisins, en vagues."
   },
   "rooms": {
-    "title": "Quelle pièce\n*gagne ?*",
+    "title": "Comparez\n*chaque pièce.*",
     "body": "Mesurez chaque pièce et comparez."
   },
   "coverage": {
-    "title": "Voyez où\n*il faiblit.*",
+    "title": "Repérez les\n*zones mortes.*",
     "body": "Touchez où vous êtes. La carte se remplit."
   },
   "history": {
@@ -16,7 +16,7 @@
     "body": "L'historique du signal, en direct."
   },
   "router": {
-    "title": "Testez\n*votre routeur.*",
+    "title": "Votre routeur\n*est lent ?*",
     "body": "Sa vitesse et sa stabilité."
   },
   "appearance": {
@@ -36,8 +36,8 @@
     "title": "Vos couleurs, *votre style*"
   },
   "network": {
-    "title": "Voyez\n*chaque appareil.*",
-    "body": "Qui est sur votre Wi-Fi."
+    "title": "Qui est\n*sur votre Wi‑Fi ?*",
+    "body": "Chaque appareil, et comment il se connecte."
   },
   "home": {
     "title": "Trouvez vos\n*zones faibles.*",
