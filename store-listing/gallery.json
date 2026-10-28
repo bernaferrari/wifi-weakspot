@@ -168,37 +168,38 @@
     },
     {
       "feature": "readme-weak",
-      "layout": "spread duo",
+      "layout": "spread mapset",
       "file": "readme/rooms-map.jpg",
       "alt": "A coverage map of a home from weak to strong, beside saved room readings compared",
       "devices": [
         {
-          "raw": "light/03-coverage.jpg",
-          "role": "first"
+          "raw": "light/tablet/7-03-coverage.jpg",
+          "role": "slate",
+          "frame": "tablet"
         },
         {
           "raw": "light/02-rooms.jpg",
-          "role": "second"
+          "role": "front"
         }
       ]
     },
     {
       "feature": "readme-tools",
-      "layout": "spread trio",
+      "layout": "spread fan",
       "file": "readme/tools.jpg",
-      "alt": "Router check with response time and packet loss, the devices on your Wi-Fi, and appearance settings",
+      "alt": "Router check in front, with the devices on your Wi-Fi and dark-mode appearance settings behind it",
       "devices": [
         {
-          "raw": "light/06-router.jpg",
-          "role": "first"
-        },
-        {
           "raw": "light/07-devices.jpg",
-          "role": "second"
+          "role": "back-left"
         },
         {
-          "raw": "light/08-appearance.jpg",
-          "role": "third"
+          "raw": "08-appearance.jpg",
+          "role": "back-right"
+        },
+        {
+          "raw": "light/06-router.jpg",
+          "role": "front"
         }
       ]
     }
