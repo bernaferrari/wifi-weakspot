@@ -348,5 +348,25 @@
       "raw": "desktop/04-appearance.jpg",
       "theme": "light"
     }
+  ],
+  "readme": [
+    {
+      "feature": "readme-spread",
+      "layout": "spread",
+      "file": "readme/big-screen.jpg",
+      "accent": "#7dd3fc",
+      "alt": "WiFi Weakspot on a landscape tablet with the channel graph beside the nearby networks, and a phone in front showing signal history",
+      "devices": [
+        {
+          "raw": "light/tablet/10-02-channels.jpg",
+          "role": "tablet",
+          "frame": "tablet"
+        },
+        {
+          "raw": "light/05-history.jpg",
+          "role": "phone"
+        }
+      ]
+    }
   ]
 }

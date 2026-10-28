@@ -11,14 +11,9 @@ A Wi-Fi analyzer for Android 8.0 and newer, built with Material 3 Expressive.</p
   <a href="https://play.google.com/store/apps/details?id=com.bernaferrari.wifiweakspot"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="80" alt="Get it on Google Play"></a>
 </p>
 
-<table>
-  <tr>
-    <td width="25%"><img src="docs/screenshots/readme-channels.jpg" alt="See every network around you: the channel graph with a suggested channel"></td>
-    <td width="25%"><img src="docs/screenshots/readme-overtime.jpg" alt="Watch your signal drop and recover: signal history while walking through a weak spot"></td>
-    <td width="25%"><img src="docs/screenshots/readme-floorplan.jpg" alt="Map your home's weak spots: a heat map built from saved readings"></td>
-    <td width="25%"><img src="docs/screenshots/readme-rooms.jpg" alt="Find the room with the best signal: saved room readings compared"></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="store-listing/en-US/readme/strip-1.jpg" width="100%" alt="See every network around you; watch your signal drop and recover; map your home's weak spots; find the room with the best signal">
+</p>
 
 ## See what overlaps
 
@@ -30,13 +25,9 @@ Save a reading in each room and compare them with a percentage, a color and a pl
 
 ## Look beyond signal strength
 
-<table>
-  <tr>
-    <td width="33%"><img src="docs/screenshots/readme-router.jpg" alt="Is it the router? Response time, variation and packet loss"></td>
-    <td width="33%"><img src="docs/screenshots/readme-network.jpg" alt="Every device at a glance: nearby networks and devices on your Wi-Fi"></td>
-    <td width="33%"><img src="docs/screenshots/readme-appearance.jpg" alt="Your colors, your style: light and dark themes with Material You palettes"></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="store-listing/en-US/readme/strip-2.jpg" width="100%" alt="Is it the router? Find out fast; every device at a glance; your colors, your style">
+</p>
 
 - **Check your router.** Response time, variation and missed replies, with past checks kept for comparison.
 - **Meet your network.** See responding devices and the names they announce, then dig in with ping, DNS lookups and port checks.
@@ -47,7 +38,7 @@ Save a reading in each room and compare them with a percentage, a color and a pl
 On tablets the graph and the network list sit side by side.
 
 <p align="center">
-  <img src="docs/screenshots/readme-wide.jpg" alt="Tablet layout with the channel graph beside the nearby network list" width="100%">
+  <img src="store-listing/en-US/readme/big-screen.jpg" width="100%" alt="WiFi Weakspot on a landscape tablet with the channel graph beside the nearby networks, and a phone in front showing signal history">
 </p>
 
 ## Private by design

@@ -36,9 +36,11 @@ incomplete = []
 for locale in locales:
     root = here / locale
     copy = read(root / 'copy.json')
-    assert set(copy) == set(reference_copy), f'{locale}: copy keys differ from the reference'
+    # README art is rendered once, in the reference locale, so its words are not translated.
+    store_keys = lambda c: {k for k in c if not k.startswith('readme-')}
+    assert store_keys(copy) == store_keys(reference_copy), f'{locale}: copy keys differ from the reference'
     empty = 0
-    for key, fields in reference_copy.items():
+    for key, fields in ((k, v) for k, v in reference_copy.items() if not k.startswith('readme-')):
         assert set(copy[key]) == set(fields), f'{locale}/{key}: copy fields differ from the reference'
         assert all(isinstance(value, str) for value in copy[key].values()), f'{locale}/{key}: copy must be text'
         empty += sum(not value.strip() for value in copy[key].values())

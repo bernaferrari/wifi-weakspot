@@ -1,0 +1,28 @@
+Finde die Räume, in denen dein WLAN schwach wird. WiFi Weakspot ist ein WLAN-Analyzer, mit dem du die Signalstärke prüfst, Netzwerke vergleichst und die Abdeckung in deinem Zuhause kartierst.
+
+Speichere Messungen dort, wo deine Verbindung unzuverlässig wirkt, und vergleiche sie, nachdem du deinen Router oder Access Point versetzt hast.
+
+Finde deine Schwachstellen
+Prüfe das Signal dort, wo du WLAN wirklich nutzt. Sieh einen Prozentwert und eine verständliche Einschätzung oder wechsle zu Signalbalken oder dBm. Speichere Messungen nach Raum und miss dieselben Stellen nach einer Änderung erneut.
+
+Kartiere deine Abdeckung
+Platziere Messungen auf einem Raster oder auf deinem eigenen Grundrissbild. Erstelle eine geschätzte Abdeckungskarte, verwalte Stockwerke getrennt und teile ein Bild der Ergebnisse. Erkenne den Unterschied zwischen einem Raum mit starkem Signal und einer schwachen Ecke auf einen Blick.
+
+Netzwerke in der Nähe verstehen
+Erkunde mit der Kanalanalyse Netzwerke im 2,4-, 5- und 6-GHz-Band, die dein Gerät unterstützt. Kanalwellen zeigen, wo sich Signale überschneiden. Sieh dir den Signalverlauf an, um Netzwerke zum selben Zeitpunkt zu vergleichen – die Messungen pausieren, während du erkundest.
+
+Prüfe die Verbindung zu deinem Router
+Miss Reaktionszeit, Schwankung und ausbleibende Antworten. Vergleiche einen problematischen Raum mit einer Stelle in Routernähe und behalte frühere Prüfungen zum Nachschlagen.
+
+Blick in dein Netzwerk
+Entdecke antwortende Geräte und die Namen, die sie melden. Nutze Ping, DNS-Abfragen und Port-Prüfungen, wenn du genauer nachforschen möchtest.
+
+Mach sie zu deiner App
+Design im Stil von Material 3 Expressive (M3 Expressive) mit hellem und dunklem Theme, Farbpaletten sowie Einstellungen für reduzierte Bewegung und haptisches Feedback. Kein Konto nötig. Gespeicherte Messungen, Karten und der Prüfverlauf bleiben auf deinem Gerät; ob du etwas teilst, entscheidest du.
+
+Gut zu wissen
+Signalstärke ist nicht gleich Internetgeschwindigkeit. Die Abdeckung zwischen gemessenen Punkten ist eine Schätzung. Kanalüberschneidungen sind eine Orientierungshilfe, keine Messung des Netzwerkverkehrs und kein Versprechen besserer Leistung. Der Test der Internetgeschwindigkeit öffnet fast.com separat.
+
+Android-Berechtigungen und Scan-Limits beeinflussen, was die App sehen kann und wie oft Messungen aktualisiert werden. Manche Geräte und Router antworten nicht auf Erkennungs- oder Ping-Anfragen. Netzwerk-Tools können die getesteten Geräte oder Hosts kontaktieren.
+
+Die Store-Screenshots zeigen Beispielnetzwerke und -messungen.

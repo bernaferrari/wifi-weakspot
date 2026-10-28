@@ -69,3 +69,11 @@ header p{margin:24px auto 0;font-size:38px;line-height:1.3;font-weight:450;color
 .desktop header p{margin-top:16px;font-size:30px}
 .desktop .device{left:220px;top:330px;width:1480px}
 .callout.mapcard{box-shadow:0 0 0 12px #ffffff14,0 60px 120px -20px #000000e6,0 0 180px -40px var(--accent)}
+
+/* README tablet spread: the headline on the left of the night sky, the tablet running off the right edge, and a
+   phone with signal history standing in front of it. */
+.readme .spread header{text-align:left;left:140px;right:auto;top:0;bottom:0;width:760px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.readme .spread h1{font-size:112px}
+.readme .spread header p{margin:26px 0 0;font-size:40px}
+.readme .spread .tablet{--bezel:18px;--radius:48px;left:1020px;top:160px;width:1600px}
+.readme .spread .phone{--bezel:12px;--radius:60px;left:900px;top:520px;width:420px;z-index:4}

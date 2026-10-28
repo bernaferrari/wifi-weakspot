@@ -1,0 +1,28 @@
+Encuentra las habitaciones donde tu Wi-Fi se debilita. WiFi Weakspot es un analizador de Wi-Fi para comprobar la intensidad de la señal, comparar redes y mapear la cobertura de tu casa.
+
+Guarda mediciones donde tu conexión parezca poco fiable y compáralas después de mover el router o el punto de acceso.
+
+Encuentra tus puntos débiles
+Comprueba la señal donde realmente usas el Wi-Fi. Consulta un porcentaje y una valoración en lenguaje sencillo, o cambia a barras de señal o dBm. Guarda mediciones por habitación y vuelve a medir los mismos puntos después de hacer un cambio.
+
+Mapea tu cobertura
+Coloca mediciones en una cuadrícula o en la imagen de tu propio plano. Crea un mapa de cobertura estimada, mantén las plantas por separado y comparte una imagen de los resultados. Distingue de un vistazo una habitación con buena señal de un rincón con señal débil.
+
+Entiende las redes cercanas
+Usa el analizador de canales para explorar las redes de 2,4, 5 y 6 GHz compatibles con tu dispositivo. Las ondas de canal muestran dónde se superponen las señales. Examina el historial de señal para comparar redes en el mismo momento, con las mediciones en pausa mientras exploras.
+
+Comprueba la conexión con tu router
+Mide el tiempo de respuesta, la variación y las respuestas perdidas. Compara una habitación problemática con un punto cerca del router y conserva las comprobaciones anteriores como referencia.
+
+Mira dentro de tu red
+Descubre los dispositivos que responden y los nombres que anuncian. Usa ping, búsquedas DNS y comprobaciones de puertos cuando necesites investigar más a fondo.
+
+Hazla tuya
+Diseño Material 3 Expressive (M3 Expressive) con temas claro y oscuro, paletas de colores y preferencias de movimiento reducido y respuesta háptica. No necesitas cuenta. Las mediciones guardadas, los mapas y el historial de comprobaciones se almacenan en tu dispositivo; compartir es decisión tuya.
+
+Algunas cosas que debes saber
+La intensidad de la señal no es la velocidad de Internet. La cobertura entre puntos medidos es una estimación. La superposición de canales es una orientación, no una medición del tráfico de red ni una promesa de mejor rendimiento. La prueba de velocidad de Internet abre fast.com por separado.
+
+Los permisos de Android y los límites de escaneo afectan a lo que la app puede ver y a la frecuencia con la que se actualizan las mediciones. Algunos dispositivos y routers no responden a solicitudes de detección o de ping. Las herramientas de red pueden contactar con los dispositivos o hosts que se están probando.
+
+Las capturas de la tienda muestran redes y mediciones de ejemplo.

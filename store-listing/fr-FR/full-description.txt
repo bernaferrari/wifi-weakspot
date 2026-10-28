@@ -1,0 +1,28 @@
+Trouvez les pièces où votre Wi-Fi faiblit. WiFi Weakspot est un analyseur Wi-Fi qui permet de vérifier la puissance du signal, de comparer les réseaux et de cartographier la couverture de votre logement.
+
+Enregistrez des mesures là où votre connexion semble peu fiable, puis comparez-les après avoir déplacé votre routeur ou votre point d’accès.
+
+Trouvez vos points faibles
+Vérifiez le signal là où vous utilisez réellement le Wi-Fi. Affichez un pourcentage et un verdict en langage clair, ou passez aux barres de signal ou aux dBm. Enregistrez des mesures par pièce et revérifiez les mêmes endroits après un changement.
+
+Cartographiez votre couverture
+Placez vos mesures sur une grille ou sur l’image de votre propre plan. Créez une carte de couverture estimée, gérez chaque étage séparément et partagez une image des résultats. Voyez d’un coup d’œil la différence entre une pièce bien couverte et un coin où le signal est faible.
+
+Comprenez les réseaux à proximité
+Utilisez l’analyseur de canaux pour explorer les réseaux 2,4, 5 et 6 GHz pris en charge par votre appareil. Les ondes de canal montrent où les signaux se chevauchent. Consultez l’historique du signal pour comparer les réseaux au même instant, avec les mesures en pause pendant votre exploration.
+
+Testez la connexion à votre routeur
+Mesurez le temps de réponse, la variation et les réponses manquées. Comparez une pièce problématique avec un endroit proche du routeur, et conservez les tests précédents pour référence.
+
+Regardez à l’intérieur de votre réseau
+Découvrez les appareils qui répondent et les noms qu’ils annoncent. Utilisez le ping, les recherches DNS et la vérification des ports lorsque vous avez besoin d’aller plus loin.
+
+Personnalisez-la
+Design Material 3 Expressive (M3 Expressive) avec thèmes clair et sombre, palettes de couleurs et préférences de réduction des animations et de retour haptique. Aucun compte n’est nécessaire. Les mesures enregistrées, les cartes et l’historique des tests sont stockés sur votre appareil ; le partage, c’est vous qui décidez.
+
+Bon à savoir
+La puissance du signal n’est pas le débit Internet. La couverture entre les points mesurés est une estimation. Le chevauchement des canaux est une indication, pas une mesure du trafic réseau ni une promesse de meilleures performances. Le test de vitesse Internet ouvre fast.com séparément.
+
+Les autorisations Android et les limites de scan influent sur ce que l’app peut voir et sur la fréquence d’actualisation des mesures. Certains appareils et routeurs ne répondent pas aux requêtes de découverte ou de ping. Les outils réseau peuvent contacter les appareils ou hôtes testés.
+
+Les captures d’écran de la fiche montrent des réseaux et des mesures d’exemple.

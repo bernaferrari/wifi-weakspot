@@ -45,5 +45,10 @@
     "badge": "Your network",
     "title": "Every device,\n*at a glance*",
     "body": "Who's online, and how strong."
+  },
+  "readme-spread": {
+    "badge": "Tablets & foldables",
+    "title": "Room for\n*every network*",
+    "body": "Graph and list, side by side."
   }
 }

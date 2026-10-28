@@ -1,0 +1,28 @@
+Trova le stanze in cui il Wi-Fi diventa debole. WiFi Weakspot è un analizzatore Wi-Fi per controllare l’intensità del segnale, confrontare le reti e mappare la copertura di casa tua.
+
+Salva le misurazioni dove la connessione sembra inaffidabile, poi confrontale dopo aver spostato il router o l’access point.
+
+Trova i punti deboli
+Controlla il segnale dove usi davvero il Wi-Fi. Visualizza una percentuale e un giudizio in parole semplici, oppure passa alle barre del segnale o ai dBm. Salva le misurazioni per stanza e ricontrolla gli stessi punti dopo una modifica.
+
+Mappa la copertura
+Posiziona le misurazioni su una griglia o sull’immagine della tua planimetria. Crea una mappa di copertura stimata, gestisci piani separati e condividi un’immagine dei risultati. Nota a colpo d’occhio la differenza tra una stanza con segnale forte e un angolo debole.
+
+Capisci le reti vicine
+Usa l’analizzatore di canali per esplorare le reti a 2,4, 5 e 6 GHz supportate dal tuo dispositivo. Le onde dei canali mostrano dove i segnali si sovrappongono. Esamina la cronologia del segnale per confrontare le reti nello stesso momento, con le misurazioni in pausa mentre esplori.
+
+Verifica la connessione al router
+Misura tempo di risposta, variazione e risposte mancate. Confronta una stanza problematica con un punto vicino al router e conserva le verifiche precedenti come riferimento.
+
+Guarda dentro la tua rete
+Scopri i dispositivi che rispondono e i nomi che annunciano. Usa ping, ricerche DNS e controlli delle porte quando devi approfondire.
+
+Rendila tua
+Design Material 3 Expressive (M3 Expressive) con temi chiaro e scuro, palette di colori e preferenze per animazioni ridotte e feedback aptico. Non serve un account. Misurazioni salvate, mappe e cronologia delle verifiche restano sul tuo dispositivo; la condivisione è una tua scelta.
+
+Buono a sapersi
+L’intensità del segnale non è la velocità di Internet. La copertura tra i punti misurati è una stima. La sovrapposizione dei canali è un’indicazione, non una misurazione del traffico di rete né una promessa di prestazioni migliori. Il test della velocità di Internet apre fast.com separatamente.
+
+Le autorizzazioni di Android e i limiti di scansione influiscono su ciò che l’app può vedere e sulla frequenza di aggiornamento delle misurazioni. Alcuni dispositivi e router non rispondono alle richieste di rilevamento o di ping. Gli strumenti di rete possono contattare i dispositivi o gli host testati.
+
+Gli screenshot dello store mostrano reti e misurazioni di esempio.
