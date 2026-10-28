@@ -33,7 +33,7 @@ import com.materialkolor.material3.rememberDynamicMaterialThemeState
 
 /**
  * The color style as four miniature app screens, each painted by that style from the chosen seed: the
- * signal card with its badge and text, and an accent chip. No labels. Every badge is
+ * signal card with its badge and text, and a primary button. No labels. Every badge is
  * an outlined circle until chosen, when it fills into the app's scalloped cookie with a check, and the
  * screen lifts inside a ring. Style names stay for screen readers only.
  */
@@ -109,7 +109,7 @@ private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, 
                 Box(Modifier.fillMaxWidth(0.85f).height(6.dp).clip(CircleShape).background(colors.onSurface.copy(alpha = .8f)))
                 Box(Modifier.fillMaxWidth(0.55f).height(6.dp).clip(CircleShape).background(colors.onSurfaceVariant.copy(alpha = .55f)))
                 Spacer(Modifier.weight(1f))
-                Box(Modifier.fillMaxWidth().height(12.dp).clip(CircleShape).background(colors.tertiaryContainer))
+                Box(Modifier.fillMaxWidth().height(12.dp).clip(CircleShape).background(colors.primary))
             }
         }
     }
