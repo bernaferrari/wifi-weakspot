@@ -58,7 +58,7 @@ fun SignalQuality.polygon(): RoundedPolygon = when (this) {
     SignalQuality.DeadZone -> MaterialShapes.Ghostish
 }
 
-private class MorphShape(private val morph: Morph, private val progress: Float) : Shape {
+internal class MorphShape(private val morph: Morph, private val progress: Float) : Shape {
     private val path = Path()
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
         path.rewind()

@@ -16,6 +16,9 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.graphics.shapes.Morph
+import com.bernaferrari.wifiweakspot.core.designsystem.component.MorphShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,8 +33,9 @@ import com.materialkolor.material3.rememberDynamicMaterialThemeState
 
 /**
  * The color style as four miniature Home cards, each painted by that style from the chosen seed: the
- * scalloped signal badge, a tonal chip and an accent chip, on the style's own surface. No names; the
- * chosen card lifts, rounds out and wears a ring with a check badge. Names stay for screen readers.
+ * badge, a tonal chip and an accent chip, on the style's own surface. No names: every badge is a plain
+ * circle until chosen, when it morphs into the app's scalloped cookie with a check inside, and the card
+ * lifts inside a ring. Names stay for screen readers.
  */
 @Composable
 internal fun ColorStylePicker(
@@ -85,19 +89,17 @@ private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, 
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterVertically)
         ) {
-            // The app's own scalloped badge, in this style's primary.
-            Box(Modifier.fillMaxWidth(0.62f).aspectRatio(1f).clip(MaterialShapes.Cookie9Sided.toShape()).background(colors.primary))
-            Box(Modifier.fillMaxWidth().height(10.dp).clip(CircleShape).background(colors.secondaryContainer))
-            Box(Modifier.fillMaxWidth(0.6f).height(10.dp).align(Alignment.Start).clip(CircleShape).background(colors.tertiaryContainer))
-        }
-        if (selected) {
+            // Circle when idle, the app's scalloped cookie with a check when chosen.
+            val shape by animateFloatAsState(if (selected) 1f else 0f, MaterialTheme.motionScheme.slowSpatialSpec(), label = "badgeMorph")
+            val morph = remember { Morph(MaterialShapes.Circle, MaterialShapes.Cookie9Sided) }
             Box(
-                Modifier.align(Alignment.TopEnd).offset(x = 4.dp, y = (-4).dp).size(24.dp)
-                    .clip(MaterialShapes.Cookie6Sided.toShape()).background(ring),
+                Modifier.fillMaxWidth(0.62f).aspectRatio(1f).clip(MorphShape(morph, shape)).background(colors.primary),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(15.dp))
+                if (selected) Icon(Icons.Rounded.Check, contentDescription = null, tint = colors.onPrimary, modifier = Modifier.fillMaxSize(0.5f))
             }
+            Box(Modifier.fillMaxWidth().height(10.dp).clip(CircleShape).background(colors.secondaryContainer))
+            Box(Modifier.fillMaxWidth(0.6f).height(10.dp).align(Alignment.Start).clip(CircleShape).background(colors.tertiaryContainer))
         }
     }
 }
