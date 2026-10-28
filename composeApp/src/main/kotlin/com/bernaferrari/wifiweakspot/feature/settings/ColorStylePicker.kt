@@ -32,10 +32,10 @@ import com.bernaferrari.wifiweakspot.core.i18n.strings
 import com.materialkolor.material3.rememberDynamicMaterialThemeState
 
 /**
- * The color style as four miniature Home cards, each painted by that style from the chosen seed: the
- * badge, a tonal chip and an accent chip, on the style's own surface. No names: every badge is a plain
- * circle until chosen, when it morphs into the app's scalloped cookie with a check inside, and the card
- * lifts inside a ring. Names stay for screen readers.
+ * The color style as four miniature app screens, each painted by that style from the chosen seed: the
+ * signal card with its badge and text, an accent chip, and the navigation bar. No labels. Every badge is
+ * an outlined circle until chosen, when it fills into the app's scalloped cookie with a check, and the
+ * screen lifts inside a ring. Style names stay for screen readers only.
  */
 @Composable
 internal fun ColorStylePicker(
@@ -73,9 +73,11 @@ private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, 
     val scale by animateFloatAsState(if (selected) 1f else 0.94f, MaterialTheme.motionScheme.fastSpatialSpec(), label = "styleScale")
     Box(
         modifier
-            .aspectRatio(0.82f)
+            .aspectRatio(0.62f)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .semantics { contentDescription = label }
+            // Clip first so the press and hover highlight follows the card's rounded shape.
+            .clip(RoundedCornerShape(corner))
             .selectable(selected = selected, role = Role.RadioButton, onClick = { if (!selected) onClick() })
     ) {
         Column(
@@ -84,22 +86,39 @@ private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, 
                 .then(if (selected) Modifier.border(3.dp, ring, RoundedCornerShape(corner)) else Modifier)
                 .padding(if (selected) 5.dp else 0.dp)
                 .clip(RoundedCornerShape((corner.value - 5f).coerceAtLeast(12f).dp))
-                .background(colors.surfaceContainerHigh)
-                .padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterVertically)
+                .background(colors.surface)
+                .padding(horizontal = 7.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // Circle when idle, the app's scalloped cookie with a check when chosen.
-            val shape by animateFloatAsState(if (selected) 1f else 0f, MaterialTheme.motionScheme.slowSpatialSpec(), label = "badgeMorph")
-            val morph = remember { Morph(MaterialShapes.Circle, MaterialShapes.Cookie9Sided) }
-            Box(
-                Modifier.fillMaxWidth(0.62f).aspectRatio(1f).clip(MorphShape(morph, shape)).background(colors.primary),
-                contentAlignment = Alignment.Center
+            // A miniature of the app in this style: the signal card, then the navigation bar.
+            Column(
+                Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(10.dp)).background(colors.surfaceContainerHigh).padding(7.dp),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                if (selected) Icon(Icons.Rounded.Check, contentDescription = null, tint = colors.onPrimary, modifier = Modifier.fillMaxSize(0.5f))
+                // Outlined circle until chosen; the chosen one fills into the app's scalloped cookie with a check.
+                val shape by animateFloatAsState(if (selected) 1f else 0f, MaterialTheme.motionScheme.slowSpatialSpec(), label = "badgeMorph")
+                val morph = remember { Morph(MaterialShapes.Circle, MaterialShapes.Cookie9Sided) }
+                Box(
+                    Modifier.fillMaxWidth(0.55f).aspectRatio(1f)
+                        .border(2.5.dp, colors.primary.copy(alpha = 1f - shape), MorphShape(morph, shape))
+                        .clip(MorphShape(morph, shape)).background(colors.primary.copy(alpha = shape)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (selected) Icon(Icons.Rounded.Check, contentDescription = null, tint = colors.onPrimary, modifier = Modifier.fillMaxSize(0.5f))
+                }
+                Box(Modifier.fillMaxWidth(0.85f).height(6.dp).clip(CircleShape).background(colors.onSurface.copy(alpha = .8f)))
+                Box(Modifier.fillMaxWidth(0.55f).height(6.dp).clip(CircleShape).background(colors.onSurfaceVariant.copy(alpha = .55f)))
+                Spacer(Modifier.weight(1f))
+                Box(Modifier.fillMaxWidth().height(12.dp).clip(CircleShape).background(colors.tertiaryContainer))
             }
-            Box(Modifier.fillMaxWidth().height(10.dp).clip(CircleShape).background(colors.secondaryContainer))
-            Box(Modifier.fillMaxWidth(0.6f).height(10.dp).align(Alignment.Start).clip(CircleShape).background(colors.tertiaryContainer))
+            Row(
+                Modifier.fillMaxWidth().height(16.dp).clip(CircleShape).background(colors.surfaceContainer).padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(Modifier.size(width = 14.dp, height = 8.dp).clip(CircleShape).background(colors.secondaryContainer))
+                Box(Modifier.size(5.dp).clip(CircleShape).background(colors.onSurfaceVariant.copy(alpha = .6f)))
+                Box(Modifier.size(5.dp).clip(CircleShape).background(colors.onSurfaceVariant.copy(alpha = .6f)))
+            }
         }
     }
 }

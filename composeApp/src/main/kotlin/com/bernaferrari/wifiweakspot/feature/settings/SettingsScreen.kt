@@ -173,7 +173,7 @@ fun SettingsScreen(
                             haptics.light()
                             scope.launch { settingsRepository.setColorStyle(style) }
                         },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)
+                        modifier = Modifier.fillMaxWidth().padding(16.dp)
                     )
                     SettingsBlock(
                         icon = Icons.Default.SignalCellularAlt,
