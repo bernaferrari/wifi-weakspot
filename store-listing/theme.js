@@ -47,13 +47,14 @@ export default {
     for (const [name, colour] of Object.entries(colours)) main.style.setProperty(`--wave-${name}`, wave(colour));
     const tone = {channels: 'green', history: 'amber', coverage: 'coral', rooms: 'green', home: 'coral', router: 'amber', network: 'violet', appearance: 'violet', 'readme-hero': 'coral', 'readme-channels': 'green'}[slide.feature];
     if (tone) main.style.setProperty('--wave', `var(--wave-${tone})`);
-    if (index === 0 && kind !== 'readme' && kind !== 'desktop') {
-      main.classList.add('first');
-      const brand = document.createElement('div');
-      brand.className = 'brand';
-      brand.dataset.checkBounds = '';
-      brand.innerHTML = '<img src="../../docs/app-icon.png" alt="">WiFi Weakspot';
-      main.append(brand);
+    // The README's first image is the app's name card: icon and name, large, over the real app; nothing else.
+    if (slide.identity) {
+      main.querySelector('header')?.remove();
+      const id = document.createElement('div');
+      id.className = 'identity';
+      id.dataset.checkBounds = '';
+      id.innerHTML = '<img src="../../docs/app-icon.png" alt="">WiFi Weakspot';
+      main.append(id);
     }
   },
 

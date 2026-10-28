@@ -1,18 +1,12 @@
 <p align="center">
-  <img src="docs/app-icon.png" width="96" alt="WiFi Weakspot icon">
+  <img src="store-listing/en-US/readme/channels.jpg" width="100%" alt="WiFi Weakspot: every nearby network as channel waves on a tablet, with the signal history of a walk on a phone">
 </p>
-
-<h1 align="center">WiFi Weakspot</h1>
 
 <p align="center"><b>See where your Wi-Fi gets weak, room by room.</b><br>
 A Wi-Fi analyzer for Android 8.0 and newer.</p>
 
 <p align="center">
   <a href="https://play.google.com/store/apps/details?id=com.bernaferrari.wifiweakspot"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="80" alt="Get it on Google Play"></a>
-</p>
-
-<p align="center">
-  <img src="store-listing/en-US/readme/channels.jpg" width="100%" alt="Pick a quiet channel: every nearby network as channel waves on a tablet, with the signal history of a walk through a weak spot on a phone">
 </p>
 
 Every nearby 2.4, 5 and 6 GHz network as a wave, so crowded channels are obvious. Get a suggested channel, or switch to history and watch each signal as you move.

@@ -171,7 +171,7 @@
           "#ff8a78"
         ]
       ],
-      "alt": "Every nearby network as channel waves on a tablet, with the signal history of a walk through a weak spot on a phone",
+      "alt": "WiFi Weakspot: every nearby network as channel waves on a tablet, with the signal history of a walk on a phone",
       "devices": [
         {
           "raw": "light/tablet/10-02-channels.jpg",
@@ -182,7 +182,8 @@
           "raw": "light/05-history.jpg",
           "role": "front"
         }
-      ]
+      ],
+      "identity": true
     },
     {
       "feature": "readme-tools",

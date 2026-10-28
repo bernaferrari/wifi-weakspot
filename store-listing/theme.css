@@ -4,11 +4,7 @@
 :root{--ink:#22307f}
 body{font-family:Google Sans Flex,var(--script-font),sans-serif;color:var(--ink)}
 
-.brand{position:absolute;z-index:6;left:84px;top:72px;display:flex;align-items:center;gap:16px;font-size:36px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
-.brand img{width:52px;height:52px;border-radius:14px;display:block}
-
 header{left:84px;right:84px;top:150px;z-index:5}
-.first header{top:170px}
 h1{font-size:132px;line-height:.98;font-weight:700;letter-spacing:-4px;word-spacing:8px}
 /* For people who only skim: the key words ride a highlighter whose top edge rolls like the app's channel waves,
    in the colour of what they describe on the signal scale (coral for dead zones, green for a quiet channel). */
@@ -22,21 +18,17 @@ header p{margin:26px 0 0;font-size:40px;line-height:1.24;font-weight:400;letter-
 /* Phone: every card shows the app at one size, spanning the text column and running off the bottom. The rhythm
    comes from the screens themselves. */
 .phone .device{left:84px;top:540px;width:912px;--radius:84px;--bezel:16px}
-.phone .first .device{top:580px}
 
 /* 7-inch portrait. */
 .tablet7 header{left:96px;right:96px}
 .tablet7 h1{font-size:136px}
-.tablet7 .brand{left:96px}
 .tablet7 .device{--bezel:18px;--radius:52px}
 .tablet7 .one .primary{left:220px;top:600px;width:760px}
-.tablet7 .first .primary{top:630px}
 
 /* 10-inch landscape: copy on the left, the app large on the right, running off the edge. */
 .tablet10 header{left:100px;right:auto;top:0;bottom:0;width:560px;display:flex;flex-direction:column;justify-content:center}
 .tablet10 h1{font-size:108px;letter-spacing:-5px}
 .tablet10 header p{margin-top:24px;font-size:36px}
-.tablet10 .brand{left:100px;top:80px}
 .tablet10 .device{--bezel:16px;--radius:44px}
 .tablet10 .one .primary{left:700px;top:240px;width:1140px}
 
@@ -59,6 +51,10 @@ header p{margin:26px 0 0;font-size:40px;line-height:1.24;font-weight:400;letter-
 .readme .wide header p{margin:18px auto 0;font-size:38px}
 .readme .wide .slate{--bezel:16px;--radius:44px;left:200px;top:380px;width:1560px}
 .readme .wide .front{--bezel:12px;--radius:58px;left:1640px;top:470px;width:500px;z-index:4}
+/* Identity: the app icon and name, large and centred above the app. */
+.readme .identity{position:absolute;z-index:5;left:0;right:0;top:92px;display:flex;align-items:center;justify-content:center;gap:40px;
+  font-size:150px;font-weight:700;letter-spacing:-5px;color:var(--ink)}
+.readme .identity img{width:180px;height:180px;border-radius:48px;display:block;box-shadow:0 24px 50px -20px #22307f66}
 /* Trio: three phones in a staggered rhythm, the middle one raised, each under its own short headline. */
 .readme .trio .device{--bezel:12px;--radius:60px;width:620px}
 .readme .trio .one{left:110px;top:400px}
