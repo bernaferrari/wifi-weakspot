@@ -11,22 +11,22 @@ A Wi-Fi analyzer for Android 8.0 and newer, built with Material 3 Expressive.</p
   <a href="https://play.google.com/store/apps/details?id=com.bernaferrari.wifiweakspot"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="80" alt="Get it on Google Play"></a>
 </p>
 
-<p align="center">
-  <img src="store-listing/en-US/readme/strip-1.jpg" width="100%" alt="Find your weak spots; see where it fades; pick a quiet channel; walk and watch it change">
-</p>
-
 ## See what overlaps
 
 Every nearby 2.4, 5 and 6 GHz network, drawn as channel waves so overlap is obvious. Tap a wave for details, get a suggested channel, or switch to history and watch each signal change as you walk around.
 
 ## Find where Wi-Fi gets weak
 
+<p align="center">
+  <img src="store-listing/en-US/readme/strip-1.jpg" width="67%" alt="See where it fades: the coverage map; which room wins: saved room readings compared">
+</p>
+
 Save a reading in each room and compare them with a percentage, a color and a plain-language verdict. Then tap where you stand on a grid or your own floor plan to build a coverage map, keep separate floors, and share the result as a picture. Recheck the same spots after moving your router to see what changed.
 
 ## Look beyond signal strength
 
 <p align="center">
-  <img src="store-listing/en-US/readme/strip-2.jpg" width="100%" alt="Which room wins; is it the router; who's on your Wi-Fi; your colors, your style">
+  <img src="store-listing/en-US/readme/strip-2.jpg" width="100%" alt="Is it the router; who's on your Wi-Fi; your colors, your style">
 </p>
 
 - **Check your router.** Response time, variation and missed replies, with past checks kept for comparison.
