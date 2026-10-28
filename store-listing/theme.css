@@ -63,5 +63,8 @@ header p{margin:26px 0 0;font-size:40px;line-height:1.24;font-weight:400;letter-
 .readme .trio .two{left:900px}
 .readme .trio .three{left:1650px}
 .readme .trio .device-label{transform:translateY(calc(-100% - 26px));text-align:center;font-size:52px;line-height:1;font-weight:480;letter-spacing:-1px;color:var(--ink)}
-/* Captions stress one word by weight alone; the headline keeps the only wave. */
-.readme .trio .device-label em{background:none;padding:0;margin:0;font-weight:800}
+/* Captions stress one word with the same wave, each in a colour that shows on the field behind it. */
+.readme .trio .device-label em{font-weight:800}
+.readme .trio .device-label.one{--wave:var(--wave-green)}
+.readme .trio .device-label.two{--wave:var(--wave-coral)}
+.readme .trio .device-label.three{--wave:var(--wave-violet)}
