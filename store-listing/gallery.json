@@ -184,17 +184,17 @@
         {
           "raw": "light/06-router.jpg",
           "role": "one",
-          "label": "Is your router slow?"
+          "label": "Router speed"
         },
         {
           "raw": "light/07-devices.jpg",
           "role": "two",
-          "label": "Who's on your Wi\u2011Fi?"
+          "label": "Who's connected"
         },
         {
           "raw": "readme-dark-settings.jpg",
           "role": "three",
-          "label": "Make it yours."
+          "label": "Light or dark"
         }
       ],
       "wash": [

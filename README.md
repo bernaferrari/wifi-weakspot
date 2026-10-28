@@ -11,10 +11,10 @@ A Wi-Fi analyzer for Android 8.0 and newer.</p>
 
 Every nearby 2.4, 5 and 6 GHz network as a wave, so crowded channels are obvious. Get a suggested channel, or switch to history and watch each signal as you move.
 
-## Beyond signal strength
+## Tools
 
 <p align="center">
-  <img src="store-listing/en-US/readme/tools.jpg" width="100%" alt="Router check answering in 4.1 ms, the devices on your Wi-Fi, and dark-mode appearance settings">
+  <img src="store-listing/en-US/readme/tools.jpg" width="100%" alt="More than a signal meter: Router check answering in 4.1 ms, the devices connected to your Wi-Fi, and light or dark appearance settings">
 </p>
 
 - **Check your router.** How fast it answers, how steady, and whether replies go missing.

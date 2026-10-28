@@ -50,5 +50,8 @@
   "readme-channels": {
     "title": "Pick a *quiet channel.*",
     "body": "Every network around you, drawn as a wave."
+  },
+  "readme-tools": {
+    "title": "More than a *signal meter.*"
   }
 }
