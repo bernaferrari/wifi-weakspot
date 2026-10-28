@@ -143,34 +143,19 @@
           "raw": "light/02-rooms.jpg",
           "role": "front"
         }
+      ],
+      "wash": [
+        "#fff6ea",
+        "#ffe3c4",
+        "#ffc0a6",
+        "#d3eaa0",
+        "#a4e0b4"
       ]
     },
     {
       "feature": "readme-channels",
       "layout": "wide",
       "file": "readme/channels.jpg",
-      "field": [
-        [
-          0.05,
-          0.75,
-          "#8fe0b4"
-        ],
-        [
-          0.35,
-          0.15,
-          "#ffd98a"
-        ],
-        [
-          0.7,
-          0.85,
-          "#ffc46b"
-        ],
-        [
-          0.98,
-          0.25,
-          "#ff8a78"
-        ]
-      ],
       "alt": "WiFi Weakspot: every nearby network as channel waves on a tablet, with the signal history of a walk on a phone",
       "devices": [
         {
@@ -183,29 +168,17 @@
           "role": "front"
         }
       ],
-      "identity": true
+      "identity": true,
+      "wash": [
+        "#fff3df",
+        "#ffd8a8",
+        "#ffb9a0"
+      ]
     },
     {
       "feature": "readme-tools",
       "layout": "trio",
       "file": "readme/tools.jpg",
-      "field": [
-        [
-          0.1,
-          0.8,
-          "#ffc46b"
-        ],
-        [
-          0.5,
-          0.1,
-          "#8fe0b4"
-        ],
-        [
-          0.9,
-          0.85,
-          "#ff8a78"
-        ]
-      ],
       "alt": "Router check answering in 4.1 ms, the devices on your Wi-Fi, and dark-mode appearance settings with the color style previews",
       "devices": [
         {
@@ -223,6 +196,11 @@
           "role": "three",
           "label": "Make it yours."
         }
+      ],
+      "wash": [
+        "#ffe7b4",
+        "#cbeaa3",
+        "#d7d4ff"
       ]
     }
   ]

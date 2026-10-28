@@ -41,10 +41,10 @@ header p{margin:26px 0 0;font-size:40px;line-height:1.24;font-weight:400;letter-
 .readme header p{font-size:40px;line-height:1.25;white-space:pre-line}
 .readme .device{background:#ffffff;box-shadow:inset 0 0 0 2px #00000008,0 50px 100px -40px #5a321e99,0 14px 30px -14px #5a321e44}
 /* Hero: the headline on the left, the full coverage map on a portrait tablet, the room comparison in front. */
-.readme .hero header{left:140px;right:auto;top:0;bottom:0;width:800px;display:flex;flex-direction:column;justify-content:center}
+.readme .hero header{left:140px;right:auto;top:0;bottom:0;width:700px;display:flex;flex-direction:column;justify-content:center}
 .readme .hero h1{font-size:128px}
-.readme .hero .slate{--bezel:16px;--radius:44px;left:1000px;top:90px;width:760px}
-.readme .hero .front{--bezel:12px;--radius:58px;left:1640px;top:300px;width:560px;z-index:4}
+.readme .hero .slate{--bezel:16px;--radius:44px;left:900px;top:90px;width:760px}
+.readme .hero .front{--bezel:12px;--radius:58px;left:1620px;top:330px;width:560px;z-index:4}
 /* Wide: a centred headline, then the channel waves on a landscape tablet and the signal walk on a phone in front. */
 .readme .wide header{left:0;right:0;top:60px;text-align:center}
 .readme .wide h1{font-size:104px}

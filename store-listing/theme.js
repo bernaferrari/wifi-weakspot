@@ -1,6 +1,5 @@
 // WiFi Weakspot: every image sits on the app's own coverage map, a soft field of signal colours with the map's
 // reading points over it.
-const random = seed => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 
 // The app's verdict badge: a scalloped shape in the verdict's colour with the percentage inside.
 const cookie = (cx, cy, r, colour, label) => {
@@ -9,17 +8,14 @@ const cookie = (cx, cy, r, colour, label) => {
   return `<path d="M${pts.join('L')}Z" fill="${colour}"/><text x="${cx}" y="${cy + r * .26}" text-anchor="middle" font-family="Google Sans Flex" font-weight="760" font-size="${r * .72}" fill="#fff">${label}</text>`;
 };
 
-// README art sits on the app's own coverage-map colours: a soft field from weak coral through amber to strong
-// green, blurred like the map, with the map's reading points scattered over it.
-function heatField(W, H, slide) {
-  const blobs = slide.field || [[.1, .2, '#ff8a78'], [.35, .85, '#ffc46b'], [.62, .25, '#ffd98a'], [.85, .8, '#6fd6a0'], [1.0, .15, '#8fe0b4']];
-  // The map's reading points: a loose grid, each point a small ring, exactly as the coverage map draws them.
-  const next = random(W + (slide.file || '').length * 31);
-  let dots = '';
-  for (let y = 70; y < H; y += 150) for (let x = 60 + (y / 150 % 2) * 75; x < W; x += 150)
-    dots += `<circle cx="${(x + (next() - .5) * 40).toFixed(1)}" cy="${(y + (next() - .5) * 40).toFixed(1)}" r="8" fill="none" stroke="#c9b8a6" stroke-opacity=".35" stroke-width="3"/>`;
-  return `<defs><filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="160"/></filter></defs>
-    <rect width="${W}" height="${H}" fill="#fbf6ef"/><g filter="url(#soft)">${blobs.map(([x, y, c]) => `<circle cx="${W * x}" cy="${H * y}" r="${H * .55}" fill="${c}" fill-opacity=".42"/>`).join('')}</g>${dots}`;
+// README art uses the store cards' clean gradient, one slice of the signal scale per image, light on the side the
+// words sit, with the same soft light from the top.
+function wash(W, H, slide) {
+  const colours = slide.wash || ['#fff3df', '#ffd8a8', '#ffb9a0'];
+  const stops = colours.map((c, i) => `<stop offset="${(i / (colours.length - 1)).toFixed(3)}" stop-color="${c}"/>`).join('');
+  return `<defs><linearGradient id="wash" x1="0" y1="0" x2="1" y2="0">${stops}</linearGradient>
+    <linearGradient id="light" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffaf3" stop-opacity=".55"/><stop offset=".5" stop-color="#fffaf3" stop-opacity="0"/></linearGradient></defs>
+    <rect width="${W}" height="${H}" fill="url(#wash)"/><rect width="${W}" height="${H}" fill="url(#light)"/>`;
 }
 
 // Store cards are one walk through the house: a single gradient in the coverage map's own colours runs across the
@@ -36,7 +32,7 @@ function walk(W, H, index, count) {
 
 export default {
   art({W, H, index, slide, slides}) {
-    if (W === 2400 && H === 1260) return heatField(W, H, slide);
+    if (W === 2400 && H === 1260) return wash(W, H, slide);
     return walk(W, H, index, slides.length);
   },
 
