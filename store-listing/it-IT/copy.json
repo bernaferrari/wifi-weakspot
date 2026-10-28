@@ -4,7 +4,7 @@
     "body": "Tutte le reti vicine, come onde."
   },
   "rooms": {
-    "title": "Confronta\n*ogni* stanza.",
+    "title": "Confronta\nogni stanza.",
     "body": "Misura ogni stanza e confronta."
   },
   "coverage": {
@@ -12,11 +12,11 @@
     "body": "Tocca dove sei. La mappa si riempie."
   },
   "history": {
-    "title": "*Cammina.*\nGuardalo cambiare.",
+    "title": "Cammina.\nGuardalo cambiare.",
     "body": "Storico del segnale, dal vivo."
   },
   "router": {
-    "title": "Il *router*\nè lento?",
+    "title": "Il router\nè lento?",
     "body": "Quanto risponde veloce e stabile."
   },
   "appearance": {
@@ -36,11 +36,11 @@
     "title": "I tuoi colori, *il tuo stile*"
   },
   "network": {
-    "title": "*Chi è*\nsul tuo Wi‑Fi?",
+    "title": "Chi è\nsul tuo Wi‑Fi?",
     "body": "Ogni dispositivo e come si connette."
   },
   "home": {
-    "title": "Trova i tuoi\npunti *deboli.*",
+    "title": "Trova i tuoi\n*punti deboli.*",
     "body": "Scopri quanto è buono il tuo Wi-Fi."
   }
 }
