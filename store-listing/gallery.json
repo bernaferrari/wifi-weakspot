@@ -4,57 +4,49 @@
       "feature": "home",
       "layout": "one",
       "file": "screenshots/v9-01-home.jpg",
-      "raw": "light/01-signal.jpg",
-      "type": "rise"
+      "raw": "light/01-signal.jpg"
     },
     {
       "feature": "coverage",
       "layout": "one",
       "file": "screenshots/v9-02-coverage.jpg",
-      "raw": "light/03-coverage.jpg",
-      "type": "fade"
+      "raw": "light/03-coverage.jpg"
     },
     {
       "feature": "channels",
       "layout": "one",
       "raw": "light/04-channels.jpg",
-      "file": "screenshots/v9-03-channels.jpg",
-      "type": "quiet"
+      "file": "screenshots/v9-03-channels.jpg"
     },
     {
       "feature": "history",
       "layout": "one",
       "raw": "light/05-history.jpg",
-      "file": "screenshots/v9-04-history.jpg",
-      "type": "wave"
+      "file": "screenshots/v9-04-history.jpg"
     },
     {
       "feature": "rooms",
       "layout": "one",
       "raw": "light/02-rooms.jpg",
-      "file": "screenshots/v9-05-rooms.jpg",
-      "type": "heavy"
+      "file": "screenshots/v9-05-rooms.jpg"
     },
     {
       "feature": "router",
       "layout": "one",
       "raw": "light/06-router.jpg",
-      "file": "screenshots/v9-06-router.jpg",
-      "type": "rise"
+      "file": "screenshots/v9-06-router.jpg"
     },
     {
       "feature": "network",
       "layout": "one",
       "raw": "light/07-devices.jpg",
-      "file": "screenshots/v9-07-network.jpg",
-      "type": "wave"
+      "file": "screenshots/v9-07-network.jpg"
     },
     {
       "feature": "appearance",
       "layout": "one",
       "file": "screenshots/v9-08-appearance.jpg",
-      "raw": "readme-dark-settings.jpg",
-      "type": "heavy"
+      "raw": "readme-dark-settings.jpg"
     }
   ],
   "tablet7": [
@@ -62,36 +54,31 @@
       "feature": "home",
       "layout": "one",
       "file": "tablet/v9-7-01-home.jpg",
-      "raw": "light/tablet/7-01-home.jpg",
-      "type": "rise"
+      "raw": "light/tablet/7-01-home.jpg"
     },
     {
       "feature": "coverage",
       "layout": "one",
       "file": "tablet/v9-7-02-coverage.jpg",
-      "raw": "light/tablet/7-03-coverage.jpg",
-      "type": "fade"
+      "raw": "light/tablet/7-03-coverage.jpg"
     },
     {
       "feature": "channels",
       "layout": "one",
       "raw": "light/tablet/7-02-channels.jpg",
-      "file": "tablet/v9-7-03-channels.jpg",
-      "type": "quiet"
+      "file": "tablet/v9-7-03-channels.jpg"
     },
     {
       "feature": "history",
       "layout": "one",
       "raw": "light/tablet/7-05-history.jpg",
-      "file": "tablet/v9-7-04-history.jpg",
-      "type": "wave"
+      "file": "tablet/v9-7-04-history.jpg"
     },
     {
       "feature": "rooms",
       "layout": "one",
       "raw": "light/tablet/7-02-rooms.jpg",
-      "file": "tablet/v9-7-05-rooms.jpg",
-      "type": "heavy"
+      "file": "tablet/v9-7-05-rooms.jpg"
     }
   ],
   "tablet10": [
@@ -99,36 +86,31 @@
       "feature": "home",
       "layout": "one",
       "raw": "light/tablet/10-01-home.jpg",
-      "file": "tablet/v9-10-01-home.jpg",
-      "type": "rise"
+      "file": "tablet/v9-10-01-home.jpg"
     },
     {
       "feature": "coverage",
       "layout": "one",
       "file": "tablet/v9-10-02-coverage.jpg",
-      "raw": "light/tablet/10-03-coverage.jpg",
-      "type": "fade"
+      "raw": "light/tablet/10-03-coverage.jpg"
     },
     {
       "feature": "channels",
       "layout": "one",
       "raw": "light/tablet/10-02-channels.jpg",
-      "file": "tablet/v9-10-03-channels.jpg",
-      "type": "quiet"
+      "file": "tablet/v9-10-03-channels.jpg"
     },
     {
       "feature": "history",
       "layout": "one",
       "raw": "light/tablet/10-05-history.jpg",
-      "file": "tablet/v9-10-04-history.jpg",
-      "type": "wave"
+      "file": "tablet/v9-10-04-history.jpg"
     },
     {
       "feature": "rooms",
       "layout": "one",
       "raw": "light/tablet/10-02-rooms.jpg",
-      "file": "tablet/v9-10-05-rooms.jpg",
-      "type": "heavy"
+      "file": "tablet/v9-10-05-rooms.jpg"
     }
   ],
   "desktop": [
