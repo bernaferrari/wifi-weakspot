@@ -38,24 +38,15 @@
     },
     {
       "feature": "network",
-      "layout": "slide",
+      "layout": "one",
       "raw": "light/07-devices.jpg",
       "file": "screenshots/v9-07-network.jpg"
     },
     {
       "feature": "appearance",
-      "layout": "pair",
+      "layout": "one",
       "file": "screenshots/v9-08-appearance.jpg",
-      "devices": [
-        {
-          "raw": "light/08-appearance.jpg",
-          "role": "back"
-        },
-        {
-          "raw": "readme-dark-settings.jpg",
-          "role": "front"
-        }
-      ]
+      "raw": "readme-dark-settings.jpg"
     }
   ],
   "tablet7": [

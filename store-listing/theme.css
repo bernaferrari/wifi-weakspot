@@ -15,22 +15,14 @@ header p{margin:28px 0 0;font-size:38px;line-height:1.3;font-weight:420;letter-s
 
 .device{z-index:2;--bezel:14px;--radius:70px;background:#ffffff;box-shadow:0 60px 110px -50px #5a2a1a73,0 18px 40px -24px #5a2a1a40}
 
-/* Phone · one: the app spans the text column, close under the copy, running off the bottom. */
-.phone .one .primary{left:84px;top:540px;width:912px;--radius:84px;--bezel:16px}
-.phone .first.one .primary{top:580px}
-/* Phone · center: the rhythm breaks; a centred headline over a centred, slightly smaller phone. */
+/* Phone: every card shows the app at one size, spanning the text column and running off the bottom. The rhythm
+   comes from the type alone: some headlines centred, one a single giant word. */
+.phone .device{left:84px;top:540px;width:912px;--radius:84px;--bezel:16px}
+.phone .first .device{top:580px}
+.phone .giant .device{top:700px}
 .phone .center header{text-align:center}
 .phone .center header p{margin-left:auto;margin-right:auto}
-.phone .center .primary{left:150px;top:560px;width:780px;--radius:72px}
-/* Phone · giant: the first word alone, huge; the rest follows at the usual size. */
 .phone .giant h1 .line:first-child{font-size:300px;line-height:.86;letter-spacing:-.055em;font-weight:720}
-.phone .giant .primary{left:84px;top:700px;width:912px;--radius:84px;--bezel:16px}
-/* Phone · slide: the app slides in from the right edge, cropped like a list that keeps going. */
-.phone .slide .primary{left:200px;top:540px;width:960px;--radius:88px;--bezel:16px}
-/* Phone · pair: two screens side by side, the second stepped up in front (light and dark, before and after). */
-.phone .pair .device{width:600px;--radius:64px}
-.phone .pair .back{left:40px;top:660px}
-.phone .pair .front{left:440px;top:540px;z-index:3}
 
 /* 7-inch portrait. */
 .tablet7 header{left:96px;right:96px}

@@ -18,7 +18,7 @@
         "slide": 1,
         "width": 1080,
         "height": 1920,
-        "bytes": 174149,
+        "bytes": 181247,
         "sources": [
           "raw/light/03-coverage.jpg"
         ]
@@ -51,7 +51,7 @@
         "slide": 4,
         "width": 1080,
         "height": 1920,
-        "bytes": 144581,
+        "bytes": 141768,
         "sources": [
           "raw/light/02-rooms.jpg"
         ]
@@ -73,7 +73,7 @@
         "slide": 6,
         "width": 1080,
         "height": 1920,
-        "bytes": 167201,
+        "bytes": 176265,
         "sources": [
           "raw/light/07-devices.jpg"
         ]
@@ -84,9 +84,8 @@
         "slide": 7,
         "width": 1080,
         "height": 1920,
-        "bytes": 233509,
+        "bytes": 182132,
         "sources": [
-          "raw/light/08-appearance.jpg",
           "raw/readme-dark-settings.jpg"
         ]
       }
