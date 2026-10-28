@@ -1,10 +1,10 @@
 {
   "channels": {
-    "title": "Pick a\n*quiet channel.*",
+    "title": "Pick a *quiet*\nchannel.",
     "body": "Every nearby network, drawn as waves."
   },
   "rooms": {
-    "title": "Compare\n*every room.*",
+    "title": "Compare\n*every* room.",
     "body": "Save a reading in each room and compare."
   },
   "coverage": {
@@ -12,11 +12,11 @@
     "body": "Tap where you stand. The map fills in."
   },
   "history": {
-    "title": "Walk.\n*Watch it change.*",
+    "title": "*Walk.*\nWatch it change.",
     "body": "Signal history, live as you move."
   },
   "router": {
-    "title": "Is your\n*router slow?*",
+    "title": "Is your\n*router* slow?",
     "body": "How fast it answers, and how steady."
   },
   "appearance": {
@@ -36,11 +36,11 @@
     "title": "Your colors, *your style*"
   },
   "network": {
-    "title": "Who's on\n*your Wi‑Fi?*",
+    "title": "*Who's on*\nyour Wi‑Fi?",
     "body": "Every device, and how it connects."
   },
   "home": {
-    "title": "Find your\n*weak spots.*",
+    "title": "Find your\n*weak* spots.",
     "body": "See how good your Wi-Fi really is."
   },
   "readme-hero": {

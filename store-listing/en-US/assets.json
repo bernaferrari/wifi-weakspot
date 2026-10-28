@@ -7,7 +7,7 @@
         "slide": 0,
         "width": 1080,
         "height": 1920,
-        "bytes": 225959,
+        "bytes": 221574,
         "sources": [
           "raw/light/04-channels.jpg"
         ]
@@ -18,7 +18,7 @@
         "slide": 1,
         "width": 1080,
         "height": 1920,
-        "bytes": 219832,
+        "bytes": 213669,
         "sources": [
           "raw/light/05-history.jpg"
         ]
@@ -40,7 +40,7 @@
         "slide": 3,
         "width": 1080,
         "height": 1920,
-        "bytes": 148023,
+        "bytes": 145453,
         "sources": [
           "raw/light/02-rooms.jpg"
         ]
@@ -51,7 +51,7 @@
         "slide": 4,
         "width": 1080,
         "height": 1920,
-        "bytes": 192485,
+        "bytes": 189377,
         "sources": [
           "raw/light/01-signal.jpg"
         ]
@@ -62,7 +62,7 @@
         "slide": 5,
         "width": 1080,
         "height": 1920,
-        "bytes": 158679,
+        "bytes": 155155,
         "sources": [
           "raw/light/06-router.jpg"
         ]
@@ -73,7 +73,7 @@
         "slide": 6,
         "width": 1080,
         "height": 1920,
-        "bytes": 179650,
+        "bytes": 179024,
         "sources": [
           "raw/light/07-devices.jpg"
         ]
@@ -97,7 +97,7 @@
         "slide": 0,
         "width": 1200,
         "height": 1920,
-        "bytes": 224557,
+        "bytes": 220231,
         "sources": [
           "raw/light/tablet/7-02-channels.jpg"
         ]
@@ -108,7 +108,7 @@
         "slide": 1,
         "width": 1200,
         "height": 1920,
-        "bytes": 211841,
+        "bytes": 206563,
         "sources": [
           "raw/light/tablet/7-05-history.jpg"
         ]
@@ -130,7 +130,7 @@
         "slide": 3,
         "width": 1200,
         "height": 1920,
-        "bytes": 168292,
+        "bytes": 165239,
         "sources": [
           "raw/light/tablet/7-02-rooms.jpg"
         ]
@@ -143,7 +143,7 @@
         "slide": 0,
         "width": 1920,
         "height": 1200,
-        "bytes": 206163,
+        "bytes": 207103,
         "sources": [
           "raw/light/tablet/10-02-channels.jpg"
         ]
@@ -154,7 +154,7 @@
         "slide": 1,
         "width": 1920,
         "height": 1200,
-        "bytes": 191340,
+        "bytes": 187566,
         "sources": [
           "raw/light/tablet/10-05-history.jpg"
         ]
@@ -176,7 +176,7 @@
         "slide": 3,
         "width": 1920,
         "height": 1200,
-        "bytes": 137158,
+        "bytes": 134568,
         "sources": [
           "raw/light/tablet/10-02-rooms.jpg"
         ]

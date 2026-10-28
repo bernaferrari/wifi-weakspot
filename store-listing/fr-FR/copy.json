@@ -1,10 +1,10 @@
 {
   "channels": {
-    "title": "Choisissez un\n*canal libre.*",
+    "title": "Choisissez un\ncanal *libre.*",
     "body": "Tous les réseaux voisins, en vagues."
   },
   "rooms": {
-    "title": "Comparez\n*chaque pièce.*",
+    "title": "Comparez\n*chaque* pièce.",
     "body": "Mesurez chaque pièce et comparez."
   },
   "coverage": {
@@ -12,11 +12,11 @@
     "body": "Touchez où vous êtes. La carte se remplit."
   },
   "history": {
-    "title": "Marchez.\n*Il change.*",
+    "title": "*Marchez.*\nIl change.",
     "body": "L'historique du signal, en direct."
   },
   "router": {
-    "title": "Votre routeur\n*est lent ?*",
+    "title": "Votre *routeur*\nest lent ?",
     "body": "Sa vitesse et sa stabilité."
   },
   "appearance": {
@@ -36,11 +36,11 @@
     "title": "Vos couleurs, *votre style*"
   },
   "network": {
-    "title": "Qui est\n*sur votre Wi‑Fi ?*",
+    "title": "*Qui est*\nsur votre Wi‑Fi ?",
     "body": "Chaque appareil, et comment il se connecte."
   },
   "home": {
-    "title": "Trouvez vos\n*zones faibles.*",
+    "title": "Trouvez vos\nzones *faibles.*",
     "body": "Voyez la vraie qualité de votre Wi-Fi."
   }
 }

@@ -1,10 +1,10 @@
 {
   "channels": {
-    "title": "Wähle einen\n*freien Kanal.*",
+    "title": "Wähle einen\n*freien* Kanal.",
     "body": "Alle Netze in der Nähe, als Wellen."
   },
   "rooms": {
-    "title": "Vergleiche\n*jeden Raum.*",
+    "title": "Vergleiche\n*jeden* Raum.",
     "body": "Miss jeden Raum und vergleiche."
   },
   "coverage": {
@@ -12,11 +12,11 @@
     "body": "Tippe, wo du stehst. Die Karte füllt sich."
   },
   "history": {
-    "title": "Geh los.\n*Sieh zu.*",
+    "title": "*Geh los.*\nSieh zu.",
     "body": "Signalverlauf, live beim Gehen."
   },
   "router": {
-    "title": "Ist dein\n*Router lahm?*",
+    "title": "Ist dein\n*Router* lahm?",
     "body": "Wie schnell und stabil er antwortet."
   },
   "appearance": {
@@ -36,11 +36,11 @@
     "title": "Deine Farben, *dein Stil*"
   },
   "network": {
-    "title": "Wer ist in\n*deinem WLAN?*",
+    "title": "*Wer ist*\nin deinem WLAN?",
     "body": "Jedes Gerät, und wie es verbunden ist."
   },
   "home": {
-    "title": "Finde deine\n*Funklöcher.*",
+    "title": "*Finde* deine\nFunklöcher.",
     "body": "Sieh, wie gut dein WLAN wirklich ist."
   }
 }
