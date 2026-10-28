@@ -38,7 +38,7 @@ header p{margin:28px 0 0;font-size:40px;line-height:1.28;font-weight:450;color:v
 .tablet7 .pair .secondary{left:500px;top:860px;width:640px;z-index:3}
 
 /* 10-inch landscape: copy on the left, the app large on the right and running off the edge. */
-.tablet10 header{left:110px;right:auto;top:0;bottom:0;width:620px;display:flex;flex-direction:column;justify-content:center}
+.tablet10 header{left:90px;right:auto;top:0;bottom:0;width:640px;display:flex;flex-direction:column;justify-content:center}
 .tablet10 h1{font-size:92px}
 .tablet10 header p{margin-top:24px;font-size:34px}
 .tablet10 .brand{left:110px;top:70px}
