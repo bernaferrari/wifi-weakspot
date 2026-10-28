@@ -61,11 +61,16 @@ header p{margin:30px 0 0;font-size:40px;line-height:1.25;font-weight:450;color:#
 .readme .hero h1{font-size:128px}
 .readme .hero .slate{--bezel:16px;--radius:44px;left:1000px;top:90px;width:760px}
 .readme .hero .front{--bezel:12px;--radius:58px;left:1640px;top:300px;width:560px;z-index:4}
-/* Wide: channel waves large on a landscape tablet, the signal walk on a phone in front. No words. */
-.readme .wide .slate{--bezel:16px;--radius:44px;left:110px;top:110px;width:1720px}
-.readme .wide .front{--bezel:12px;--radius:58px;left:1700px;top:250px;width:540px;z-index:4}
-/* Trio: three phones side by side at one size, each screen readable. No words. */
-.readme .trio .device{--bezel:12px;--radius:58px;top:110px;width:600px}
-.readme .trio .one{left:160px}
-.readme .trio .two{left:900px}
-.readme .trio .three{left:1640px}
+/* Wide: a centred headline, then the channel waves on a landscape tablet and the signal walk on a phone in front. */
+.readme .wide header{left:0;right:0;top:60px;text-align:center}
+.readme .wide h1{font-size:104px}
+.readme .wide header p{margin:18px auto 0;font-size:38px}
+.readme .wide .slate{--bezel:16px;--radius:44px;left:200px;top:380px;width:1560px}
+.readme .wide .front{--bezel:12px;--radius:58px;left:1640px;top:470px;width:500px;z-index:4}
+/* Trio: three phones side by side at one size, each under its own short headline, like the store cards. */
+.readme .trio .device{--bezel:12px;--radius:58px;top:330px;width:580px}
+.readme .trio .one{left:170px}
+.readme .trio .two{left:910px}
+.readme .trio .three{left:1650px}
+.readme .trio .device-label{transform:translateY(calc(-100% - 34px));text-align:left;font-size:56px;line-height:1.05;font-weight:720;letter-spacing:-.025em;color:var(--ink)}
+.readme .trio .device-label em{font-style:normal;color:#c2410c}

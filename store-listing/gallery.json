@@ -230,15 +230,18 @@
       "devices": [
         {
           "raw": "light/06-router.jpg",
-          "role": "one"
+          "role": "one",
+          "label": "Is it *the router?*"
         },
         {
           "raw": "light/07-devices.jpg",
-          "role": "two"
+          "role": "two",
+          "label": "Who's on *your Wi-Fi?*"
         },
         {
           "raw": "readme-dark-settings.jpg",
-          "role": "three"
+          "role": "three",
+          "label": "Light or dark, *yours.*"
         }
       ]
     }

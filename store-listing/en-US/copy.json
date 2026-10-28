@@ -46,5 +46,9 @@
   "readme-hero": {
     "title": "Find your\n*weak spots.*",
     "body": "Walk around. The map shows\nwhere your Wi-Fi fades."
+  },
+  "readme-channels": {
+    "title": "Pick a *quiet channel.*",
+    "body": "Every network around you, drawn as a wave."
   }
 }
