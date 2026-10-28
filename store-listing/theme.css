@@ -56,7 +56,7 @@ header p{margin:26px 0 0;font-size:40px;line-height:1.24;font-weight:400;letter-
   font-size:150px;font-weight:700;letter-spacing:-5px;color:var(--ink)}
 .readme .identity img{width:180px;height:180px;border-radius:48px;display:block;box-shadow:0 24px 50px -20px #22307f66}
 /* Trio: one headline, then equal phones in an even row, each under a short caption. */
-.readme .trio header{left:0;right:0;top:64px;text-align:center}
+.readme .trio header{left:0;right:0;top:118px;text-align:center}
 .readme .trio h1{font-size:104px}
 .readme .trio .device{--bezel:12px;--radius:60px;width:600px;top:420px}
 .readme .trio .one{left:150px}
