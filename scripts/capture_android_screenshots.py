@@ -42,19 +42,39 @@ package = 'com.bernaferrari.wifiweakspot.screenshots'
 
 
 def adb(*parts):
-    return subprocess.check_output(['adb', '-s', args.serial, *parts], stderr=subprocess.STDOUT)
+    # A starved emulator sometimes kills uiautomator or drops a command; try again before giving up.
+    for attempt in range(5):
+        try:
+            return subprocess.check_output(['adb', '-s', args.serial, *parts], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            if attempt == 4:
+                raise
+            time.sleep(3)
 
 
 last_xml = None
 
 
+def dismiss_not_responding(root):
+    """A starved emulator can show "isn't responding" for the system itself; choose Wait and carry on."""
+    wait = next((n for n in root.iter('node') if n.get('text', '').lower() == 'wait'), None)
+    if wait is not None:
+        x1, y1, x2, y2 = map(int, re.findall(r'\d+', wait.get('bounds')))
+        adb('shell', 'input', 'tap', str((x1 + x2) // 2), str((y1 + y2) // 2))
+
+
 def tree():
+    # On a busy machine the app can take 20+ seconds to draw; wait for it instead of failing.
     global last_xml
-    adb('shell', 'uiautomator', 'dump', '--compressed', '/sdcard/wifi-capture.xml')
-    last_xml = adb('shell', 'cat', '/sdcard/wifi-capture.xml')
-    root = ET.fromstring(last_xml)
-    assert any(n.get('package') == package for n in root.iter('node')), 'Screenshot app is not foreground'
-    return root
+    for attempt in range(30):
+        adb('shell', 'uiautomator', 'dump', '--compressed', '/sdcard/wifi-capture.xml')
+        last_xml = adb('shell', 'cat', '/sdcard/wifi-capture.xml')
+        root = ET.fromstring(last_xml)
+        if any(n.get('package') == package for n in root.iter('node')):
+            return root
+        dismiss_not_responding(root)
+        time.sleep(2)
+    raise AssertionError('Screenshot app is not foreground')
 
 
 def find(label, root=None):
@@ -65,14 +85,14 @@ def find(label, root=None):
 def click(label):
     pattern = re.compile(label) if isinstance(label, str) else label
     mode = 'store' if args.store_only else 'campaign' if args.campaign_only else 'home-tools' if args.home_tools_only else 'settings' if args.settings_only else 'networks' if args.networks_only else 'full'
-    for attempt in range(4):
+    for attempt in range(20):
         tree()
         try:
             node = navigator.resolve(f'{current_profile}|{args.theme}|{mode}|{pattern.pattern}', last_xml,
                                      lambda n: bool(pattern.fullmatch(n.get('text', '')) or pattern.fullmatch(n.get('desc', ''))))
             break
         except AssertionError:
-            if attempt == 3:
+            if attempt == 19:
                 raise
             time.sleep(1)
 

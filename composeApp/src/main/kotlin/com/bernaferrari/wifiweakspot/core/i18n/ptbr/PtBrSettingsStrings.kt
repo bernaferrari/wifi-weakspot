@@ -24,7 +24,7 @@ object PtBrSettingsStrings : SettingsStrings {
     override val styleExpressive = "Expressivo"
     override val styleVibrant = "Vibrante"
     override val styleTonal = "Tonal"
-    override val styleCmf = "CMF"
+    override val styleCmf = "Suave"
     override val showSignalAs = "Mostrar sinal como"
     override val sectionComfort = "Conforto"
     override val reduceMotionTitle = "Reduzir animações"

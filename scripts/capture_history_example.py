@@ -28,7 +28,14 @@ navigator = Navigator(repo/f'store-listing/{reference}/raw/tap-map-history-{args
 last_xml = None
 
 def adb(*parts):
-    return subprocess.check_output(['adb','-s',args.serial,*parts],stderr=subprocess.STDOUT)
+    # A starved emulator sometimes kills uiautomator or drops a command; try again before giving up.
+    for attempt in range(5):
+        try:
+            return subprocess.check_output(['adb', '-s', args.serial, *parts], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            if attempt == 4:
+                raise
+            time.sleep(3)
 
 def tree():
     global last_xml
@@ -40,13 +47,13 @@ def tree():
 
 def click(label):
     # Taps are recorded by UI tree path in the reference locale and replayed in every other language.
-    for attempt in range(4):
+    for attempt in range(20):
         tree()
         try:
             node=navigator.resolve(f'{current}|{label}',last_xml,lambda n: label in (n.get('text'),n.get('desc')))
             break
         except AssertionError:
-            if attempt == 3:
+            if attempt == 19:
                 raise
             time.sleep(1)
     x1,y1,x2,y2=node['b']

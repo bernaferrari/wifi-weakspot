@@ -24,7 +24,7 @@ object EnSettingsStrings : SettingsStrings {
     override val styleExpressive = "Expressive"
     override val styleVibrant = "Vibrant"
     override val styleTonal = "Tonal"
-    override val styleCmf = "CMF"
+    override val styleCmf = "Muted"
     override val showSignalAs = "Show signal as"
     override val sectionComfort = "Comfort"
     override val reduceMotionTitle = "Reduce motion"

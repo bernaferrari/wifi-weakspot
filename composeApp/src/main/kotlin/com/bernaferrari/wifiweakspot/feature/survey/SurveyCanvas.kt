@@ -99,7 +99,15 @@ fun SurveyCanvas(
                 }
             }
     ) {
-    val fitted = fittedMapSize(maxWidth.value, maxHeight.value, widthMeters, heightMeters)
+    // A floor-plan photo keeps its calibrated shape. Without one, the grid has no fixed shape, so it fills the
+    // whole viewport, and the field uses the same area in meters spread over the viewport's proportions.
+    val fillViewport = imagePath == null && maxWidth.value > 0f && maxHeight.value > 0f
+    val (fieldWidthMeters, fieldHeightMeters) = if (fillViewport) {
+        val area = (widthMeters * heightMeters).takeIf { it.isFinite() && it > 0f } ?: 100f
+        val viewAspect = maxWidth.value / maxHeight.value
+        kotlin.math.sqrt(area * viewAspect) to kotlin.math.sqrt(area / viewAspect)
+    } else widthMeters to heightMeters
+    val fitted = fittedMapSize(maxWidth.value, maxHeight.value, fieldWidthMeters, fieldHeightMeters)
     val mapWidth = fitted.width.dp
     val mapHeight = fitted.height.dp
     Box(Modifier.align(Alignment.Center).size(mapWidth, mapHeight).onSizeChanged { fittedPixels = it }.graphicsLayer { scaleX = zoom; scaleY = zoom; translationX = pan.x; translationY = pan.y }) {
@@ -119,9 +127,9 @@ fun SurveyCanvas(
         val gradient = remember(heatColors) { signalGradient(heatColors) }
         val signalColor: (Int) -> Color = { rssi -> gradient(rssi.toFloat()) }
         // The same physical field is fitted to every screen and exported without recomputing distances.
-        val coverage = remember(points, widthMeters, heightMeters, gradient) {
+        val coverage = remember(points, fieldWidthMeters, fieldHeightMeters, gradient) {
             if (points.isEmpty()) null
-            else coverageGridForMap(points.map { PlanReading(it.x, it.y, it.rssi) }, widthMeters, heightMeters)
+            else coverageGridForMap(points.map { PlanReading(it.x, it.y, it.rssi) }, fieldWidthMeters, fieldHeightMeters)
                 .toBitmap(gradient, opacity = 0.95f)
         }
         // A new reading eases in: the updated field fades in over the old one and the new dot grows,

@@ -25,7 +25,7 @@ object JaSettingsStrings : SettingsStrings {
     override val styleExpressive = "表情豊か"
     override val styleVibrant = "鮮やか"
     override val styleTonal = "トーナル"
-    override val styleCmf = "CMF"
+    override val styleCmf = "落ち着き"
     override val showSignalAs = "信号の表示方法"
     override val sectionComfort = "使いやすさ"
 

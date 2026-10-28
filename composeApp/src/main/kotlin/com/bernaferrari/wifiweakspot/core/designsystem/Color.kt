@@ -41,10 +41,10 @@ private class SignalTone(
 private val SignalTones = mapOf(
     // Re-Rethink's allowed green.
     SignalQuality.Excellent to SignalTone(hue = 156.0, chroma = 48.0, heatChroma = 120.0, heatToneLight = 66.0, heatToneDark = 64.0),
-    // A softer, lighter leaf green: still "fine", one step toward the middle.
-    SignalQuality.Good to SignalTone(hue = 145.0, chroma = 36.0, heatChroma = 64.0, heatToneLight = 80.0, heatToneDark = 76.0),
-    // Muted sand: the neutral midpoint between the two families, kept low in chroma.
-    SignalQuality.Fair to SignalTone(hue = 82.0, chroma = 26.0, heatChroma = 30.0, heatToneLight = 82.0, heatToneDark = 76.0),
+    // A fresh leaf green: still "fine", one step toward the middle.
+    SignalQuality.Good to SignalTone(hue = 140.0, chroma = 44.0, heatChroma = 64.0, heatToneLight = 80.0, heatToneDark = 76.0),
+    // A clear warm amber for the midpoint. Low-chroma sand turned olive brown at dark tones.
+    SignalQuality.Fair to SignalTone(hue = 72.0, chroma = 46.0, heatChroma = 56.0, heatToneLight = 84.0, heatToneDark = 76.0),
     // A soft coral, one step short of the full red.
     SignalQuality.Weak to SignalTone(hue = 38.0, chroma = 50.0, heatChroma = 64.0, heatToneLight = 76.0, heatToneDark = 70.0),
     // Material's error red, as Re-Rethink uses for "blocked".
@@ -66,6 +66,29 @@ internal fun signalColorsFor(quality: SignalQuality, dark: Boolean): SignalColor
     } else {
         SignalColors(accent = hct(t.hue, t.chroma, 40.0), container = hct(t.hue, t.chroma, 90.0), onContainer = hct(t.hue, t.chroma, 30.0))
     }
+}
+
+/**
+ * The percentage badge: a level meter inside the verdict shape. Light mode is tonal, like a Material chip:
+ * a pale track, a soft fill up to the percentage, and dark text in the same hue. Dark mode mirrors it.
+ */
+internal fun signalBadgeColorsFor(quality: SignalQuality, dark: Boolean): SignalColors {
+    val t = SignalTones.getValue(quality)
+    return if (dark) {
+        SignalColors(accent = hct(t.hue, t.chroma, 42.0), container = hct(t.hue, t.chroma * .8, 24.0), onContainer = hct(t.hue, t.chroma * .5, 94.0))
+    } else {
+        SignalColors(accent = hct(t.hue, t.chroma + 10, 82.0), container = hct(t.hue, t.chroma * .7, 94.0), onContainer = hct(t.hue, t.chroma, 22.0))
+    }
+}
+
+private val LightBadgeColors by lazy { SignalQuality.entries.associateWith { signalBadgeColorsFor(it, dark = false) } }
+private val DarkBadgeColors by lazy { SignalQuality.entries.associateWith { signalBadgeColorsFor(it, dark = true) } }
+
+@Composable
+@ReadOnlyComposable
+fun signalBadgeColors(quality: SignalQuality): SignalColors {
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    return (if (dark) DarkBadgeColors else LightBadgeColors).getValue(quality)
 }
 
 private val LightSignalColors by lazy { SignalQuality.entries.associateWith { signalColorsFor(it, dark = false) } }

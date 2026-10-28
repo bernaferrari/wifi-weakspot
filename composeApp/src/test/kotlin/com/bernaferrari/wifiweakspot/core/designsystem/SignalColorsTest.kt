@@ -36,6 +36,16 @@ class SignalColorsTest {
         assertEquals(Color(0xFF93000A), signalColorsFor(SignalQuality.DeadZone, dark = true).container)
     }
 
+    @Test fun percentageBadgeTextReadsOnTrackAndFillInBothThemes() {
+        for (dark in listOf(false, true)) for (quality in SignalQuality.entries) {
+            val b = signalBadgeColorsFor(quality, dark)
+            for (background in listOf(b.container, b.accent)) {
+                val ratio = contrastRatio(background, b.onContainer)
+                assertTrue("Badge text $ratio for $quality, dark=$dark", ratio >= 4.5f)
+            }
+        }
+    }
+
     @Test fun neighbouringHeatColorsStayDistinct() {
         for (dark in listOf(false, true)) {
             val heat = signalHeatColorsFor(dark)

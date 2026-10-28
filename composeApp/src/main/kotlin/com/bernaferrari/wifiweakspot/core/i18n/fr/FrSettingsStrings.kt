@@ -24,7 +24,7 @@ object FrSettingsStrings : SettingsStrings {
     override val styleExpressive = "Expressif"
     override val styleVibrant = "Vif"
     override val styleTonal = "Tonal"
-    override val styleCmf = "CMF"
+    override val styleCmf = "Doux"
     override val showSignalAs = "Afficher le signal en"
     override val sectionComfort = "Confort"
     override val reduceMotionTitle = "Réduire les animations"

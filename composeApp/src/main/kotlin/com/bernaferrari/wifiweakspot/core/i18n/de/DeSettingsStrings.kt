@@ -24,7 +24,7 @@ object DeSettingsStrings : SettingsStrings {
     override val styleExpressive = "Ausdrucksvoll"
     override val styleVibrant = "Lebhaft"
     override val styleTonal = "Tonal"
-    override val styleCmf = "CMF"
+    override val styleCmf = "Gedämpft"
     override val showSignalAs = "Signalanzeige"
     override val sectionComfort = "Komfort"
     override val reduceMotionTitle = "Animationen reduzieren"

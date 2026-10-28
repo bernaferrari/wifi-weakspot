@@ -24,7 +24,7 @@ object EsSettingsStrings : SettingsStrings {
     override val styleExpressive = "Expresivo"
     override val styleVibrant = "Vibrante"
     override val styleTonal = "Tonal"
-    override val styleCmf = "CMF"
+    override val styleCmf = "Suave"
     override val showSignalAs = "Mostrar señal como"
     override val sectionComfort = "Comodidad"
     override val reduceMotionTitle = "Reducir animaciones"

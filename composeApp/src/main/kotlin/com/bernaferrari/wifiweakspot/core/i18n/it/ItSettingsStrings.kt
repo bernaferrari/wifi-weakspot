@@ -24,7 +24,7 @@ object ItSettingsStrings : SettingsStrings {
     override val styleExpressive = "Espressivo"
     override val styleVibrant = "Vivace"
     override val styleTonal = "Tonale"
-    override val styleCmf = "CMF"
+    override val styleCmf = "Tenue"
     override val showSignalAs = "Mostra segnale come"
     override val sectionComfort = "Comodità"
     override val reduceMotionTitle = "Riduci le animazioni"

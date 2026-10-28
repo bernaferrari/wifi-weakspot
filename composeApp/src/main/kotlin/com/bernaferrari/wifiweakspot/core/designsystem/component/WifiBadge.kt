@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bernaferrari.wifiweakspot.core.designsystem.signalColors
-import com.bernaferrari.wifiweakspot.core.designsystem.signalMeterColors
+import com.bernaferrari.wifiweakspot.core.designsystem.signalBadgeColors
 import com.bernaferrari.wifiweakspot.core.wifi.SignalQuality
 import com.bernaferrari.wifiweakspot.core.wifi.SignalDisplay
 
@@ -27,12 +27,8 @@ import com.bernaferrari.wifiweakspot.core.wifi.SignalDisplay
 @Composable
 fun WifiBadge(rssi: Int, modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 48.dp) {
     val quality = SignalQuality.of(rssi)
-    val signal = signalColors(quality)
     val display = com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay.current
-    val surface = MaterialTheme.colorScheme.surface
-    val colors = androidx.compose.runtime.remember(signal, display, surface) {
-        if (display == SignalDisplay.Percentage) signalMeterColors(signal, surface) else signal
-    }
+    val colors = if (display == SignalDisplay.Percentage) signalBadgeColors(quality) else signalColors(quality)
     val badgeDescription = strings.common.signalBadgeDescription(quality.label, display.reading(rssi))
     androidx.compose.foundation.layout.Box(
         modifier
@@ -77,7 +73,7 @@ fun WifiBadge(rssi: Int, modifier: Modifier = Modifier, size: androidx.compose.u
     }
 }
 
-/** Number and fill share the same percentage; one surface-colored label spans both tones. */
+/** Number and fill share the same percentage; one label in the verdict's ink reads on both tones. */
 @Composable
 private fun androidx.compose.foundation.layout.BoxScope.PercentageFill(
     percentage: Int,

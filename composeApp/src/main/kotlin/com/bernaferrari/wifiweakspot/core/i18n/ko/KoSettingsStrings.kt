@@ -25,7 +25,7 @@ object KoSettingsStrings : SettingsStrings {
     override val styleExpressive = "표현적"
     override val styleVibrant = "선명함"
     override val styleTonal = "톤"
-    override val styleCmf = "CMF"
+    override val styleCmf = "차분함"
     override val showSignalAs = "신호 표시 방식"
     override val sectionComfort = "사용 편의"
 

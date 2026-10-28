@@ -24,7 +24,7 @@ object RuSettingsStrings : SettingsStrings {
     override val styleExpressive = "Выразительный"
     override val styleVibrant = "Яркий"
     override val styleTonal = "Тональный"
-    override val styleCmf = "CMF"
+    override val styleCmf = "Приглушённый"
     override val showSignalAs = "Отображение сигнала"
     override val sectionComfort = "Комфорт"
     override val reduceMotionTitle = "Уменьшить анимацию"

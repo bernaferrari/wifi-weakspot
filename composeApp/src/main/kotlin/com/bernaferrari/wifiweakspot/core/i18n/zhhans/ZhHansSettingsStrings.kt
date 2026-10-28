@@ -25,7 +25,7 @@ object ZhHansSettingsStrings : SettingsStrings {
     override val styleExpressive = "表现力"
     override val styleVibrant = "鲜艳"
     override val styleTonal = "柔和色调"
-    override val styleCmf = "CMF"
+    override val styleCmf = "柔和"
     override val showSignalAs = "信号显示方式"
     override val sectionComfort = "使用体验"
 
