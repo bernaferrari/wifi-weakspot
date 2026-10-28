@@ -33,7 +33,7 @@ import com.materialkolor.material3.rememberDynamicMaterialThemeState
 
 /**
  * The color style as four miniature app screens, each painted by that style from the chosen seed: the
- * signal card with its badge and text, an accent chip, and the navigation bar. No labels. Every badge is
+ * signal card with its badge and text, and an accent chip. No labels. Every badge is
  * an outlined circle until chosen, when it fills into the app's scalloped cookie with a check, and the
  * screen lifts inside a ring. Style names stay for screen readers only.
  */
@@ -73,7 +73,7 @@ private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, 
     val scale by animateFloatAsState(if (selected) 1f else 0.94f, MaterialTheme.motionScheme.fastSpatialSpec(), label = "styleScale")
     Box(
         modifier
-            .aspectRatio(0.62f)
+            .aspectRatio(0.72f)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .semantics { contentDescription = label }
             // Clip first so the press and hover highlight follows the card's rounded shape.
@@ -90,7 +90,7 @@ private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, 
                 .padding(horizontal = 7.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // A miniature of the app in this style: the signal card, then the navigation bar.
+            // A miniature of the app in this style: the signal card.
             Column(
                 Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(10.dp)).background(colors.surfaceContainerHigh).padding(7.dp),
                 verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -110,14 +110,6 @@ private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, 
                 Box(Modifier.fillMaxWidth(0.55f).height(6.dp).clip(CircleShape).background(colors.onSurfaceVariant.copy(alpha = .55f)))
                 Spacer(Modifier.weight(1f))
                 Box(Modifier.fillMaxWidth().height(12.dp).clip(CircleShape).background(colors.tertiaryContainer))
-            }
-            Row(
-                Modifier.fillMaxWidth().height(16.dp).clip(CircleShape).background(colors.surfaceContainer).padding(horizontal = 4.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(Modifier.size(width = 14.dp, height = 8.dp).clip(CircleShape).background(colors.secondaryContainer))
-                Box(Modifier.size(5.dp).clip(CircleShape).background(colors.onSurfaceVariant.copy(alpha = .6f)))
-                Box(Modifier.size(5.dp).clip(CircleShape).background(colors.onSurfaceVariant.copy(alpha = .6f)))
             }
         }
     }
