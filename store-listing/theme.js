@@ -41,7 +41,7 @@ export default {
     const wave = colour => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><path d='M0 58 C25 58 25 40 50 40 S75 58 100 58 L100 92 C75 92 75 74 50 74 S25 92 0 92 Z' fill='${colour}'/></svg>`)}")`;
     const colours = {coral: '#ffc4b8', green: '#b6ecc8', amber: '#ffe2a3', violet: '#dcd6ff'};
     for (const [name, colour] of Object.entries(colours)) main.style.setProperty(`--wave-${name}`, wave(colour));
-    const tone = {channels: 'green', history: 'amber', coverage: 'coral', rooms: 'green', home: 'coral', router: 'amber', network: 'violet', appearance: 'violet', 'readme-hero': 'coral', 'readme-channels': 'green', 'readme-tools': 'violet'}[slide.feature];
+    const tone = {channels: 'green', history: 'amber', coverage: 'coral', rooms: 'green', home: 'coral', router: 'amber', network: 'violet', appearance: 'violet', 'readme-hero': 'coral', 'readme-channels': 'green', 'readme-tools': 'amber'}[slide.feature];
     if (tone) main.style.setProperty('--wave', `var(--wave-${tone})`);
     // The README's first image is the app's name card: icon and name, large, over the real app; nothing else.
     if (slide.identity) {
