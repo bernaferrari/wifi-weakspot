@@ -58,9 +58,10 @@ header p{margin:26px 0 0;font-size:40px;line-height:1.24;font-weight:400;letter-
 /* Trio: one headline, then equal phones in an even row, each under a short caption. */
 .readme .trio header{left:0;right:0;top:64px;text-align:center}
 .readme .trio h1{font-size:104px}
-.readme .trio .device{--bezel:13px;--radius:64px;width:660px;top:420px}
-.readme .trio .one{left:450px}
-.readme .trio .two{left:1290px}
+.readme .trio .device{--bezel:12px;--radius:60px;width:600px;top:420px}
+.readme .trio .one{left:150px}
+.readme .trio .two{left:900px}
+.readme .trio .three{left:1650px}
 .readme .trio .device-label{transform:translateY(calc(-100% - 26px));text-align:center;font-size:52px;line-height:1;font-weight:480;letter-spacing:-1px;color:var(--ink)}
 /* Captions stress one word by weight alone; the headline keeps the only wave. */
 .readme .trio .device-label em{background:none;padding:0;margin:0;font-weight:800}

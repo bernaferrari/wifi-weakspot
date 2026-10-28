@@ -179,7 +179,7 @@
       "feature": "readme-tools",
       "layout": "trio",
       "file": "readme/tools.jpg",
-      "alt": "More than a signal meter: Router check answering in 4.1 ms, and the devices connected to your Wi-Fi",
+      "alt": "More than a signal meter: Router check answering in 4.1 ms, the suggested channel with steps to change it, and the devices connected to your Wi-Fi",
       "devices": [
         {
           "raw": "light/06-router.jpg",
@@ -187,8 +187,13 @@
           "label": "Router *speed*"
         },
         {
-          "raw": "light/07-devices.jpg",
+          "raw": "light/09-channel-advice.jpg",
           "role": "two",
+          "label": "Best *channel*"
+        },
+        {
+          "raw": "light/07-devices.jpg",
+          "role": "three",
           "label": "Who's *connected*"
         }
       ],
