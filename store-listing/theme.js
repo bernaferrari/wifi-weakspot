@@ -41,6 +41,9 @@ export default {
   },
 
   compose({main, index, kind, slide}) {
+    // Each key phrase in the colour of what it describes, from the app's signal scale.
+    const sig = {channels: '#178a4c', history: '#c2410c', coverage: '#d23b2a', rooms: '#178a4c', home: '#d23b2a', router: '#c2410c', network: '#4f46c8', appearance: '#7e3fbf', 'readme-hero': '#d23b2a', 'readme-channels': '#178a4c'}[slide.feature];
+    if (sig) main.style.setProperty('--sig', sig);
     if (index === 0 && kind !== 'readme' && kind !== 'desktop') {
       main.classList.add('first');
       const brand = document.createElement('div');

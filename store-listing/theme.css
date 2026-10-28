@@ -10,9 +10,9 @@ body{font-family:Google Sans Flex,var(--script-font),sans-serif;color:var(--ink)
 header{left:84px;right:84px;top:150px;z-index:5}
 .first header{top:170px}
 h1{font-size:132px;line-height:.98;font-weight:700;letter-spacing:-4px;word-spacing:8px}
-/* For people who only skim: the lead-in recedes to a soft tint of the ink, the key phrase stays full ink. */
-h1{color:#22307f70}
-h1 em{font-style:normal;color:var(--ink)}
+/* For people who only skim: the key words take the colour of what they describe on the app's own signal scale,
+   coral for dead zones, green for a quiet channel, amber for a walk; the rest stays ink. */
+h1 em,.device-label em{font-style:normal;color:var(--sig,var(--ink))}
 header p{margin:26px 0 0;font-size:40px;line-height:1.24;font-weight:400;letter-spacing:-.5px;max-width:760px;opacity:.82}
 
 .device{z-index:2;--bezel:14px;--radius:70px;background:#ffffff;box-shadow:0 60px 110px -50px #5a2a1a73,0 18px 40px -24px #5a2a1a40}
@@ -62,5 +62,7 @@ header p{margin:26px 0 0;font-size:40px;line-height:1.24;font-weight:400;letter-
 .readme .trio .one{left:110px;top:400px}
 .readme .trio .two{left:890px;top:270px}
 .readme .trio .three{left:1670px;top:400px}
-.readme .trio .device-label{transform:translateY(calc(-100% - 28px));text-align:left;font-size:64px;line-height:1;font-weight:700;letter-spacing:-2px;word-spacing:4px;color:#22307f70}
-.readme .trio .device-label em{font-style:normal;color:var(--ink)}
+.readme .trio .device-label{transform:translateY(calc(-100% - 28px));text-align:left;font-size:64px;line-height:1;font-weight:700;letter-spacing:-2px;word-spacing:4px;color:var(--ink)}
+.readme .trio .device-label.one{--sig:#c2410c}
+.readme .trio .device-label.two{--sig:#4f46c8}
+.readme .trio .device-label.three{--sig:#7e3fbf}
