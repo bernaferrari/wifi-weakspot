@@ -4,6 +4,7 @@ package com.bernaferrari.wifiweakspot.feature.settings
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -33,7 +34,7 @@ import com.materialkolor.material3.rememberDynamicMaterialThemeState
 
 /**
  * The color style as four miniature app screens, each painted by that style from the chosen seed: the
- * signal card with its badge and text, and a primary button. No labels. Every badge is
+ * signal badge and the channel waves. No labels. Every badge is
  * an outlined circle until chosen, when it fills into the app's scalloped cookie with a check, and the
  * screen lifts inside a ring. Style names stay for screen readers only.
  */
@@ -48,7 +49,7 @@ internal fun ColorStylePicker(
     val s = strings.settings
     Row(
         modifier.selectableGroup().semantics { contentDescription = s.colorStyle },
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
     ) {
         ColorStyle.entries.forEach { style ->
             val preview = rememberDynamicMaterialThemeState(seedColor = seedColor, isDark = dark, style = style.palette).colorScheme
@@ -57,7 +58,7 @@ internal fun ColorStylePicker(
                 colors = preview,
                 selected = style == selected,
                 onClick = { onSelect(style) },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f, fill = false).widthIn(max = 96.dp)
             )
         }
     }
@@ -73,7 +74,7 @@ private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, 
     val scale by animateFloatAsState(if (selected) 1f else 0.94f, MaterialTheme.motionScheme.fastSpatialSpec(), label = "styleScale")
     Box(
         modifier
-            .aspectRatio(0.72f)
+            .aspectRatio(0.66f)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .semantics { contentDescription = label }
             // Clip first so the press and hover highlight follows the card's rounded shape.
@@ -90,26 +91,38 @@ private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, 
                 .padding(horizontal = 7.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // A miniature of the app in this style: the signal card.
+            // A miniature of the app in this style: the signal badge large, and channel waves below it.
             Column(
-                Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(10.dp)).background(colors.surfaceContainerHigh).padding(7.dp),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
+                Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(10.dp)).background(colors.surfaceContainerHigh).padding(top = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Outlined circle until chosen; the chosen one fills into the app's scalloped cookie with a check.
                 val shape by animateFloatAsState(if (selected) 1f else 0f, MaterialTheme.motionScheme.slowSpatialSpec(), label = "badgeMorph")
                 val morph = remember { Morph(MaterialShapes.Circle, MaterialShapes.Cookie9Sided) }
                 Box(
-                    Modifier.fillMaxWidth(0.55f).aspectRatio(1f)
-                        .border(2.5.dp, colors.primary.copy(alpha = 1f - shape), MorphShape(morph, shape))
+                    Modifier.fillMaxWidth(0.62f).aspectRatio(1f)
+                        .border(3.dp, colors.primary.copy(alpha = 1f - shape), MorphShape(morph, shape))
                         .clip(MorphShape(morph, shape)).background(colors.primary.copy(alpha = shape)),
                     contentAlignment = Alignment.Center
                 ) {
                     if (selected) Icon(Icons.Rounded.Check, contentDescription = null, tint = colors.onPrimary, modifier = Modifier.fillMaxSize(0.5f))
                 }
-                Box(Modifier.fillMaxWidth(0.85f).height(6.dp).clip(CircleShape).background(colors.onSurface.copy(alpha = .8f)))
-                Box(Modifier.fillMaxWidth(0.55f).height(6.dp).clip(CircleShape).background(colors.onSurfaceVariant.copy(alpha = .55f)))
                 Spacer(Modifier.weight(1f))
-                Box(Modifier.fillMaxWidth().height(12.dp).clip(CircleShape).background(colors.primary))
+                // Overlapping channel waves in the style's three accents, like the Networks chart.
+                Canvas(Modifier.fillMaxWidth().height(22.dp)) {
+                    listOf(Triple(.3f, .95f, colors.tertiary), Triple(.7f, .75f, colors.secondary), Triple(.5f, 1f, colors.primary)).forEach { (cx, h, c) ->
+                        val half = size.width * .36f
+                        val top = size.height * (1f - h)
+                        val path = androidx.compose.ui.graphics.Path().apply {
+                            moveTo(size.width * cx - half, size.height)
+                            cubicTo(size.width * cx - half * .45f, size.height, size.width * cx - half * .5f, top, size.width * cx, top)
+                            cubicTo(size.width * cx + half * .5f, top, size.width * cx + half * .45f, size.height, size.width * cx + half, size.height)
+                            close()
+                        }
+                        drawPath(path, c.copy(alpha = .35f))
+                        drawPath(path, c, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
+                    }
+                }
             }
         }
     }
