@@ -46,5 +46,13 @@
   "home": {
     "title": "Find your\n*weak spots.*",
     "body": "See how good your Wi-Fi really is."
+  },
+  "readme-weak": {
+    "title": "See where\n*it fades.*",
+    "body": "Map your home, then find\nthe room that wins."
+  },
+  "readme-tools": {
+    "title": "Look beyond\n*the signal.*",
+    "body": "Check your router, see every\ndevice, make it yours."
   }
 }

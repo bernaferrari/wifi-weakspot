@@ -21,26 +21,5 @@
     "desktop": "gallery-desktop.jpg"
   },
   "supersample": 2,
-  "readmeStrips": [
-    {
-      "file": "readme/strip-1.jpg",
-      "kind": "phone",
-      "cards": [
-        1,
-        4
-      ],
-      "height": 1200
-    },
-    {
-      "file": "readme/strip-2.jpg",
-      "kind": "phone",
-      "cards": [
-        5,
-        6,
-        7
-      ],
-      "height": 1200
-    }
-  ],
   "minFit": 0.62
 }

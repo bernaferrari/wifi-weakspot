@@ -18,7 +18,7 @@ Every nearby 2.4, 5 and 6 GHz network, drawn as channel waves so overlap is obvi
 ## Find where Wi-Fi gets weak
 
 <p align="center">
-  <img src="store-listing/en-US/readme/strip-1.jpg" width="67%" alt="See where it fades: the coverage map; which room wins: saved room readings compared">
+  <img src="store-listing/en-US/readme/rooms-map.jpg" width="100%" alt="A coverage map of a home from weak to strong, beside saved room readings compared">
 </p>
 
 Save a reading in each room and compare them with a percentage, a color and a plain-language verdict. Then tap where you stand on a grid or your own floor plan to build a coverage map, keep separate floors, and share the result as a picture. Recheck the same spots after moving your router to see what changed.
@@ -26,7 +26,7 @@ Save a reading in each room and compare them with a percentage, a color and a pl
 ## Look beyond signal strength
 
 <p align="center">
-  <img src="store-listing/en-US/readme/strip-2.jpg" width="100%" alt="Is it the router; who's on your Wi-Fi; your colors, your style">
+  <img src="store-listing/en-US/readme/tools.jpg" width="100%" alt="Router check with response time and packet loss, the devices on your Wi-Fi, and appearance settings">
 </p>
 
 - **Check your router.** Response time, variation and missed replies, with past checks kept for comparison.
