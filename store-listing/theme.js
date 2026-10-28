@@ -2,6 +2,19 @@
 // every card and drawn in panorama coordinates so they cross each seam; one soft indigo glow lights every phone.
 const random = seed => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 
+// The app's verdict badge: a scalloped shape in the verdict's colour with the percentage inside.
+const cookie = (cx, cy, r, colour, label) => {
+  const pts = [];
+  for (let i = 0; i < 360; i++) { const t = i / 360 * Math.PI * 2, rr = r * (.93 + .07 * Math.cos(9 * t)); pts.push(`${(cx + rr * Math.cos(t)).toFixed(1)},${(cy + rr * Math.sin(t)).toFixed(1)}`); }
+  return `<path d="M${pts.join('L')}Z" fill="${colour}"/><text x="${cx}" y="${cy + r * .26}" text-anchor="middle" font-family="Google Sans Flex" font-weight="760" font-size="${r * .72}" fill="#fff">${label}</text>`;
+};
+
+// Wi-Fi rings spreading from the router check's answer across the whole image.
+function rings() {
+  return `<svg class="rings-art" viewBox="0 0 2400 1260" aria-hidden="true">${[180, 330, 480, 640, 810, 990, 1180].map((r, i) =>
+    `<circle cx="810" cy="620" r="${r}" fill="none" stroke="#aab3ff" stroke-opacity="${(.55 - i * .06).toFixed(2)}" stroke-width="${8 - i * .8}"/>`).join('')}</svg>`;
+}
+
 export default {
   art({W, H, index, slides, slide}) {
     const landscape = W > H;
@@ -28,7 +41,8 @@ export default {
       <rect width="${W}" height="${H}" fill="url(#sky)"/><rect width="${W}" height="${H}" fill="url(#glow)"/>${stars}`;
   },
 
-  compose({main, index, kind}) {
+  compose({main, index, kind, slide}) {
+    if (slide.layout === 'rings') main.insertAdjacentHTML('beforeend', rings());
     if (index === 0 && kind !== 'readme' && kind !== 'desktop') {
       const brand = document.createElement('div');
       brand.className = 'brand';
