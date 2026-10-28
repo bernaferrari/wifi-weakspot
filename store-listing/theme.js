@@ -41,6 +41,22 @@ export default {
   },
 
   compose({main, index, kind, slide}) {
+    // The key phrase's weight behaves like signal: it fades, strengthens, whispers or waves, letter by letter,
+    // in the variable font's full range. The rest of the headline stays light.
+    const shape = {
+      fade: t => 860 - t * 720, rise: t => 160 + t * 720, quiet: () => 170, wave: t => 500 + 340 * Math.sin(t * Math.PI * 2.2),
+      heavy: () => 980,
+    }[slide.type];
+    if (shape && kind !== 'readme') for (const em of main.querySelectorAll('h1 em')) {
+      const letters = [...em.textContent];
+      em.textContent = '';
+      letters.forEach((ch, i) => {
+        const span = document.createElement('span');
+        span.textContent = ch;
+        span.style.fontWeight = Math.round(shape(letters.length > 1 ? i / (letters.length - 1) : 1));
+        em.append(span);
+      });
+    }
     if (typeof slide.hl === 'string') main.style.setProperty('--hl', slide.hl);
     if (index === 0 && kind !== 'readme' && kind !== 'desktop') {
       main.classList.add('first');
