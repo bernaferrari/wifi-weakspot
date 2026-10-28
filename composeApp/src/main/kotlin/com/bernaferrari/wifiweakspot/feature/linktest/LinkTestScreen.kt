@@ -304,7 +304,8 @@ private fun ResultStage(result: LinkTestResult) {
     val count = remember(result) { androidx.compose.animation.core.Animatable(0f) }
     val countSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
     LaunchedEffect(result) { count.animateTo(target, countSpec) }
-    SignalMorphBlob(quality = result.verdict.quality(), color = colors.container, size = 248.dp, spinning = false) {
+    // A burst, not the signal cookie: this is the router's answer time, distinct from the Rooms reading.
+    SignalMorphBlob(quality = result.verdict.quality(), color = colors.container, size = 248.dp, spinning = false, shape = androidx.compose.material3.MaterialShapes.SoftBurst) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(if (result.latency.samples > 0) formatMs(count.value) else "—",
                 style = MaterialTheme.typography.displayLarge.copy(fontFeatureSettings = "tnum"),

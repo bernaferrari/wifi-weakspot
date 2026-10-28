@@ -1,5 +1,5 @@
-// WiFi Weakspot: one night sky under the whole strip. Its stars are the networks around you, scattered evenly through
-// every card and drawn in panorama coordinates so they cross each seam; one soft indigo glow lights every phone.
+// WiFi Weakspot: every image sits on the app's own coverage map, a soft field of signal colours with the map's
+// reading points over it.
 const random = seed => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 
 // The app's verdict badge: a scalloped shape in the verdict's colour with the percentage inside.
@@ -22,36 +22,28 @@ function heatField(W, H, slide) {
     <rect width="${W}" height="${H}" fill="#fbf6ef"/><g filter="url(#soft)">${blobs.map(([x, y, c]) => `<circle cx="${W * x}" cy="${H * y}" r="${H * .55}" fill="${c}" fill-opacity=".42"/>`).join('')}</g>${dots}`;
 }
 
+// Store cards are one walk through the house: a single gradient in the coverage map's own colours runs across the
+// whole set, from a weak coral spot to strong green by the middle and back again, so the first four cards (all most
+// people see) hold the whole arc and every seam continues. A soft light from the top keeps the copy calm.
+const WALK = ['#ff9f8a', '#ffb98c', '#ffd38a', '#e9e48c', '#c4e79a', '#9edfae'];
+function walk(W, H, index, count) {
+  const there = [...WALK, ...WALK.slice(0, -1).reverse()];
+  const stops = there.map((c, i) => `<stop offset="${(i / (there.length - 1)).toFixed(3)}" stop-color="${c}"/>`).join('');
+  return `<defs><linearGradient id="walk" gradientUnits="userSpaceOnUse" x1="${-index * W}" y1="0" x2="${(count - index) * W}" y2="0">${stops}</linearGradient>
+    <linearGradient id="light" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffaf3" stop-opacity=".55"/><stop offset=".45" stop-color="#fffaf3" stop-opacity="0"/></linearGradient></defs>
+    <rect width="${W}" height="${H}" fill="url(#walk)"/><rect width="${W}" height="${H}" fill="url(#light)"/>`;
+}
+
 export default {
-  art({W, H, index, slides, slide}) {
+  art({W, H, index, slide, slides}) {
     if (W === 2400 && H === 1260) return heatField(W, H, slide);
-    const landscape = W > H;
-    let stars = '';
-    for (let k = index - 1; k <= index + 1; k++) {
-      if (k < 0 || k >= slides.length) continue;
-      const next = random(k * 131 + 7), x0 = (k - index) * W;
-      for (let i = 0; i < 46; i++) {
-        const x = x0 + next() * W, y = next() * H, r = .9 + next() * 2.6, o = .25 + next() * .6;
-        stars += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" fill="#ffffff" fill-opacity="${o.toFixed(2)}"/>`;
-      }
-      // A few brighter stars with a halo: the strongest networks.
-      for (let i = 0; i < 3; i++) {
-        const x = x0 + next() * W, y = next() * H;
-        stars += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="14" fill="#a9b4ff" fill-opacity=".18"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#ffffff"/>`;
-      }
-    }
-    // The glow sits where the phone is: low on most cards, high when the phone hangs from the top.
-    const high = /drop/.test(slide.layout || ''), mid = /stack/.test(slide.layout || '');
-    const gx = landscape ? W * .7 : W * .5, gy = landscape ? H * .55 : H * (high ? .25 : mid ? .5 : .72);
-    const R = Math.max(W, H) * .55;
-    return `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#090b22"/><stop offset="1" stop-color="#141945"/></linearGradient>
-      <radialGradient id="glow" gradientUnits="userSpaceOnUse" cx="${gx}" cy="${gy}" r="${R}"><stop offset="0" stop-color="#5b63ff" stop-opacity=".42"/><stop offset=".55" stop-color="#5b63ff" stop-opacity=".1"/><stop offset="1" stop-color="#5b63ff" stop-opacity="0"/></radialGradient></defs>
-      <rect width="${W}" height="${H}" fill="url(#sky)"/><rect width="${W}" height="${H}" fill="url(#glow)"/>${stars}`;
+    return walk(W, H, index, slides.length);
   },
 
   compose({main, index, kind, slide}) {
     if (typeof slide.hl === 'string') main.style.setProperty('--hl', slide.hl);
     if (index === 0 && kind !== 'readme' && kind !== 'desktop') {
+      main.classList.add('first');
       const brand = document.createElement('div');
       brand.className = 'brand';
       brand.dataset.checkBounds = '';

@@ -16,12 +16,12 @@
     "body": "Storico del segnale, dal vivo."
   },
   "router": {
-    "title": "È colpa\n*del router?*",
-    "body": "Velocità, stabilità e perdita."
+    "title": "Controlla\n*il router.*",
+    "body": "Quanto risponde veloce e stabile."
   },
   "appearance": {
-    "title": "I tuoi colori,\n*il tuo stile*",
-    "body": "Chiaro, scuro e ogni palette."
+    "title": "Tutto\n*tuo.*",
+    "body": "Chiaro o scuro, colori e stili."
   },
   "desktop/channels": {
     "title": "Scegli il *canale più libero*"
@@ -36,8 +36,8 @@
     "title": "I tuoi colori, *il tuo stile*"
   },
   "network": {
-    "title": "Chi usa\n*il tuo Wi-Fi?*",
-    "body": "Tutti i dispositivi, a colpo d'occhio."
+    "title": "Vedi\n*ogni dispositivo.*",
+    "body": "Chi usa il tuo Wi-Fi."
   },
   "home": {
     "title": "Trova i tuoi\n*punti deboli.*",

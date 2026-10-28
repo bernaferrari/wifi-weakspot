@@ -79,9 +79,11 @@ fun SignalMorphBlob(
     modifier: Modifier = Modifier,
     size: Dp = 200.dp,
     spinning: Boolean = true,
+    /** A fixed shape for screens that measure something other than signal; colour still carries the verdict. */
+    shape: RoundedPolygon? = null,
     content: @Composable BoxScope.() -> Unit = {}
 ) {
-    val target = quality?.polygon() ?: MaterialShapes.Circle
+    val target = shape ?: quality?.polygon() ?: MaterialShapes.Circle
     var from by remember { mutableStateOf(target) }
     var to by remember { mutableStateOf(target) }
     val progress = remember { Animatable(1f) }

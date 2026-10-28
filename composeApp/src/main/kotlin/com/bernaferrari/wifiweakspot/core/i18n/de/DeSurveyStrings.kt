@@ -52,7 +52,7 @@ object DeSurveyStrings : SurveyStrings {
     override val noReadingsYet = "Noch keine Messwerte vorhanden. Tippen Sie im Grundriss auf Ihren Standort."
 
     override val weakestFirst = "Der Schwächste zuerst, daher liegen die Problemstellen oben."
-    override val mapYourHome = "Kartieren Sie Ihr Zuhause"
+    override val mapYourHome = "Zuhause kartieren"
     override val mapYourHomeBody = "Sehen Sie die WLAN-Abdeckung im Grundriss Ihres Zuhauses. Nutzen Sie ein Foto des Grundrisses oder ein leeres Raster."
 
     override val createMap = "Erstellen Sie eine Karte"
@@ -90,7 +90,7 @@ object DeSurveyStrings : SurveyStrings {
     override val roomsEmptyHint = "Bleiben Sie in einem Raum stehen und speichern Sie eine Messung. Messen Sie auch in anderen Räumen, um schwache Stellen zu finden."
 
     override val noWifiSignal = "Kein Wi-Fi-Signal"
-    override val saveRoom = "Platz sparen"
+    override val saveRoom = "Raum speichern"
     override fun dbStronger(delta: Int) = "${delta} dB stärker"
     override fun dbWeaker(delta: Int) = "${delta} dB schwächer"
     override val savedRooms = "Gespeicherte Räume"

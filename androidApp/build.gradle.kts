@@ -47,10 +47,13 @@ android {
     }
 
     buildTypes {
+        // Captures run the shipping configuration (R8, not debuggable): what people install, and fast enough that
+        // a busy emulator never shows an "isn't responding" dialog during first composition.
         create("screenshots") {
-            initWith(getByName("debug"))
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
             applicationIdSuffix = ".screenshots"
-            matchingFallbacks += "debug"
+            matchingFallbacks += "release"
         }
         getByName("release") {
             isMinifyEnabled = true

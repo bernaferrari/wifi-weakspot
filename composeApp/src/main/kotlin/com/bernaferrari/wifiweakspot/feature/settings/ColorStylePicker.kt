@@ -74,7 +74,7 @@ private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, 
     val scale by animateFloatAsState(if (selected) 1f else 0.94f, MaterialTheme.motionScheme.fastSpatialSpec(), label = "styleScale")
     Box(
         modifier
-            .aspectRatio(0.66f)
+            .aspectRatio(1f)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .semantics { contentDescription = label }
             // Clip first so the press and hover highlight follows the card's rounded shape.
@@ -87,21 +87,20 @@ private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, 
                 .then(if (selected) Modifier.border(3.dp, ring, RoundedCornerShape(corner)) else Modifier)
                 .padding(if (selected) 5.dp else 0.dp)
                 .clip(RoundedCornerShape((corner.value - 5f).coerceAtLeast(12f).dp))
-                .background(colors.surface)
-                .padding(horizontal = 7.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .background(colors.surfaceContainerHigh)
+                .padding(top = 10.dp)
         ) {
-            // A miniature of the app in this style: the signal badge large, and channel waves below it.
+            // A miniature of the app in this style: the signal badge, and channel waves below it.
             Column(
-                Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(10.dp)).background(colors.surfaceContainerHigh).padding(top = 10.dp),
+                Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Outlined circle until chosen; the chosen one fills into the app's scalloped cookie with a check.
                 val shape by animateFloatAsState(if (selected) 1f else 0f, MaterialTheme.motionScheme.slowSpatialSpec(), label = "badgeMorph")
                 val morph = remember { Morph(MaterialShapes.Circle, MaterialShapes.Cookie9Sided) }
                 Box(
-                    Modifier.fillMaxWidth(0.62f).aspectRatio(1f)
-                        .border(3.dp, colors.primary.copy(alpha = 1f - shape), MorphShape(morph, shape))
+                    Modifier.fillMaxWidth(0.46f).aspectRatio(1f)
+                        .border(2.5.dp, colors.primary.copy(alpha = 1f - shape), MorphShape(morph, shape))
                         .clip(MorphShape(morph, shape)).background(colors.primary.copy(alpha = shape)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -109,7 +108,7 @@ private fun StylePreview(label: String, colors: ColorScheme, selected: Boolean, 
                 }
                 Spacer(Modifier.weight(1f))
                 // Overlapping channel waves in the style's three accents, like the Networks chart.
-                Canvas(Modifier.fillMaxWidth().height(22.dp)) {
+                Canvas(Modifier.fillMaxWidth().fillMaxHeight(0.42f)) {
                     listOf(Triple(.3f, .95f, colors.tertiary), Triple(.7f, .75f, colors.secondary), Triple(.5f, 1f, colors.primary)).forEach { (cx, h, c) ->
                         val half = size.width * .36f
                         val top = size.height * (1f - h)

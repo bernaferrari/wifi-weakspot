@@ -16,12 +16,12 @@
     "body": "Signal history, live as you move."
   },
   "router": {
-    "title": "Is it\n*the router?*",
-    "body": "Speed, stability and packet loss."
+    "title": "Check\n*your router.*",
+    "body": "How fast it answers, and how steady."
   },
   "appearance": {
-    "title": "Your colors,\n*your style*",
-    "body": "Light, dark and every palette."
+    "title": "Make it\n*yours.*",
+    "body": "Light or dark, wallpaper colors, four styles."
   },
   "desktop/channels": {
     "title": "Pick the *clearest channel*"
@@ -36,8 +36,8 @@
     "title": "Your colors, *your style*"
   },
   "network": {
-    "title": "Who's on\n*your Wi-Fi?*",
-    "body": "Every device, and how it connects."
+    "title": "See\n*every device.*",
+    "body": "Who's on your Wi-Fi, and how it connects."
   },
   "home": {
     "title": "Find your\n*weak spots.*",

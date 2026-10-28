@@ -327,7 +327,7 @@ fun WalkScreen(
     }
 }
 
-/** A shape that grows with signal, with ripples that quicken as it gets stronger. */
+/** A shape that grows and morphs with signal; the shape alone is the gauge. */
 @Composable
 private fun FinderStage(rssi: Int?, height: androidx.compose.ui.unit.Dp) {
     val survey = strings.survey
@@ -340,55 +340,12 @@ private fun FinderStage(rssi: Int?, height: androidx.compose.ui.unit.Dp) {
         MaterialTheme.motionScheme.defaultSpatialSpec(),
         label = "finderSize"
     )
-    // The pulse is a second gauge, like sonar: strong signal sends quick, bold rings far out;
-    // weak signal sends slow, faint rings that barely leave the shape.
-    val strength by animateFloatAsState(fraction, MaterialTheme.motionScheme.slowEffectsSpec(), label = "finderStrength")
-    val reduceMotion = com.bernaferrari.wifiweakspot.core.designsystem.LocalReduceMotion.current
-    var ripple by remember { mutableFloatStateOf(0f) }
-    val latestRssi by androidx.compose.runtime.rememberUpdatedState(rssi)
-    if (quality != null && !reduceMotion) {
-        LaunchedEffect(Unit) {
-            var last = withFrameNanos { it }
-            while (true) {
-                withFrameNanos { now ->
-                    // Calm at every level: full pace (2.2 s) from -65 dBm up, slowing to 6 s at -90.
-                    val pace = ((latestRssi ?: -95) + 90).coerceIn(0, 25) / 25f
-                    val periodMs = lerp(6_000f, 2_200f, pace)
-                    ripple = (ripple + (now - last) / 1_000_000f / periodMs) % 1f
-                    last = now
-                }
-            }
-        }
-    }
-    val rings = 1 + (quality?.bars ?: 0).coerceAtMost(3)
-    val ringColor = colors.accent
     Box(
         Modifier.fillMaxWidth().height(height).clearAndSetSemantics {
             contentDescription = quality?.let { listOf(display.reading(rssi!!), it.headline).joinToString(" · ") } ?: survey.noWifiSignal
         },
         contentAlignment = Alignment.Center
     ) {
-        if (quality != null) {
-            // Full width, so strong signal can send rings well past the shape.
-            Canvas(Modifier.fillMaxWidth().height(height)) {
-                // Rings start hidden behind the shape and emerge from its edge, easing out as they fade.
-                val start = blobSize.toPx() * 0.3f
-                val edge = blobSize.toPx() / 2
-                // Wide windows (tablets, unfolded phones) would send rings far past the title;
-                // there the meter's own height sets the reach.
-                val reach = if (size.width > size.height * 1.2f) size.height * 0.6f else maxOf(size.width / 2, size.height * 0.75f)
-                val end = edge + (reach - edge).coerceAtLeast(0f) * lerp(0.45f, 1f, strength)
-                val peak = lerp(0.18f, 0.5f, strength)
-                val stroke = lerp(1.5f, 4f, strength).dp.toPx()
-                repeat(rings) { index ->
-                    val t = (ripple + index / rings.toFloat()) % 1f
-                    val eased = 1f - (1f - t) * (1f - t)
-                    val radius = start + eased * (end - start)
-                    val alpha = peak * (1f - t) * (1f - t)
-                    drawCircle(ringColor.copy(alpha = alpha), radius = radius, style = Stroke(width = stroke))
-                }
-            }
-        }
         // A consistent Wi-Fi symbol inside the same quality shape used in every list.
         if (rssi != null) {
             com.bernaferrari.wifiweakspot.core.designsystem.component.WifiBadge(rssi, size = blobSize)

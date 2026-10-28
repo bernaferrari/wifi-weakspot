@@ -16,12 +16,12 @@
     "body": "L'historique du signal, en direct."
   },
   "router": {
-    "title": "C'est\n*le routeur ?*",
-    "body": "Vitesse, stabilité et pertes."
+    "title": "Testez\n*votre routeur.*",
+    "body": "Sa vitesse et sa stabilité."
   },
   "appearance": {
-    "title": "Vos couleurs,\n*votre style*",
-    "body": "Clair, sombre et toutes les palettes."
+    "title": "À votre\n*image.*",
+    "body": "Clair ou sombre, couleurs et styles."
   },
   "desktop/channels": {
     "title": "Choisissez le *canal le plus libre*"
@@ -36,8 +36,8 @@
     "title": "Vos couleurs, *votre style*"
   },
   "network": {
-    "title": "Qui est sur\n*votre Wi-Fi ?*",
-    "body": "Tous les appareils, d'un coup d'œil."
+    "title": "Voyez\n*chaque appareil.*",
+    "body": "Qui est sur votre Wi-Fi."
   },
   "home": {
     "title": "Trouvez vos\n*zones faibles.*",

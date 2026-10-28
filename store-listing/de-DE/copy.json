@@ -16,12 +16,12 @@
     "body": "Signalverlauf, live beim Gehen."
   },
   "router": {
-    "title": "Liegt's am\n*Router?*",
-    "body": "Tempo, Stabilität und Paketverlust."
+    "title": "Prüfe\n*deinen Router.*",
+    "body": "Wie schnell und stabil er antwortet."
   },
   "appearance": {
-    "title": "Deine Farben,\n*dein Stil*",
-    "body": "Material-You-Farben, vier Stile, hell und dunkel."
+    "title": "Ganz\n*nach dir.*",
+    "body": "Hell oder dunkel, Farben und Stile."
   },
   "desktop/channels": {
     "title": "Wähle den *freiesten Kanal*"
@@ -36,8 +36,8 @@
     "title": "Deine Farben, *dein Stil*"
   },
   "network": {
-    "title": "Wer ist in\n*deinem WLAN?*",
-    "body": "Jedes Gerät auf einen Blick."
+    "title": "Sieh\n*jedes Gerät.*",
+    "body": "Wer in deinem WLAN ist."
   },
   "home": {
     "title": "Finde deine\n*Funklöcher.*",
