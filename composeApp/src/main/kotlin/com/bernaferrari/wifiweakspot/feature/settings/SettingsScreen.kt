@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.settings
 
+import com.bernaferrari.wifiweakspot.core.designsystem.exceptBottom
 import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material.icons.rounded.DarkMode
@@ -103,10 +104,10 @@ fun SettingsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding.exceptBottom())
                 .padding(horizontal = 16.dp),
-            // Room below the last card, matching the gap between sections.
-            contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp),
+            // Room below the last card, matching the gap between sections; the list scrolls under the gesture bar.
+            contentPadding = PaddingValues(top = 8.dp, bottom = padding.calculateBottomPadding() + 32.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Only while there's something to do: Android still limits scans, or root is in use.

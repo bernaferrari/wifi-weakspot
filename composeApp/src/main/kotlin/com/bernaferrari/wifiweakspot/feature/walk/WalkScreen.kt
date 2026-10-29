@@ -219,17 +219,17 @@ fun WalkScreen(
         // Only worth showing once rooms were saved on some other Wi-Fi too.
         val showNetworks = choices.any { it.networkKey != connectedKey }
         val hasList = spots.rankedRooms.isNotEmpty()
-        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(bottom = padding.calculateBottomPadding())) {
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
             // Draw below the transparent app bar; the whole page scrolls on short screens.
             // Anything under the meter (rooms or the network chips) gets room; an empty screen gives the meter most of it.
             // Sized from the expanded bar, so the meter doesn't resize while the title collapses.
             val expandedTop = padding.calculateTopPadding() - with(androidx.compose.ui.platform.LocalDensity.current) {
                 scrollBehavior.state.heightOffset.toDp()
             }
-            val stageHeight = ((maxHeight - expandedTop) * if (hasList || showNetworks) 0.42f else 0.62f).coerceIn(180.dp, 420.dp)
+            val stageHeight = ((maxHeight - padding.calculateBottomPadding() - expandedTop) * if (hasList || showNetworks) 0.42f else 0.62f).coerceIn(180.dp, 420.dp)
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 24.dp),
+                contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding() + 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
