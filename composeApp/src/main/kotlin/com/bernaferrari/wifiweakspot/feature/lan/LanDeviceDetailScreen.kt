@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.lan
 
+import com.bernaferrari.wifiweakspot.core.designsystem.exceptBottom
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -124,8 +125,8 @@ fun LanDeviceDetailScreen(
         val checkedAt = scanTime?.let { strings.tools.portsCheckedAt(momentLabel(it)) }
         val portNames = ports.map { serviceLabel(it.second) }
         LazyColumn(
-            Modifier.padding(padding).fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 32.dp)
+            Modifier.padding(padding.exceptBottom()).fillMaxSize(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = padding.calculateBottomPadding() + 32.dp)
         ) {
             item(key = "hero") {
                 Row(

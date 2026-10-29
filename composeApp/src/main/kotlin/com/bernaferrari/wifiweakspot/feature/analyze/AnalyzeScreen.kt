@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.analyze
 
+import com.bernaferrari.wifiweakspot.core.designsystem.exceptBottom
 import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.foundation.layout.widthIn
@@ -196,7 +197,7 @@ fun AnalyzeScreen(
                 )
             }
         ) { padding ->
-            Box(Modifier.fillMaxSize().padding(padding)) {
+            Box(Modifier.fillMaxSize().padding(padding.exceptBottom())) {
                 when {
                     !permissions.canScanWifi -> CenteredMessage(
                         icon = Icons.Rounded.WifiFind,
@@ -232,6 +233,7 @@ fun AnalyzeScreen(
                         connected = connected,
                         band = band,
                         leftHeader = { NetworksHeader(band, counts, true, true, null, canScan && throttle !is ThrottleState.Unlimited, appBarActions, changeBand) },
+                        bottomInset = padding.calculateBottomPadding(),
                         onBandChange = changeBand
                     )
                 }
@@ -297,6 +299,7 @@ private fun NetworksContent(
     connected: NetworkStatus,
     band: FrequencyBand,
     leftHeader: @Composable () -> Unit,
+    bottomInset: androidx.compose.ui.unit.Dp,
     onBandChange: (FrequencyBand) -> Unit
 ) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -450,11 +453,11 @@ private fun NetworksContent(
 
         val listState = androidx.compose.foundation.lazy.rememberLazyListState()
         Box(Modifier.fillMaxSize()) {
-            val padding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 32.dp)
+            val padding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = bottomInset + 32.dp)
             if (wide) {
                 Row(Modifier.fillMaxSize()) {
                     Column(
-                        Modifier.weight(1.2f).fillMaxSize().padding(bottom = 16.dp),
+                        Modifier.weight(1.2f).fillMaxSize().padding(bottom = bottomInset + 16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         leftHeader()

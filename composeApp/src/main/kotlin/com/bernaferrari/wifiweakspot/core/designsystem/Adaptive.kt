@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -123,4 +125,19 @@ fun AdaptiveColumns(
             }
         }
     }
+}
+
+/**
+ * Scaffold padding without its bottom edge. On rail layouts the bottom is the gesture bar: pad the
+ * container with this and add [PaddingValues.calculateBottomPadding] to the scroll's own padding,
+ * so content passes under the bar and still ends clear of it.
+ */
+@Composable
+fun androidx.compose.foundation.layout.PaddingValues.exceptBottom(): androidx.compose.foundation.layout.PaddingValues {
+    val direction = androidx.compose.ui.platform.LocalLayoutDirection.current
+    return androidx.compose.foundation.layout.PaddingValues(
+        start = calculateStartPadding(direction),
+        top = calculateTopPadding(),
+        end = calculateEndPadding(direction)
+    )
 }

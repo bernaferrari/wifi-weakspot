@@ -36,6 +36,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bernaferrari.wifiweakspot.core.designsystem.LocalReduceMotion
 import com.bernaferrari.wifiweakspot.core.designsystem.component.segmentedShape
@@ -175,17 +176,17 @@ private fun <T> LazyListScope.rows(items: List<T>, content: @Composable (T, andr
 }
 
 @Composable
-private fun ResultList(onRetry: () -> Unit, onDone: () -> Unit, modifier: Modifier, content: LazyListScope.() -> Unit) {
-    LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
+private fun ResultList(onRetry: () -> Unit, onDone: () -> Unit, modifier: Modifier, bottomInset: Dp, content: LazyListScope.() -> Unit) {
+    LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = bottomInset + 16.dp)) {
         content()
         item { ResultActions(onRetry, onDone) }
     }
 }
 
 @Composable
-fun PingResultContent(target: String, lines: List<String>, onRetry: () -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier) {
+fun PingResultContent(target: String, lines: List<String>, onRetry: () -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier, bottomInset: Dp = 0.dp) {
     val summary = remember(lines, target) { PingSummary.of(lines, target) }
-    ResultList(onRetry, onDone, modifier) {
+    ResultList(onRetry, onDone, modifier, bottomInset) {
         item {
             ResultHero(
                 value = summary.average?.let { it.fixed(if (it < 10f) 1 else 0) } ?: "—",
@@ -254,9 +255,9 @@ private fun ReplyBars(summary: PingSummary) {
 }
 
 @Composable
-fun DnsResultContent(query: String, lines: List<String>, onRetry: () -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier) {
+fun DnsResultContent(query: String, lines: List<String>, onRetry: () -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier, bottomInset: Dp = 0.dp) {
     val records = lines.filter { it.isNotBlank() && !it.startsWith("Error") }
-    ResultList(onRetry, onDone, modifier) {
+    ResultList(onRetry, onDone, modifier, bottomInset) {
         item {
             ResultHero(
                 value = "${records.size}",
@@ -276,11 +277,11 @@ fun DnsResultContent(query: String, lines: List<String>, onRetry: () -> Unit, on
 }
 
 @Composable
-fun PortsResultContent(host: String, ports: List<Pair<Int, String>>, onRetry: () -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier) {
+fun PortsResultContent(host: String, ports: List<Pair<Int, String>>, onRetry: () -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier, bottomInset: Dp = 0.dp) {
     val platform: PlatformActions = koinInject()
     val web = ports.firstOrNull { it.first in setOf(80, 8080, 8000) }?.let { "http://$host${if (it.first == 80) "" else ":${it.first}"}" }
         ?: ports.firstOrNull { it.first in setOf(443, 8443) }?.let { "https://$host${if (it.first == 443) "" else ":${it.first}"}" }
-    ResultList(onRetry, onDone, modifier) {
+    ResultList(onRetry, onDone, modifier, bottomInset) {
         item {
             ResultHero(
                 value = "${ports.size}",

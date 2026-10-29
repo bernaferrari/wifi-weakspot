@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.feature.tools
 
+import com.bernaferrari.wifiweakspot.core.designsystem.exceptBottom
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import kotlinx.coroutines.flow.map
 import androidx.compose.ui.draw.alpha
@@ -119,9 +120,11 @@ fun ToolsScreen(
             )
         }
     ) { padding ->
+        // Scrolling states take the gesture bar inside their scroll, so they pass under it on rail layouts.
+        val bottomInset = padding.calculateBottomPadding()
         AnimatedContent(
             targetState = uiState,
-            modifier = Modifier.padding(padding).fillMaxSize(),
+            modifier = Modifier.padding(padding.exceptBottom()).fillMaxSize(),
             transitionSpec = {
                 when {
                     reduceMotion -> fadeIn(snap()) togetherWith fadeOut(snap())
@@ -154,6 +157,7 @@ fun ToolsScreen(
                         inputText = inputText,
                         initialTool = initialTool,
                         onInputChange = { inputText = it },
+                        bottomInset = bottomInset,
                         onToolSelect = { tool ->
                             val type = when (tool.id) {
                                 "ping" -> ToolType.PING
@@ -175,20 +179,23 @@ fun ToolsScreen(
                         onCancel = {
                             haptics.light()
                             viewModel.stopTool()
-                        }
+                        },
+                        modifier = Modifier.padding(bottom = bottomInset)
                     )
                 }
                 is ToolsUiState.PingResult -> PingResultContent(
                     target = state.target,
                     lines = state.results,
                     onRetry = { haptics.click(); viewModel.startTool(ToolType.PING, state.target) },
-                    onDone = { haptics.light(); viewModel.reset() }
+                    onDone = { haptics.light(); viewModel.reset() },
+                    bottomInset = bottomInset
                 )
                 is ToolsUiState.DnsResult -> DnsResultContent(
                     query = state.query,
                     lines = state.records,
                     onRetry = { haptics.click(); viewModel.startTool(ToolType.DNS, state.query) },
-                    onDone = { haptics.light(); viewModel.reset() }
+                    onDone = { haptics.light(); viewModel.reset() },
+                    bottomInset = bottomInset
                 )
                 is ToolsUiState.Error -> {
                     Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -201,7 +208,8 @@ fun ToolsScreen(
                     host = state.host,
                     ports = state.ports,
                     onRetry = { haptics.click(); viewModel.startTool(ToolType.PORT_SCAN, state.host) },
-                    onDone = { haptics.light(); viewModel.reset() }
+                    onDone = { haptics.light(); viewModel.reset() },
+                    bottomInset = bottomInset
                 )
             }
         }
@@ -216,6 +224,7 @@ fun ToolsHomeContent(
     onInputChange: (String) -> Unit,
     onToolSelect: (Tool) -> Unit,
     initialTool: ToolType? = null,
+    bottomInset: androidx.compose.ui.unit.Dp = 0.dp,
     modifier: Modifier = Modifier
 ) {
     val hasInput = inputText.isNotBlank()
@@ -238,7 +247,8 @@ fun ToolsHomeContent(
     Column(
         modifier = modifier
             .verticalScroll(androidx.compose.foundation.rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(bottom = bottomInset),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // A search-style field: filled, rounded, no outline to fuss over.

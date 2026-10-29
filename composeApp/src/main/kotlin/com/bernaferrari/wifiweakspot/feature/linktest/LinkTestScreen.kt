@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.linktest
 
+import com.bernaferrari.wifiweakspot.core.designsystem.exceptBottom
 import androidx.compose.material.icons.outlined.AddLocationAlt
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.runtime.setValue
@@ -129,7 +130,7 @@ fun LinkTestScreen(
             )
         }
     ) { padding ->
-        BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
+        BoxWithConstraints(Modifier.fillMaxSize().padding(padding.exceptBottom())) {
             // The stage and its text form one group, centered in the space between the app bar and
             // the footer link; when the group outgrows the screen it simply scrolls.
             Column(
@@ -137,7 +138,8 @@ fun LinkTestScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .heightIn(min = maxHeight)
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = padding.calculateBottomPadding()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
