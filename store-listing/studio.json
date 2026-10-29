@@ -21,5 +21,47 @@
     "desktop": "gallery-desktop.jpg"
   },
   "supersample": 2,
-  "minFit": 0.62
+  "minFit": 0.62,
+  "capture": {
+    "build": "./gradlew :androidApp:assembleScreenshots -q",
+    "install": [
+      {
+        "apk": "androidApp/build/outputs/apk/screenshots/androidApp-screenshots.apk",
+        "package": "com.bernaferrari.wifiweakspot.screenshots"
+      }
+    ],
+    "runs": [
+      {
+        "script": "scripts/capture_android_screenshots.py",
+        "args": [
+          "--store-only",
+          "--theme",
+          "light"
+        ]
+      },
+      {
+        "script": "scripts/capture_history_example.py",
+        "args": [
+          "--theme",
+          "light"
+        ]
+      },
+      {
+        "script": "scripts/capture_android_screenshots.py",
+        "args": [
+          "--settings-only",
+          "--theme",
+          "dark"
+        ],
+        "profiles": [
+          "phone"
+        ],
+        "locales": "default"
+      }
+    ],
+    "after": [
+      "uv run -q --with pillow python3 store-listing/prepare.py",
+      "python3 scripts/refresh_readme_assets.py"
+    ]
+  }
 }

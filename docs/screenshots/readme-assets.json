@@ -1,42 +1,42 @@
 [
   {
     "file": "docs/screenshots/readme-channels.jpg",
-    "source": "store-listing/en-US/screenshots/v8-01-channels.jpg",
-    "sha256": "20c19f3da88c935ed21ed41f83fcd767436851f254150a847c5ab8d248771699"
+    "source": "store-listing/en-US/screenshots/v10-01-channels.jpg",
+    "sha256": "c79bca24e95658c167388a9cb9d7c0970ce739394b777d7f865ee2f213e6319c"
   },
   {
     "file": "docs/screenshots/readme-overtime.jpg",
-    "source": "store-listing/en-US/screenshots/v8-02-history.jpg",
-    "sha256": "4d649b76bd8dee769739f798345694ec0092930a8e4e8100d15d438beab6143b"
+    "source": "store-listing/en-US/screenshots/v10-02-history.jpg",
+    "sha256": "aedb22b4ed53260e95e7b1889a0a387e57b5d4620d20e3d323b27dc7e6c3f578"
   },
   {
     "file": "docs/screenshots/readme-floorplan.jpg",
-    "source": "store-listing/en-US/screenshots/v8-03-coverage.jpg",
-    "sha256": "1f2fa6fd6fdb8142f61f3c31baa27bbc48da81a4580c51cb71f65096bdc64e14"
+    "source": "store-listing/en-US/screenshots/v10-03-coverage.jpg",
+    "sha256": "0711310245f27c4dffc2fb4104a82af70004c177c9c59dd83d3e017ab545f70c"
   },
   {
     "file": "docs/screenshots/readme-rooms.jpg",
-    "source": "store-listing/en-US/screenshots/v8-04-rooms.jpg",
-    "sha256": "94f23b49362feac924a990b84b042777b702ddc8080c77e555657702a1ec5a06"
+    "source": "store-listing/en-US/screenshots/v10-04-rooms.jpg",
+    "sha256": "698c9b46e66efbadc0c454bd7cbd88a58d56e28d85f671747dfb00152483f576"
   },
   {
     "file": "docs/screenshots/readme-router.jpg",
-    "source": "store-listing/en-US/screenshots/v8-05-router.jpg",
-    "sha256": "1bd17e32a0a8a45e3d3706191df40434d5a07ab40f9d7b7df7614bf28642193d"
+    "source": "store-listing/en-US/screenshots/v10-06-router.jpg",
+    "sha256": "30029b48dfbc90cf6aea75c8226aba7af64762332d863ed3922b65e8f291ff1b"
   },
   {
     "file": "docs/screenshots/readme-network.jpg",
-    "source": "store-listing/en-US/screenshots/v8-06-network.jpg",
-    "sha256": "6255d0eb041df8435e5670e55b2e9dd7d4418ba362905d3d34f7e18f351fe175"
+    "source": "store-listing/en-US/screenshots/v10-07-network.jpg",
+    "sha256": "2da115c5718b70ec3482168bad991a8488419ace75817837c16e7d019a2fa786"
   },
   {
     "file": "docs/screenshots/readme-appearance.jpg",
-    "source": "store-listing/en-US/screenshots/v8-07-appearance.jpg",
-    "sha256": "6132d58d4eff350d6e7f12a6d5b70d606f5d10d9f8af232341c2a1d8d85b6ad8"
+    "source": "store-listing/en-US/screenshots/v10-08-appearance.jpg",
+    "sha256": "d1f230cad7e3d183f1329e4fe0525b0792730928911c6452730c1e6108999b32"
   },
   {
     "file": "docs/screenshots/readme-wide.jpg",
-    "source": "store-listing/en-US/tablet/v8-10-01-channels.jpg",
-    "sha256": "6c641742539df8de74d9ce53bff0b0ab8a2c7e22be4f325d5335b8d57dae5465"
+    "source": "store-listing/en-US/tablet/v10-10-01-channels.jpg",
+    "sha256": "0c4b60fa14ec7a816fc21f59109785c346a2cef9f5a8f06b6585fb588d72acc9"
   }
 ]

@@ -1,163 +1,58 @@
-"""Capture the isolated Android demo on a resizable emulator (requires Pillow and adb)."""
-import argparse
-import json
-from io import BytesIO
-from pathlib import Path
+"""Capture the isolated Android demo on the capture emulator (requires Pillow and adb).
+
+Build and install the screenshots build first, or run `node store-listing/studio/recapture.cjs`, which
+builds, captures every locale and exports. The emulator plumbing (display size per profile, demo-mode
+status bar, tap maps, sidecars, cleanup) is the studio's `capture.py`; this file is the scene tour.
+"""
 import re
-import subprocess
 import sys
 import time
-import xml.etree.ElementTree as ET
+from pathlib import Path
 
-from PIL import Image
+repo = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo / 'store-listing/studio'))
+from capture import Device, parser  # noqa: E402
 
-parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--serial', required=True, help='Dedicated emulator serial; never a physical phone')
-parser.add_argument('--profile', choices=['phone', 'tablet7', 'tablet10', 'all'], default='all')
+parser = parser(__doc__)
 parser.add_argument('--store-only', action='store_true', help='Capture just the current gallery sources in the selected theme')
 parser.add_argument('--settings-only', action='store_true', help='Refresh Appearance and style-picker captures only')
 parser.add_argument('--campaign-only', action='store_true', help='Capture the five store campaign scenes for each device')
 parser.add_argument('--networks-only', action='store_true', help='Refresh only Networks captures after a chart/control change')
 parser.add_argument('--home-tools-only', action='store_true', help='Refresh only the phone Home, Router check, and Devices captures')
 parser.add_argument('--theme', choices=['dark', 'light'], default='dark')
-parser.add_argument('--locale', help='Play locale to capture in, e.g. de-DE (default: the studio default locale)')
 args = parser.parse_args()
-assert args.serial.startswith('emulator-'), 'Use a dedicated emulator, not a personal device.'
-repo = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(repo / 'store-listing/studio'))
-from uitree import Navigator, set_app_locale, write_sidecar  # noqa: E402
-
-studio = json.loads((repo / 'store-listing/studio.json').read_text())
-reference = studio.get('defaultLocale', 'en-US')
-locale = args.locale or reference
-# The reference locale records which UI node each tap hits; every other locale replays those tree paths,
-# so this flow is written once with English labels and still runs in German or Japanese.
-navigator = Navigator(repo / f'store-listing/{reference}/raw/tap-map.json', recording=locale == reference)
-raw = repo / f'store-listing/{locale}/raw'
-if args.theme == 'light':
-    raw = raw / 'light'
+mode = ('store' if args.store_only else 'campaign' if args.campaign_only else 'home-tools' if args.home_tools_only
+        else 'settings' if args.settings_only else 'networks' if args.networks_only else 'full')
+# Holds the connected sample at 84%; the app needs no network, and the fixture never scans.
+d = Device(args, 'com.bernaferrari.wifiweakspot.screenshots', 'com.bernaferrari.wifiweakspot.android.MainActivity',
+           battery=84, offline=False)
+raw = d.raw / 'light' if args.theme == 'light' else d.raw
 # README previews stay in the reference language.
-docs = repo / 'docs/screenshots' if locale == reference else Path('/tmp/wifi-weakspot-docs-unused')
-package = 'com.bernaferrari.wifiweakspot.screenshots'
-
-
-def adb(*parts):
-    # A starved emulator sometimes kills uiautomator or drops a command; try again before giving up.
-    for attempt in range(5):
-        try:
-            return subprocess.check_output(['adb', '-s', args.serial, *parts], stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError:
-            if attempt == 4:
-                raise
-            time.sleep(3)
-
-
-last_xml = None
-
-
-def dismiss_not_responding(root):
-    """A starved emulator can show "isn't responding" for the system itself; choose Wait and carry on."""
-    wait = next((n for n in root.iter('node') if n.get('text', '').lower() == 'wait'), None)
-    if wait is not None:
-        x1, y1, x2, y2 = map(int, re.findall(r'\d+', wait.get('bounds')))
-        adb('shell', 'input', 'tap', str((x1 + x2) // 2), str((y1 + y2) // 2))
-
-
-def tree():
-    # On a busy machine the app can take 20+ seconds to draw; wait for it instead of failing.
-    global last_xml
-    for attempt in range(30):
-        adb('shell', 'uiautomator', 'dump', '--compressed', '/sdcard/wifi-capture.xml')
-        last_xml = adb('shell', 'cat', '/sdcard/wifi-capture.xml')
-        root = ET.fromstring(last_xml)
-        if any(n.get('package') == package for n in root.iter('node')):
-            return root
-        dismiss_not_responding(root)
-        time.sleep(2)
-    raise AssertionError('Screenshot app is not foreground')
-
-
-def find(label, root=None):
-    return next((n for n in (root if root is not None else tree()).iter('node')
-                 if label.fullmatch(n.get('text', '')) or label.fullmatch(n.get('content-desc', ''))), None)
+docs = repo / 'docs/screenshots' if d.locale == d.reference else Path('/tmp/wifi-weakspot-docs-unused')
 
 
 def click(label):
-    pattern = re.compile(label) if isinstance(label, str) else label
-    mode = 'store' if args.store_only else 'campaign' if args.campaign_only else 'home-tools' if args.home_tools_only else 'settings' if args.settings_only else 'networks' if args.networks_only else 'full'
-    for attempt in range(20):
-        tree()
-        try:
-            node = navigator.resolve(f'{current_profile}|{args.theme}|{mode}|{pattern.pattern}', last_xml,
-                                     lambda n: bool(pattern.fullmatch(n.get('text', '')) or pattern.fullmatch(n.get('desc', ''))))
-            break
-        except AssertionError:
-            if attempt == 19:
-                raise
-            time.sleep(1)
-
-    x1, y1, x2, y2 = node['b']
-    adb('shell', 'input', 'tap', str((x1 + x2) // 2), str((y1 + y2) // 2))
-    time.sleep(1)
+    d.tap(label, wait=1, attempts=20, pause=1)
 
 
 def scroll(up=False):
-    adb('shell', 'input', 'swipe', str(width * 4 // 5), str(height * (3 if up else 8) // 10),
-        str(width * 4 // 5), str(height * (8 if up else 3) // 10), '300')
-    time.sleep(.4)
+    d.scroll(.5, up=up, x=.8, wait=.4)
 
 
 def capture(*paths):
-    root = tree()
-    assert not any('100%' in (n.get('text', '') + n.get('content-desc', '')) for n in root.iter('node'))
-    png = adb('exec-out', 'screencap', '-p')
-    # Some emulator versions print a multiple-display warning before the PNG stream.
-    png = png[png.index(b'\x89PNG\r\n\x1a\n'):]
-    im = Image.open(BytesIO(png)).convert('RGB')
-    assert im.size == (width, height), im.size
-    for path in paths:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        if path.suffix == '.png':
-            im.save(path)
-        else:
-            im.save(path, quality=95, subsampling=0)
-            # The UI tree beside each store capture lets callouts follow their element in every language.
-            write_sidecar(path, last_xml, width, height)
-        print(path.relative_to(repo) if path.is_relative_to(repo) else path, flush=True)
+    # A full battery reading would mean the fixture lost its 84% sample.
+    d.shot(*paths, settle=0, check=lambda nodes: not any('100%' in n.get('text', '') + n.get('desc', '') for n in nodes))
 
 
 def back():
-    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
-    time.sleep(.5)
+    d.back(.5)
 
 
-profiles = {name: (p['captureWidth'], p['captureHeight'], p['captureDensity'])
-            for name, p in json.loads((repo / 'store-listing/profiles.json').read_text()).items()
-            if name != 'desktop' and 'captureWidth' in p}
-original_size = adb('shell', 'wm', 'size').decode()
-original_density = adb('shell', 'wm', 'density').decode()
-assert 'Override' not in original_size + original_density, 'Start from a dedicated emulator with no display overrides.'
-current_profile = None
-try:
-    set_app_locale(adb, package, locale)
-    adb('shell', 'cmd', 'overlay', 'enable-exclusive', '--category', 'com.android.internal.systemui.navbar.gestural')
-    adb('shell', 'settings', 'put', 'global', 'sysui_demo_allowed', '1')
-    for profile, (width, height, density) in profiles.items():
-        if args.profile not in ('all', profile):
-            continue
-        current_profile = profile
-        adb('shell', 'am', 'broadcast', '-a', 'com.android.systemui.demo', '--es', 'command', 'exit')
-        adb('shell', 'am', 'force-stop', package)
-        adb('shell', 'wm', 'size', f'{width}x{height}')
-        adb('shell', 'wm', 'density', str(density))
-        time.sleep(1)
-        for extra in [('enter',), ('clock', '--es', 'hhmm', '0941'),
-                      ('battery', '--es', 'level', '84', '--es', 'plugged', 'false'),
-                      ('notifications', '--es', 'visible', 'false'),
-                      ('network', '--es', 'wifi', 'show', '--es', 'level', '4', '--es', 'fully', 'true', '--es', 'mobile', 'hide', '--es', 'sims', '0')]:
-            adb('shell', 'am', 'broadcast', '-a', 'com.android.systemui.demo', '--es', 'command', *extra)
-        adb('shell', 'am', 'start', '-W', '-n', package + '/com.bernaferrari.wifiweakspot.android.MainActivity')
-        time.sleep(2)
+with d:
+    for profile in d.profiles():
+        # Taps are recorded per profile, theme and mode in the reference locale and replayed in the others.
+        d.scope = f'{profile}|{args.theme}|{mode}'
+        d.launch(wait=2)
         if args.theme == 'light':
             click('Settings')
             click('Light')
@@ -165,31 +60,35 @@ try:
         phone = profile == 'phone'
         prefix = '' if phone else 'tablet/' + ('7-' if profile == 'tablet7' else '10-')
         if args.store_only:
-            if args.theme == 'dark':
-                if phone:
-                    capture(raw / '01-signal.jpg')
-                click('Networks')
-                click(r'2\.4 GHz, 18 networks')
-                capture(raw / (prefix + ('04-channels.jpg' if phone else '02-channels.jpg')))
-                click('Signal over time')
-                time.sleep(8)
-                capture(raw / ('05-history.jpg' if phone else prefix + '05-history.jpg'))
-            else:
-                click('Rooms')
-                capture(raw / (prefix + '02-rooms.jpg'))
-                click('Map your home')
-                capture(raw / (prefix + '03-coverage.jpg'))
+            # Every capture gallery.json uses in this theme; the moving history comes from capture_history_example.py.
+            if phone:
+                capture(raw / '01-signal.jpg')
+            click('Networks')
+            click(r'2\.4 GHz, 18 networks')
+            capture(raw / (prefix + ('04-channels.jpg' if phone else '02-channels.jpg')))
+            if phone:
+                click(re.compile(r'Suggested channel.*'))
+                capture(raw / '09-channel-advice.jpg')
                 back()
-                if phone:
-                    click('Home')
-                    scroll()
-                    click('Router check')
-                    click('GO')
-                    time.sleep(8)
-                    capture(raw / '06-router.jpg')
-                    back()
-                click('Settings')
-                capture(raw / ('08-appearance.jpg' if phone else prefix + '04-appearance.jpg'))
+            click('Rooms')
+            capture(raw / (prefix + '02-rooms.jpg'))
+            click('Map your home')
+            capture(raw / (prefix + '03-coverage.jpg'))
+            back()
+            if phone:
+                click('Home')
+                scroll()
+                click('Router check')
+                click('GO')
+                time.sleep(8)
+                capture(raw / '06-router.jpg')
+                back()
+                click('Devices')
+                time.sleep(4)
+                capture(raw / '07-devices.jpg')
+                back()
+            click('Settings')
+            capture(raw / ('08-appearance.jpg' if phone else prefix + '04-appearance.jpg'))
             continue
         if args.campaign_only:
             click('Networks')
@@ -224,7 +123,8 @@ try:
             click('Settings')
             appearance = '08-appearance.jpg' if phone else prefix + '04-appearance.jpg'
             preview = f'{args.theme}-settings.png' if phone else f'{profile}-{args.theme}-settings.png'
-            capture(raw / appearance, docs / preview)
+            # The README's dark settings card uses the dark phone capture.
+            capture(raw / appearance, docs / preview, *([d.raw / 'readme-dark-settings.jpg'] if phone and args.theme == 'dark' else []))
             continue
         if not args.networks_only:
             capture(raw / (prefix + ('01-signal.jpg' if phone else '01-home.jpg')),
@@ -247,7 +147,7 @@ try:
             capture(docs / f'{args.theme}-channel-selection.png')
             click(re.compile(r'Clear selected network: .+'))
         click(re.compile(r'Suggested channel.*'))
-        capture(docs / (f'{args.theme}-channel-advice.png' if phone else
+        capture(*([raw / '09-channel-advice.jpg'] if phone else []), docs / (f'{args.theme}-channel-advice.png' if phone else
                          ('tablet-' if profile == 'tablet7' else 'desktop-') +
                          ('light-' if args.theme == 'light' else '') + 'channel-advice.png'))
         back()
@@ -276,10 +176,3 @@ try:
             click('Settings')
             capture(raw / ('08-appearance.jpg' if phone else prefix + '04-appearance.jpg'),
                     *([docs / f'{args.theme}-settings.png'] if phone else []))
-finally:
-    navigator.save()
-    adb('shell', 'am', 'force-stop', package)
-    set_app_locale(adb, package, None)
-    adb('shell', 'wm', 'size', 'reset')
-    adb('shell', 'wm', 'density', 'reset')
-    adb('shell', 'am', 'broadcast', '-a', 'com.android.systemui.demo', '--es', 'command', 'exit')
