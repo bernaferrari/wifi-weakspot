@@ -77,7 +77,7 @@ The campaign uses its own artwork and copy. Research references: [Google Fit on 
 
 ## Branding
 
-`en-US/graphics/feature-source.png` is the generated master. `feature-graphic.png` is the 1024 × 500 RGB export, and its exact prompt is saved beside it. The 512 × 512 RGBA store icon comes from `design/branding/weak-spot-icon-final.png`. Label the generated icon and feature artwork accurately in Play Console. The screenshot UI is captured from the app, with deterministic HTML/CSS captions and framing.
+`en-US/graphics/feature-source.png` is the generated master. `feature-graphic.png` is the 1024 × 500 RGB export, and its exact prompt is saved beside it. The 512 × 512 store icon is `store-listing/brand/icon.png`, written with every other icon by `node store-listing/studio/icon.cjs` from the layers in `store-listing/brand` (the painted `foreground.png` and `background.png`). Label the generated icon and feature artwork accurately in Play Console. The screenshot UI is captured from the app, with deterministic HTML/CSS captions and framing.
 
 Saved drafts are not publication. Sending changes for review happens separately in Publishing overview.
 

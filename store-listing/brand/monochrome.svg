@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
+  <!-- The mark's silhouette in white, for themed icons. -->
+  <defs><filter id="white"><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0"/></filter></defs>
+  <image href="foreground.png" x="23.8787" y="23.9504" width="59.9558" height="59.9558" filter="url(#white)"/>
+</svg>

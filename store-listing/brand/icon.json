@@ -1,0 +1,8 @@
+{
+  "android": {"res": "androidApp/src/main/res", "legacy": true},
+  "files": [
+    {"path": "webDemo/src/wasmJsMain/resources/favicon.png", "size": 32, "shape": "rounded"},
+    {"path": "webDemo/src/wasmJsMain/resources/favicon.ico", "shape": "rounded"},
+    {"path": "store-listing/brand/icon.png", "size": 512, "shape": "square"}
+  ]
+}
