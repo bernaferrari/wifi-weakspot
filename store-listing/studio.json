@@ -63,5 +63,33 @@
       "uv run -q --with pillow python3 store-listing/prepare.py",
       "python3 scripts/refresh_readme_assets.py"
     ]
+  },
+  "identity": {
+    "icon": "../docs/app-icon.png"
+  },
+  "frames": {
+    "phone": {
+      "bezel": 0.02,
+      "radius": 0.09
+    },
+    "tablet": {
+      "bezel": 0.02,
+      "radius": 0.09
+    },
+    "landscape": {
+      "bezel": 0.011,
+      "radius": 0.035
+    },
+    "browser": {
+      "bezel": 0.011,
+      "radius": 0.035
+    }
+  },
+  "bounds": {
+    "layouts": {
+      "wide": {
+        "cut": true
+      }
+    }
   }
 }

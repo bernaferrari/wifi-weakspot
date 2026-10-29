@@ -31,6 +31,9 @@ function walk(W, H, index, count) {
 }
 
 export default {
+  // The walk runs across every card's seam.
+  continuous: true,
+
   art({W, H, index, slide, slides}) {
     if (W === 2400 && H === 1260) return wash(W, H, slide);
     return walk(W, H, index, slides.length);
@@ -43,23 +46,5 @@ export default {
     for (const [name, colour] of Object.entries(colours)) main.style.setProperty(`--wave-${name}`, wave(colour));
     const tone = {channels: 'green', history: 'amber', coverage: 'coral', rooms: 'green', home: 'coral', router: 'amber', network: 'violet', appearance: 'violet', 'readme-hero': 'coral', 'readme-channels': 'green', 'readme-tools': 'coral'}[slide.feature];
     if (tone) main.style.setProperty('--wave', `var(--wave-${tone})`);
-    // The README's first image is the app's name card: icon and name, large, over the real app; nothing else.
-    if (slide.identity) {
-      main.querySelector('header')?.remove();
-      const id = document.createElement('div');
-      id.className = 'identity';
-      id.dataset.checkBounds = '';
-      id.innerHTML = '<img src="../../docs/app-icon.png" alt="">WiFi Weakspot';
-      main.append(id);
-    }
-  },
-
-  /** Bezel and corners scale with the device width. */
-  layout({main}) {
-    for (const node of main.querySelectorAll('.device')) {
-      const image = node.querySelector('img'), width = node.clientWidth, landscape = image.naturalWidth > image.naturalHeight;
-      node.style.setProperty('--bezel', `${Math.round(width * (landscape ? .011 : .02))}px`);
-      node.style.setProperty('--radius', `${Math.round(width * (landscape ? .035 : .09))}px`);
-    }
   }
 };
