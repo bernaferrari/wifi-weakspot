@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.settings
 
+import com.bernaferrari.wifiweakspot.core.designsystem.exceptBottom
 import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -45,9 +46,9 @@ fun AboutScreen(onBack: () -> Unit) {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, strings.common.back) }
         })
     }) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
+        Box(Modifier.fillMaxSize().padding(padding.exceptBottom()), contentAlignment = Alignment.TopCenter) {
             Column(
-                Modifier.widthIn(max = 600.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 40.dp),
+                Modifier.widthIn(max = 600.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = padding.calculateBottomPadding() + 40.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 SignalMorphBlob(quality = SignalQuality.Excellent, color = scheme.primaryContainer, size = 140.dp) {

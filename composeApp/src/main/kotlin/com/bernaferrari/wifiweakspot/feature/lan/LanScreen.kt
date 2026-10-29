@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.lan
 
+import com.bernaferrari.wifiweakspot.core.designsystem.exceptBottom
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -131,13 +132,13 @@ fun LanScreen(
             // The progress row below shows the scan; the pull indicator would duplicate it.
             isRefreshing = false,
             onRefresh = { haptics.click(); viewModel.startScan() },
-            modifier = Modifier.padding(padding)
+            modifier = Modifier.padding(padding.exceptBottom())
         ) {
             val yourNetwork = strings.common.yourNetwork
             val otherDevices = strings.tools.otherDevicesGroup(others.size)
             val footer = strings.tools.noDevicesFoundSubtitle
             LazyColumn(
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 32.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = padding.calculateBottomPadding() + 32.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
                 item(key = "status") {
