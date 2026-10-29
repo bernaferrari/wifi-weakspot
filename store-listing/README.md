@@ -45,13 +45,12 @@ After capturing both themes, run `python3 scripts/compare_screenshot_themes.py` 
 Phone and tablet images are captured from the real Android UI on the shared `Resizable_Experimental` emulator (`emulator-5578`). Android renders the status-bar clock, Wi-Fi and battery icons, window insets, and gesture-navigation pill. The `screenshots` build uses a separate application ID (`com.bernaferrari.wifiweakspot.screenshots`), in-memory settings, sample networks, and saved example room readings. It does not scan nearby networks. Ordinary still captures hold the connected sample at 84%. The same fixtures also serve the browser demo; production builds do not include them.
 
 ```sh
-./gradlew :androidApp:assembleScreenshots
-adb -s emulator-5578 install -r androidApp/build/outputs/apk/screenshots/androidApp-screenshots.apk
-python3 scripts/capture_android_screenshots.py --serial emulator-5578 --store-only --theme dark --locale en-US
-python3 scripts/capture_android_screenshots.py --serial emulator-5578 --store-only --theme light --locale en-US
-python3 scripts/capture_history_example.py --serial emulator-5578 --profile all
+node store-listing/studio/recapture.cjs              # build, install, capture every language and size, export, refresh README images
+node store-listing/studio/recapture.cjs de-DE --no-build
 python3 scripts/record_android_capture_provenance.py --serial emulator-5578 --locale en-US
 ```
+
+`studio.json` → `capture` lists the runs: `--store-only --theme light` (every capture `gallery.json` uses), the moving light history, and the dark phone settings for the README. The emulator plumbing (display sizes, demo-mode status bar, tap maps, sidecars, cleanup) is the studio's `capture.py`; the two scripts are only scene tours.
 
 Use `--serial emulator-5578`, the shared Resizable_Experimental emulator. The script requires Pillow and gesture-navigation support. `--campaign-only` captures the same five scenes for all three device profiles. Use `--theme light` to capture a matching light set under `en-US/raw/light/`; the default dark set stays in `en-US/raw/`. Use `--home-tools-only --profile phone` to refresh just Home, Router check, and Devices; `--networks-only` refreshes just charts, selection states, and channel advice; `--settings-only` refreshes Appearance and the style picker.
 
@@ -103,7 +102,7 @@ Open the editor with `node store-listing/studio/server.cjs 8790`. Use **Cards**,
 
 Render one completed language with `node store-listing/studio/export.cjs --locale de-DE --strict` (set `PLAYWRIGHT_MODULE` if needed). `--kind phone` limits the gallery. Missing words or images borrow English and are flagged. A callout that cannot follow its UI element is flagged too; `--strict` rejects those three conditions. Draft locales should fail strict checks until translated and captured. README images continue to use English assets. Nothing is uploaded or published by this workflow.
 
-For the current gallery use `capture_android_screenshots.py --store-only --theme dark` and then `--store-only --theme light`, each with `--serial emulator-5578 --locale <locale>`. The reference run records `en-US/raw/tap-map.json`; localized runs replay those UI paths. `capture_history_example.py --locale <locale>` records the moving signal variant with its own reference tap map.
+For the current gallery run `node store-listing/studio/recapture.cjs <locale>` (or `capture_android_screenshots.py --store-only --theme light --locale <locale>` alone). The reference run records `en-US/raw/tap-map.json`; localized runs replay those UI paths. `capture_history_example.py --locale <locale>` records the moving signal variant with its own reference tap map.
 
 Desktop uses the production browser demo. Build it, serve `webDemo/build/dist/wasmJs/productionExecutable`, then run `PLAYWRIGHT_MODULE=/path/to/playwright node scripts/capture_desktop_screenshots.cjs --url http://127.0.0.1:8835 --locale en-US`, followed by `--locale de-DE`. This records separate desktop navigation positions and layout sidecars.
 
