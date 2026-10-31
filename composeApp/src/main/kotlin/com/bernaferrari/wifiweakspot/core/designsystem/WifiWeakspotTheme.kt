@@ -49,14 +49,17 @@ fun WifiWeakspotTheme(
     val reduceMotion = reduceMotionSetting || platform.systemReducedMotion()
     platform.ApplySystemBars(effectiveDark)
 
-    // Wallpaper remains a color source; the selected style also applies to that source.
+    // Wallpaper colors are used exactly as Android gives them, so the app matches the rest of the phone (Android
+    // has its own style setting for them). The color style shapes the app's own colors, as in every app of
+    // the family; Settings shows the style row only for those.
     val wallpaperScheme = if (dynamicColor) platform.dynamicColorScheme(effectiveDark) else null
     val resolvedSeed = wallpaperScheme?.primary ?: Color(seedColorInt)
-    val colorScheme = rememberDynamicMaterialThemeState(
-        seedColor = resolvedSeed,
+    val styledScheme = rememberDynamicMaterialThemeState(
+        seedColor = Color(seedColorInt),
         isDark = effectiveDark,
         style = colorStyle.palette
     ).colorScheme
+    val colorScheme = wallpaperScheme ?: styledScheme
 
     CompositionLocalProvider(
         LocalThemeSettings provides ThemeSettings(

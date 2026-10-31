@@ -168,16 +168,20 @@ fun SettingsScreen(
                             }
                         )
                     }
-                    ColorStylePicker(
-                        selected = themeSettings.colorStyle,
-                        seedColor = themeSettings.resolvedSeed,
-                        dark = themeSettings.effectiveDark,
-                        onSelect = { style ->
-                            haptics.light()
-                            scope.launch { settingsRepository.setColorStyle(style) }
-                        },
-                        modifier = Modifier.fillMaxWidth().padding(16.dp)
-                    )
+                    // The style shapes the app's own colors; wallpaper colors come as Android gives them, so the
+                    // row slides away while they are in use.
+                    androidx.compose.animation.AnimatedVisibility(visible = !(dynamicColor && wallpaperScheme != null)) {
+                        ColorStylePicker(
+                            selected = themeSettings.colorStyle,
+                            seedColor = Color(seedColor),
+                            dark = themeSettings.effectiveDark,
+                            onSelect = { style ->
+                                haptics.light()
+                                scope.launch { settingsRepository.setColorStyle(style) }
+                            },
+                            modifier = Modifier.fillMaxWidth().padding(16.dp)
+                        )
+                    }
                     SettingsBlock(
                         icon = Icons.Default.SignalCellularAlt,
                         title = strings.settings.showSignalAs,
