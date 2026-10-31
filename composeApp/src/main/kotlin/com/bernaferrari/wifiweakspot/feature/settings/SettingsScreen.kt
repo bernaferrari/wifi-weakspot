@@ -28,6 +28,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
@@ -144,8 +145,9 @@ fun SettingsScreen(
                     Box(Modifier.fillMaxWidth().padding(16.dp)) {
                         SettingsChoices(themes, themes.first { it.second == darkMode }, onSelect = { (_, value, _) ->
                             haptics.light(); scope.launch { settingsRepository.setDarkMode(value) }
-                        }) { (label, _, icon) ->
-                            Icon(icon, null, Modifier.size(ToggleButtonDefaults.IconSize))
+                        }) { (label, value, icon) ->
+                            // The chosen mode trades its icon for a check, as in every app of the family.
+                            Icon(if (value == darkMode) Icons.Rounded.Check else icon, null, Modifier.size(ToggleButtonDefaults.IconSize))
                             Spacer(Modifier.width(ToggleButtonDefaults.IconSpacing))
                             Text(label, maxLines = 1)
                         }
@@ -489,7 +491,7 @@ fun <T> SettingsChoices(
                     checkedContainerColor = MaterialTheme.colorScheme.primary,
                     checkedContentColor = MaterialTheme.colorScheme.onPrimary,
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
                 modifier = Modifier.weight(1f).heightIn(min = 48.dp)
             ) { label(option) }

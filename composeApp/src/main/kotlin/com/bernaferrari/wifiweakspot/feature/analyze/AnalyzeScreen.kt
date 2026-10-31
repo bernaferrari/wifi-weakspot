@@ -369,7 +369,12 @@ private fun NetworksContent(
                                             onCheckedChange = { haptics.light(); showHistory = history },
                                             shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes() else ButtonGroupDefaults.connectedTrailingButtonShapes(),
                                             contentPadding = PaddingValues(horizontal = 12.dp),
-                                            colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+                                            colors = ToggleButtonDefaults.colors(
+                                                checkedContainerColor = MaterialTheme.colorScheme.primary,
+                                                checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            ),
                                             modifier = Modifier.size(48.dp)
                                         ) { Icon(look.first, look.second, Modifier.size(20.dp)) }
                                     }
@@ -547,7 +552,12 @@ private fun AppBarBandSelector(band: FrequencyBand, counts: Map<FrequencyBand, I
                     else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                 },
                 contentPadding = PaddingValues(horizontal = 6.dp),
-                colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+                colors = ToggleButtonDefaults.colors(
+                    checkedContainerColor = MaterialTheme.colorScheme.primary,
+                    checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
                 modifier = Modifier.weight(1f).height(48.dp).semantics { contentDescription = description }
             ) {
                 Row(Modifier.clearAndSetSemantics { }, verticalAlignment = Alignment.CenterVertically) {
@@ -586,7 +596,12 @@ internal fun CompactBandSelector(band: FrequencyBand, onSelect: (FrequencyBand) 
                 contentPadding = PaddingValues(horizontal = 14.dp),
                 // Same connected group as the full selector; unselected segments get a tone so they
                 // read as buttons against the app bar.
-                colors = ToggleButtonDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
+                colors = ToggleButtonDefaults.colors(
+                    checkedContainerColor = MaterialTheme.colorScheme.primary,
+                    checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
                 modifier = Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp).semantics { contentDescription = entry.label }
             ) { Text(entry.label.removeSuffix(" GHz"), style = MaterialTheme.typography.labelLarge) }
         }
