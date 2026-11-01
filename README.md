@@ -7,6 +7,7 @@ A Wi-Fi analyzer for Android 8.0 and newer.</p>
 
 <p align="center">
   <a href="https://play.google.com/store/apps/details?id=com.bernaferrari.wifiweakspot"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="80" alt="Get it on Google Play"></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.bernaferrari.wifiweakspot%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fbernaferrari%2Fwifi-weakspot%22%2C%22author%22%3A%22bernaferrari%22%2C%22name%22%3A%22WiFi%20Weakspot%22%7D"><img src="docs/obtainium-badge.png" height="80" alt="Get it on Obtainium"></a>
 </p>
 
 Every nearby 2.4, 5 and 6 GHz network as a wave, so crowded channels are obvious. Get a suggested channel, or switch to history and watch each signal as you move.
