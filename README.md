@@ -1,6 +1,6 @@
-<h1 align="center">
+<p align="center">
   <img src="store-listing/en-US/readme/channels.jpg" width="100%" alt="WiFi Weakspot">
-</h1>
+</p>
 
 <p align="center"><b>See where your Wi-Fi gets weak, room by room.</b><br>
 A Wi-Fi analyzer for Android 8.0 and newer.</p>
