@@ -1,21 +1,22 @@
 """Capture a changing example signal using the isolated screenshot APK, never real networks.
 
 The capture-only activity records 45 seconds of an example walk through a weak spot for each profile.
-Emulator plumbing comes from the studio's capture.py.
+Emulator plumbing comes from the studio's capture.py; `npx screenshot-studio recapture` runs this with the
+studio's folder on PYTHONPATH.
 """
-import sys
 import time
 from pathlib import Path
 
+from capture import Device, parser  # the studio's, on PYTHONPATH when recapture runs this tour
+
 repo = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(repo / 'store-listing/studio'))
-from capture import Device, parser  # noqa: E402
 
 parser = parser(__doc__)
 parser.add_argument('--theme', choices=['dark', 'light'], default='dark')
 args = parser.parse_args()
 d = Device(args, 'com.bernaferrari.wifiweakspot.screenshots', 'com.bernaferrari.wifiweakspot.android.ScreenshotActivity',
-           tap_map=f'tap-map-history-{args.theme}.json', battery=84, offline=False)
+           tap_map=f'tap-map-history-{args.theme}.json', battery=84, offline=False,
+           listing=repo / 'store-listing')
 
 
 def no_full_battery(nodes):

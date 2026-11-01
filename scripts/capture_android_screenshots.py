@@ -1,17 +1,16 @@
 """Capture the isolated Android demo on the capture emulator (requires Pillow and adb).
 
-Build and install the screenshots build first, or run `node store-listing/studio/recapture.cjs`, which
-builds, captures every locale and exports. The emulator plumbing (display size per profile, demo-mode
+Build and install the screenshots build first, or run `npx screenshot-studio recapture`, which
+builds, captures every locale and exports. Run alone with the studio's folder on PYTHONPATH (recapture sets it). The emulator plumbing (display size per profile, demo-mode
 status bar, tap maps, sidecars, cleanup) is the studio's `capture.py`; this file is the scene tour.
 """
 import re
-import sys
 import time
 from pathlib import Path
 
+from capture import Device, parser  # the studio's, on PYTHONPATH when recapture runs this tour
+
 repo = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(repo / 'store-listing/studio'))
-from capture import Device, parser  # noqa: E402
 
 parser = parser(__doc__)
 parser.add_argument('--store-only', action='store_true', help='Capture just the current gallery sources in the selected theme')
@@ -25,7 +24,7 @@ mode = ('store' if args.store_only else 'campaign' if args.campaign_only else 'h
         else 'settings' if args.settings_only else 'networks' if args.networks_only else 'full')
 # Holds the connected sample at 84%; the app needs no network, and the fixture never scans.
 d = Device(args, 'com.bernaferrari.wifiweakspot.screenshots', 'com.bernaferrari.wifiweakspot.android.MainActivity',
-           battery=84, offline=False)
+           battery=84, offline=False, listing=repo / 'store-listing')
 raw = d.raw / 'light' if args.theme == 'light' else d.raw
 # README previews stay in the reference language.
 docs = repo / 'docs/screenshots' if d.locale == d.reference else Path('/tmp/wifi-weakspot-docs-unused')

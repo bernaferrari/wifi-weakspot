@@ -55,13 +55,13 @@ python3 scripts/check_bidi.py
 
 ## Store screenshots and icon
 
-Screenshot Studio lives in `store-listing/studio/`. It is synced from `~/Documents/screenshot-studio`, so never edit it here. App-specific config is `store-listing/studio.json`; details are in [store-listing/README.md](../store-listing/README.md).
+Screenshot Studio comes from the `screenshot-studio` package (`npx screenshot-studio …`, run in the repository); `store-listing/` keeps only this app's words, look and captures. App-specific config is `store-listing/studio.json`; details are in [store-listing/README.md](../store-listing/README.md).
 
 - The `screenshots` build type (`./gradlew :androidApp:assembleScreenshots`, package `com.bernaferrari.wifiweakspot.screenshots`) is a release-configured build with in-memory settings, sample networks and saved example room readings. It never scans real networks. The capture runs are the scene tours `scripts/capture_android_screenshots.py` and `scripts/capture_history_example.py`.
-- `node store-listing/studio/recapture.cjs` builds, installs and captures on the dedicated emulator `CAPTURE_SERIAL` (default `emulator-5578`, never a personal phone), exports every language, then refreshes the README images. Useful flags: a locale such as `en-US`, `--profile phone`, `--no-build`, `--no-capture`.
-- Export only: `PLAYWRIGHT_MODULE=/path/to/playwright node store-listing/studio/export.cjs --locale en-US`. Live editor: `node store-listing/studio/server.cjs 8790`, then open `http://127.0.0.1:8790/store-listing/studio/`.
+- `npx screenshot-studio recapture` builds, installs and captures on the dedicated emulator `CAPTURE_SERIAL` (default `emulator-5578`, never a personal phone), exports every language, then refreshes the README images. Useful flags: a locale such as `en-US`, `--profile phone`, `--no-build`, `--no-capture`.
+- Export only: `npx screenshot-studio export --locale en-US`. Live editor: `npx screenshot-studio studio --open` (`http://127.0.0.1:8790/store-listing/studio/`).
 - Desktop artwork comes from the web demo: `scripts/capture_desktop_screenshots.cjs` (see the store-listing README).
-- Icon: layers in `store-listing/brand/*.svg` plus `brand/icon.json`. `node store-listing/studio/icon.cjs` regenerates the Android launcher icons, the web demo favicons and the 512 px store icon.
+- Icon: layers in `store-listing/brand/*.svg` plus `brand/icon.json`. `npx screenshot-studio icons` regenerates the Android launcher icons, the web demo favicons and the 512 px store icon.
 
 ## Good to know
 

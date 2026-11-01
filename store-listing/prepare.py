@@ -13,11 +13,11 @@ parser.add_argument('--locale', help='Check one configured locale')
 parser.add_argument('--strict', action='store_true', help='Reject untranslated fields and missing captures/exports')
 args = parser.parse_args()
 here = Path(__file__).resolve().parent
-read = lambda path: json.loads(path.read_text())
+read = lambda path: json.loads(path.read_text(), object_hook=lambda o: {k: v for k, v in o.items() if k != '$schema'})
 config = read(here / 'studio.json')
 reference = config.get('defaultLocale', 'en-US')
 locales = [args.locale] if args.locale else config['locales']
-assert set(locales) <= set(config['locales']), 'Unknown locale; initialize it with studio/locales.cjs --init'
+assert set(locales) <= set(config['locales']), 'Unknown locale; initialize it with npx screenshot-studio locales --init'
 reference_copy = read(here / reference / 'copy.json')
 galleries = read(here / 'gallery.json')
 profiles = read(here / 'profiles.json')
