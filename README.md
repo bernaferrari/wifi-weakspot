@@ -2,8 +2,7 @@
   <img src="store-listing/en-US/readme/channels.jpg" width="100%" alt="WiFi Weakspot">
 </p>
 
-<p align="center"><b>See where your Wi-Fi gets weak, room by room.</b><br>
-A Wi-Fi analyzer for Android 8.0 and newer.</p>
+<p align="center"><b>See where your Wi-Fi gets weak, room by room.</b></p>
 
 <p align="center">
   <a href="https://play.google.com/store/apps/details?id=com.bernaferrari.wifiweakspot"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" height="80" alt="Get it on Google Play"></a>
