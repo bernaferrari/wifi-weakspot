@@ -38,7 +38,7 @@ cd wifi-weakspot
 | `androidApp/` | The Android application: manifest, icons, signing, and the `screenshots` build type |
 | `webDemo/` | Browser build of `composeApp`'s shared source with simulated platform services |
 | `demo-fixtures/` | Sample networks and room readings shared by the web demo and the `screenshots` build |
-| `scripts/` | Bidi check, emulator smoke test, capture scene tours, README asset refresh |
+| `scripts/` | Bidi check, emulator smoke test, capture provenance, README asset refresh |
 | `store-listing/` | Play listing copy, artwork sources, brand icon layers, Screenshot Studio |
 | `docs/` | This page, localization notes, README images |
 
@@ -57,7 +57,7 @@ python3 scripts/check_bidi.py
 
 Screenshot Studio comes from the `screenshot-studio` package (`npx screenshot-studio …`, run in the repository); `store-listing/` keeps only this app's words, look and captures. App-specific config is `store-listing/studio.json`; details are in [store-listing/README.md](../store-listing/README.md).
 
-- The `screenshots` build type (`./gradlew :androidApp:assembleScreenshots`, package `com.bernaferrari.wifiweakspot.screenshots`) is a release-configured build with in-memory settings, sample networks and saved example room readings. It never scans real networks. The capture runs are the scene tours `scripts/capture_android_screenshots.py` and `scripts/capture_history_example.py`.
+- The `screenshots` build type (`./gradlew :androidApp:assembleScreenshots`, package `com.bernaferrari.wifiweakspot.screenshots`) is a release-configured build with in-memory settings, sample networks and saved example room readings. It never scans real networks. The scene tour is `store-listing/capture.tour.mjs`.
 - `npx screenshot-studio recapture` builds, installs and captures on the dedicated emulator `CAPTURE_SERIAL` (default `emulator-5578`, never a personal phone), exports every language, then refreshes the README images. Useful flags: a locale such as `en-US`, `--profile phone`, `--no-build`, `--no-capture`.
 - Export only: `npx screenshot-studio export --locale en-US`. Live editor: `npx screenshot-studio studio --open` (`http://127.0.0.1:8790/store-listing/studio/`).
 - Desktop artwork comes from the web demo: `scripts/capture_desktop_screenshots.cjs` (see the store-listing README).

@@ -56,8 +56,6 @@ manifest=dict(source='Android Resizable_Experimental emulator; adb exec-out scre
     latestInstalledApkSha256=installed_hash,
     systemUi='Real Android status bar at 09:41, Wi-Fi, 84% battery, and gesture navigation',
     sampleData=True,phoneDisplay='1080×2340; Galaxy S25 19.5:9 aspect ratio, not Samsung hardware',
-    captureScripts=[f'scripts/capture_android_screenshots.py --store-only --theme dark --locale {args.locale}',
-        f'scripts/capture_android_screenshots.py --store-only --theme light --locale {args.locale}',
-        f'scripts/capture_history_example.py --profile all --locale {args.locale}'],captures=records)
+    captureTour=f'store-listing/capture.tour.mjs (npx screenshot-studio tour --locale {args.locale})',captures=records)
 (root/'raw/capture-manifest.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False)+'\n')
 print(f'Cataloged {len(records)} native Android captures with pixel dimensions, APK and image hashes.')

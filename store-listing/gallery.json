@@ -4,75 +4,75 @@
     {
       "feature": "channels",
       "layout": "one",
-      "raw": "light/04-channels.jpg",
+      "raw": "phone/channels.png",
       "file": "screenshots/v10-01-channels.jpg"
     },
     {
       "feature": "history",
       "layout": "one",
-      "raw": "light/05-history.jpg",
+      "raw": "phone/history.png",
       "file": "screenshots/v10-02-history.jpg"
     },
     {
       "feature": "coverage",
       "layout": "one",
       "file": "screenshots/v10-03-coverage.jpg",
-      "raw": "light/03-coverage.jpg"
+      "raw": "phone/coverage.png"
     },
     {
       "feature": "rooms",
       "layout": "one",
-      "raw": "light/02-rooms.jpg",
+      "raw": "phone/rooms.png",
       "file": "screenshots/v10-04-rooms.jpg"
     },
     {
       "feature": "home",
       "layout": "one",
       "file": "screenshots/v10-05-home.jpg",
-      "raw": "light/01-signal.jpg"
+      "raw": "phone/signal.png"
     },
     {
       "feature": "router",
       "layout": "one",
-      "raw": "light/06-router.jpg",
+      "raw": "phone/router.png",
       "file": "screenshots/v10-06-router.jpg"
     },
     {
       "feature": "network",
       "layout": "one",
-      "raw": "light/07-devices.jpg",
+      "raw": "phone/devices.png",
       "file": "screenshots/v10-07-network.jpg"
     },
     {
       "feature": "appearance",
       "layout": "one",
       "file": "screenshots/v10-08-appearance.jpg",
-      "raw": "readme-dark-settings.jpg"
+      "raw": "phone/appearance-dark.png"
     }
   ],
   "tablet7": [
     {
       "feature": "channels",
       "layout": "one",
-      "raw": "light/tablet/7-02-channels.jpg",
+      "raw": "tablet7/channels.png",
       "file": "tablet/v10-7-01-channels.jpg"
     },
     {
       "feature": "history",
       "layout": "one",
-      "raw": "light/tablet/7-05-history.jpg",
+      "raw": "tablet7/history.png",
       "file": "tablet/v10-7-02-history.jpg"
     },
     {
       "feature": "coverage",
       "layout": "one",
       "file": "tablet/v10-7-03-coverage.jpg",
-      "raw": "light/tablet/7-03-coverage.jpg"
+      "raw": "tablet7/coverage.png"
     },
     {
       "feature": "rooms",
       "layout": "one",
-      "raw": "light/tablet/7-02-rooms.jpg",
+      "raw": "tablet7/rooms.png",
       "file": "tablet/v10-7-04-rooms.jpg"
     }
   ],
@@ -80,25 +80,25 @@
     {
       "feature": "channels",
       "layout": "one",
-      "raw": "light/tablet/10-02-channels.jpg",
+      "raw": "tablet10/channels.png",
       "file": "tablet/v10-10-01-channels.jpg"
     },
     {
       "feature": "history",
       "layout": "one",
-      "raw": "light/tablet/10-05-history.jpg",
+      "raw": "tablet10/history.png",
       "file": "tablet/v10-10-02-history.jpg"
     },
     {
       "feature": "coverage",
       "layout": "one",
       "file": "tablet/v10-10-03-coverage.jpg",
-      "raw": "light/tablet/10-03-coverage.jpg"
+      "raw": "tablet10/coverage.png"
     },
     {
       "feature": "rooms",
       "layout": "one",
-      "raw": "light/tablet/10-02-rooms.jpg",
+      "raw": "tablet10/rooms.png",
       "file": "tablet/v10-10-04-rooms.jpg"
     }
   ],
@@ -136,12 +136,12 @@
       "alt": "Find your weak spots: a coverage map of a home from weak red to strong green on a tablet, and the Rooms screen comparing saved readings",
       "devices": [
         {
-          "raw": "light/tablet/7-03-coverage.jpg",
+          "raw": "tablet7/coverage.png",
           "role": "slate",
           "frame": "tablet"
         },
         {
-          "raw": "light/02-rooms.jpg",
+          "raw": "phone/rooms.png",
           "role": "front"
         }
       ],
@@ -160,12 +160,12 @@
       "alt": "WiFi Weakspot: every nearby network as channel waves on a tablet, with the signal history of a walk on a phone",
       "devices": [
         {
-          "raw": "light/tablet/10-02-channels.jpg",
+          "raw": "tablet10/channels.png",
           "role": "slate",
           "frame": "tablet"
         },
         {
-          "raw": "light/05-history.jpg",
+          "raw": "phone/history.png",
           "role": "front"
         }
       ],
@@ -183,17 +183,17 @@
       "alt": "More than a signal meter: Router check answering in 4.1 ms, the suggested channel with steps to change it, and the devices connected to your Wi-Fi",
       "devices": [
         {
-          "raw": "light/06-router.jpg",
+          "raw": "phone/router.png",
           "role": "one",
           "label": "*Router* speed"
         },
         {
-          "raw": "light/09-channel-advice.jpg",
+          "raw": "phone/channel-advice.png",
           "role": "two",
           "label": "*Best* channel"
         },
         {
-          "raw": "light/07-devices.jpg",
+          "raw": "phone/devices.png",
           "role": "three",
           "label": "*Who*'s connected"
         }
