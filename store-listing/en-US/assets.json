@@ -7,7 +7,7 @@
         "slide": 0,
         "width": 1080,
         "height": 1920,
-        "bytes": 215931,
+        "bytes": 216707,
         "sources": [
           "raw/phone/channels.png"
         ]
@@ -18,7 +18,7 @@
         "slide": 1,
         "width": 1080,
         "height": 1920,
-        "bytes": 206789,
+        "bytes": 207973,
         "sources": [
           "raw/phone/history.png"
         ]
@@ -62,7 +62,7 @@
         "slide": 5,
         "width": 1080,
         "height": 1920,
-        "bytes": 162378,
+        "bytes": 162792,
         "sources": [
           "raw/phone/router.png"
         ]
@@ -97,7 +97,7 @@
         "slide": 0,
         "width": 1200,
         "height": 1920,
-        "bytes": 219514,
+        "bytes": 219738,
         "sources": [
           "raw/tablet7/channels.png"
         ]
@@ -108,7 +108,7 @@
         "slide": 1,
         "width": 1200,
         "height": 1920,
-        "bytes": 213255,
+        "bytes": 214998,
         "sources": [
           "raw/tablet7/history.png"
         ]
@@ -143,7 +143,7 @@
         "slide": 0,
         "width": 1920,
         "height": 1200,
-        "bytes": 202191,
+        "bytes": 203818,
         "sources": [
           "raw/tablet10/channels.png"
         ]
@@ -154,7 +154,7 @@
         "slide": 1,
         "width": 1920,
         "height": 1200,
-        "bytes": 187511,
+        "bytes": 192465,
         "sources": [
           "raw/tablet10/history.png"
         ]
@@ -247,7 +247,7 @@
         "slide": 1,
         "width": 2400,
         "height": 1260,
-        "bytes": 283077,
+        "bytes": 287741,
         "sources": [
           "raw/tablet10/channels.png",
           "raw/phone/history.png"
@@ -259,7 +259,7 @@
         "slide": 2,
         "width": 2400,
         "height": 1260,
-        "bytes": 275230,
+        "bytes": 275852,
         "sources": [
           "raw/phone/router.png",
           "raw/phone/channel-advice.png",

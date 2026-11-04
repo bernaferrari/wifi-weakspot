@@ -2,12 +2,12 @@
   {
     "file": "docs/screenshots/readme-channels.jpg",
     "source": "store-listing/en-US/screenshots/v10-01-channels.jpg",
-    "sha256": "e1a101dca36dce494412b71157f61d5e87b0b189f0395cc247fae96759ba8a0e"
+    "sha256": "9635af7375050ab0a421db8b25586e03d2b28a7743949cdb200cf77c4a40298c"
   },
   {
     "file": "docs/screenshots/readme-overtime.jpg",
     "source": "store-listing/en-US/screenshots/v10-02-history.jpg",
-    "sha256": "ed3c70c6eb7af6320502f50d6e98db3e9047bbae95b73fd194215258257850ea"
+    "sha256": "23f40a805c013b25bbe92386ac08ff7fbef324836ea26e31c843d58da6a13a65"
   },
   {
     "file": "docs/screenshots/readme-floorplan.jpg",
@@ -22,7 +22,7 @@
   {
     "file": "docs/screenshots/readme-router.jpg",
     "source": "store-listing/en-US/screenshots/v10-06-router.jpg",
-    "sha256": "c0cd5f1c23b5b37df0de17b2ccb6678055f6570cfee0a92d0838280e5adcd2c9"
+    "sha256": "4d6c29b7a9026230c0da8cf50da351a96b28bf92b34c2aae20c7f444d16325fb"
   },
   {
     "file": "docs/screenshots/readme-network.jpg",
@@ -37,6 +37,6 @@
   {
     "file": "docs/screenshots/readme-wide.jpg",
     "source": "store-listing/en-US/tablet/v10-10-01-channels.jpg",
-    "sha256": "8d1c8bd67f25c570791c75d9ad185dda096519f833ab4c2f507042116af19892"
+    "sha256": "b5ea663b613a03b2d403aae38731c58caed8d51b59fc60c3bce4e8d50c30c01d"
   }
 ]

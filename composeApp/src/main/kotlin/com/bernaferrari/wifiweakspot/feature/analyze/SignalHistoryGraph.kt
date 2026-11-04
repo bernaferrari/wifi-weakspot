@@ -83,7 +83,7 @@ fun SignalHistoryGraph(
         .take(MaxLines)
     val samples = shown.maxOfOrNull { readings[it.bssid]?.size ?: 0 } ?: 0
     val density = androidx.compose.ui.platform.LocalDensity.current
-    val gutter = qualityGutter(measurer, labelStyle)
+    val insets = chartInsets(measurer, labelStyle)
     var canvasSize by remember { mutableStateOf(Size.Zero) }
     val haptics = com.bernaferrari.wifiweakspot.core.designsystem.rememberWifiWeakspotHapticFeedback()
     val index = cursor?.let { (it * (samples - 1)).roundToInt().coerceIn(0, (samples - 1).coerceAtLeast(0)) }
@@ -111,7 +111,7 @@ fun SignalHistoryGraph(
     /** [sticky] keeps the inspected line until the finger is clearly closer to another, so crowded lines don't flicker. */
     fun inspect(at: Offset, sticky: Boolean) {
         if (samples < 2) return
-        val plot = timelinePlot(canvasSize.width, canvasSize.height, density, gutter)
+        val plot = timelinePlot(canvasSize.width, canvasSize.height, density, insets)
         val fraction = ((at.x - plot.left) / plot.width.coerceAtLeast(1f)).coerceIn(0f, 1f)
         val atIndex = (fraction * (samples - 1)).roundToInt()
         pause()
@@ -204,7 +204,7 @@ fun SignalHistoryGraph(
                     }
                 }
         ) {
-            val plot = timelinePlot(size.width, size.height, this, gutter)
+            val plot = timelinePlot(size.width, size.height, this, insets)
             drawZones(plot, zones)
             drawSignalAxis(s.axisSignal, plot, measurer, labelStyle.copy(color = scheme.onSurfaceVariant), scheme.outlineVariant, scheme.outline)
             // "——→ Now": an arrow ending at now already says this is time, so the axis needs no name.
@@ -302,6 +302,8 @@ fun SignalHistoryGraph(
     }
 }
 
-private fun timelinePlot(width: Float, height: Float, density: Density, gutter: androidx.compose.ui.unit.Dp): Rect = with(density) {
-    Rect(gutter.toPx(), 12.dp.toPx(), (width - 12.dp.toPx()).coerceAtLeast(gutter.toPx() + 1f), (height - 26.dp.toPx()).coerceAtLeast(13.dp.toPx()))
+private fun timelinePlot(width: Float, height: Float, density: Density, insets: ChartInsets): Rect = with(density) {
+    val left = insets.left.toPx()
+    val top = insets.top.toPx()
+    Rect(left, top, (width - 12.dp.toPx()).coerceAtLeast(left + 1f), (height - 26.dp.toPx()).coerceAtLeast(top + 1f))
 }

@@ -172,7 +172,7 @@ fun ChannelGraph(
     val sharedCatalog = strings
 
     val s = strings.analyze
-    val qualityGutter = qualityGutter(textMeasurer, labelStyle)
+    val insets = chartInsets(textMeasurer, labelStyle)
     val busiest = remember(networks) {
         networks.groupBy { frequencyToChannel(it.frequency) }.maxByOrNull { it.value.size }
     }
@@ -241,9 +241,9 @@ fun ChannelGraph(
                 }
             }
             .focusable(enabled = explore || onNetworkSelected != null)
-            .then(if (explore) Modifier.pointerInput(selectedBand, qualityGutter) {
+            .then(if (explore) Modifier.pointerInput(selectedBand, insets) {
                 fun moveTo(x: Float) {
-                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, qualityGutter)
+                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, insets)
                     val nearest = channels.minBy { kotlin.math.abs(plot.left + mapFreqToNormX(it.second.toFloat(), selectedBand) * plot.width - x) }.first
                     if (nearest != cursorChannel) { cursorChannel = nearest; haptics.light() }
                 }
@@ -256,22 +256,22 @@ fun ChannelGraph(
                     } while (event.changes.any { it.pressed })
                 }
             } else Modifier)
-            .pointerInput(selectedBand, explore, qualityGutter) {
+            .pointerInput(selectedBand, explore, insets) {
                 if (explore) return@pointerInput
                 // Tapping the same spot again steps through overlapping hills, strongest first.
                 detectTapGestures { tap ->
-                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, qualityGutter)
+                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, insets)
                     val here = networksAt(tap, latestRadios, selectedBand, plot)
                     val current = here.indexOfFirst { it.bssid == latestFocus?.bssid }
                     selectLatest?.invoke(if (here.isEmpty()) null else here[(current + 1) % here.size])
                 }
             }
-            .pointerInput(selectedBand, explore, qualityGutter) {
+            .pointerInput(selectedBand, explore, insets) {
                 if (explore) return@pointerInput
                 // Horizontal scrubbing is immediate; vertical gestures remain available to the list.
                 var last: String? = null
                 fun scrub(at: Offset) {
-                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, qualityGutter)
+                    val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, insets)
                     val pick = networksAt(Offset(at.x, plot.bottom), latestRadios, selectedBand, plot, anyHeight = true).firstOrNull() ?: return
                     if (pick.bssid != last) {
                         last = pick.bssid
@@ -285,7 +285,7 @@ fun ChannelGraph(
                 )
             }
     ) {
-        val plot = plotRect(size.width, size.height, this, selectedBand, qualityGutter)
+        val plot = plotRect(size.width, size.height, this, selectedBand, insets)
         drawZones(plot, zones)
         drawSignalAxis(s.axisSignal, plot, textMeasurer, labelStyle.copy(color = scheme.onSurfaceVariant), scheme.outlineVariant, scheme.outline)
         drawChannelAxis(s.axisChannel, plot, selectedBand, textMeasurer, labelStyle, scheme.onSurfaceVariant, scheme.outlineVariant)
@@ -367,10 +367,10 @@ fun ChannelGraph(
     }
 }
 
-private fun plotRect(width: Float, height: Float, density: Density, band: FrequencyBand, qualityGutter: androidx.compose.ui.unit.Dp = QualityGutter): Rect = with(density) {
-    val below = (28 + (fontScale - 1).coerceAtLeast(0f) * 12).dp
-    // The gutter holds the signal words, so they never collide with hills or names.
-    Rect(left = qualityGutter.toPx(), top = 12.dp.toPx(), right = width - 12.dp.toPx(), bottom = height - below.toPx())
+private fun plotRect(width: Float, height: Float, density: Density, band: FrequencyBand, insets: ChartInsets): Rect = with(density) {
+    // Below the plot: the channel numbers, then the "Channel" name centred under them.
+    val below = (28 + (fontScale - 1).coerceAtLeast(0f) * 12).dp + insets.label
+    Rect(left = insets.left.toPx(), top = insets.top.toPx(), right = width - 12.dp.toPx(), bottom = height - below.toPx())
 }
 
 /**
@@ -392,34 +392,29 @@ internal fun DrawScope.drawZones(plot: Rect, zones: Map<SignalQuality, Color>) {
     )
 }
 
-/** Narrowest room left of the plot for the axis names. */
-internal val QualityGutter = 40.dp
-
 /**
- * The left column holds "Signal" at the top and, on the channel chart, "Channel" on the axis row.
- * It fits both, so the two charts share one left edge and switching between them doesn't shift
- * the plot. Translated words and larger text need their measured width, plus a margin each side.
+ * Room around the plot for the axis names. Each name sits at the end of its axis, like "Now", not in
+ * a column beside the plot: [left] only fits the arrow, [top] fits "Signal" beside the arrow tip, and
+ * [label] is one line of axis text (for "Channel" under the numbers). Both charts share [left], so
+ * switching between them doesn't shift the plot. Larger text grows [top] and [label].
  */
+/** Space between the channel numbers and the "Channel" name under them. */
+private val ChannelNameGap = 6.dp
+
+internal data class ChartInsets(val left: androidx.compose.ui.unit.Dp, val top: androidx.compose.ui.unit.Dp, val label: androidx.compose.ui.unit.Dp)
+
 @Composable
-internal fun qualityGutter(measurer: TextMeasurer, style: TextStyle): androidx.compose.ui.unit.Dp {
-    val s = strings.analyze
+internal fun chartInsets(measurer: TextMeasurer, style: TextStyle): ChartInsets {
     val density = androidx.compose.ui.platform.LocalDensity.current
-    return with(density) {
-        maxOf(QualityGutter, listOf(s.axisSignal, s.axisChannel)
-            .maxOf { measurer.measure(it, style, maxLines = 1).size.width }.toDp() + 16.dp)
-    }
+    val line = with(density) { measurer.measure(strings.analyze.axisSignal, style, maxLines = 1).size.height.toDp() }
+    return ChartInsets(left = 16.dp, top = line / 2 + 14.dp, label = line + ChannelNameGap)
 }
 
-/** The x axis's name in the gutter, on the same row as the axis labels. */
-internal fun DrawScope.drawAxisName(name: String, plot: Rect, measurer: TextMeasurer, style: TextStyle) {
-    val layout = measurer.measure(name, style, maxLines = 1)
-    drawText(layout, topLeft = Offset(plot.left - layout.size.width - 8.dp.toPx(), plot.bottom + 6.dp.toPx()))
-}
-
-/** Words instead of dBm numbers: what the level means matters more than the exact reading. */
 /**
- * "Signal ↑" up the left edge, the twin of the bottom axis: one name and one direction instead of
- * rating words, which bunch up on the non-linear dBm scale. Ratings live in the rows and readings.
+ * "Signal" over an arrow up the left edge, the twin of the bottom axis: one name and one direction
+ * instead of rating words, which bunch up on the non-linear dBm scale. Ratings live in the rows.
+ * The name sits beside the arrow tip, so it reads as the axis's own and not as a caption for the
+ * chart buttons above it.
  */
 internal fun DrawScope.drawSignalAxis(name: String, plot: Rect, measurer: TextMeasurer, style: TextStyle, line: Color, head: Color) {
     drawLine(line, Offset(plot.left, plot.bottom), Offset(plot.left, plot.top), strokeWidth = 1.dp.toPx())
@@ -431,7 +426,7 @@ internal fun DrawScope.drawSignalAxis(name: String, plot: Rect, measurer: TextMe
         close()
     }, head)
     val layout = measurer.measure(name, style, maxLines = 1)
-    drawText(layout, topLeft = Offset(plot.left - layout.size.width - 8.dp.toPx(), plot.top))
+    drawText(layout, topLeft = Offset(plot.left + 8.dp.toPx(), plot.top - layout.size.height / 2f))
 }
 
 private fun DrawScope.drawChannelAxis(
@@ -449,8 +444,10 @@ private fun DrawScope.drawChannelAxis(
         val layout = measurer.measure("$channel", style.copy(color = ink, fontWeight = FontWeight.Normal))
         drawText(layout, topLeft = Offset(x - layout.size.width / 2f, plot.bottom + 6.dp.toPx()))
     }
-    // The number row's name sits in the gutter under the signal words, so it costs no height.
-    drawAxisName(title, plot, measurer, style.copy(color = ink))
+    // The number row's name, centred under it like any axis title.
+    val number = measurer.measure("1", style)
+    val name = measurer.measure(title, style.copy(color = ink), maxLines = 1)
+    drawText(name, topLeft = Offset(plot.center.x - name.size.width / 2f, plot.bottom + 6.dp.toPx() + number.size.height + ChannelNameGap.toPx()))
 }
 
 /** Every channel the explore cursor can stop on, with its centre frequency. */
