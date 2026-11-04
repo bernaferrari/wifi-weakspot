@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 /** Scans take about a second, like a real radio sweep, and return the simulated block. */
@@ -58,10 +59,26 @@ class SimulatedWifiScanner : WifiScanner {
     override val scanResults: StateFlow<List<WifiNetwork>> = _results.asStateFlow()
     override val isScanning: StateFlow<Boolean> = _isScanning.asStateFlow()
 
+    private var replayed = false
+
     override fun startScan(): Boolean {
         if (_isScanning.value) return false
-        scope.launch { sweep() }
+        scope.launch { if (!SimulatedHome.stationary && !replayed) replay() else sweep() }
         return true
+    }
+
+    /** The moving demo's first scan sends the walk so far, one frame at a time, then goes live. */
+    private suspend fun replay() = lock.withLock {
+        replayed = true
+        _isScanning.value = true
+        SimulatedHome.replayWalk(after = _results.value.maxOfOrNull { it.timestamp } ?: 0L).forEach { frame ->
+            _results.value = frame
+            // Scan results conflate: the app's collector on the main thread must take each frame
+            // before the next replaces it. Main runs in order, so this returns after it has.
+            withContext(Dispatchers.Main) {}
+            delay(16)
+        }
+        _isScanning.value = false
     }
 
     override fun stopScan() {

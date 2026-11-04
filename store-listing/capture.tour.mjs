@@ -1,7 +1,7 @@
 // WiFi Weakspot's store screens on the capture emulator. The `screenshots` build (./gradlew :androidApp:assembleScreenshots,
 // com.bernaferrari.wifiweakspot.screenshots) has in-memory settings, sample networks and saved example room readings, and
-// never scans real networks; it holds the connected sample at 84%. History comes from its ScreenshotActivity, which
-// records 45 seconds of an example walk through a weak spot. `npx screenshot-studio recapture` builds and installs it,
+// never scans real networks; it holds the connected sample at 84%. History comes from its ScreenshotActivity, whose
+// first scan replays an example walk through a weak spot in one go. `npx screenshot-studio recapture` builds and installs it,
 // runs this for every language and device size, exports, and refreshes the README images.
 // Alone: npx screenshot-studio tour [--profile phone] [--locale de-DE] [--only channels,rooms]
 
@@ -48,7 +48,7 @@ export default {
         await d.launch({activity: 'com.bernaferrari.wifiweakspot.android.ScreenshotActivity', extras: {moving: true, theme: 'light'}});
         await networks(d);
         await d.tap('Signal over time');
-        await d.sleep(45_000);  // the example walk through a weak spot
+        await d.sleep(2_000);  // the demo replays its example walk through a weak spot at once
         if (d.locale === d.defaultLocale && !(await d.isVisible('Signal history for.*'))) throw new Error('The history chart is not on screen');
       },
     },

@@ -22,7 +22,7 @@ object SimulatedHome {
     private class Ap(val ssid: String, val bssid: String, var rssi: Int, val freq: Int, val width: Int, val center: Int, val caps: String)
 
     private val random = Random(42)
-    private val startedAt = nowMillis()
+    private var startedAt = nowMillis()
 
     private val aps: List<Ap> = buildList {
         add(Ap(Ssid, Bssid, -58, Frequency, 80, 5210, Wpa3))
@@ -48,11 +48,12 @@ object SimulatedHome {
     }
 
     /** One scan: every neighbor drifts a little, as real readings do. */
-    fun scan(): List<WifiNetwork> {
-        val now = nowMillis()
+    fun scan(): List<WifiNetwork> = scan(nowMillis(), walkSeconds())
+
+    private fun scan(now: Long, walkSeconds: Double): List<WifiNetwork> {
         aps.forEach { it.rssi = (it.rssi + random.nextInt(-3, 4)).coerceIn(-93, -58) }
-        aps[0].rssi = connectedRssi()
-        aps[1].rssi = (connectedRssi() - 3).coerceAtLeast(-93)
+        aps[0].rssi = connectedRssi(walkSeconds)
+        aps[1].rssi = (connectedRssi(walkSeconds) - 3).coerceAtLeast(-93)
         return aps.map {
             WifiNetwork(it.ssid, it.bssid, it.rssi, it.freq, it.width, com.bernaferrari.wifiweakspot.core.wifi.securityLabel(it.caps), it.caps, now, centerFreq0 = it.center)
         }
@@ -65,12 +66,28 @@ object SimulatedHome {
      * Signal on the connected link. It mostly sits near the router, then fades on a slow
      * loop as if someone carried the phone to the far bedroom and back, so Walk has a story.
      */
-    fun connectedRssi(): Int {
+    fun connectedRssi(): Int = connectedRssi(walkSeconds())
+
+    private fun walkSeconds() = (nowMillis() - startedAt) / 1000.0
+
+    private fun connectedRssi(seconds: Double): Int {
         if (stationary) return -58
-        val seconds = (nowMillis() - startedAt) / 1000.0
         val phase = (seconds % LoopSeconds) / LoopSeconds
         val dip = max(0.0, sin(phase * 2 * PI)).pow(3) * 32
         return (-58 - dip + random.nextInt(-2, 3)).toInt().coerceIn(-92, -58)
+    }
+
+    /**
+     * The first [ReplayFrames] scans of the walk at once, newest last, so the signal history has
+     * its story the moment Networks opens instead of after waiting through live scans. The chart only needs
+     * each frame newer than the last ([after] is the newest reading already sent); it counts
+     * frames, never seconds. The live walk then carries on from where the replay ends.
+     */
+    fun replayWalk(after: Long): List<List<WifiNetwork>> {
+        val now = maxOf(nowMillis(), after + ReplayFrames * ReplayStepMillis)
+        val frames = (1..ReplayFrames).map { i -> scan(now - (ReplayFrames - i) * ReplayStepMillis, i * ScanCadenceSeconds) }
+        startedAt = now - (ReplayFrames * ScanCadenceSeconds * 1000).toLong()
+        return frames
     }
 
     /** Link rate the radio would negotiate at [rssi]. */
@@ -91,6 +108,10 @@ object SimulatedHome {
     }
 
     private const val LoopSeconds = 75.0
+    /** Ten frames at the Networks screen's ~5 s live cadence cover the dip and the walk back. */
+    private const val ReplayFrames = 10
+    private const val ScanCadenceSeconds = 5.0
+    private const val ReplayStepMillis = 100L
     private const val Wpa2 = "[WPA2-PSK-CCMP][ESS]"
     private const val Wpa3 = "[RSN-SAE-CCMP][ESS]"
     private const val Open = "[ESS]"
