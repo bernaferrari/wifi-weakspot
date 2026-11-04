@@ -1,6 +1,5 @@
 package com.bernaferrari.wifiweakspot.feature.analyze
 
-import com.bernaferrari.wifiweakspot.core.i18n.AnalyzeStrings
 import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
@@ -173,12 +172,7 @@ fun ChannelGraph(
     val sharedCatalog = strings
 
     val s = strings.analyze
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    // Translated axis words and larger accessibility text need their actual measured width.
-    val qualityGutter = with(density) {
-        maxOf(QualityGutter, listOf(s.axisStrong, s.axisOkay, s.axisWeak)
-            .maxOf { textMeasurer.measure(it, labelStyle, maxLines = 1).size.width }.toDp() + 8.dp)
-    }
+    val qualityGutter = qualityGutter(textMeasurer, labelStyle)
     val busiest = remember(networks) {
         networks.groupBy { frequencyToChannel(it.frequency) }.maxByOrNull { it.value.size }
     }
@@ -293,8 +287,8 @@ fun ChannelGraph(
     ) {
         val plot = plotRect(size.width, size.height, this, selectedBand, qualityGutter)
         drawZones(plot, zones)
-        drawQualityLabels(s, plot, textMeasurer, labelStyle.copy(color = scheme.onSurfaceVariant.copy(alpha = 0.7f)))
-        drawChannelAxis(plot, selectedBand, textMeasurer, labelStyle, scheme.onSurfaceVariant, scheme.outlineVariant)
+        drawSignalAxis(s.axisSignal, plot, textMeasurer, labelStyle.copy(color = scheme.onSurfaceVariant), scheme.outlineVariant, scheme.outline)
+        drawChannelAxis(s.axisChannel, plot, selectedBand, textMeasurer, labelStyle, scheme.onSurfaceVariant, scheme.outlineVariant)
 
 
 
@@ -398,19 +392,50 @@ internal fun DrawScope.drawZones(plot: Rect, zones: Map<SignalQuality, Color>) {
     )
 }
 
-/** Room left of the plot for the signal words. */
-internal val QualityGutter = 48.dp
+/** Narrowest room left of the plot for the axis names. */
+internal val QualityGutter = 40.dp
 
-/** Words instead of dBm numbers: what the level means matters more than the exact reading. */
-internal fun DrawScope.drawQualityLabels(s: AnalyzeStrings, plot: Rect, measurer: TextMeasurer, style: TextStyle) {
-    listOf(s.axisStrong to -40, s.axisOkay to -71, s.axisWeak to -88).forEach { (label, dbm) ->
-        val layout = measurer.measure(label, style)
-        val y = plot.bottom - plot.height * dbmToFraction(dbm.toFloat()) - layout.size.height / 2f
-        drawText(layout, topLeft = Offset(plot.left - layout.size.width - 8.dp.toPx(), y))
+/**
+ * The left column holds "Signal" at the top and, on the channel chart, "Channel" on the axis row.
+ * It fits both, so the two charts share one left edge and switching between them doesn't shift
+ * the plot. Translated words and larger text need their measured width, plus a margin each side.
+ */
+@Composable
+internal fun qualityGutter(measurer: TextMeasurer, style: TextStyle): androidx.compose.ui.unit.Dp {
+    val s = strings.analyze
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    return with(density) {
+        maxOf(QualityGutter, listOf(s.axisSignal, s.axisChannel)
+            .maxOf { measurer.measure(it, style, maxLines = 1).size.width }.toDp() + 16.dp)
     }
 }
 
+/** The x axis's name in the gutter, on the same row as the axis labels. */
+internal fun DrawScope.drawAxisName(name: String, plot: Rect, measurer: TextMeasurer, style: TextStyle) {
+    val layout = measurer.measure(name, style, maxLines = 1)
+    drawText(layout, topLeft = Offset(plot.left - layout.size.width - 8.dp.toPx(), plot.bottom + 6.dp.toPx()))
+}
+
+/** Words instead of dBm numbers: what the level means matters more than the exact reading. */
+/**
+ * "Signal ↑" up the left edge, the twin of the bottom axis: one name and one direction instead of
+ * rating words, which bunch up on the non-linear dBm scale. Ratings live in the rows and readings.
+ */
+internal fun DrawScope.drawSignalAxis(name: String, plot: Rect, measurer: TextMeasurer, style: TextStyle, line: Color, head: Color) {
+    drawLine(line, Offset(plot.left, plot.bottom), Offset(plot.left, plot.top), strokeWidth = 1.dp.toPx())
+    val size = 5.dp.toPx()
+    drawPath(Path().apply {
+        moveTo(plot.left, plot.top - 1.dp.toPx())
+        lineTo(plot.left - size * 0.8f, plot.top + size)
+        lineTo(plot.left + size * 0.8f, plot.top + size)
+        close()
+    }, head)
+    val layout = measurer.measure(name, style, maxLines = 1)
+    drawText(layout, topLeft = Offset(plot.left - layout.size.width - 8.dp.toPx(), plot.top))
+}
+
 private fun DrawScope.drawChannelAxis(
+    title: String,
     plot: Rect,
     band: FrequencyBand,
     measurer: TextMeasurer,
@@ -424,6 +449,8 @@ private fun DrawScope.drawChannelAxis(
         val layout = measurer.measure("$channel", style.copy(color = ink, fontWeight = FontWeight.Normal))
         drawText(layout, topLeft = Offset(x - layout.size.width / 2f, plot.bottom + 6.dp.toPx()))
     }
+    // The number row's name sits in the gutter under the signal words, so it costs no height.
+    drawAxisName(title, plot, measurer, style.copy(color = ink))
 }
 
 /** Every channel the explore cursor can stop on, with its centre frequency. */

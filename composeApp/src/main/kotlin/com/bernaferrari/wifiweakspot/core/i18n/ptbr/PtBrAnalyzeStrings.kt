@@ -29,8 +29,7 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
     override val expandSignalHistory = "Expandir histórico de sinal"
     override val expandChannels = "Expandir canais"
     override fun noBandNetworksNearby(band: String) = "Não há redes ${band} por perto."
-    override fun networksOnBand(count: Int, band: String) =
-        if (count == 0) "Nenhuma rede em ${band}" else "${networks(count)} em ${band}"
+    override val nearbyNetworks = "Redes próximas"
     override fun showVeryWeakNetworks(count: Int) =
         if (count == 1) "Mostrar 1 rede muito fraca" else "Mostrar ${count} redes muito fracas"
     override fun hideVeryWeakNetworks(count: Int) =
@@ -64,7 +63,7 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
     override val axisStrong = "Forte"
-    override val axisOkay = "Médio"
+    override val axisSignal = "Sinal"
 
     override val axisWeak = "Fraco"
     override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
@@ -105,8 +104,7 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
 
     override val strongerNetwork = "Rede mais forte"
     override val weakerNetwork = "Rede mais fraca"
-    override val axisOlder = "anterior"
-    override val axisLatest = "recente"
+    override val axisNow = "Agora"
     override val exploreSignalHistory = "Explore o histórico do sinal"
     override val tapLineToCompare = "Toque em uma linha e arraste para comparar"
     override val noReadingAtPoint = "Sem medição neste ponto"
@@ -119,6 +117,7 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
 
     override fun seenReading(rssi: Int, seen: String) = "${rssi} dBm · visto ${seen}"
     override val factChannel = "Canal"
+    override val axisChannel = "Canal"
     override val factWidth = "Largura"
     override val factSecurity = "Segurança"
     override val factDistance = "Estimativa de distância"

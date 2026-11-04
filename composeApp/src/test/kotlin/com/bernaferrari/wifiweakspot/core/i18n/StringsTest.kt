@@ -66,7 +66,6 @@ class StringsTest {
             }
             for (count in listOf(0, 1, 2, 5, 11, 21, 101)) {
                 assertTrue(s.common.scansCount(count).isNotBlank())
-                assertTrue(s.analyze.networksOnBand(count, "5 GHz").contains("5 GHz"))
                 assertTrue(s.history.devicesFound(count).isNotBlank())
             }
             val network = "Café 東京 <&>"

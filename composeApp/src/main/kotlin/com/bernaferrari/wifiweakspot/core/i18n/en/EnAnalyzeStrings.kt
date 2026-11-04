@@ -29,8 +29,7 @@ object EnAnalyzeStrings : AnalyzeStrings {
     override val expandSignalHistory = "Expand signal history"
     override val expandChannels = "Expand channels"
     override fun noBandNetworksNearby(band: String) = "No $band networks nearby."
-    override fun networksOnBand(count: Int, band: String) =
-        if (count == 0) "No networks on $band" else "${networks(count)} on $band"
+    override val nearbyNetworks = "Nearby networks"
     override fun showVeryWeakNetworks(count: Int) =
         if (count == 1) "Show 1 very weak network" else "Show $count very weak networks"
     override fun hideVeryWeakNetworks(count: Int) =
@@ -64,7 +63,7 @@ object EnAnalyzeStrings : AnalyzeStrings {
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
     override val axisStrong = "Strong"
-    override val axisOkay = "Okay"
+    override val axisSignal = "Signal"
     override val axisWeak = "Weak"
     override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
 
@@ -104,8 +103,7 @@ object EnAnalyzeStrings : AnalyzeStrings {
 
     override val strongerNetwork = "Stronger network"
     override val weakerNetwork = "Weaker network"
-    override val axisOlder = "older"
-    override val axisLatest = "latest"
+    override val axisNow = "Now"
     override val exploreSignalHistory = "Explore signal history"
     override val tapLineToCompare = "Tap a line, then drag to compare"
     override val noReadingAtPoint = "No measurement at this point"
@@ -118,6 +116,7 @@ object EnAnalyzeStrings : AnalyzeStrings {
 
     override fun seenReading(rssi: Int, seen: String) = "$rssi dBm · seen $seen"
     override val factChannel = "Channel"
+    override val axisChannel = "Channel"
     override val factWidth = "Width"
     override val factSecurity = "Security"
     override val factDistance = "Distance estimate"

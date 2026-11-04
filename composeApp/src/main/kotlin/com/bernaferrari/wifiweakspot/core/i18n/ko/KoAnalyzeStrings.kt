@@ -39,7 +39,7 @@ object KoAnalyzeStrings : AnalyzeStrings {
     override val expandChannels = "채널 그래프 확대"
 
     override fun noBandNetworksNearby(band: String) = "근처에 ${band} 네트워크가 없습니다."
-    override fun networksOnBand(count: Int, band: String) = if (count == 0) "${band} 네트워크 없음" else "${band} 네트워크 ${count}개"
+    override val nearbyNetworks = "주변 네트워크"
 
     override fun showVeryWeakNetworks(count: Int) = "신호가 매우 약한 네트워크 ${count}개 표시"
 
@@ -85,7 +85,7 @@ object KoAnalyzeStrings : AnalyzeStrings {
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
     override val axisStrong = "강함"
-    override val axisOkay = "보통"
+    override val axisSignal = "신호"
     override val axisWeak = "약함"
     override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
 
@@ -132,8 +132,7 @@ object KoAnalyzeStrings : AnalyzeStrings {
 
     override val weakerNetwork = "신호가 더 약한 네트워크"
 
-    override val axisOlder = "이전"
-    override val axisLatest = "최신"
+    override val axisNow = "지금"
     override val exploreSignalHistory = "신호 기록 살펴보기"
 
     override val tapLineToCompare = "선을 누르고 드래그해 비교하세요"
@@ -149,6 +148,8 @@ object KoAnalyzeStrings : AnalyzeStrings {
     override fun seenReading(rssi: Int, seen: String) = "${rssi} dBm · 발견: ${seen}"
 
     override val factChannel = "채널"
+
+    override val axisChannel = "채널"
     override val factWidth = "채널 폭"
 
     override val factSecurity = "보안"

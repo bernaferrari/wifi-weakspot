@@ -353,15 +353,11 @@ private fun NetworksContent(
         val chart: @Composable (Modifier) -> Unit = { chartModifier ->
             Card(modifier = chartModifier, shape = WifiWeakspotShapes.large, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
                 Column((if (wide) Modifier.fillMaxSize() else Modifier).padding(vertical = 12.dp)) {
-                    Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                            Text(if (showHistory) strings.common.historyTitle else strings.analyze.channels, style = if (windowWidth < 360.dp) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            IconButton(onClick = { haptics.click(); showHelp = true }) {
-                                Icon(Icons.Outlined.Info, strings.analyze.howToReadThisChart, Modifier.size(18.dp))
-                            }
-                        }
+                    // The chart names itself (channel numbers, or older/latest), so the row is just
+                    // its tools: which chart on the left, help and full screen on the right.
+                    Row(Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                         // Match the band selector's visible gap; each segment fills its 48 dp width.
-                        Row(modifier = Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                        Row(modifier = Modifier.selectableGroup().weight(1f), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
                                 listOf(false to (NetworksIcons.Filled to strings.analyze.channels), true to (Icons.AutoMirrored.Rounded.ShowChart to strings.analyze.signalOverTime))
                                     .forEachIndexed { index, (history, look) ->
                                         ToggleButton(
@@ -378,6 +374,9 @@ private fun NetworksContent(
                                             modifier = Modifier.size(48.dp)
                                         ) { Icon(look.first, look.second, Modifier.size(20.dp)) }
                                     }
+                        }
+                        IconButton(onClick = { haptics.click(); showHelp = true }) {
+                            Icon(Icons.Outlined.Info, strings.analyze.howToReadThisChart)
                         }
                         IconButton(onClick = { haptics.click(); showExplorer = true }) { Icon(Icons.Rounded.Fullscreen, if (showHistory) strings.analyze.expandSignalHistory else strings.analyze.expandChannels) }
                     }
@@ -420,9 +419,10 @@ private fun NetworksContent(
         }
         var showWeak by rememberSaveable(band) { mutableStateOf(false) }
         val list: LazyListScope.() -> Unit = {
-            item(key = "listHeader") {
+            // The band buttons already carry the band and its count; the chart says when it's empty.
+            if (inBand.isNotEmpty()) item(key = "listHeader") {
                 Text(
-                    strings.analyze.networksOnBand(inBand.size, band.label),
+                    strings.analyze.nearbyNetworks,
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(start = 4.dp, top = 20.dp, bottom = 8.dp)
                 )

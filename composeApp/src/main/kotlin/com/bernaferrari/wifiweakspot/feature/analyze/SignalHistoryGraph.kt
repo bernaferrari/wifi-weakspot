@@ -83,6 +83,7 @@ fun SignalHistoryGraph(
         .take(MaxLines)
     val samples = shown.maxOfOrNull { readings[it.bssid]?.size ?: 0 } ?: 0
     val density = androidx.compose.ui.platform.LocalDensity.current
+    val gutter = qualityGutter(measurer, labelStyle)
     var canvasSize by remember { mutableStateOf(Size.Zero) }
     val haptics = com.bernaferrari.wifiweakspot.core.designsystem.rememberWifiWeakspotHapticFeedback()
     val index = cursor?.let { (it * (samples - 1)).roundToInt().coerceIn(0, (samples - 1).coerceAtLeast(0)) }
@@ -110,7 +111,7 @@ fun SignalHistoryGraph(
     /** [sticky] keeps the inspected line until the finger is clearly closer to another, so crowded lines don't flicker. */
     fun inspect(at: Offset, sticky: Boolean) {
         if (samples < 2) return
-        val plot = timelinePlot(canvasSize.width, canvasSize.height, density)
+        val plot = timelinePlot(canvasSize.width, canvasSize.height, density, gutter)
         val fraction = ((at.x - plot.left) / plot.width.coerceAtLeast(1f)).coerceIn(0f, 1f)
         val atIndex = (fraction * (samples - 1)).roundToInt()
         pause()
@@ -203,13 +204,23 @@ fun SignalHistoryGraph(
                     }
                 }
         ) {
-            val plot = timelinePlot(size.width, size.height, this)
+            val plot = timelinePlot(size.width, size.height, this, gutter)
             drawZones(plot, zones)
-            drawQualityLabels(s, plot, measurer, labelStyle.copy(color = scheme.onSurfaceVariant))
-            listOf(Triple(s.axisOlder, plot.left, false), Triple(s.axisLatest, plot.right, true)).forEach { (label, x, alignEnd) ->
-                val layout = measurer.measure(label, labelStyle.copy(color = scheme.onSurfaceVariant))
-                drawText(layout, topLeft = Offset(if (alignEnd) x - layout.size.width else x, plot.bottom + 6.dp.toPx()))
-            }
+            drawSignalAxis(s.axisSignal, plot, measurer, labelStyle.copy(color = scheme.onSurfaceVariant), scheme.outlineVariant, scheme.outline)
+            // "——→ Now": an arrow ending at now already says this is time, so the axis needs no name.
+            // A name in the left column would read as the bottom of the Signal axis above it.
+            val axisInk = scheme.onSurfaceVariant
+            val arrowEnd = plot.right
+            val head = 5.dp.toPx()
+            drawLine(scheme.outlineVariant, Offset(plot.left, plot.bottom), Offset(arrowEnd, plot.bottom), strokeWidth = 1.dp.toPx())
+            drawPath(Path().apply {
+                moveTo(arrowEnd + 1.dp.toPx(), plot.bottom)
+                lineTo(arrowEnd - head, plot.bottom - head * 0.8f)
+                lineTo(arrowEnd - head, plot.bottom + head * 0.8f)
+                close()
+            }, scheme.outline)
+            val now = measurer.measure(s.axisNow, labelStyle.copy(color = axisInk), maxLines = 1)
+            drawText(now, topLeft = Offset(plot.right - now.size.width, plot.bottom + 6.dp.toPx()))
             val step = plot.width / (samples - 1)
             val focus = inspectedBssid.takeIf { cursor != null } ?: selected?.bssid
             val labels = mutableListOf<Rect>()
@@ -291,6 +302,6 @@ fun SignalHistoryGraph(
     }
 }
 
-private fun timelinePlot(width: Float, height: Float, density: Density): Rect = with(density) {
-    Rect(QualityGutter.toPx(), 12.dp.toPx(), (width - 12.dp.toPx()).coerceAtLeast(QualityGutter.toPx() + 1f), (height - 26.dp.toPx()).coerceAtLeast(13.dp.toPx()))
+private fun timelinePlot(width: Float, height: Float, density: Density, gutter: androidx.compose.ui.unit.Dp): Rect = with(density) {
+    Rect(gutter.toPx(), 12.dp.toPx(), (width - 12.dp.toPx()).coerceAtLeast(gutter.toPx() + 1f), (height - 26.dp.toPx()).coerceAtLeast(13.dp.toPx()))
 }

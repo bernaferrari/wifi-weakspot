@@ -74,8 +74,8 @@ interface AnalyzeStrings {
     /** Shown in the empty chart; [band] is a band name such as "5 GHz". */
     fun noBandNetworksNearby(band: String): String
 
-    /** Heading above the network list; [band] is a band name such as "5 GHz". */
-    fun networksOnBand(count: Int, band: String): String
+    /** Heading above the network list. The band and count already show in the band buttons. */
+    val nearbyNetworks: String
 
     /** Button that reveals [count] very weak networks folded at the bottom of the list. */
     fun showVeryWeakNetworks(count: Int): String
@@ -170,10 +170,15 @@ interface AnalyzeStrings {
     fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int): String
 
 
-    /** Chart axis labels for signal strength, top to bottom. One very short word each. */
+    /** Ends of the coverage map's signal legend. One very short word each. */
     val axisStrong: String
-    val axisOkay: String
     val axisWeak: String
+
+    /** Names the vertical axis of both Networks charts: higher is stronger. One very short word. */
+    val axisSignal: String
+
+    /** Names the row of channel numbers under the chart. One very short word. */
+    val axisChannel: String
 
     /** Selected network's reading under its name, e.g. "-52 dBm · Good · Ch 6". */
     fun selectedNetworkSummary(reading: String, quality: String, channel: Int): String
@@ -240,9 +245,8 @@ interface AnalyzeStrings {
     val strongerNetwork: String
     val weakerNetwork: String
 
-    /** Time axis labels at the left and right ends. One very short word each. */
-    val axisOlder: String
-    val axisLatest: String
+    /** Under the arrow tip of the signal history's time axis, where the newest reading is drawn. One very short word. */
+    val axisNow: String
 
     /** Title under the chart when nothing is inspected. */
     val exploreSignalHistory: String

@@ -39,7 +39,7 @@ object JaAnalyzeStrings : AnalyzeStrings {
     override val expandChannels = "チャンネルグラフを拡大"
 
     override fun noBandNetworksNearby(band: String) = "近くに ${band} ネットワークがありません。"
-    override fun networksOnBand(count: Int, band: String) = if (count == 0) "近くに${band}のネットワークはありません" else "${band}：${networks(count)}"
+    override val nearbyNetworks = "近くのネットワーク"
 
     override fun showVeryWeakNetworks(count: Int) = "信号が非常に弱いネットワーク${count}件を表示"
 
@@ -85,7 +85,7 @@ object JaAnalyzeStrings : AnalyzeStrings {
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
     override val axisStrong = "強い"
-    override val axisOkay = "普通"
+    override val axisSignal = "電波"
     override val axisWeak = "弱い"
     override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
 
@@ -132,8 +132,7 @@ object JaAnalyzeStrings : AnalyzeStrings {
 
     override val weakerNetwork = "信号がより弱いネットワーク"
 
-    override val axisOlder = "過去"
-    override val axisLatest = "最新"
+    override val axisNow = "現在"
     override val exploreSignalHistory = "信号履歴を確認"
 
     override val tapLineToCompare = "線をタップし、ドラッグして比較できます"
@@ -149,6 +148,8 @@ object JaAnalyzeStrings : AnalyzeStrings {
     override fun seenReading(rssi: Int, seen: String) = "${rssi} dBm · 検出：${seen}"
 
     override val factChannel = "チャンネル"
+
+    override val axisChannel = "チャンネル"
     override val factWidth = "チャンネル幅"
 
     override val factSecurity = "セキュリティ"

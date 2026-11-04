@@ -29,8 +29,7 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override val expandSignalHistory = "Развернуть историю сигналов"
     override val expandChannels = "Развернуть каналы"
     override fun noBandNetworksNearby(band: String) = "Нет сетей ${band} поблизости."
-    override fun networksOnBand(count: Int, band: String) =
-        if (count == 0) "Нет сетей на ${band}" else "${networks(count)} на ${band}"
+    override val nearbyNetworks = "Сети рядом"
     override fun showVeryWeakNetworks(count: Int) = "Показать ${count} ${plural(count, "очень слабую сеть", "очень слабые сети", "очень слабых сетей")}"
 
     override fun hideVeryWeakNetworks(count: Int) = "Скрыть ${count} ${plural(count, "очень слабую сеть", "очень слабые сети", "очень слабых сетей")}"
@@ -64,7 +63,7 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
     override val axisStrong = "Сильный"
-    override val axisOkay = "Средний"
+    override val axisSignal = "Сигнал"
     override val axisWeak = "Слабый"
     override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
 
@@ -101,8 +100,7 @@ object RuAnalyzeStrings : AnalyzeStrings {
 
     override val strongerNetwork = "Более мощная сеть"
     override val weakerNetwork = "Более слабая сеть"
-    override val axisOlder = "раньше"
-    override val axisLatest = "сейчас"
+    override val axisNow = "Сейчас"
     override val exploreSignalHistory = "Изучите историю сигналов"
     override val tapLineToCompare = "Коснитесь линии, затем перетащите ее, чтобы сравнить."
     override val noReadingAtPoint = "Для этого момента нет измерения"
@@ -115,6 +113,7 @@ object RuAnalyzeStrings : AnalyzeStrings {
 
     override fun seenReading(rssi: Int, seen: String) = "${rssi} dBm · видел ${seen}"
     override val factChannel = "Канал"
+    override val axisChannel = "Канал"
     override val factWidth = "Ширина"
     override val factSecurity = "Безопасность"
     override val factDistance = "Оценка расстояния"

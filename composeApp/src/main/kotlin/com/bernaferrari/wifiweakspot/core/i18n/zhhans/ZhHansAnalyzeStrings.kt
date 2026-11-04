@@ -39,7 +39,7 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
     override val expandChannels = "展开信道图"
 
     override fun noBandNetworksNearby(band: String) = "附近没有 ${band} 网络。"
-    override fun networksOnBand(count: Int, band: String) = if (count == 0) "没有 ${band} 网络" else "${band} 网络：${count} 个"
+    override val nearbyNetworks = "附近的网络"
 
     override fun showVeryWeakNetworks(count: Int) = "显示 ${count} 个信号很弱的网络"
 
@@ -85,7 +85,7 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
     override fun chartNetworkLabel(name: String, isYou: Boolean, extraNames: Int) = name + (if (isYou) " (${connected})" else "") + (if (extraNames > 0) " +${extraNames}" else "")
 
     override val axisStrong = "强"
-    override val axisOkay = "一般"
+    override val axisSignal = "信号"
     override val axisWeak = "弱"
     override fun selectedNetworkSummary(reading: String, quality: String, channel: Int) = "${reading} · ${quality} · ${channelShort(channel)}"
 
@@ -132,8 +132,7 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
 
     override val weakerNetwork = "信号更弱的网络"
 
-    override val axisOlder = "较早"
-    override val axisLatest = "最新"
+    override val axisNow = "现在"
     override val exploreSignalHistory = "查看信号历史"
 
     override val tapLineToCompare = "点击曲线并拖动以进行比较"
@@ -149,6 +148,8 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
     override fun seenReading(rssi: Int, seen: String) = "${rssi} dBm · 发现于${seen}"
 
     override val factChannel = "信道"
+
+    override val axisChannel = "信道"
     override val factWidth = "信道宽度"
 
     override val factSecurity = "安全"
