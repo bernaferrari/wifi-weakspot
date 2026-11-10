@@ -1,6 +1,5 @@
 package com.bernaferrari.wifiweakspot.core.i18n
 
-import com.bernaferrari.wifiweakspot.core.monitoring.MonitorSignalLevel
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -14,23 +13,6 @@ class TranslationMeaningTest {
                     com.bernaferrari.wifiweakspot.feature.tools.serviceLabel(stored, label))
             }
             assertEquals("HTTPS", com.bernaferrari.wifiweakspot.feature.tools.serviceLabel("HTTPS", label))
-        }
-    }
-
-    @Test fun signalAlertsUseTheSameScaleAsTheRestOfTheApp() {
-        for (language in AppLanguage.entries) {
-            val domain = language.strings.domain
-            for ((level, label) in listOf(
-                MonitorSignalLevel.Excellent to domain.qualityExcellentLabel,
-                MonitorSignalLevel.Good to domain.qualityGoodLabel,
-                MonitorSignalLevel.Fair to domain.qualityFairLabel,
-                MonitorSignalLevel.Weak to domain.qualityWeakLabel
-            )) {
-                val alert = domain.signalChangeText("Café 東京", level, -72)
-                assertTrue("${language.tag}: $alert", alert.contains(label))
-                assertTrue(alert.contains("Café 東京"))
-                assertTrue(alert.contains("-72"))
-            }
         }
     }
 

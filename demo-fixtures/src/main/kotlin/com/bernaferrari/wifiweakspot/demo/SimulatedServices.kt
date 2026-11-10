@@ -13,8 +13,6 @@ import com.bernaferrari.wifiweakspot.core.model.tools.PingSummary
 import com.bernaferrari.wifiweakspot.core.model.tools.PortResult
 import com.bernaferrari.wifiweakspot.core.model.tools.PortScanResult
 import com.bernaferrari.wifiweakspot.core.model.tools.PortStatus
-import com.bernaferrari.wifiweakspot.core.monitoring.BackgroundMonitor
-import com.bernaferrari.wifiweakspot.core.monitoring.MonitorSettings
 import com.bernaferrari.wifiweakspot.core.permissions.PermissionGate
 import com.bernaferrari.wifiweakspot.core.permissions.PermissionState
 import com.bernaferrari.wifiweakspot.core.permissions.PermissionStatus
@@ -265,17 +263,6 @@ class SimulatedLanScanner : LanScanner {
     }
 
     override fun cancel() { _scanning.value = false }
-}
-
-class SimulatedBackgroundMonitor : BackgroundMonitor {
-    private val _monitoring = MutableStateFlow(false)
-    private val _settings = MutableStateFlow(MonitorSettings())
-    override val isMonitoring: StateFlow<Boolean> = _monitoring.asStateFlow()
-    override val error: StateFlow<String?> = MutableStateFlow(null)
-    override val settings: StateFlow<MonitorSettings> = _settings.asStateFlow()
-    override fun startMonitoring() { _monitoring.value = true }
-    override fun stopMonitoring() { _monitoring.value = false }
-    override fun updateSettings(settings: MonitorSettings) { _settings.value = settings }
 }
 
 private fun ipFor(host: String): String =

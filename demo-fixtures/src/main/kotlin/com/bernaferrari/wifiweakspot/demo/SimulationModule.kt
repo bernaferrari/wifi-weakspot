@@ -3,7 +3,6 @@ package com.bernaferrari.wifiweakspot.demo
 import com.bernaferrari.wifiweakspot.core.database.dao.WifiWeakspotDao
 import com.bernaferrari.wifiweakspot.core.domain.NetworkStatusRepository
 import com.bernaferrari.wifiweakspot.core.lan.LanScanner
-import com.bernaferrari.wifiweakspot.core.monitoring.BackgroundMonitor
 import com.bernaferrari.wifiweakspot.core.permissions.PermissionGate
 import com.bernaferrari.wifiweakspot.core.root.RootAccess
 import com.bernaferrari.wifiweakspot.core.router.RouterProbe
@@ -34,6 +33,4 @@ val simulationModule = module {
     factory<PortScanner> { SimulatedPortScanner() }
     factory<LanScanner> { SimulatedLanScanner() }
     factory<RouterProbe> { SimulatedRouterProbe() }
-
-    single<BackgroundMonitor> { SimulatedBackgroundMonitor() }
 }

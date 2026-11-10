@@ -2,7 +2,6 @@ package com.bernaferrari.wifiweakspot.core.i18n.ja
 
 import com.bernaferrari.wifiweakspot.core.i18n.DomainStrings
 import com.bernaferrari.wifiweakspot.core.lan.DeviceKind
-import com.bernaferrari.wifiweakspot.core.monitoring.MonitorSignalLevel
 
 object JaDomainStrings : DomainStrings {
 
@@ -103,39 +102,6 @@ object JaDomainStrings : DomainStrings {
             if (bandChanged) add("周波数帯が変わりました")
         }
         return signal + if (changed.isEmpty()) "（前回の測定と比較）" else " · ${changed.joinToString("; ")}"
-    }
-
-    override val monitorChannelName = "バックグラウンド監視"
-    override val monitorChannelDescription = "WiFi WeakspotによるWi-Fi監視の実行状態を表示します"
-
-    override val alertsChannelName = "ネットワークアラート"
-    override val alertsChannelDescription = "新しいネットワークや信号の変化を通知します"
-
-    override val monitorStartFailed = "監視を開始できませんでした。Wi-Fiスキャンを許可し、位置情報をオンにしてから、もう一度お試しください。"
-
-    override val monitorWaitingForScanLimited = "新しいWi-Fiスキャンの結果を待っています。Androidによってスキャン回数が制限される場合があります。"
-
-    override val monitorWaitingForScan = "新しいWi-Fiスキャンの結果を待っています"
-
-    override fun monitorStatus(networkCount: Int, lastScanTime: String) = "ネットワーク${networkCount}件 · 最終スキャン：${lastScanTime}"
-
-    override fun newNetworksTitle(count: Int) =
-        if (count == 1) "新しい WiFi ネットワークが検出されました" else "新しい WiFi ネットワークが検出されました"
-
-    override fun newNetworksText(names: List<String>): String = when {
-        names.size == 1 -> "「${names.first()}」が範囲内になりました"
-        else -> "${names[0]}, ${names[1]}" + if (names.size > 2) " など" else ""
-    }
-
-    override val signalChangeTitle = "信号変化"
-    override fun signalChangeText(networkName: String, level: MonitorSignalLevel, rssi: Int): String {
-        val quality = when (level) {
-            MonitorSignalLevel.Excellent -> qualityExcellentLabel
-            MonitorSignalLevel.Good -> qualityGoodLabel
-            MonitorSignalLevel.Fair -> qualityFairLabel
-            MonitorSignalLevel.Weak -> qualityWeakLabel
-        }
-        return "「${networkName}」の信号：${quality}（${rssi} dBm）"
     }
 
     override val exportFileChooserTitle = "ファイルのエクスポート"

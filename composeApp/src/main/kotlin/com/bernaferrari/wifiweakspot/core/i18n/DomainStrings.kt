@@ -1,7 +1,6 @@
 package com.bernaferrari.wifiweakspot.core.i18n
 
 import com.bernaferrari.wifiweakspot.core.lan.DeviceKind
-import com.bernaferrari.wifiweakspot.core.monitoring.MonitorSignalLevel
 
 /**
  * Text produced by the app's core logic rather than by a screen: signal-quality names, device
@@ -135,47 +134,6 @@ interface DomainStrings {
      * @param bandChanged The phone used a different band this time.
      */
     fun spotComparison(deltaDb: Int, accessPointChanged: Boolean, bandChanged: Boolean): String
-
-    // endregion
-
-    // region Background monitor (Android notifications)
-
-    /** Notification channel name shown in Android settings. */
-    val monitorChannelName: String
-    /** Notification channel description shown in Android settings. Keep the brand as-is. */
-    val monitorChannelDescription: String
-    /** Notification channel name for alerts. */
-    val alertsChannelName: String
-    val alertsChannelDescription: String
-
-    /** Error when the monitor service failed to start. */
-    val monitorStartFailed: String
-    /** Status when no fresh scan arrived in time. */
-    val monitorWaitingForScanLimited: String
-    /** Ongoing notification text before the first scan arrives. */
-    val monitorWaitingForScan: String
-    /**
-     * Ongoing notification text, e.g. "12 networks · Last scan: 14:05".
-     * @param networkCount Networks found in the last scan. @param lastScanTime Clock time, already formatted.
-     */
-    fun monitorStatus(networkCount: Int, lastScanTime: String): String
-
-    /** Alert title when new networks appear. @param count Number of new networks listed (1 to 3). */
-    fun newNetworksTitle(count: Int): String
-    /**
-     * Alert text listing new networks. One name: "\"Name\" is now in range". Two or more: the first two
-     * names, plus "and more" when there are more than two.
-     * @param names Network names, not translated (1 to 3).
-     */
-    fun newNetworksText(names: List<String>): String
-
-    /** Alert title when the strongest network's signal changed a lot. */
-    val signalChangeTitle: String
-    /**
-     * Alert text, e.g. "\"Home\" signal is now good (-58 dBm)".
-     * @param networkName Network name. @param level New signal level. @param rssi Signal in dBm.
-     */
-    fun signalChangeText(networkName: String, level: MonitorSignalLevel, rssi: Int): String
 
     // endregion
 

@@ -2,7 +2,6 @@ package com.bernaferrari.wifiweakspot.core.i18n.zhhans
 
 import com.bernaferrari.wifiweakspot.core.i18n.DomainStrings
 import com.bernaferrari.wifiweakspot.core.lan.DeviceKind
-import com.bernaferrari.wifiweakspot.core.monitoring.MonitorSignalLevel
 
 object ZhHansDomainStrings : DomainStrings {
 
@@ -103,39 +102,6 @@ object ZhHansDomainStrings : DomainStrings {
             if (bandChanged) add("频段已变化")
         }
         return signal + if (changed.isEmpty()) "（与上次测量相比）" else " · ${changed.joinToString("; ")}"
-    }
-
-    override val monitorChannelName = "后台监控"
-    override val monitorChannelDescription = "显示 WiFi Weakspot 的 Wi-Fi 监测状态"
-
-    override val alertsChannelName = "网络警报"
-    override val alertsChannelDescription = "提示新发现的网络和信号变化"
-
-    override val monitorStartFailed = "无法启动监测。请允许 Wi-Fi 扫描并开启位置信息，然后重试。"
-
-    override val monitorWaitingForScanLimited = "正在等待新的 Wi-Fi 扫描结果。Android 可能会限制扫描次数。"
-
-    override val monitorWaitingForScan = "正在等待新的 Wi-Fi 扫描结果"
-
-    override fun monitorStatus(networkCount: Int, lastScanTime: String) = "${networkCount} 个网络 · 上次扫描：${lastScanTime}"
-
-    override fun newNetworksTitle(count: Int) =
-        if (count == 1) "检测到新WiFi网络" else "检测到新的 WiFi 网络"
-
-    override fun newNetworksText(names: List<String>): String = when {
-        names.size == 1 -> "“${names.first()}”现已在范围内"
-        else -> "${names[0]}, ${names[1]}" + if (names.size > 2) " 及更多" else ""
-    }
-
-    override val signalChangeTitle = "信号变化"
-    override fun signalChangeText(networkName: String, level: MonitorSignalLevel, rssi: Int): String {
-        val quality = when (level) {
-            MonitorSignalLevel.Excellent -> qualityExcellentLabel
-            MonitorSignalLevel.Good -> qualityGoodLabel
-            MonitorSignalLevel.Fair -> qualityFairLabel
-            MonitorSignalLevel.Weak -> qualityWeakLabel
-        }
-        return "“${networkName}”的信号：${quality}（${rssi} dBm）"
     }
 
     override val exportFileChooserTitle = "导出文件"

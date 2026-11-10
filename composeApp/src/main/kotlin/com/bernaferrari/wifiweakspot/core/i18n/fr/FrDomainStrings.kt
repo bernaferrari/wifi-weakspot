@@ -2,7 +2,6 @@ package com.bernaferrari.wifiweakspot.core.i18n.fr
 
 import com.bernaferrari.wifiweakspot.core.i18n.DomainStrings
 import com.bernaferrari.wifiweakspot.core.lan.DeviceKind
-import com.bernaferrari.wifiweakspot.core.monitoring.MonitorSignalLevel
 
 object FrDomainStrings : DomainStrings {
 
@@ -95,36 +94,6 @@ object FrDomainStrings : DomainStrings {
             if (bandChanged) add("bande changée")
         }
         return signal + if (changed.isEmpty()) " depuis le dernier contrôle" else " · ${changed.joinToString("; ")}"
-    }
-
-    override val monitorChannelName = "Surveillance en arrière-plan"
-
-    override val monitorChannelDescription = "Indique quand WiFi Weakspot surveille les réseaux WiFi"
-    override val alertsChannelName = "Alertes réseau"
-    override val alertsChannelDescription = "Alertes pour les nouveaux réseaux et les changements de signal"
-    override val monitorStartFailed = "Impossible de démarrer la surveillance. Autorisez les analyses Wi-Fi, activez la localisation, puis réessayez."
-
-    override val monitorWaitingForScanLimited = "En attente d'un nouveau scan Wi-Fi. Android peut limiter les demandes d'analyse."
-    override val monitorWaitingForScan = "En attente d'un nouveau scan Wi-Fi"
-    override fun monitorStatus(networkCount: Int, lastScanTime: String) = "${networkCount} ${if (networkCount == 1) "réseau" else "réseaux"} · Dernière analyse : ${lastScanTime}"
-
-    override fun newNetworksTitle(count: Int) =
-        if (count == 1) "Nouveau réseau WiFi détecté" else "Nouveaux réseaux WiFi détectés"
-
-    override fun newNetworksText(names: List<String>): String = when {
-        names.size == 1 -> "\"${names.first()}\" est désormais à portée"
-        else -> "${names[0]}, ${names[1]}" + if (names.size > 2) " et plus" else ""
-    }
-
-    override val signalChangeTitle = "Changement de signal"
-    override fun signalChangeText(networkName: String, level: MonitorSignalLevel, rssi: Int): String {
-        val quality = when (level) {
-            MonitorSignalLevel.Excellent -> qualityExcellentLabel
-            MonitorSignalLevel.Good -> qualityGoodLabel
-            MonitorSignalLevel.Fair -> qualityFairLabel
-            MonitorSignalLevel.Weak -> qualityWeakLabel
-        }
-        return "Le signal de « $networkName » est maintenant : $quality ($rssi dBm)"
     }
 
     override val exportFileChooserTitle = "Exporter le fichier"
