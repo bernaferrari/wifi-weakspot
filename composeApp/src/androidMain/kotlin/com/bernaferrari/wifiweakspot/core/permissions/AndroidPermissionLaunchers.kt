@@ -69,8 +69,9 @@ fun rememberAndroidPermissionLaunchers(): PermissionLaunchers {
                         val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
                         android.graphics.BitmapFactory.decodeFile(file.absolutePath, bounds)
                         require(bounds.outWidth > 0 && bounds.outHeight > 0) { "Image unreadable" }
+                        storeUpright(file, bounds.outMimeType)
                         file.absolutePath
-                    } catch (error: Exception) { file.delete(); throw error }
+                    } catch (error: Throwable) { file.delete(); throw error }
                 }.getOrNull()
             }
             if (path != null) floorplanPick.value = FloorplanPick(target, path)
