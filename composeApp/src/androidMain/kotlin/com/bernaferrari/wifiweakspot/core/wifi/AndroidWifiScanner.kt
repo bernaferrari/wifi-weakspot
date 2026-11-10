@@ -146,7 +146,7 @@ class AndroidWifiScanner(
 
     private fun readCurrentResults(): List<WifiNetwork> {
         return try {
-            wifiManager.scanResults.map { it.toWifiNetwork() }
+            distinctAccessPoints(wifiManager.scanResults.map { it.toWifiNetwork() })
         } catch (_: SecurityException) {
             emptyList()
         } catch (_: IllegalStateException) {

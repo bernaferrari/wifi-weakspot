@@ -41,4 +41,25 @@ class ScanFreshnessTest {
         assertFalse(FrequencySegment(5180, 20).overlaps(5200))
         assertTrue(FrequencySegment(2437, 20).overlaps(2432))
     }
+
+    @Test fun listWithoutRepeatsIsUnchanged() {
+        val networks = listOf(network(100), network(200).copy(bssid = "00:11:22:33:44:56"))
+        assertEquals(networks, distinctAccessPoints(networks))
+    }
+
+    @Test fun repeatedAddressKeepsTheLatestSighting() {
+        val latest = network(200).copy(rssi = -70)
+        assertEquals(listOf(latest), distinctAccessPoints(listOf(network(100), latest)))
+    }
+
+    @Test fun hiddenSightingBorrowsTheNameSeenEarlier() {
+        val hidden = network(200).copy(ssid = "")
+        assertEquals(listOf(network(200)), distinctAccessPoints(listOf(network(100), hidden)))
+    }
+
+    @Test fun addressCaseDoesNotSplitAnAccessPoint() {
+        val first = network(100).copy(bssid = "AA:BB:CC:DD:EE:FF")
+        val latest = network(200).copy(bssid = "aa:bb:cc:dd:ee:ff")
+        assertEquals(listOf(latest), distinctAccessPoints(listOf(first, latest)))
+    }
 }

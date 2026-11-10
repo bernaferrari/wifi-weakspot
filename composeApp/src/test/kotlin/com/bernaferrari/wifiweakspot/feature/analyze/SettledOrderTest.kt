@@ -19,4 +19,10 @@ class SettledOrderTest {
 
     @Test fun newcomersSlotInBySignal() =
         assertEquals(listOf("c", "a", "b"), order(listOf("a", "b"), N("a", -60), N("b", -61), N("c", -40)))
+
+    @Test fun aRepeatedNewcomerMakesOneRow() =
+        assertEquals(listOf("a", "b"), order(emptyList(), N("a", -70), N("b", -60), N("a", -50)))
+
+    @Test fun aRepeatedPreviousIdMakesOneRow() =
+        assertEquals(listOf("a", "b"), order(listOf("a", "a", "b"), N("a", -60), N("b", -61)))
 }

@@ -40,6 +40,18 @@ fun freshScanResults(
 }
 
 /**
+ * One entry per access point. Android can report the same address twice, usually a hidden network
+ * seen once without its name and once with it. The most recent sighting wins, so a fresh scan
+ * keeps it, and it borrows the name when only the older sighting had one.
+ */
+fun distinctAccessPoints(results: List<WifiNetwork>): List<WifiNetwork> =
+    results.groupBy { it.bssid.lowercase() }.values.map { sightings ->
+        val latest = sightings.maxBy { it.observedElapsedRealtimeMicros }
+        if (latest.ssid.isNotBlank()) latest
+        else sightings.firstOrNull { it.ssid.isNotBlank() }?.let { latest.copy(ssid = it.ssid) } ?: latest
+    }
+
+/**
  * Maps a center frequency in MHz to an 802.11 channel number.
  * 6 GHz channel 1 is 5955 MHz. Channel 14 is 2484 MHz.
  */

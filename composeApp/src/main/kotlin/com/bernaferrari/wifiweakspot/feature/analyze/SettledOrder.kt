@@ -14,10 +14,11 @@ internal fun <T> settledOrder(
     margin: Int = 6
 ): List<T> {
     val byId = items.associateBy(id)
-    val known = previous.mapNotNull { byId[it] }
+    val known = previous.distinct().mapNotNull { byId[it] }
     val seen = known.map(id).toSet()
     // Newcomers start in signal order behind the rows already on screen, then bubble up if strong.
-    val list = (known + items.filter { id(it) !in seen }.sortedByDescending(strength)).toMutableList()
+    // They come from byId, so an id that arrives twice still makes one row.
+    val list = (known + byId.values.filter { id(it) !in seen }.sortedByDescending(strength)).toMutableList()
     var changed = true
     while (changed) {
         changed = false
