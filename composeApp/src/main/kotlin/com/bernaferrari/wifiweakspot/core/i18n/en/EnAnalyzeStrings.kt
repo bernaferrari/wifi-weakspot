@@ -124,6 +124,7 @@ object EnAnalyzeStrings : AnalyzeStrings {
     override val watch = "Watch"
     override val addToFavorites = "Add to favorites"
     override val removeFromFavorites = "Remove from favorites"
+    override val favoriteNetwork = "Favorite"
 
     override fun routerCheckLastTime(pingMs: String) = "$pingMs ms last time"
     override fun devicesFoundLastScan(count: Int) = "$count found last scan"

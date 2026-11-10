@@ -161,6 +161,7 @@ object KoAnalyzeStrings : AnalyzeStrings {
 
     override val addToFavorites = "즐겨찾기에 추가"
     override val removeFromFavorites = "즐겨찾기에서 삭제"
+    override val favoriteNetwork = "즐겨찾기"
 
     override fun routerCheckLastTime(pingMs: String) = "지난번: ${pingMs} ms"
 

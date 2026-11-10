@@ -121,6 +121,7 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override val watch = "Смотреть"
     override val addToFavorites = "Добавить в избранное"
     override val removeFromFavorites = "Удалить из избранного"
+    override val favoriteNetwork = "В избранном"
 
     override fun routerCheckLastTime(pingMs: String) = "${pingMs} мс в прошлый раз"
     override fun devicesFoundLastScan(count: Int) = "${count} найдено при последнем сканировании"

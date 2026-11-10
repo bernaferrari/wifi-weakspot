@@ -161,6 +161,7 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
 
     override val addToFavorites = "添加到收藏夹"
     override val removeFromFavorites = "从收藏夹中删除"
+    override val favoriteNetwork = "已收藏"
 
     override fun routerCheckLastTime(pingMs: String) = "上次：${pingMs} ms"
 

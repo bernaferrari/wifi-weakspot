@@ -125,6 +125,7 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
     override val watch = "Assistir"
     override val addToFavorites = "Adicionar aos favoritos"
     override val removeFromFavorites = "Remover dos favoritos"
+    override val favoriteNetwork = "Favorita"
 
     override fun routerCheckLastTime(pingMs: String) = "${pingMs} ms da última vez"
     override fun devicesFoundLastScan(count: Int) = "${count} encontrado na última varredura"

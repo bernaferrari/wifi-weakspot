@@ -280,6 +280,9 @@ interface AnalyzeStrings {
     val addToFavorites: String
     val removeFromFavorites: String
 
+    /** Read aloud for the star beside a favorite network in the list. One or two words. */
+    val favoriteNetwork: String
+
     // Home screen
 
     /** [pingMs] is a formatted number, e.g. "4.2". */

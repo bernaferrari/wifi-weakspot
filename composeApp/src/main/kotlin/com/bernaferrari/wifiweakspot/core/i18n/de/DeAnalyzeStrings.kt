@@ -125,6 +125,7 @@ object DeAnalyzeStrings : AnalyzeStrings {
     override val watch = "Anschauen"
     override val addToFavorites = "Zu Favoriten hinzufügen"
     override val removeFromFavorites = "Aus Favoriten entfernen"
+    override val favoriteNetwork = "Favorit"
 
     override fun routerCheckLastTime(pingMs: String) = "${pingMs} ms letztes Mal"
     override fun devicesFoundLastScan(count: Int) = "${count} letzten Scan gefunden"

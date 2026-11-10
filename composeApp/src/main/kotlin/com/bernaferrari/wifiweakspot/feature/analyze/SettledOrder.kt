@@ -3,14 +3,15 @@ package com.bernaferrari.wifiweakspot.feature.analyze
 /**
  * Orders a live list without making it jump under the finger. Items keep their previous places
  * and only pass a neighbour when clearly stronger (by [margin] or more), so a 1–2 dB wobble
- * between scans never reshuffles rows. [pinned] items (your own connection) always lead.
+ * between scans never reshuffles rows. Items with a higher [rank] lead. The same signal rules
+ * apply within each rank.
  */
 internal fun <T> settledOrder(
     previous: List<String>,
     items: List<T>,
     id: (T) -> String,
     strength: (T) -> Int,
-    pinned: (T) -> Boolean = { false },
+    rank: (T) -> Int = { 0 },
     margin: Int = 6
 ): List<T> {
     val byId = items.associateBy(id)
@@ -25,8 +26,8 @@ internal fun <T> settledOrder(
         for (i in 0 until list.size - 1) {
             val a = list[i]
             val b = list[i + 1]
-            val swap = (pinned(b) && !pinned(a)) ||
-                (pinned(a) == pinned(b) && strength(b) - strength(a) >= margin)
+            val swap = rank(b) > rank(a) ||
+                (rank(a) == rank(b) && strength(b) - strength(a) >= margin)
             if (swap) {
                 list[i] = b
                 list[i + 1] = a

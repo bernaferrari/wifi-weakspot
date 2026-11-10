@@ -161,6 +161,7 @@ object JaAnalyzeStrings : AnalyzeStrings {
 
     override val addToFavorites = "お気に入りに追加"
     override val removeFromFavorites = "お気に入りから削除"
+    override val favoriteNetwork = "お気に入り"
 
     override fun routerCheckLastTime(pingMs: String) = "前回：${pingMs} ms"
 

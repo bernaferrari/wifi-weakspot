@@ -47,6 +47,7 @@ import androidx.compose.material.icons.rounded.NetworkWifi3Bar
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SignalWifi0Bar
 import androidx.compose.material.icons.rounded.SignalWifi4Bar
+import androidx.compose.material.icons.rounded.Star
 import com.bernaferrari.wifiweakspot.core.designsystem.component.NetworksIcons
 import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.WifiFind
@@ -81,7 +82,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -337,16 +337,24 @@ private fun NetworksContent(
         }
         LaunchedEffect(band) { selected = null }
         var detail by remember { mutableStateOf<WifiNetwork?>(null) }
-        // Your own connection leads the list; everything else is strongest first.
+        val settings: SettingsRepository = koinInject()
+        val favorites by settings.favoriteBssids.collectAsStateWithLifecycle(initialValue = emptySet())
+        // Your own connection leads, then favorites. Within each group, stronger networks rise.
         // Rows hold their places between scans (see settledOrder), so taps land where you aim.
         val lastOrder = remember(band) { arrayOf(emptyList<String>()) }
-        val inBand = remember(networks, band, connected.bssid) {
+        val inBand = remember(networks, band, connected.bssid, connected.isConnected, favorites) {
             settledOrder(
                 lastOrder[0],
                 networks.filter { band.contains(it.frequency) },
                 id = { it.bssid },
                 strength = { it.rssi },
-                pinned = { connected.isConnected && it.bssid.equals(connected.bssid, ignoreCase = true) }
+                rank = {
+                    when {
+                        connected.isConnected && it.bssid.equals(connected.bssid, ignoreCase = true) -> 2
+                        it.bssid in favorites -> 1
+                        else -> 0
+                    }
+                }
             ).also { lastOrder[0] = it.map { n -> n.bssid } }
         }
 
@@ -449,7 +457,7 @@ private fun NetworksContent(
                 )
             }
             // With dozens of neighbors, the unusable ones fold away behind one row.
-            val weak = if (inBand.size > 10) inBand.filter { SignalQuality.of(it.rssi) == SignalQuality.DeadZone && !it.bssid.equals(connected.bssid, true) } else emptyList()
+            val weak = if (inBand.size > 10) inBand.filter { SignalQuality.of(it.rssi) == SignalQuality.DeadZone && !it.bssid.equals(connected.bssid, true) && it.bssid !in favorites } else emptyList()
             val visible = if (showWeak) inBand else inBand - weak.toSet()
             itemsIndexed(visible, key = { _, n -> n.bssid }) { index, network ->
                 NetworkRow(
@@ -458,6 +466,7 @@ private fun NetworksContent(
                     count = visible.size,
                     isConnected = connected.isConnected && network.bssid.equals(connected.bssid, ignoreCase = true),
                     isYourRouter = connected.isConnected && network.isSiblingOf(connected.bssid, connected.frequency),
+                    isFavorite = network.bssid in favorites,
                     isSelected = selected?.bssid == network.bssid,
                     chartColor = palette.color(network.bssid),
                     onClick = { toggle(network) },
@@ -515,8 +524,6 @@ private fun NetworksContent(
             onDismiss = { showExplorer = false }
         )
         detail?.let { network ->
-            val settings: SettingsRepository = koinInject()
-            val favorites by settings.favoriteBssids.collectAsState(initial = emptySet())
             val scope = rememberCoroutineScope()
             val platform: com.bernaferrari.wifiweakspot.core.platform.PlatformActions = org.koin.compose.koinInject()
             val common = strings.common
@@ -636,6 +643,7 @@ private fun NetworkRow(
     count: Int,
     isConnected: Boolean,
     isYourRouter: Boolean,
+    isFavorite: Boolean,
     isSelected: Boolean,
     chartColor: androidx.compose.ui.graphics.Color,
     onClick: () -> Unit,
@@ -696,6 +704,10 @@ private fun NetworkRow(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f, fill = false)
             )
+            if (isFavorite) {
+                Spacer(Modifier.width(6.dp))
+                Icon(Icons.Rounded.Star, s.favoriteNetwork, Modifier.size(16.dp), tint = scheme.primary)
+            }
             if (isConnected) {
                 Spacer(Modifier.width(8.dp))
                 Surface(shape = WifiWeakspotShapes.full, color = scheme.primary, contentColor = scheme.onPrimary) {
