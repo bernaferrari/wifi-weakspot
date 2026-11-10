@@ -1,5 +1,6 @@
 package com.bernaferrari.wifiweakspot.feature.tools
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bernaferrari.wifiweakspot.core.designsystem.exceptBottom
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import kotlinx.coroutines.flow.map
@@ -232,7 +233,7 @@ fun ToolsHomeContent(
     // Your router is the most useful thing to test at home, so it's the first suggestion.
     val statusRepository: com.bernaferrari.wifiweakspot.core.domain.NetworkStatusRepository = org.koin.compose.koinInject()
     val status by remember(statusRepository) { statusRepository.getCurrentNetworkStatus(refreshIntervalMs = 10_000) }
-        .collectAsState(initial = com.bernaferrari.wifiweakspot.core.model.NetworkStatus.Disconnected)
+        .collectAsStateWithLifecycle(initialValue = com.bernaferrari.wifiweakspot.core.model.NetworkStatus.Disconnected)
     val dao: com.bernaferrari.wifiweakspot.core.database.dao.WifiWeakspotDao = org.koin.compose.koinInject()
     val recent by remember(dao) {
         dao.getToolHistory().map { results -> results.map { it.target }.distinct().take(4) }

@@ -102,7 +102,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.bernaferrari.wifiweakspot.core.datastore.SettingsRepository
 import com.bernaferrari.wifiweakspot.core.designsystem.LocalReduceMotion
 import com.bernaferrari.wifiweakspot.core.designsystem.WifiWeakspotShapes
@@ -112,6 +115,7 @@ import com.bernaferrari.wifiweakspot.core.designsystem.rememberWifiWeakspotHapti
 import com.bernaferrari.wifiweakspot.core.designsystem.signalColors
 import com.bernaferrari.wifiweakspot.core.model.NetworkStatus
 import com.bernaferrari.wifiweakspot.core.permissions.PermissionGate
+import com.bernaferrari.wifiweakspot.core.util.nowMillis
 import com.bernaferrari.wifiweakspot.core.wifi.ScanThrottleManager
 import com.bernaferrari.wifiweakspot.core.wifi.SignalQuality
 import com.bernaferrari.wifiweakspot.core.wifi.ThrottleState
@@ -141,6 +145,13 @@ private fun throttleIntervalMs(state: ThrottleState): Long = when (state) {
     else -> 30_000L
 }
 
+/** How long to wait before the first scan after coming back, so a quick return doesn't spend an extra scan. */
+internal fun resumeDelayMs(intervalMs: Long, lastScanAt: Long, now: Long): Long {
+    // Never scanned from this screen, or the clock moved backwards: scan right away.
+    if (lastScanAt <= 0L || now < lastScanAt) return 0L
+    return (intervalMs - (now - lastScanAt)).coerceIn(0L, intervalMs)
+}
+
 @Composable
 fun AnalyzeScreen(
     modifier: Modifier = Modifier,
@@ -161,12 +172,22 @@ fun AnalyzeScreen(
         val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
         val canScan = permissions.canScanWifi && radios.wifiEnabled && radios.locationEnabled
 
-        // Refresh while the screen is visible, paced to what Android allows.
-        LaunchedEffect(canScan) {
+        val lifecycle = LocalLifecycleOwner.current.lifecycle
+        // Keep the scan pace when the same screen comes back into view.
+        val lastScanAt = remember { longArrayOf(0L) }
+
+        LaunchedEffect(canScan, lifecycle) {
             if (!canScan) return@LaunchedEffect
-            while (isActive) {
-                if (throttleManager.throttleState.value !is ThrottleState.Exhausted) viewModel.startScan()
-                delay(throttleIntervalMs(throttleManager.throttleState.value))
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                val interval = throttleIntervalMs(throttleManager.throttleState.value)
+                delay(resumeDelayMs(interval, lastScanAt[0], nowMillis()))
+                while (isActive) {
+                    if (throttleManager.throttleState.value !is ThrottleState.Exhausted) {
+                        viewModel.startScan()
+                        lastScanAt[0] = nowMillis()
+                    }
+                    delay(throttleIntervalMs(throttleManager.throttleState.value))
+                }
             }
         }
 

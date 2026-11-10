@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bernaferrari.wifiweakspot.core.designsystem.exceptBottom
 import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.material3.ToggleButtonDefaults
@@ -68,7 +69,7 @@ fun SettingsScreen(
     val hapticsEnabled = com.bernaferrari.wifiweakspot.core.designsystem.LocalHapticsEnabled.current
     val signalDisplay = com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay.current
     val networkStatusRepository: com.bernaferrari.wifiweakspot.core.domain.NetworkStatusRepository = koinInject()
-    val networkStatus by remember(networkStatusRepository) { networkStatusRepository.getCurrentNetworkStatus() }.collectAsState(initial = null)
+    val networkStatus by remember(networkStatusRepository) { networkStatusRepository.getCurrentNetworkStatus() }.collectAsStateWithLifecycle(initialValue = null)
     val scope = rememberCoroutineScope()
     val haptics = rememberWifiWeakspotHapticFeedback()
 
