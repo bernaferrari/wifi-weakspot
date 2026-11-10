@@ -1,6 +1,6 @@
 # WiFi Weakspot Privacy Policy
 
-**Effective date: October 24, 2026**  
+**Effective date: November 10, 2026**  
 **Developer: Bernardo Ferrari**  
 **Android package: `com.bernaferrari.wifiweakspot`**
 
@@ -19,17 +19,15 @@ Depending on the features you use and the permissions you grant, the app can acc
 - **Wi-Fi information:** network names (SSIDs), access-point identifiers (BSSIDs), signal strength, channels, frequency bands, security type, and connection details.
 - **Local network information:** IP addresses, device names, available hardware addresses and manufacturer information, announced services, and responses to discovery or diagnostic requests.
 - **Your saved work:** room names, signal readings, timestamps, router-check and tool results, coverage-map points, and floor-plan images you choose to import.
-- **Preferences:** appearance, favorite networks, signal-display preferences, and background-alert settings.
+- **Preferences:** appearance, favorite networks, and signal-display preferences.
 
-This information is used to display nearby signals, compare readings, build coverage estimates, run diagnostics, and provide the settings or alerts you request. Saved records are kept in the app's private storage on your device. They are not synchronized to a developer cloud service.
+This information is used to display nearby signals, compare readings, build coverage estimates, run diagnostics, and provide the settings you request. Saved records are kept in the app's private storage on your device. They are not synchronized to a developer cloud service.
 
-## Permissions and background alerts
+## Permissions
 
 Android restricts access to Wi-Fi scans and network names because Wi-Fi identifiers can reveal location. The app requests location permission for these Wi-Fi features. **It does not request GPS coordinates or track your geographic movements.** Positions you place on a coverage map are positions within that map, not GPS locations.
 
 Network and Wi-Fi permissions support connection information, scanning, and diagnostics. You choose any floor-plan image through Android's image picker; the app does not browse your photo library.
-
-If you enable background alerts, the app can continue checking nearby Wi-Fi networks through an Android foreground service and show notifications. Android classifies this as a location foreground service because it performs Wi-Fi scans. It does not add GPS tracking or send scan results to us. You can turn off alerts in the app, stop the service, or revoke permissions in Android settings.
 
 ## Network requests and external services
 

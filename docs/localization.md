@@ -11,11 +11,11 @@ The target languages are English (`en`), Spanish (`es`), Brazilian Portuguese (`
 3. Keep calendar arrays in Monday–Sunday and January–December order. Keep the twelve room suggestions in their documented order, which identifies their icons. Picked room names and user-entered device names stay as saved when the language changes.
 4. Register the completed object in `AppLanguage`, then add the same tag to `androidApp/src/main/res/xml/locales_config.xml`. Regional and script tags are matched before language fallbacks; Traditional Chinese requests do not resolve to a Simplified Chinese catalog.
 5. Run `./gradlew :composeApp:testDebugUnitTest :webDemo:compileKotlinWasmJs :androidApp:assembleDebug`.
-6. Review every screen on a device in the language, including long labels, dialogs, charts, large font sizes, screen-reader descriptions, notifications, generated names, and shared reports. Change the per-app language with history and saved rooms already present. Automated tests check catalog structure and locale resolution, not translation accuracy or rendered layout.
+6. Review every screen on a device in the language, including long labels, dialogs, charts, large font sizes, screen-reader descriptions, generated names, and shared reports. Change the per-app language with history and saved rooms already present. Automated tests check catalog structure and locale resolution, not translation accuracy or rendered layout.
 
 ## Text versus data
 
-Translate actions, accessibility descriptions, tool verdicts, notifications, permission explanations, share-sheet titles, and human-readable reports. Keep SSIDs, addresses, user names, brands, protocol names, and units intact.
+Translate actions, accessibility descriptions, tool verdicts, permission explanations, share-sheet titles, and human-readable reports. Keep SSIDs, addresses, user names, brands, protocol names, and units intact.
 
 Database keys, enum names, CSV/JSON field names, file timestamps, and diagnostic wire formats are stable data. In particular, the legacy ping/DNS history format contains `Reply`, `time=… ms`, and `Error:` markers that parsers depend on. Do not translate those stored records. The UI renders localized summaries from them, and failed DNS history uses a catalog message instead of displaying a saved English exception. CSV headers remain stable for existing consumers.
 
@@ -101,4 +101,5 @@ public gallery artwork uses the browser’s simulated networks, capped at 84% si
 
 The earlier catalog-reduction and browser-verification sections record the initial 551-entry
 quality pass. Channel-advice features subsequently added five entries, while removal of the
-Busy strip removed two obsolete entries. Catalogs remain complete and symmetric.
+Busy strip removed two obsolete entries and removal of background alerts removed twenty-two.
+Catalogs remain complete and symmetric.
