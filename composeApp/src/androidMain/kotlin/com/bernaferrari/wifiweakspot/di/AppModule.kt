@@ -9,7 +9,6 @@ import com.bernaferrari.wifiweakspot.core.export.AndroidExportManager
 import com.bernaferrari.wifiweakspot.core.export.ExportManager
 import com.bernaferrari.wifiweakspot.core.lan.AndroidLanScanner
 import com.bernaferrari.wifiweakspot.core.lan.LanScanner
-import com.bernaferrari.wifiweakspot.core.monitoring.BackgroundMonitorManager
 import com.bernaferrari.wifiweakspot.core.permissions.AndroidPermissionGate
 import com.bernaferrari.wifiweakspot.core.permissions.PermissionGate
 import com.bernaferrari.wifiweakspot.core.tools.AndroidDnsClient
@@ -64,7 +63,6 @@ val appModule = module {
     single<NetworkStatusRepository> { AndroidNetworkStatusRepository(androidContext()) }
 
     // Background Monitoring
-    single { BackgroundMonitorManager(androidContext()) } bind com.bernaferrari.wifiweakspot.core.monitoring.BackgroundMonitor::class
 
     // Platform hooks for the shared UI
     single<com.bernaferrari.wifiweakspot.core.platform.PlatformActions> { com.bernaferrari.wifiweakspot.core.platform.AndroidPlatformActions(androidContext()) }

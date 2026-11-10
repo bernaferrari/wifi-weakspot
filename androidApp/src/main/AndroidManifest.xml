@@ -10,19 +10,9 @@
     <!-- Hears devices announce their names over mDNS (Bonjour). -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
-
     <!-- Location permissions - required for SSID access on all Android versions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
-    <!-- Notifications (API 33+) -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-    <!-- Step detector for site-survey walks (API 29+) -->
-
-    <!-- Background monitoring: Android only allows Wi-Fi scans in the background from a location service. -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <!-- Hardware features (optional) -->
     <uses-feature android:name="android.hardware.wifi" android:required="false" />
@@ -51,12 +41,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- Background monitoring service -->
-        <service
-            android:name="com.bernaferrari.wifiweakspot.core.monitoring.BackgroundMonitorService"
-            android:exported="false"
-            android:foregroundServiceType="location" />
 
         <!-- FileProvider for exports -->
         <provider

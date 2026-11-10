@@ -44,12 +44,9 @@ import com.bernaferrari.wifiweakspot.core.datastore.SettingsRepository
 import com.bernaferrari.wifiweakspot.core.designsystem.WifiWeakspotAlpha
 import com.bernaferrari.wifiweakspot.core.designsystem.WifiWeakspotShapes
 import com.bernaferrari.wifiweakspot.core.designsystem.rememberWifiWeakspotHapticFeedback
-import com.bernaferrari.wifiweakspot.core.monitoring.BackgroundMonitor
-import com.bernaferrari.wifiweakspot.core.monitoring.MonitorSettings
 import org.koin.compose.koinInject
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -70,21 +67,10 @@ fun SettingsScreen(
     val reduceMotion = themeSettings.reduceMotion
     val hapticsEnabled = com.bernaferrari.wifiweakspot.core.designsystem.LocalHapticsEnabled.current
     val signalDisplay = com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay.current
-    val permissionGate: com.bernaferrari.wifiweakspot.core.permissions.PermissionGate = koinInject()
-    val permissionState by permissionGate.state.collectAsState()
     val networkStatusRepository: com.bernaferrari.wifiweakspot.core.domain.NetworkStatusRepository = koinInject()
     val networkStatus by remember(networkStatusRepository) { networkStatusRepository.getCurrentNetworkStatus() }.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
     val haptics = rememberWifiWeakspotHapticFeedback()
-
-    // Background monitoring
-    val monitorManager: BackgroundMonitor = koinInject()
-    val isMonitoring by monitorManager.isMonitoring.collectAsState()
-    val monitorSettings by monitorManager.settings.collectAsState()
-    val monitorError by monitorManager.error.collectAsState()
-    var intervalMinutes by remember(monitorSettings.scanIntervalMs) { mutableFloatStateOf(monitorSettings.intervalMinutes) }
-    val platform: com.bernaferrari.wifiweakspot.core.platform.PlatformActions = koinInject()
-    val launchers = com.bernaferrari.wifiweakspot.core.platform.LocalPermissionLaunchers.current
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -209,85 +195,6 @@ fun SettingsScreen(
                         onCheckedChange = { scope.launch { settingsRepository.setReduceMotion(it) } })
                     SettingsToggle(icon = Icons.Default.Vibration, title = strings.settings.hapticsSubtitle, checked = hapticsEnabled,
                         onCheckedChange = { scope.launch { settingsRepository.setHapticsEnabled(it) } })
-                }
-            }
-
-            // Background Monitoring Section
-            item {
-                SettingsSection(strings.settings.sectionAlerts) {
-                    // Main toggle
-                    val notificationsDenied = strings.settings.notificationsDenied
-                    SettingsToggle(
-                        icon = Icons.Default.Radar,
-                        title = strings.settings.backgroundAlertsTitle,
-                        subtitle = strings.settings.backgroundAlertsSubtitle,
-                        checked = isMonitoring,
-                        onCheckedChange = { enabled ->
-                            haptics.click()
-                            if (!enabled) {
-                                monitorManager.stopMonitoring()
-                            } else if (!permissionState.canScanWifi) {
-                                onRequestScanPermission()
-                            } else if (platform.needsNotificationPermission()) {
-                                launchers.notifications { granted ->
-                                    if (granted) monitorManager.startMonitoring()
-                                    else platform.showMessage(notificationsDenied)
-                                }
-                            } else {
-                                monitorManager.startMonitoring()
-                            }
-                        }
-                    )
-                    monitorError?.let { message ->
-                        Text(message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
-                    }
-
-                    // Settings (only visible when enabled)
-                    if (isMonitoring) {
-                        // Scan interval slider
-                        SettingsBlock(
-                            icon = Icons.Default.Schedule,
-                            title = strings.settings.checkEvery,
-                            trailing = {
-                                Text(
-                                    if (intervalMinutes < 1f) strings.settings.intervalSeconds(30) else strings.settings.intervalMinutes(intervalMinutes.roundToInt()),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        ) {
-                            Slider(
-                                value = intervalMinutes,
-                                onValueChange = { intervalMinutes = it },
-                                onValueChangeFinished = { monitorManager.updateSettings(monitorSettings.withIntervalMinutes(intervalMinutes)) },
-                                valueRange = 0.5f..10f,
-                                steps = 18
-                            )
-                        }
-
-                        // Notification options
-                        SettingsToggle(
-                            icon = Icons.Default.Notifications,
-                            title = strings.settings.newNetworkAlertsTitle,
-
-                            checked = monitorSettings.notifyNewNetworks,
-                            onCheckedChange = {
-                                haptics.click()
-                                monitorManager.updateSettings(monitorSettings.copy(notifyNewNetworks = it))
-                            }
-                        )
-
-                        SettingsToggle(
-                            icon = Icons.Default.SignalCellularAlt,
-                            title = strings.settings.signalChangeAlertsTitle,
-                            subtitle = strings.settings.signalChangeAlertsSubtitle,
-                            checked = monitorSettings.notifySignalChange,
-                            onCheckedChange = {
-                                haptics.click()
-                                monitorManager.updateSettings(monitorSettings.copy(notifySignalChange = it))
-                            }
-                        )
-                    }
                 }
             }
 
