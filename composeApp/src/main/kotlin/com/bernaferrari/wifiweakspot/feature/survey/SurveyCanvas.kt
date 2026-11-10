@@ -1,5 +1,9 @@
 package com.bernaferrari.wifiweakspot.feature.survey
 
+import androidx.compose.ui.graphics.ImageBitmap
+import com.bernaferrari.wifiweakspot.core.platform.PlatformActions
+import org.koin.compose.koinInject
+import androidx.compose.runtime.key
 import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clipToBounds
@@ -99,27 +103,30 @@ fun SurveyCanvas(
                 }
             }
     ) {
-    // A floor-plan photo keeps its calibrated shape. Without one, the grid has no fixed shape, so it fills the
-    // whole viewport, and the field uses the same area in meters spread over the viewport's proportions.
+    // Match the photo's proportions, or fill the viewport when there is no photo.
+    val platform: PlatformActions = koinInject()
+    var photoResolved by remember(imagePath) { mutableStateOf(imagePath == null) }
+    val floorplan by key(imagePath) {
+        produceState<ImageBitmap?>(null) {
+            value = imagePath?.let { platform.loadImage(it) }
+            photoResolved = true
+        }
+    }
+    if (!photoResolved) return@BoxWithConstraints
+    val photoAspect = floorplan?.let { it.width.toFloat() / it.height.toFloat() }
     val fillViewport = imagePath == null && maxWidth.value > 0f && maxHeight.value > 0f
-    val (fieldWidthMeters, fieldHeightMeters) = if (fillViewport) {
-        val area = (widthMeters * heightMeters).takeIf { it.isFinite() && it > 0f } ?: 100f
-        val viewAspect = maxWidth.value / maxHeight.value
-        kotlin.math.sqrt(area * viewAspect) to kotlin.math.sqrt(area / viewAspect)
-    } else widthMeters to heightMeters
+    val (fieldWidthMeters, fieldHeightMeters) = when {
+        fillViewport -> fieldMetersForAspect(widthMeters, heightMeters, maxWidth.value / maxHeight.value)
+        photoAspect != null -> fieldMetersForAspect(widthMeters, heightMeters, photoAspect)
+        else -> widthMeters to heightMeters
+    }
     val fitted = fittedMapSize(maxWidth.value, maxHeight.value, fieldWidthMeters, fieldHeightMeters)
     val mapWidth = fitted.width.dp
     val mapHeight = fitted.height.dp
     Box(Modifier.align(Alignment.Center).size(mapWidth, mapHeight).onSizeChanged { fittedPixels = it }.graphicsLayer { scaleX = zoom; scaleY = zoom; translationX = pan.x; translationY = pan.y }) {
-        val platform: com.bernaferrari.wifiweakspot.core.platform.PlatformActions = org.koin.compose.koinInject()
-        val floorplan by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, imagePath) {
-            value = null
-            value = imagePath?.let { platform.loadImage(it) }
-        }
         floorplan?.let { bitmap -> androidx.compose.foundation.Image(
             bitmap = bitmap, contentDescription = strings.survey.floorplanDescription,
-            // Existing normalized pins refer to the full photo bounds. Fit the whole map above,
-            // not the photo alone, so changing screens never separates pins from photo locations.
+            // The box matches the photo's proportions. Pins stay at the same fractions of its width and height.
             contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize()
         ) }
         // Same palette and thresholds as every other signal reading in the app.

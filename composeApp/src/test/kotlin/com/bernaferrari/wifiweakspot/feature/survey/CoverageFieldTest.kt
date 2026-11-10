@@ -32,6 +32,25 @@ class CoverageFieldTest {
         assertEquals(portrait.rows, landscape.rows)
     }
 
+    @Test fun aPhotoTwiceAsWideAsTallMakesTheMapTwiceAsWide() {
+        val (width, height) = fieldMetersForAspect(10f, 10f, 2f)
+        assertEquals(2f, width / height, 0.001f)
+        assertEquals(100f, width * height, 0.01f)
+    }
+
+    @Test fun anUnusableAspectKeepsTheStoredSize() {
+        for (aspect in listOf(Float.NaN, 0f, -1f, Float.POSITIVE_INFINITY)) {
+            assertEquals(8f to 12f, fieldMetersForAspect(8f, 12f, aspect))
+        }
+    }
+
+    @Test fun theFittedMapHasThePhotosProportions() {
+        val (width, height) = fieldMetersForAspect(10f, 10f, 4f / 3f)
+        val fitted = fittedMapSize(300f, 600f, width, height)
+        assertEquals(300f, fitted.width, 0.01f)
+        assertEquals(4f / 3f, fitted.width / fitted.height, 0.001f)
+    }
+
     private fun CoverageGrid.at(x: Float, y: Float): Pair<Float, Float> {
         val i = (x * columns).toInt().coerceIn(0, columns - 1)
         val j = (y * rows).toInt().coerceIn(0, rows - 1)

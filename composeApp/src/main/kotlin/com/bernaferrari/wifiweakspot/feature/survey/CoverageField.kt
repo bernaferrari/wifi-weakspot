@@ -138,6 +138,17 @@ private fun smoothStep(edge0: Float, edge1: Float, x: Float): Float {
     return t * t * (3f - 2f * t)
 }
 
+/**
+ * The map's size in meters, reshaped to [aspect] (width / height) while keeping its area. A photo
+ * or a viewport decides the shape; the stored size only says how large the home is. An unusable
+ * aspect keeps the stored size.
+ */
+internal fun fieldMetersForAspect(widthMeters: Float, heightMeters: Float, aspect: Float): Pair<Float, Float> {
+    if (!aspect.isFinite() || aspect <= 0f) return widthMeters to heightMeters
+    val area = (widthMeters * heightMeters).takeIf { it.isFinite() && it > 0f } ?: 100f
+    return sqrt(area * aspect) to sqrt(area / aspect)
+}
+
 /** A map keeps its calibrated aspect on every viewport. Invalid imported sizes fall back to a square. */
 internal fun mapAspectRatio(widthMeters: Float, heightMeters: Float): Float =
     if (widthMeters.isFinite() && heightMeters.isFinite() && widthMeters > 0f && heightMeters > 0f)
