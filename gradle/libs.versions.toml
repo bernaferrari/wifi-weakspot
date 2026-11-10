@@ -1,19 +1,19 @@
 [versions]
 agp = "9.5.0-alpha09"
-androidx-activity = "1.14.0-alpha03"
+androidx-activity = "1.13.0"
 androidx-navigation = "2.10.2"
-androidx-lifecycle = "2.12.0-alpha04"
+androidx-lifecycle = "2.11.0"
 coil = "3.6.3"
-compose-multiplatform = "1.13.0-alpha02"
+compose-multiplatform = "1.13.0-beta01"
 koin = "4.2.2"
-kotlin = "2.5.0-Beta1"
+kotlin = "2.4.21"
 ktor = "3.6.0"
 room = "2.8.5"
-datastore = "1.3.0-rc01"
-sqlite = "2.8.0-alpha01"
+datastore = "1.3.0"
+sqlite = "2.7.1"
 ksp = "2.3.12"
 kotlinx-datetime = "0.8.0"
-materialKolor = "6.0.0-beta01"
+materialKolor = "6.0.0"
 okhttp = "5.5.0"
 androidx-material3 = "1.5.0-beta01"
 material-icons-extended = "1.7.8"
@@ -23,7 +23,7 @@ turbine = "1.2.1"
 mockk = "1.14.11"
 
 [libraries]
-kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version = "1.11.0" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version = "1.12.0" }
 # AndroidX
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version = "1.2.0" }
@@ -40,7 +40,7 @@ androidx-sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", 
 androidx-datastore-preferences-core = { group = "androidx.datastore", name = "datastore-preferences-core", version.ref = "datastore" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
-# Compose Material 3 follows the Compose Multiplatform alpha.
+# Compose Material 3 follows the Compose Multiplatform beta.
 # The deprecated compose.material3 accessor is pinned to Material3 1.4, where Expressive APIs are internal.
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-multiplatform" }
 androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "androidx-material3" }

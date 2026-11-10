@@ -1,0 +1,656 @@
+{
+  "ok": true,
+  "cards": [
+    {
+      "locale": "zh-CN",
+      "kind": "phone",
+      "index": 0,
+      "feature": "channels",
+      "file": "zh-CN/screenshots/v10-01-channels.jpg",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 205960,
+      "notes": [],
+      "layout": {
+        "width": 1080,
+        "height": 1920,
+        "devices": [
+          {
+            "raw": "phone/channels.png",
+            "left": 84,
+            "top": 540,
+            "width": 912,
+            "height": 1934
+          }
+        ],
+        "header": {
+          "left": 84,
+          "top": 150,
+          "width": 912,
+          "height": 334
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "phone",
+      "index": 1,
+      "feature": "history",
+      "file": "zh-CN/screenshots/v10-02-history.jpg",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 205337,
+      "notes": [],
+      "layout": {
+        "width": 1080,
+        "height": 1920,
+        "devices": [
+          {
+            "raw": "phone/history.png",
+            "left": 84,
+            "top": 540,
+            "width": 912,
+            "height": 1934
+          }
+        ],
+        "header": {
+          "left": 84,
+          "top": 150,
+          "width": 912,
+          "height": 334
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "phone",
+      "index": 2,
+      "feature": "coverage",
+      "file": "zh-CN/screenshots/v10-03-coverage.jpg",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 179299,
+      "notes": [],
+      "layout": {
+        "width": 1080,
+        "height": 1920,
+        "devices": [
+          {
+            "raw": "phone/coverage.png",
+            "left": 84,
+            "top": 540,
+            "width": 912,
+            "height": 1934
+          }
+        ],
+        "header": {
+          "left": 84,
+          "top": 150,
+          "width": 912,
+          "height": 334
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "phone",
+      "index": 3,
+      "feature": "rooms",
+      "file": "zh-CN/screenshots/v10-04-rooms.jpg",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 133169,
+      "notes": [],
+      "layout": {
+        "width": 1080,
+        "height": 1920,
+        "devices": [
+          {
+            "raw": "phone/rooms.png",
+            "left": 84,
+            "top": 540,
+            "width": 912,
+            "height": 1934
+          }
+        ],
+        "header": {
+          "left": 84,
+          "top": 150,
+          "width": 912,
+          "height": 334
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "phone",
+      "index": 4,
+      "feature": "home",
+      "file": "zh-CN/screenshots/v10-05-home.jpg",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 187608,
+      "notes": [],
+      "layout": {
+        "width": 1080,
+        "height": 1920,
+        "devices": [
+          {
+            "raw": "phone/signal.png",
+            "left": 84,
+            "top": 540,
+            "width": 912,
+            "height": 1934
+          }
+        ],
+        "header": {
+          "left": 84,
+          "top": 150,
+          "width": 912,
+          "height": 334
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "phone",
+      "index": 5,
+      "feature": "router",
+      "file": "zh-CN/screenshots/v10-06-router.jpg",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 154360,
+      "notes": [],
+      "layout": {
+        "width": 1080,
+        "height": 1920,
+        "devices": [
+          {
+            "raw": "phone/router.png",
+            "left": 84,
+            "top": 540,
+            "width": 912,
+            "height": 1934
+          }
+        ],
+        "header": {
+          "left": 84,
+          "top": 150,
+          "width": 912,
+          "height": 334
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "phone",
+      "index": 6,
+      "feature": "network",
+      "file": "zh-CN/screenshots/v10-07-network.jpg",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 184381,
+      "notes": [],
+      "layout": {
+        "width": 1080,
+        "height": 1920,
+        "devices": [
+          {
+            "raw": "phone/devices.png",
+            "left": 84,
+            "top": 540,
+            "width": 912,
+            "height": 1934
+          }
+        ],
+        "header": {
+          "left": 84,
+          "top": 150,
+          "width": 912,
+          "height": 334
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "phone",
+      "index": 7,
+      "feature": "appearance",
+      "file": "zh-CN/screenshots/v10-08-appearance.jpg",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 171927,
+      "notes": [
+        "en-US capture: phone/appearance-dark.png"
+      ],
+      "layout": {
+        "width": 1080,
+        "height": 1920,
+        "devices": [
+          {
+            "raw": "phone/appearance-dark.png",
+            "left": 84,
+            "top": 540,
+            "width": 912,
+            "height": 1934
+          }
+        ],
+        "header": {
+          "left": 84,
+          "top": 150,
+          "width": 912,
+          "height": 334
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "tablet7",
+      "index": 0,
+      "feature": "channels",
+      "file": "zh-CN/tablet/v10-7-01-channels.jpg",
+      "width": 1200,
+      "height": 1920,
+      "bytes": 213620,
+      "notes": [],
+      "layout": {
+        "width": 1200,
+        "height": 1920,
+        "devices": [
+          {
+            "raw": "tablet7/channels.png",
+            "left": 220,
+            "top": 600,
+            "width": 760,
+            "height": 1198
+          }
+        ],
+        "header": {
+          "left": 96,
+          "top": 150,
+          "width": 1008,
+          "height": 342
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "tablet7",
+      "index": 1,
+      "feature": "history",
+      "file": "zh-CN/tablet/v10-7-02-history.jpg",
+      "width": 1200,
+      "height": 1920,
+      "bytes": 202747,
+      "notes": [],
+      "layout": {
+        "width": 1200,
+        "height": 1920,
+        "devices": [
+          {
+            "raw": "tablet7/history.png",
+            "left": 220,
+            "top": 600,
+            "width": 760,
+            "height": 1198
+          }
+        ],
+        "header": {
+          "left": 96,
+          "top": 150,
+          "width": 1008,
+          "height": 342
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "tablet7",
+      "index": 2,
+      "feature": "coverage",
+      "file": "zh-CN/tablet/v10-7-03-coverage.jpg",
+      "width": 1200,
+      "height": 1920,
+      "bytes": 188135,
+      "notes": [],
+      "layout": {
+        "width": 1200,
+        "height": 1920,
+        "devices": [
+          {
+            "raw": "tablet7/coverage.png",
+            "left": 220,
+            "top": 600,
+            "width": 760,
+            "height": 1198
+          }
+        ],
+        "header": {
+          "left": 96,
+          "top": 150,
+          "width": 1008,
+          "height": 342
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "tablet7",
+      "index": 3,
+      "feature": "rooms",
+      "file": "zh-CN/tablet/v10-7-04-rooms.jpg",
+      "width": 1200,
+      "height": 1920,
+      "bytes": 158381,
+      "notes": [],
+      "layout": {
+        "width": 1200,
+        "height": 1920,
+        "devices": [
+          {
+            "raw": "tablet7/rooms.png",
+            "left": 220,
+            "top": 600,
+            "width": 760,
+            "height": 1198
+          }
+        ],
+        "header": {
+          "left": 96,
+          "top": 150,
+          "width": 1008,
+          "height": 342
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "tablet10",
+      "index": 0,
+      "feature": "channels",
+      "file": "zh-CN/tablet/v10-10-01-channels.jpg",
+      "width": 1920,
+      "height": 1200,
+      "bytes": 202252,
+      "notes": [],
+      "layout": {
+        "width": 1920,
+        "height": 1200,
+        "devices": [
+          {
+            "raw": "tablet10/channels.png",
+            "left": 700,
+            "top": 240,
+            "width": 1140,
+            "height": 722
+          }
+        ],
+        "header": {
+          "left": 100,
+          "top": 0,
+          "width": 560,
+          "height": 1200
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "tablet10",
+      "index": 1,
+      "feature": "history",
+      "file": "zh-CN/tablet/v10-10-02-history.jpg",
+      "width": 1920,
+      "height": 1200,
+      "bytes": 197092,
+      "notes": [],
+      "layout": {
+        "width": 1920,
+        "height": 1200,
+        "devices": [
+          {
+            "raw": "tablet10/history.png",
+            "left": 700,
+            "top": 240,
+            "width": 1140,
+            "height": 722
+          }
+        ],
+        "header": {
+          "left": 100,
+          "top": 0,
+          "width": 560,
+          "height": 1200
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "tablet10",
+      "index": 2,
+      "feature": "coverage",
+      "file": "zh-CN/tablet/v10-10-03-coverage.jpg",
+      "width": 1920,
+      "height": 1200,
+      "bytes": 150801,
+      "notes": [],
+      "layout": {
+        "width": 1920,
+        "height": 1200,
+        "devices": [
+          {
+            "raw": "tablet10/coverage.png",
+            "left": 700,
+            "top": 240,
+            "width": 1140,
+            "height": 722
+          }
+        ],
+        "header": {
+          "left": 100,
+          "top": 0,
+          "width": 560,
+          "height": 1200
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "tablet10",
+      "index": 3,
+      "feature": "rooms",
+      "file": "zh-CN/tablet/v10-10-04-rooms.jpg",
+      "width": 1920,
+      "height": 1200,
+      "bytes": 127396,
+      "notes": [],
+      "layout": {
+        "width": 1920,
+        "height": 1200,
+        "devices": [
+          {
+            "raw": "tablet10/rooms.png",
+            "left": 700,
+            "top": 240,
+            "width": 1140,
+            "height": 722
+          }
+        ],
+        "header": {
+          "left": 100,
+          "top": 0,
+          "width": 560,
+          "height": 1200
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "desktop",
+      "index": 0,
+      "feature": "channels",
+      "file": "zh-CN/desktop/v8-01-channels.jpg",
+      "width": 1920,
+      "height": 1080,
+      "bytes": 193701,
+      "notes": [
+        "en-US capture: desktop/02-channels.jpg"
+      ],
+      "layout": {
+        "width": 1920,
+        "height": 1080,
+        "devices": [
+          {
+            "raw": "desktop/02-channels.jpg",
+            "left": 220,
+            "top": 330,
+            "width": 1480,
+            "height": 885
+          }
+        ],
+        "header": {
+          "left": 220,
+          "top": 70,
+          "width": 1480,
+          "height": 132
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "desktop",
+      "index": 1,
+      "feature": "home",
+      "file": "zh-CN/desktop/v8-02-home.jpg",
+      "width": 1920,
+      "height": 1080,
+      "bytes": 166867,
+      "notes": [
+        "en-US capture: desktop/01-home.jpg"
+      ],
+      "layout": {
+        "width": 1920,
+        "height": 1080,
+        "devices": [
+          {
+            "raw": "desktop/01-home.jpg",
+            "left": 220,
+            "top": 330,
+            "width": 1480,
+            "height": 885
+          }
+        ],
+        "header": {
+          "left": 220,
+          "top": 70,
+          "width": 1480,
+          "height": 132
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "desktop",
+      "index": 2,
+      "feature": "history",
+      "file": "zh-CN/desktop/v8-03-history.jpg",
+      "width": 1920,
+      "height": 1080,
+      "bytes": 191820,
+      "notes": [
+        "en-US capture: desktop/03-history.jpg"
+      ],
+      "layout": {
+        "width": 1920,
+        "height": 1080,
+        "devices": [
+          {
+            "raw": "desktop/03-history.jpg",
+            "left": 220,
+            "top": 330,
+            "width": 1480,
+            "height": 885
+          }
+        ],
+        "header": {
+          "left": 220,
+          "top": 70,
+          "width": 1480,
+          "height": 132
+        },
+        "callouts": []
+      }
+    },
+    {
+      "locale": "zh-CN",
+      "kind": "desktop",
+      "index": 3,
+      "feature": "appearance",
+      "file": "zh-CN/desktop/v8-04-appearance.jpg",
+      "width": 1920,
+      "height": 1080,
+      "bytes": 139988,
+      "notes": [
+        "en-US capture: desktop/04-appearance.jpg"
+      ],
+      "layout": {
+        "width": 1920,
+        "height": 1080,
+        "devices": [
+          {
+            "raw": "desktop/04-appearance.jpg",
+            "left": 220,
+            "top": 330,
+            "width": 1480,
+            "height": 885
+          }
+        ],
+        "header": {
+          "left": 220,
+          "top": 70,
+          "width": 1480,
+          "height": 132
+        },
+        "callouts": []
+      }
+    }
+  ],
+  "warnings": [
+    "zh-CN/tablet/v10-10-03-coverage.jpg: \"点按你所在的位置，地图随之填满。\" is left on a short last line; reword or shorten the copy"
+  ],
+  "locales": [
+    {
+      "locale": "zh-CN",
+      "cards": 20,
+      "untranslated": 0,
+      "borrowedCaptures": 5,
+      "movedCallouts": 0,
+      "fixedCallouts": 0,
+      "shrunk": 0
+    }
+  ],
+  "finishedAt": "2026-11-04T20:57:23.925Z",
+  "options": {
+    "locales": [
+      "zh-CN"
+    ],
+    "strict": false
+  }
+}
