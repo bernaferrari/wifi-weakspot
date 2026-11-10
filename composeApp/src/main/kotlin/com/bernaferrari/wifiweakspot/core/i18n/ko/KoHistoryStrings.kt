@@ -19,6 +19,9 @@ object KoHistoryStrings : HistoryStrings {
     override val kindScans = "스캔"
     override val emptyTitle = "아직 저장된 것이 없습니다."
     override val emptySubtitle = "공유기 확인, 네트워크 스캔, 도구 결과가 여기에 저장되어 Wi-Fi의 변화를 살펴볼 수 있습니다."
+    override val clearHistory = "기록 지우기"
+    override val clearHistoryTitle = "기록을 지울까요?"
+    override val clearHistoryBody = "여기에 표시된 모든 항목이 이 기기에서 삭제되며, 기기에 지정한 이름도 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다."
 
     override fun trendBarsDescription(count: Int, readings: String) = "최근 공유기 테스트 ${count}회: ${readings}"
 

@@ -19,6 +19,9 @@ object ZhHansHistoryStrings : HistoryStrings {
     override val kindScans = "扫描"
     override val emptyTitle = "尚未保存任何内容"
     override val emptySubtitle = "这里会保存路由器检查、网络扫描和工具结果，方便查看 Wi-Fi 随时间的变化。"
+    override val clearHistory = "清除历史记录"
+    override val clearHistoryTitle = "要清除历史记录吗？"
+    override val clearHistoryBody = "此处列出的所有内容都将从此设备中删除，包括为设备设置的名称。此操作无法撤销。"
 
     override fun trendBarsDescription(count: Int, readings: String) = "最近 ${count} 次路由器测试：${readings}"
 

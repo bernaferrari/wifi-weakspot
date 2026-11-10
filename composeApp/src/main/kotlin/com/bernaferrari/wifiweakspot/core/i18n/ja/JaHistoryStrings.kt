@@ -19,6 +19,9 @@ object JaHistoryStrings : HistoryStrings {
     override val kindScans = "スキャン"
     override val emptyTitle = "まだ何も保存されていません"
     override val emptySubtitle = "ルーターのテスト、ネットワークのスキャン、各ツールの結果を保存し、Wi-Fiの変化を振り返ることができます。"
+    override val clearHistory = "履歴を消去"
+    override val clearHistoryTitle = "履歴を消去しますか？"
+    override val clearHistoryBody = "ここに表示されている内容はすべてこのデバイスから削除されます。デバイスに付けた名前も削除されます。この操作は元に戻せません。"
 
     override fun trendBarsDescription(count: Int, readings: String) = "直近${count}回のルーターテスト：${readings}"
 

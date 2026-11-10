@@ -19,6 +19,9 @@ object EsHistoryStrings : HistoryStrings {
     override val kindScans = "Escaneos"
     override val emptyTitle = "Nada guardado aún"
     override val emptySubtitle = "Aquí se guardan las comprobaciones del router, las búsquedas de redes y los resultados de las herramientas para comparar cómo cambia tu Wi-Fi."
+    override val clearHistory = "Borrar historial"
+    override val clearHistoryTitle = "¿Borrar el historial?"
+    override val clearHistoryBody = "Todo lo que aparece aquí se eliminará de este dispositivo, incluidos los nombres personalizados de los dispositivos. Esta acción no se puede deshacer."
 
     override fun trendBarsDescription(count: Int, readings: String) = "Últimas ${count} pruebas de enrutador: ${readings}"
     override val trendNoReply = "No hay respuesta del router. Algunos enrutadores ignoran estas comprobaciones."

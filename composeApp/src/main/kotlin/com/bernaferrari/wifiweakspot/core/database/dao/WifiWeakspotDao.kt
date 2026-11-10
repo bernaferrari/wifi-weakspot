@@ -71,6 +71,28 @@ interface WifiWeakspotDao {
     @Query("SELECT * FROM speed_test_results ORDER BY timestamp DESC")
     fun getSpeedTestHistory(): Flow<List<SpeedTestResultEntity>>
 
+    // Clearing history
+    @Query("DELETE FROM wifi_scan_results")
+    suspend fun deleteWifiScans()
+
+    @Query("DELETE FROM lan_devices")
+    suspend fun deleteLanDevices()
+
+    @Query("DELETE FROM tool_results")
+    suspend fun deleteToolResults()
+
+    @Query("DELETE FROM speed_test_results")
+    suspend fun deleteSpeedTests()
+
+    /** Everything the History screen lists, in one step so a failure leaves nothing half-cleared. Maps and rooms stay. */
+    @Transaction
+    suspend fun clearHistory() {
+        deleteWifiScans()
+        deleteLanDevices()
+        deleteToolResults()
+        deleteSpeedTests()
+    }
+
     // Snapshot queries retain the caller's driver transaction; Flow collection is for observers.
     @Query("SELECT * FROM survey_projects ORDER BY updatedAt DESC")
     suspend fun snapshotSurveyProjects(): List<SurveyProjectEntity>

@@ -40,6 +40,13 @@ interface HistoryStrings {
     val emptyTitle: String
     /** Empty state explanation under [emptyTitle]. */
     val emptySubtitle: String
+
+    /** Top-bar action that deletes all saved history. Also read aloud by screen readers. */
+    val clearHistory: String
+    /** Title of the confirmation dialog for [clearHistory]. */
+    val clearHistoryTitle: String
+    /** Body of that dialog: says what is deleted, including names given to devices, and that it is permanent. */
+    val clearHistoryBody: String
     /** Accessibility description of the router trend bar chart. [readings] is a comma list of readings like "4.2 ms" or [noReplyReading]. */
     fun trendBarsDescription(count: Int, readings: String): String
 

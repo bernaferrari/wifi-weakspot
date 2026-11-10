@@ -77,6 +77,11 @@ class InMemoryDao : WifiWeakspotDao {
     override suspend fun tagSpeedTest(id: Long, room: String?) =
         speed.update { list -> list.map { t -> if (t.id == id) t.copy(room = room) else t } }
 
+    override suspend fun deleteWifiScans() { scans.value = emptyList() }
+    override suspend fun deleteLanDevices() { lan.value = emptyList() }
+    override suspend fun deleteToolResults() { tools.value = emptyList() }
+    override suspend fun deleteSpeedTests() { speed.value = emptyList() }
+
     override suspend fun insertSurveyProject(project: SurveyProjectEntity): Long {
         val id = nextId++
         projects.update { listOf(project.copy(id = id)) + it }
