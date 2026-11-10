@@ -97,7 +97,6 @@ object EsDomainStrings : DomainStrings {
     }
 
     override val exportFileChooserTitle = "Exportar archivo"
-    override fun chartDescription(name: String) = "Gráfico: ${name}"
 
     override val lanVpnUnavailable = "La búsqueda de dispositivos no está disponible con esta conexión VPN. Comprueba si tu VPN permite el acceso a la red local o desconéctala y vuelve a intentarlo."
 

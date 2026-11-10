@@ -3,6 +3,7 @@ package com.bernaferrari.wifiweakspot.core.backup
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.room.useReaderConnection
 import androidx.room.useWriterConnection
 import androidx.room.Transactor.SQLiteTransactionType
@@ -30,37 +31,71 @@ class AndroidBackupService(
     private val mutex = Mutex()
     private val dao get() = database.dao()
 
-    override suspend fun exportTo(destination: String): Unit = withContext(Dispatchers.IO) {
-        mutex.withLock {
-            recoverPendingImportsLocked()
-            val archiveId = UUID.randomUUID().toString()
-            val images = mutableMapOf<String, File>()
-            val projects = database.useReaderConnection { connection ->
-                connection.withTransaction(SQLiteTransactionType.DEFERRED) {
-                val points = dao.snapshotSurveyPoints().groupBy { it.projectId }
-                dao.snapshotSurveyProjects().mapIndexed { index, project ->
-                    val entry = project.imagePath?.let { path ->
-                        val owned = File(context.filesDir, "survey_floorplans").canonicalFile
-                        val file = File(path).canonicalFile
-                        require(file.parentFile == owned && file.isFile) { "Floor plan unavailable" }
-                        "images/$index.bin".also { images[it] = file }
+    override suspend fun prepareExport(): PreparedBackup {
+        var temporary: File? = null
+        try {
+            return withContext(Dispatchers.IO) {
+                mutex.withLock {
+                    recoverPendingImportsLocked()
+                    val images = mutableMapOf<String, File>()
+                    val projects = database.useReaderConnection { connection ->
+                        connection.withTransaction(SQLiteTransactionType.DEFERRED) {
+                            val points = dao.snapshotSurveyPoints().groupBy { it.projectId }
+                            val owned = File(context.filesDir, "survey_floorplans").canonicalFile
+                            dao.snapshotSurveyProjects().mapIndexed { index, project ->
+                                val entry = project.imagePath?.let { path ->
+                                    val file = File(path).canonicalFile
+                                    require(file.parentFile == owned && file.isFile) { "Floor plan unavailable" }
+                                    "images/$index.bin".also { images[it] = file }
+                                }
+                                project.backup(points[project.id].orEmpty(), entry)
+                            }
+                        }
                     }
-                    project.backup(points[project.id].orEmpty(), entry)
-                }
+                    val archive = BackupArchive(
+                        archiveId = UUID.randomUUID().toString(), createdAt = System.currentTimeMillis(),
+                        projects = projects, roomReadings = rooms.readings.first()
+                    )
+                    val file = File.createTempFile("backup-", ".zip", context.cacheDir)
+                    temporary = file
+                    file.outputStream().use { BackupZip.write(it, archive, images) }
+                    Export(file)
                 }
             }
-            val archive = BackupArchive(archiveId = archiveId, createdAt = System.currentTimeMillis(),
-                projects = projects, roomReadings = rooms.readings.first())
-            // Finish/validate the archive before opening the user's destination for writing.
-            val temporary = File.createTempFile("backup-", ".zip", context.cacheDir)
-            try {
-                temporary.outputStream().use { BackupZip.write(it, archive, images) }
-                context.contentResolver.openOutputStream(Uri.parse(destination), "wt")?.use { output ->
-                    temporary.inputStream().use { it.copyTo(output) }
-                } ?: error("Backup destination unavailable")
-            } finally { temporary.delete() }
-            Unit
+        } catch (failure: Exception) {
+            temporary?.delete()
+            throw failure
         }
+    }
+
+    override suspend fun discardExportDestination(destination: String) {
+        val uri = Uri.parse(destination)
+        // The system create-document picker never overwrites an existing file.
+        withContext(NonCancellable + Dispatchers.IO) {
+            if (DocumentsContract.isDocumentUri(context, uri)) {
+                runCatching { DocumentsContract.deleteDocument(context.contentResolver, uri) }
+            }
+        }
+    }
+
+    private inner class Export(private val file: File) : PreparedBackup {
+        override suspend fun writeTo(destination: String) {
+            var written = false
+            try {
+                withContext(Dispatchers.IO) {
+                    val uri = Uri.parse(destination)
+                    context.contentResolver.openOutputStream(uri, "wt")?.use { output ->
+                        file.inputStream().use { it.copyTo(output) }
+                    } ?: error("Backup destination unavailable")
+                    written = true
+                }
+            } catch (failure: Exception) {
+                if (!written) discardExportDestination(destination)
+                throw failure
+            }
+        }
+
+        override fun discard() { file.delete() }
     }
 
     override suspend fun restoreFrom(source: String): RestoreResult = withContext(Dispatchers.IO) {

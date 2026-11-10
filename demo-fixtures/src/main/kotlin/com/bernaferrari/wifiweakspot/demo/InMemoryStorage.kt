@@ -58,6 +58,15 @@ class InMemoryDao : WifiWeakspotDao {
 
     override suspend fun insertLanDevice(device: LanDeviceEntity) =
         lan.update { list -> (list.filterNot { it.ipAddress == device.ipAddress && it.networkKey == device.networkKey } + device).sortedByDescending { it.lastSeen } }
+    override suspend fun trimUnnamedLanDevices() = lan.update { devices ->
+        val removable = devices.filter { it.customName == null && !it.isTrusted }.drop(1000).toSet()
+        devices.filterNot { it in removable }
+    }
+    override fun countLatestLanDevices(networkKey: String): Flow<Int?> = lan.map { devices ->
+        val scoped = devices.filter { it.networkKey == networkKey }
+        val latest = scoped.maxOfOrNull { it.lastSeen } ?: return@map null
+        scoped.count { latest - it.lastSeen <= 120_000L }
+    }
     override fun getAllLanDevices(): Flow<List<LanDeviceEntity>> = lan
     override suspend fun getLanDevice(ip: String, networkKey: String) = lan.value.firstOrNull { it.ipAddress == ip && it.networkKey == networkKey }
     override suspend fun renameLanDevice(ip: String, networkKey: String, name: String?) =
@@ -65,13 +74,19 @@ class InMemoryDao : WifiWeakspotDao {
     override suspend fun getLatestPortScan(host: String, networkKey: String) =
         tools.value.firstOrNull { it.target == host && it.networkKey == networkKey && it.toolType == "PORT_SCAN" && it.isSuccess }
 
-    override suspend fun insertToolResult(result: ToolResultEntity) = tools.update { listOf(result.copy(id = nextId++)) + it }
+    override suspend fun addToolResult(result: ToolResultEntity) = tools.update { listOf(result.copy(id = nextId++)) + it }
+    override suspend fun trimToolHistory() = tools.update { it.sortedByDescending { row -> row.timestamp }.take(1000) }
     override fun getToolHistory(): Flow<List<ToolResultEntity>> = tools
 
-    override suspend fun insertSpeedTest(result: SpeedTestResultEntity): Long {
+    override suspend fun addSpeedTest(result: SpeedTestResultEntity): Long {
         val id = nextId++
         speed.update { listOf(result.copy(id = id)) + it }
         return id
+    }
+    override suspend fun trimSpeedHistory() = speed.update { it.sortedByDescending { row -> row.timestamp }.take(1000) }
+    override fun countSpeedTests(): Flow<Int> = speed.map { it.size }
+    override fun getLatestRouterTest(ssid: String): Flow<SpeedTestResultEntity?> = speed.map { tests ->
+        tests.filter { it.ssid == ssid && it.serverName.startsWith("Router ") }.maxByOrNull { it.timestamp }
     }
     override fun getSpeedTestHistory(): Flow<List<SpeedTestResultEntity>> = speed
     override suspend fun tagSpeedTest(id: Long, room: String?) =

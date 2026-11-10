@@ -2,12 +2,10 @@
 """UI/state checks on a disposable, English-language Android emulator (API 26+).
 Never accepts a physical device. Install the debug APK first to enable run-as.
 
-Seed a synthetic v1 database before upgrading the APK to verify actual migration.
-Example: python3 scripts/android_smoke.py --serial emulator-5554 --seed-legacy
-         adb -s emulator-5554 install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
-         python3 scripts/android_smoke.py --serial emulator-5554
+Seed the current schema before the checks:
+    python3 scripts/android_smoke.py --serial emulator-5554 --seed
+    python3 scripts/android_smoke.py --serial emulator-5554
 Artifacts and a backup of the emulator test database are saved under build/qa/.
-The non-seeding run expects the legacy fixture and verifies migration to the current schema.
 """
 import argparse
 import json
@@ -20,7 +18,7 @@ import xml.etree.ElementTree as ET
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--serial', required=True)
-parser.add_argument('--seed-legacy', action='store_true')
+parser.add_argument('--seed', action='store_true')
 args = parser.parse_args()
 if not re.fullmatch(r'emulator-\d+', args.serial):
     parser.error('These checks modify test permissions and fixtures; use a disposable emulator only.')
@@ -39,7 +37,9 @@ def start():
     adb('shell', 'am', 'start', '-n', package + '/.android.MainActivity')
 
 def screenshot(name):
-    (out / (name + '.png')).write_bytes(adb('exec-out', 'screencap', '-p', binary=True))
+    capture = adb('exec-out', 'screencap', '-p', binary=True)
+    # Multi-display emulators can emit a display-selection notice before the image.
+    (out / (name + '.png')).write_bytes(capture[capture.index(b'\x89PNG\r\n\x1a\n'):])
 
 def tree():
     # UIAutomator can exit without replacing the file when the UI never becomes idle.
@@ -95,7 +95,11 @@ def back():
 # Fail early rather than running against an unsupported Android version.
 assert int(adb('shell', 'getprop', 'ro.build.version.sdk')) >= 26, 'Requires Android 8.0/API 26 or newer.'
 
-if args.seed_legacy:
+database_source = (root / 'composeApp/src/androidMain/kotlin/com/bernaferrari/wifiweakspot/core/database/WifiWeakspotDatabase.kt').read_text()
+current_version = int(re.search(r'version\s*=\s*(\d+)', database_source).group(1))
+schema_path = root / f'composeApp/schemas/com.bernaferrari.wifiweakspot.core.database.WifiWeakspotDatabase/{current_version}.json'
+
+if args.seed:
     adb('shell', 'am', 'force-stop', package)
     old = adb('exec-out', 'run-as', package, 'cat', 'databases/wifiweakspot.db', binary=True, check=False)
     if old.startswith(b'SQLite format 3'):
@@ -104,9 +108,9 @@ if args.seed_legacy:
             sidecar = adb('exec-out', 'run-as', package, 'cat', 'databases/wifiweakspot.db' + suffix, binary=True, check=False)
             if sidecar:
                 (out / ('emulator-before-fixtures.db' + suffix)).write_bytes(sidecar)
-    fixture = out / 'legacy-fixture.db'
+    fixture = out / 'smoke-fixture.db'
     fixture.unlink(missing_ok=True)
-    schema = json.loads((root / 'composeApp/schemas/com.bernaferrari.wifiweakspot.core.database.WifiWeakspotDatabase/1.json').read_text())['database']
+    schema = json.loads(schema_path.read_text())['database']
     with sqlite3.connect(fixture) as db:
         for entity in schema['entities']:
             db.execute(entity['createSql'].replace('${TABLE_NAME}', entity['tableName']))
@@ -114,24 +118,24 @@ if args.seed_legacy:
                 db.execute(index['createSql'].replace('${TABLE_NAME}', entity['tableName']))
         for query in schema['setupQueries']:
             db.execute(query)
-        db.execute('PRAGMA user_version=1')
-        db.execute("INSERT INTO survey_projects VALUES (9000,'QA legacy survey',NULL,NULL,1000,2000)")
-        db.execute("INSERT INTO survey_points VALUES (9010,9000,0.3,0.7,-66,'QA network','00:11:22:33:44:55',1,3000)")
-        db.execute("INSERT INTO speed_test_results VALUES (9020,3000,12.3,4.5,28.0,1.2,'QA server')")
-        db.execute("INSERT INTO tool_results VALUES (9030,3000,'DNS','localhost','A: 127.0.0.1',1)")
+        db.execute(f'PRAGMA user_version={current_version}')
+        db.execute("INSERT INTO survey_projects (id,name,description,imagePath,createdAt,updatedAt) VALUES (9000,'QA survey',NULL,NULL,1000,2000)")
+        db.execute("INSERT INTO survey_points (id,projectId,x,y,rssi,ssid,bssid,floorId,timestamp) VALUES (9010,9000,0.3,0.7,-66,'QA network','00:11:22:33:44:55',1,3000)")
+        db.execute("INSERT INTO speed_test_results (id,timestamp,downloadMbps,uploadMbps,pingMs,jitterMs,serverName) VALUES (9020,3000,12.3,4.5,28.0,1.2,'QA server')")
+        db.execute("INSERT INTO tool_results (id,timestamp,toolType,target,resultJson,isSuccess) VALUES (9030,3000,'DNS','localhost','A: 127.0.0.1',1)")
     adb('shell', 'run-as', package, 'mkdir', '-p', 'databases')
     adb('shell', 'run-as', package, 'rm', '-f', 'databases/wifiweakspot.db-wal', 'databases/wifiweakspot.db-shm')
     # exec-in does not drain tee's stdout; a binary echo can terminate the transfer early.
-    staging = '/data/local/tmp/wifiweakspot-legacy-fixture.db'
+    staging = '/data/local/tmp/wifiweakspot-smoke-fixture.db'
     adb('push', str(fixture), staging)
     try:
         adb('shell', 'run-as', package, 'cp', staging, 'databases/wifiweakspot.db')
     finally:
         adb('shell', 'rm', '-f', staging)
     written = adb('exec-out', 'run-as', package, 'cat', 'databases/wifiweakspot.db', binary=True)
-    assert written == fixture.read_bytes(), 'Legacy database transfer was incomplete'
+    assert written == fixture.read_bytes(), 'Database fixture transfer was incomplete'
 
-    print('Seeded synthetic v1 fixture in disposable emulator; original test DB backed up when present.')
+    print('Seeded current-schema fixture in disposable emulator; original test DB backed up when present.')
     raise SystemExit(0)
 
 print('Checking permission-independent tools and saved history…', flush=True)
@@ -140,16 +144,17 @@ for permission in ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION']:
     adb('shell', 'pm', 'revoke', package, 'android.permission.' + permission, check=False)
 start()
 # A clean install has onboarding; a returning install goes straight to Home.
-ready = find(('Not now', 'Home'), timeout=45)
-if normalized(ready.get('text', '') or ready.get('content-desc', '')) == 'Not now':
-    click('Not now')
+ready = find(('Get started', 'Not now', 'Home'), timeout=45)
+welcome_action = normalized(ready.get('text', '') or ready.get('content-desc', ''))
+if welcome_action != 'Home':
+    click(welcome_action)
 find('Home')
 scroll_to('Test a website')
 click('Test a website')
 find('Does it answer?')
 screenshot('tools-without-scan-permission')
 back()
-# Open saved history after upgrading from the fixture, exercising Room validation.
+# Open saved history from the fixture.
 scroll_to('History')
 click('History')
 click('Look up localhost')
@@ -192,10 +197,10 @@ for attempt in range(20):
 else:
     raise AssertionError('Scan permission gate did not recover after the Settings grant')
 screenshot('analyze-after-settings-grant')
-print('Checking saved survey and database migration…', flush=True)
+print('Checking saved survey and database schema…', flush=True)
 click('Rooms')
 click('Map your home')
-find('QA legacy survey')
+find('QA survey')
 find('1 reading', contains=True)
 screenshot('restored-survey')
 click('All readings')
@@ -204,8 +209,7 @@ screenshot('restored-readings')
 click('Reading 9010')
 find('Recheck here')
 screenshot('selected-map-reading')
-click('Reading 9010', contains=True)
-find('Position: 30% across, 70% down')
+click('Position: 30% across, 70% down')
 find('Across the map, from left')
 find('Down the map, from top')
 screenshot('accessible-map-position')
@@ -214,10 +218,14 @@ click('Rename')
 find('Name')
 screenshot('rename-map-reading')
 click('Cancel')
+click('Map options')
+click("Delete this floor's readings")
+find('Delete Floor 1?')
+click('Cancel')
 back()
-# Verify on-device migration preserved the original measurement and added calibration.
+# Verify Room opened the expected schema and preserved the fixture.
 adb('shell', 'am', 'force-stop', package)
-fixture = out / 'migrated-fixture.db'
+fixture = out / 'verified-fixture.db'
 fixture.write_bytes(adb('exec-out', 'run-as', package, 'cat', 'databases/wifiweakspot.db', binary=True))
 # Preserve the WAL when Room has not checkpointed before process termination.
 wal = adb('exec-out', 'run-as', package, 'cat', 'databases/wifiweakspot.db-wal', binary=True, check=False)
@@ -226,8 +234,6 @@ wal_path.unlink(missing_ok=True)
 Path(str(fixture) + '-shm').unlink(missing_ok=True)
 if wal:
     wal_path.write_bytes(wal)
-database_source = (root / 'composeApp/src/androidMain/kotlin/com/bernaferrari/wifiweakspot/core/database/WifiWeakspotDatabase.kt').read_text()
-current_version = int(re.search(r'version\s*=\s*(\d+)', database_source).group(1))
 with sqlite3.connect(fixture) as db:
     actual_version = db.execute('PRAGMA user_version').fetchone()[0]
     assert actual_version == current_version, (actual_version, current_version)
@@ -235,7 +241,6 @@ with sqlite3.connect(fixture) as db:
     assert db.execute('SELECT widthMeters,heightMeters,mapTopBearingDegrees FROM survey_projects WHERE id=9000').fetchone() == (10.,10.,0.)
     assert db.execute("SELECT resultJson FROM tool_results WHERE id=9030").fetchone() == ('A: 127.0.0.1',)
     assert db.execute("SELECT networkKey FROM tool_results WHERE id=9030").fetchone() == (None,)
-    schema_path = root / f'composeApp/schemas/com.bernaferrari.wifiweakspot.core.database.WifiWeakspotDatabase/{current_version}.json'
     expected_hash = json.loads(schema_path.read_text())['database']['identityHash']
     assert db.execute('SELECT identity_hash FROM room_master_table WHERE id=42').fetchone() == (expected_hash,)
-print(f'PASS: permission-independent tools, history details, theme/settings, permission recovery, saved survey and real v1→v{current_version} migration.')
+print(f'PASS: permission-independent tools, history details, theme/settings, permission recovery, saved survey and Room schema {current_version}.')

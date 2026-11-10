@@ -31,7 +31,6 @@ android {
 
     // src/main/kotlin is platform-free and shared with the web demo;
     // Android-only implementations live in src/androidMain/kotlin.
-    sourceSets.getByName("androidTest").assets.srcDir("schemas")
     sourceSets.getByName("main") {
         kotlin.srcDir("src/androidMain/kotlin")
     }
@@ -88,6 +87,4 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.7.0")
     androidTestImplementation("androidx.test:core:1.7.0")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
-    // Host-native SQLite for testing the actual Room migration, including data preservation.
-    testImplementation("androidx.sqlite:sqlite-bundled-jvm:2.7.1")
 }

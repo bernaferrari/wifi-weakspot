@@ -100,7 +100,6 @@ object EnDomainStrings : DomainStrings {
     }
 
     override val exportFileChooserTitle = "Export File"
-    override fun chartDescription(name: String) = "Chart: $name"
 
     override val lanVpnUnavailable = "Device discovery isn't available through this VPN connection. Check whether your VPN allows local-network access, or try again when it is disconnected."
     override val lanConnectFirst = "Connect to Wi-Fi or Ethernet before scanning local devices."

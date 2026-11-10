@@ -93,9 +93,16 @@ internal fun BackupArchive.validate() {
     }
 }
 
+interface PreparedBackup {
+    suspend fun writeTo(destination: String)
+    fun discard()
+}
+
 interface BackupService {
     val supported: Boolean get() = true
-    suspend fun exportTo(destination: String)
+    suspend fun prepareExport(): PreparedBackup
+    /** Cleans up the new document if Android returns it after the app lost the prepared backup. */
+    suspend fun discardExportDestination(destination: String) = Unit
     /** Appends maps, preserves existing room IDs, and ignores an already-restored archive. */
     suspend fun restoreFrom(source: String): RestoreResult
 }
@@ -105,6 +112,6 @@ enum class RestoreResult { Restored, AlreadyRestored }
 /** The browser/screenshot demo never opens or restores personal files. */
 object NoBackupService : BackupService {
     override val supported = false
-    override suspend fun exportTo(destination: String) = error("Backup unavailable")
+    override suspend fun prepareExport(): PreparedBackup = error("Backup unavailable")
     override suspend fun restoreFrom(source: String): RestoreResult = error("Backup unavailable")
 }

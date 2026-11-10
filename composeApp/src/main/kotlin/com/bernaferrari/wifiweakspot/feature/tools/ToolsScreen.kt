@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.horizontalScroll
@@ -83,7 +84,7 @@ fun ToolsScreen(
     initialTool: ToolType? = null,
     onBack: (() -> Unit)? = null
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val haptics = rememberWifiWeakspotHapticFeedback()
     val reduceMotion = LocalReduceMotion.current
 
@@ -91,16 +92,8 @@ fun ToolsScreen(
         viewModel.reset()
     }
 
-    var inputText by remember(initialTarget) { mutableStateOf(initialTarget) }
-    // Opened with a target and a check (e.g. "Check ports" on a device): just run it, once.
-    var autoRan by androidx.compose.runtime.saveable.rememberSaveable(initialTarget, initialTool) { mutableStateOf(false) }
-    LaunchedEffect(initialTarget, initialTool) {
-        if (initialTarget.isNotBlank()) viewModel.reset()
-        if (initialTarget.isNotBlank() && initialTool != null && !autoRan) {
-            autoRan = true
-            viewModel.startTool(initialTool, initialTarget)
-        }
-    }
+    var inputText by rememberSaveable(initialTarget) { mutableStateOf(initialTarget) }
+    LaunchedEffect(viewModel, initialTarget, initialTool) { viewModel.open(initialTool, initialTarget) }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     val tools = listOf(

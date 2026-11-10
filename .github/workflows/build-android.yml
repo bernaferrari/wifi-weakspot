@@ -55,7 +55,7 @@ jobs:
       - run: ./gradlew :webDemo:wasmJsBrowserDistribution --stacktrace
 
   device:
-    name: Backup and migration on Android 8.0
+    name: Backup and history on Android 8.0
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

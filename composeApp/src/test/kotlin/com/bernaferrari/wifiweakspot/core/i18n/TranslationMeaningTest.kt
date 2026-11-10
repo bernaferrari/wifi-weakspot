@@ -74,7 +74,6 @@ class TranslationMeaningTest {
             val channel = s.channelShort(36)
             assertTrue(language.tag, s.shareNetworkLine(-52, 36, "5 GHz").contains(channel))
             assertTrue(language.tag, s.selectedNetworkSummary("-52 dBm", "Good", 36).contains(channel))
-            assertTrue(language.tag, s.scanReportLine("Café", -52, 36, "WPA3").contains(channel))
         }
         assertEquals("Can. 36", AppLanguage.PortugueseBrazil.strings.analyze.channelShort(36))
         assertEquals("Can. 36", AppLanguage.Italian.strings.analyze.channelShort(36))

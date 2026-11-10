@@ -34,7 +34,7 @@ cd wifi-weakspot
 | Path | What's there |
 | --- | --- |
 | `composeApp/` | Shared screens, view models, navigation, design system and services (Android library) |
-| `composeApp/src/test`, `src/androidTest` | Unit tests; device tests for backup, restore and database migration |
+| `composeApp/src/test`, `src/androidTest` | Unit tests; device tests for backup, restore and history retention |
 | `androidApp/` | The Android application: manifest, icons, signing, and the `screenshots` build type |
 | `webDemo/` | Browser build of `composeApp`'s shared source with simulated platform services |
 | `demo-fixtures/` | Sample networks and room readings shared by the web demo and the `screenshots` build |
@@ -66,6 +66,6 @@ Screenshot Studio comes from the `screenshot-studio` package (`npx screenshot-st
 ## Good to know
 
 - Release signing reads `keystore.properties` (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`). Without it, release builds use the debug key and are for local checks only. Never commit `keystore.properties` or `*.keystore`; both are gitignored.
-- `scripts/android_smoke.py --serial emulator-NNNN` checks permissions, history, settings and migration from a synthetic v1 database. It only accepts emulators: never run its fixture setup on a device with personal data. See the script header for the seed, install, verify sequence.
+- `scripts/android_smoke.py --serial emulator-NNNN` checks permissions, history, settings, and saved maps. Install the debug APK and run with `--seed` first on a disposable emulator.
 - The sample data in `demo-fixtures/` is fictional and ships only in the web demo and the `screenshots` build, never in production builds.
 - Strings live in `core/i18n/`; read [localization.md](localization.md) before adding or changing text in any of the ten languages.

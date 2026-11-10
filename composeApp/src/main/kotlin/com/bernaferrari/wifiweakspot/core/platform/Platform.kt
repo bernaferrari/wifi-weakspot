@@ -77,3 +77,6 @@ val LocalBackHandler = staticCompositionLocalOf<@Composable (enabled: Boolean, o
 
 /** Shows a web page inside the app where the platform can (Android's WebView). */
 val LocalWebContent = staticCompositionLocalOf<@Composable (url: String, modifier: Modifier) -> Unit> { { _, _ -> } }
+
+/** Release version supplied by the installed app. */
+val LocalAppVersion = staticCompositionLocalOf<String?> { null }

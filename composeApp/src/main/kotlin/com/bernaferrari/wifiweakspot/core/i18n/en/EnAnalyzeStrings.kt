@@ -41,11 +41,6 @@ object EnAnalyzeStrings : AnalyzeStrings {
     override fun alsoYourRouter(quality: String) = "$quality · Also your router"
     override val connected = "Connected"
 
-    override val scanReportHeading = "WiFi\u00A0Weakspot Scan Report"
-    override fun scanReportTime(time: String) = "Time: $time"
-    override fun scanReportTotal(count: Int) = "Total Networks: $count"
-    override val scanReportNetworksHeading = "Networks:"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
     override val channelLooksClear = "Your channel isn’t crowded"
     override val noChannelImprovement = "No better channel found"

@@ -1,6 +1,5 @@
 package com.bernaferrari.wifiweakspot.core.lan
 
-import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -49,23 +48,23 @@ class AndroidLanScanner(
     private val activeSockets = ConcurrentHashMap.newKeySet<Socket>()
 
     override suspend fun scanSubnet(subnet: String?): LanScanResult = withContext(Dispatchers.IO) {
-        val local = localIpv4()
-        check(local != null) {
-            val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val capabilities = connectivity.activeNetwork?.let(connectivity::getNetworkCapabilities)
-            if (capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true) {
-                appStrings.domain.lanVpnUnavailable
-            } else appStrings.domain.lanConnectFirst
+        val connectivity = context.getSystemService(ConnectivityManager::class.java)
+        val network = connectivity.activeNetwork ?: throw LanUnavailable(LanUnavailableReason.NoLocalConnection)
+        val capabilities = connectivity.getNetworkCapabilities(network)
+            ?: throw LanUnavailable(LanUnavailableReason.NoLocalConnection)
+        if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+            throw LanUnavailable(LanUnavailableReason.Vpn)
         }
-        val hosts = if (local != null) {
-            hostsOnLink(local.first, local.second).filter { it != local.first }
-        } else {
-            emptyList()
+        if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) &&
+            !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+            throw LanUnavailable(LanUnavailableReason.NoLocalConnection)
         }
-        val label = local?.let { "${networkAddress(it.first, it.second)}/${it.second.coerceAtLeast(24).coerceAtMost(32)}" }
-            ?: subnet
-            ?: appStrings.domain.lanNotConnected
-        scanHosts(hosts, label, ownIp = local?.first)
+        val link = connectivity.getLinkProperties(network)
+        val address = link?.linkAddresses?.firstOrNull { it.address is Inet4Address && !it.address.isLoopbackAddress }
+        val ip = address?.address?.hostAddress ?: throw LanUnavailable(LanUnavailableReason.NoLocalConnection)
+        val prefix = address.prefixLength.coerceIn(24, 32)
+        val hosts = hostsOnLink(ip, prefix).filterNot { it == ip }
+        scanHosts(hosts, "${networkAddress(ip, prefix)}/$prefix", ownIp = ip)
     }
 
     override suspend fun scanRange(startIp: String, endIp: String): LanScanResult = withContext(Dispatchers.IO) {
@@ -224,24 +223,6 @@ class AndroidLanScanner(
             true
         } catch (e: CancellationException) { throw e } catch (_: Exception) { false }
         finally { activeSockets.remove(socket); runCatching { socket.close() } }
-    }
-
-    private fun localIpv4(): Pair<String, Int>? {
-        val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val network = connectivity.activeNetwork ?: return null
-        val capabilities = connectivity.getNetworkCapabilities(network) ?: return null
-        if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) &&
-            !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-        ) {
-            return null
-        }
-        val link = connectivity.getLinkProperties(network) ?: return null
-        val address = link.linkAddresses.firstOrNull {
-            val ip = it.address
-            ip is Inet4Address && !ip.isLoopbackAddress
-        } ?: return null
-        val host = address.address.hostAddress ?: return null
-        return host to address.prefixLength
     }
 
     private fun hostsOnLink(ip: String, prefixLength: Int): List<String> {

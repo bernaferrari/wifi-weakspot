@@ -2,6 +2,7 @@ package com.bernaferrari.wifiweakspot.core.lan
 
 import android.content.Context
 import android.net.wifi.WifiManager
+import android.os.SystemClock
 import java.net.DatagramPacket
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -33,12 +34,14 @@ class AndroidMdnsDiscovery(private val context: Context) {
                 val query = Mdns.query(unicast = !shared)
                 val target = InetSocketAddress(group, Mdns.Port)
                 socket.soTimeout = 250
-                val buffer = ByteArray(9_000)
-                val started = System.currentTimeMillis()
+                // Keep one extra byte so an oversized datagram remains distinguishable after truncation.
+                val buffer = ByteArray(Mdns.MaxPacketBytes + 1)
+                val started = SystemClock.elapsedRealtime()
                 var sent = 0
                 val askAt = listOf(0L, 1_000L, 3_000L, 8_000L)
-                while (true) {
-                    val elapsed = System.currentTimeMillis() - started
+                var responses = 0
+                while (responses < 512) {
+                    val elapsed = SystemClock.elapsedRealtime() - started
                     if (elapsed >= maxMs || (elapsed >= minMs && !keepListening())) break
                     // Ask again over time: later rounds catch devices that were asleep for the first.
                     if (sent < askAt.size && elapsed >= askAt[sent]) {
@@ -48,6 +51,7 @@ class AndroidMdnsDiscovery(private val context: Context) {
                     try {
                         val packet = DatagramPacket(buffer, buffer.size)
                         socket.receive(packet)
+                        responses++
                         records.addAll(Mdns.parse(packet.data.copyOf(packet.length)))
                     } catch (_: SocketTimeoutException) {
                     }

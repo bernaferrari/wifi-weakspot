@@ -141,9 +141,6 @@ interface DomainStrings {
 
     /** Title of the Android share sheet for an exported file. */
     val exportFileChooserTitle: String
-    /** Description of an exported chart image. @param name Chart file name. */
-    fun chartDescription(name: String): String
-
     // endregion
 
     // region Network tools and device discovery errors

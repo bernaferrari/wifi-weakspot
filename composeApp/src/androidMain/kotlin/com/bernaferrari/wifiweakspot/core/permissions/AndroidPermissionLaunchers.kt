@@ -39,9 +39,13 @@ fun rememberAndroidPermissionLaunchers(): PermissionLaunchers {
 
     val scan = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
         gate.checkPermissions()
-        val granted = results.values.any { it }
-        if (!granted && System.currentTimeMillis() - startedAt[0] < NO_DIALOG_MS) gate.openAppSettings()
+        val granted = gate.state.value.canScanWifi
+        val approximateOnly = results[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (!granted && (approximateOnly || System.currentTimeMillis() - startedAt[0] < NO_DIALOG_MS)) {
+            gate.openAppSettings()
+        }
         pending[0]?.invoke(granted)
+        pending[0] = null
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult

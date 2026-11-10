@@ -62,4 +62,49 @@ class HistoryClearTest {
             database.close()
         }
     }
+
+    @Test fun keepsRecentHistoryAndNamedDevicesWhileHomeQueriesStayScoped() = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val database = Room.inMemoryDatabaseBuilder(context, WifiWeakspotDatabase::class.java)
+            .setDriver(BundledSQLiteDriver()).build()
+        try {
+            val dao = database.dao()
+            repeat(1001) { index ->
+                dao.addToolResult(ToolResultEntity(
+                    timestamp = index.toLong(), toolType = "DNS", target = "localhost", resultJson = "", isSuccess = true
+                ))
+                dao.addSpeedTest(SpeedTestResultEntity(
+                    timestamp = index.toLong(), downloadMbps = 1f, uploadMbps = 1f, pingMs = 1f,
+                    jitterMs = 1f, serverName = "Router Home", ssid = "Home"
+                ))
+            }
+            dao.insertToolResult(ToolResultEntity(
+                timestamp = 1001, toolType = "DNS", target = "localhost", resultJson = "", isSuccess = true
+            ))
+            dao.insertSpeedTest(SpeedTestResultEntity(
+                timestamp = 1001, downloadMbps = 1f, uploadMbps = 1f, pingMs = 1f,
+                jitterMs = 1f, serverName = "Other service", ssid = "Home"
+            ))
+
+            val template = LanDeviceEntity(
+                ipAddress = "192.168.1.10", macAddress = null, hostname = null, vendor = null,
+                lastSeen = 1, isOnline = true, customName = "TV", networkKey = "home"
+            )
+            dao.saveLanDevices(listOf(template) + List(1001) { index ->
+                template.copy(networkKey = "other-$index", lastSeen = 180_000L + index, customName = null)
+            })
+
+            assertEquals(1000, dao.getToolHistory().first().size)
+            assertEquals(2L, dao.getToolHistory().first().last().timestamp)
+            assertEquals(1000, dao.countSpeedTests().first())
+            assertEquals(1000L, dao.getLatestRouterTest("Home").first()?.timestamp)
+            assertEquals(null, dao.getLatestRouterTest("Away").first())
+            assertEquals("TV", dao.getLanDevice(template.ipAddress, "home")?.customName)
+            assertEquals(1001, dao.getAllLanDevices().first().size)
+            assertEquals(1, dao.countLatestLanDevices("home").first())
+            assertEquals(null, dao.countLatestLanDevices("unseen").first())
+        } finally {
+            database.close()
+        }
+    }
 }

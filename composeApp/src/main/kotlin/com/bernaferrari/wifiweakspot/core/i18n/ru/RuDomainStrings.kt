@@ -96,7 +96,6 @@ object RuDomainStrings : DomainStrings {
     }
 
     override val exportFileChooserTitle = "Экспортировать файл"
-    override fun chartDescription(name: String) = "Диаграмма: ${name}"
 
     override val lanVpnUnavailable = "Обнаружение устройств через это VPN-соединение недоступно. Проверьте, разрешает ли ваша VPN доступ к локальной сети, или повторите попытку, когда она отключена."
     override val lanConnectFirst = "Подключитесь к Wi-Fi или Ethernet перед сканированием локальных устройств."

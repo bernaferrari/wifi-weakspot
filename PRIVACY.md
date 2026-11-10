@@ -50,7 +50,7 @@ Settings → Backup lets you save a ZIP archive containing survey projects, floo
 
 ## Storage, retention, and deletion
 
-Saved records remain on your device until you delete them using the available in-app controls or clear the app's storage in Android settings. Uninstalling normally removes app-private data, but Android may offer to keep it; choose removal if you want it deleted. Shared exports, original images, and copies saved in other apps must be deleted separately. Temporary export files may remain in the app's cache until it is cleared or Android removes them.
+Diagnostic history keeps the most recent 3,000 Wi-Fi observations, 1,000 tool results, 1,000 speed tests, and 1,000 unnamed and untrusted devices. Older entries are removed as new results are saved. Clear history also removes device names and trust labels. Maps and room readings stay on your device until you delete them or clear the app's storage in Android settings. Uninstalling normally removes app-private data, but Android may offer to keep it; choose removal if you want it deleted. Shared exports, original images, and copies saved in other apps must be deleted separately. Temporary export files may remain in the app's cache until it is cleared or Android removes them.
 
 The app's backup configuration excludes its database, saved floor-plan copies, and main settings from Android cloud backup and device transfer. There is no developer-held copy of your network records for us to retrieve or delete.
 

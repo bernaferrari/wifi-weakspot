@@ -31,7 +31,6 @@ import com.bernaferrari.wifiweakspot.core.datastore.SettingsRepository
 import com.bernaferrari.wifiweakspot.core.designsystem.WifiWeakspotAlpha
 import com.bernaferrari.wifiweakspot.core.designsystem.WifiWeakspotShapes
 import com.bernaferrari.wifiweakspot.core.designsystem.WifiWeakspotTheme
-import com.bernaferrari.wifiweakspot.core.designsystem.component.WifiNetworkIllustration
 import com.bernaferrari.wifiweakspot.core.designsystem.rememberWifiWeakspotHapticFeedback
 import com.bernaferrari.wifiweakspot.core.permissions.PermissionGate
 import com.bernaferrari.wifiweakspot.core.permissions.PermissionStatus

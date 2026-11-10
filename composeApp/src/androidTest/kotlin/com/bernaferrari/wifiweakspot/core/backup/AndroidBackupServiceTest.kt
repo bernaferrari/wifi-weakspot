@@ -11,10 +11,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import androidx.sqlite.execSQL
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.bernaferrari.wifiweakspot.core.database.SURVEY_POINT_LABEL_MIGRATION
 import com.bernaferrari.wifiweakspot.core.database.WifiWeakspotDatabase
 import com.bernaferrari.wifiweakspot.core.database.entities.SurveyPointEntity
 import com.bernaferrari.wifiweakspot.core.database.entities.SurveyProjectEntity
@@ -64,7 +62,7 @@ class AndroidBackupServiceTest {
         sourceRooms.save(room("source-reading", "Office"))
         sourceRooms.save(room("shared-id", "Archive version"))
         val archive = File(root, "roundtrip.zip")
-        AndroidBackupService(context, source, sourceRooms).exportTo(Uri.fromFile(archive).toString())
+        AndroidBackupService(context, source, sourceRooms).writeArchiveTo(archive)
         assertTrue(archive.length() > 0)
 
         // Import into a separate real Room instance, with independently owned files and existing data.
@@ -140,7 +138,7 @@ class AndroidBackupServiceTest {
         source.dao().insertSurveyProject(project("Recover me"))
         sourceRooms.save(room("recover-room", "Bedroom"))
         val archive = File(root, "recover.zip")
-        AndroidBackupService(context, source, sourceRooms).exportTo(Uri.fromFile(archive).toString())
+        AndroidBackupService(context, source, sourceRooms).writeArchiveTo(archive)
         val destination = database()
         val preferences = MemoryPreferences().apply { failNextWrite = true }
         val destinationRooms = RoomCheckRepository(preferences)
@@ -159,40 +157,10 @@ class AndroidBackupServiceTest {
         assertEquals(1, destination.dao().snapshotSurveyProjects().size)
     }
 
-    @Test(timeout = 60_000) fun realRoomMigratesVersionSixAndValidatesVersionSevenSchema() = runBlocking {
-        val databaseFile = File(root, "migration.db")
-        val assets = InstrumentationRegistry.getInstrumentation().context.assets
-        val schema = assets.open("com.bernaferrari.wifiweakspot.core.database.WifiWeakspotDatabase/6.json")
-            .bufferedReader().use { JSONObject(it.readText()).getJSONObject("database") }
-        BundledSQLiteDriver().open(databaseFile.absolutePath).use { connection ->
-            val entities = schema.getJSONArray("entities")
-            for (i in 0 until entities.length()) {
-                val entity = entities.getJSONObject(i)
-                val table = entity.getString("tableName")
-                connection.execSQL(entity.getString("createSql").replace("\${TABLE_NAME}", table))
-                entity.optJSONArray("indices")?.let { indices ->
-                    for (j in 0 until indices.length()) connection.execSQL(
-                        indices.getJSONObject(j).getString("createSql").replace("\${TABLE_NAME}", table))
-                }
-            }
-            val setup = schema.getJSONArray("setupQueries")
-            for (i in 0 until setup.length()) connection.execSQL(setup.getString(i))
-            connection.execSQL("PRAGMA user_version = 6")
-            connection.execSQL("INSERT INTO survey_projects (id, name, createdAt, updatedAt) VALUES (7, 'Existing map', 100, 200)")
-            connection.execSQL("INSERT INTO survey_points (id, projectId, x, y, rssi, floorId, timestamp) VALUES (9, 7, 0.25, 0.75, -67, 0, 300)")
-        }
-        val migrated = Room.databaseBuilder(context, WifiWeakspotDatabase::class.java, databaseFile.absolutePath)
-            .setDriver(BundledSQLiteDriver())
-            .addMigrations(SURVEY_POINT_LABEL_MIGRATION)
-            .build().also { databases += it }
-        val existing = migrated.dao().snapshotSurveyPoints().single()
-        assertEquals(9L, existing.id)
-        assertEquals(0, existing.floorId)
-        assertNull(existing.label)
-        assertEquals("Existing map", migrated.dao().snapshotSurveyProjects().single().name)
-        assertTrue(migrated.dao().getPendingBackupImports().isEmpty())
-        migrated.dao().updateSurveyPoint(existing.copy(label = "Migrated label"))
-        assertEquals("Migrated label", migrated.dao().snapshotSurveyPoints().single().label)
+    private suspend fun AndroidBackupService.writeArchiveTo(archive: File) {
+        val backup = prepareExport()
+        try { backup.writeTo(Uri.fromFile(archive).toString()) }
+        finally { backup.discard() }
     }
 
     private fun database(ctx: Context = context): WifiWeakspotDatabase =

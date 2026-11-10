@@ -7,7 +7,7 @@ import org.koin.dsl.module
 
 val webModule = module {
     includes(simulationModule)
-    single<ExportManager> { ClipboardExportManager() }
+    single<ExportManager> { ExportManager { _, _ -> } }
     single<PlatformActions> { WebPlatformActions() }
     single<PlatformTheme> { WebPlatformTheme() }
 }

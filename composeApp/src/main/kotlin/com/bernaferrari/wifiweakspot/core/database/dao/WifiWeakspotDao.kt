@@ -29,7 +29,7 @@ interface WifiWeakspotDao {
         """
         DELETE FROM wifi_scan_results
         WHERE id NOT IN (
-            SELECT id FROM wifi_scan_results ORDER BY timestamp DESC LIMIT :keep
+            SELECT id FROM wifi_scan_results ORDER BY timestamp DESC, id DESC LIMIT :keep
         )
         """
     )
@@ -38,9 +38,37 @@ interface WifiWeakspotDao {
     @Query("SELECT * FROM wifi_scan_results ORDER BY timestamp DESC LIMIT 3000")
     fun getRecentWifiScans(): Flow<List<WifiScanResultEntity>>
 
+    @Transaction
+    suspend fun saveWifiScans(results: List<WifiScanResultEntity>) {
+        insertWifiScans(results)
+        trimWifiScans(keep = 3_000)
+    }
+
     // LAN Devices
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLanDevice(device: LanDeviceEntity)
+
+    @Transaction
+    suspend fun saveLanDevices(devices: List<LanDeviceEntity>) {
+        devices.forEach { insertLanDevice(it) }
+        trimUnnamedLanDevices()
+    }
+
+    @Query("""
+        DELETE FROM lan_devices WHERE rowid IN (
+            SELECT rowid FROM lan_devices WHERE customName IS NULL AND isTrusted = 0
+            ORDER BY lastSeen DESC, rowid DESC LIMIT -1 OFFSET 1000
+        )
+    """)
+    suspend fun trimUnnamedLanDevices()
+
+    @Query("""
+        SELECT NULLIF(COUNT(*), 0) FROM lan_devices
+        WHERE networkKey = :networkKey AND lastSeen >= (
+            SELECT MAX(lastSeen) - 120000 FROM lan_devices WHERE networkKey = :networkKey
+        )
+    """)
+    fun countLatestLanDevices(networkKey: String): Flow<Int?>
 
     @Query("SELECT * FROM lan_devices ORDER BY lastSeen DESC")
     fun getAllLanDevices(): Flow<List<LanDeviceEntity>>
@@ -55,15 +83,40 @@ interface WifiWeakspotDao {
     suspend fun getLatestPortScan(host: String, networkKey: String): ToolResultEntity?
 
     // Tool Results
+    @Transaction
+    suspend fun insertToolResult(result: ToolResultEntity) {
+        addToolResult(result)
+        trimToolHistory()
+    }
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertToolResult(result: ToolResultEntity)
+    suspend fun addToolResult(result: ToolResultEntity)
+
+    @Query("DELETE FROM tool_results WHERE id IN (SELECT id FROM tool_results ORDER BY timestamp DESC, id DESC LIMIT -1 OFFSET 1000)")
+    suspend fun trimToolHistory()
 
     @Query("SELECT * FROM tool_results ORDER BY timestamp DESC")
     fun getToolHistory(): Flow<List<ToolResultEntity>>
 
     // Speed Test Results
+    @Transaction
+    suspend fun insertSpeedTest(result: SpeedTestResultEntity): Long {
+        val id = addSpeedTest(result)
+        trimSpeedHistory()
+        return id
+    }
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSpeedTest(result: SpeedTestResultEntity): Long
+    suspend fun addSpeedTest(result: SpeedTestResultEntity): Long
+
+    @Query("DELETE FROM speed_test_results WHERE id IN (SELECT id FROM speed_test_results ORDER BY timestamp DESC, id DESC LIMIT -1 OFFSET 1000)")
+    suspend fun trimSpeedHistory()
+
+    @Query("SELECT COUNT(*) FROM speed_test_results")
+    fun countSpeedTests(): Flow<Int>
+
+    @Query("SELECT * FROM speed_test_results WHERE ssid = :ssid AND serverName GLOB 'Router *' ORDER BY timestamp DESC, id DESC LIMIT 1")
+    fun getLatestRouterTest(ssid: String): Flow<SpeedTestResultEntity?>
 
     @Query("UPDATE speed_test_results SET room = :room WHERE id = :id")
     suspend fun tagSpeedTest(id: Long, room: String?)

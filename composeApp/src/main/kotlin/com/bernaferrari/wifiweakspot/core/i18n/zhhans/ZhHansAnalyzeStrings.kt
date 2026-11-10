@@ -56,12 +56,7 @@ object ZhHansAnalyzeStrings : AnalyzeStrings {
 
     override val connected = "已连接"
 
-    override val scanReportHeading = "WiFi Weakspot 扫描报告"
 
-    override fun scanReportTime(time: String) = "时间：${time}"
-    override fun scanReportTotal(count: Int) = "网络总数：${count}"
-    override val scanReportNetworksHeading = "网络："
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
     override val channelLooksClear = "当前信道较空闲"
 

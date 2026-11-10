@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.settings
 
+import com.bernaferrari.wifiweakspot.core.platform.LocalAppVersion
 import com.bernaferrari.wifiweakspot.core.designsystem.exceptBottom
 import com.bernaferrari.wifiweakspot.core.i18n.strings
 import androidx.compose.foundation.layout.*
@@ -56,8 +57,10 @@ fun AboutScreen(onBack: () -> Unit) {
                 }
                 Text("WiFi Weakspot", Modifier.padding(top = 20.dp), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                 Text(strings.settings.tagline, Modifier.padding(top = 6.dp), style = MaterialTheme.typography.titleMedium, color = scheme.onSurfaceVariant)
-                Surface(shape = CircleShape, color = scheme.surfaceContainerHighest, modifier = Modifier.padding(top = 16.dp)) {
-                    Text(strings.settings.version("1.0"), Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
+                LocalAppVersion.current?.let { version ->
+                    Surface(shape = CircleShape, color = scheme.surfaceContainerHighest, modifier = Modifier.padding(top = 16.dp)) {
+                        Text(strings.settings.version(version), Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
+                    }
                 }
 
                 Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(top = 24.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {

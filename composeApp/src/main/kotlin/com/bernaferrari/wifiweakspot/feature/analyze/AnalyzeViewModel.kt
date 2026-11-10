@@ -4,10 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bernaferrari.wifiweakspot.core.wifi.WifiNetwork
 import com.bernaferrari.wifiweakspot.core.wifi.WifiScanner
-import com.bernaferrari.wifiweakspot.core.wifi.frequencyToChannel
 import com.bernaferrari.wifiweakspot.core.wifi.ThrottleState
-import com.bernaferrari.wifiweakspot.core.export.ExportManager
-import com.bernaferrari.wifiweakspot.core.export.WifiExportData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +18,6 @@ class AnalyzeViewModel(
     private val wifiScanner: WifiScanner,
     private val throttleManager: com.bernaferrari.wifiweakspot.core.wifi.ScanThrottleManager,
     private val dao: com.bernaferrari.wifiweakspot.core.database.dao.WifiWeakspotDao,
-    private val exportManager: ExportManager,
     networkStatusRepository: com.bernaferrari.wifiweakspot.core.domain.NetworkStatusRepository
 ) : ViewModel() {
 
@@ -92,8 +88,7 @@ class AnalyzeViewModel(
                 )
             }
             try {
-                dao.insertWifiScans(rows)
-                dao.trimWifiScans(keep = 3_000)
+                dao.saveWifiScans(rows)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -105,57 +100,7 @@ class AnalyzeViewModel(
         wifiScanner.startScan()
     }
 
-    fun stopScan() {
-        wifiScanner.stopScan()
-    }
-
-    fun exportToCsv(networks: List<WifiNetwork>) {
-        viewModelScope.launch {
-            val data = networks.map { it.toExportData() }
-            val fileName = "wifi_scan_${timestamp()}"
-            exportManager.exportWifiToCsv(data, fileName)
-        }
-    }
-
-    fun exportToJson(networks: List<WifiNetwork>) {
-        viewModelScope.launch {
-            val data = networks.map { it.toExportData() }
-            val fileName = "wifi_scan_${timestamp()}"
-            exportManager.exportWifiToJson(data, fileName)
-        }
-    }
-
-    fun shareSummary(networks: List<WifiNetwork>) {
-        viewModelScope.launch {
-            val s = com.bernaferrari.wifiweakspot.core.i18n.appStrings.analyze
-            val summary = buildString {
-                appendLine(s.scanReportHeading)
-                appendLine("=========================")
-                appendLine(s.scanReportTime(com.bernaferrari.wifiweakspot.feature.history.formatDate(com.bernaferrari.wifiweakspot.core.util.nowMillis())))
-                appendLine(s.scanReportTotal(networks.size))
-                appendLine()
-                appendLine(s.scanReportNetworksHeading)
-                networks.sortedByDescending { it.rssi }.take(15).forEach { n ->
-                    val ch = frequencyToChannel(n.frequency)
-                    appendLine(s.scanReportLine(n.ssid.ifEmpty { com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.hiddenNetworkShort }, n.rssi, ch, n.security))
-                }
-            }
-            exportManager.shareReport(summary, com.bernaferrari.wifiweakspot.core.i18n.appStrings.common.share)
-        }
-    }
-
-    private fun timestamp(): String = com.bernaferrari.wifiweakspot.feature.history.fileTimestamp()
 }
-
-private fun WifiNetwork.toExportData() = WifiExportData(
-    ssid = ssid,
-    bssid = bssid,
-    rssi = rssi,
-    frequency = frequency,
-    channel = frequencyToChannel(frequency),
-    security = security,
-    timestamp = timestamp
-)
 
 sealed interface AnalyzeUiState {
     data object Loading : AnalyzeUiState

@@ -3,9 +3,6 @@
 package com.bernaferrari.wifiweakspot.feature.survey
 
 import com.bernaferrari.wifiweakspot.core.i18n.strings
-import androidx.compose.ui.semantics.onLongClick
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.draw.drawWithContent
@@ -204,6 +201,12 @@ fun SurveyScreen(
                             if (project?.imagePath != null) DropdownMenuItem(text = { Text(strings.survey.removePhoto) }, leadingIcon = { Icon(Icons.Default.HideImage, null) }, onClick = { actionsExpanded = false; viewModel.setFloorplan(null, ::releaseOwnedFloorplan) })
                             DropdownMenuItem(text = { Text(strings.survey.exportReadingsCsv) }, leadingIcon = { Icon(Icons.Default.IosShare, null) }, onClick = { actionsExpanded = false; viewModel.exportProject() })
                             HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text(strings.survey.deleteFloorReadingsAction) },
+                                onClick = { actionsExpanded = false; deletingFloor = selectedFloor },
+                                enabled = points.isNotEmpty() && !isSampling,
+                                leadingIcon = { Icon(Icons.Default.DeleteOutline, null) }
+                            )
                             DropdownMenuItem(text = { Text(strings.common.delete) }, leadingIcon = { Icon(Icons.Default.DeleteOutline, null) }, onClick = { actionsExpanded = false; deletingProject = project })
                         }
                     }
@@ -262,8 +265,7 @@ fun SurveyScreen(
                         floors = floors,
                         selected = selectedFloor,
                         onSelect = viewModel::setFloor,
-                        enabled = !isUpdatingProject,
-                        onLongPress = { deletingFloor = it }
+                        enabled = !isUpdatingProject
                     )
                     if (points.isNotEmpty()) SignalLegend()
                 }
@@ -400,7 +402,7 @@ fun AnimatedEmptyState(onCreateProject: () -> Unit) {
 
 /** Floors as a connected button group on the map; "+" adds the next one up (then a basement). */
 @Composable
-private fun FloorButtons(floors: List<Int>, selected: Int, onSelect: (Int) -> Unit, enabled: Boolean, modifier: Modifier = Modifier, onLongPress: (Int) -> Unit = {}) {
+private fun FloorButtons(floors: List<Int>, selected: Int, onSelect: (Int) -> Unit, enabled: Boolean, modifier: Modifier = Modifier) {
     val next = ((1..3).firstOrNull { it !in floors }) ?: 0.takeIf { it !in floors }
     val survey = strings.survey
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween), verticalAlignment = Alignment.CenterVertically) {
@@ -411,13 +413,8 @@ private fun FloorButtons(floors: List<Int>, selected: Int, onSelect: (Int) -> Un
                 index == floors.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
                 else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
             }
-            // Long press a floor to delete its readings.
             val buttonModifier = Modifier.heightIn(min = 40.dp)
-                .pointerInput(floor, enabled) { if (enabled) detectTapGestures(onLongPress = { onLongPress(floor) }) }
-                .semantics {
-                    contentDescription = survey.floorName(floor)
-                    onLongClick(label = survey.deleteFloorReadingsAction) { onLongPress(floor); true }
-                }
+                .semantics { contentDescription = survey.floorName(floor) }
             if (shapes == null) FilledTonalToggleButton(
                 checked = floor == selected,
                 onCheckedChange = { onSelect(floor) },

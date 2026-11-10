@@ -35,6 +35,9 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 import com.bernaferrari.wifiweakspot.core.designsystem.rememberWifiWeakspotHapticFeedback
 
 @Composable
@@ -133,11 +136,13 @@ fun SurveyCanvas(
         val heatColors = com.bernaferrari.wifiweakspot.core.designsystem.signalHeatColors()
         val gradient = remember(heatColors) { signalGradient(heatColors) }
         val signalColor: (Int) -> Color = { rssi -> gradient(rssi.toFloat()) }
-        // The same physical field is fitted to every screen and exported without recomputing distances.
-        val coverage = remember(points, fieldWidthMeters, fieldHeightMeters, gradient) {
-            if (points.isEmpty()) null
-            else coverageGridForMap(points.map { PlanReading(it.x, it.y, it.rssi) }, fieldWidthMeters, fieldHeightMeters)
-                .toBitmap(gradient)
+        val coverage by produceState<ImageBitmap?>(null, points, fieldWidthMeters, fieldHeightMeters, gradient) {
+            value = if (points.isEmpty()) null else withContext(Dispatchers.Default) {
+                val checkActive = { coroutineContext.ensureActive() }
+                val readings = points.map { PlanReading(it.x, it.y, it.rssi) }
+                coverageGridForMap(readings, fieldWidthMeters, fieldHeightMeters, checkActive)
+                    .toBitmap(gradient, checkActive)
+            }
         }
         // A new reading eases in: the updated field fades in over the old one and the new dot grows,
         // instead of the whole map snapping to its next state.

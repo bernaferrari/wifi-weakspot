@@ -239,8 +239,8 @@ class SurveyViewModel(
         val project = currentProject.value ?: return
         mutateProject(project.id, appStrings.common.couldNotDeleteItem) { persisted ->
             dao.deleteFloorPoints(persisted.id, floor)
+            if (_currentProjectId.value == project.id && _selectedFloor.value == floor) setFloor(1)
         }
-        if (_selectedFloor.value == floor) setFloor(1)
     }
 
     fun setFloor(floor: Int) {
@@ -383,7 +383,7 @@ class SurveyViewModel(
                 points.forEach { p -> csv += listOf(p.timestamp, p.x, p.y, p.rssi, csvField(p.ssid ?: ""),
                     csvField(p.bssid ?: ""), p.floorId, csvField(p.label ?: "")).joinToString(",") }
                 val safeName = project.name.replace(Regex("[^A-Za-z0-9._-]+"), "_")
-                exportManager.exportToCsv(csv, "Survey_${safeName}_${com.bernaferrari.wifiweakspot.core.util.nowMillis()}")
+                exportManager.exportCsv(csv, "Survey_${safeName}_${com.bernaferrari.wifiweakspot.core.util.nowMillis()}")
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) { _message.value = appStrings.survey.couldNotExportProject }

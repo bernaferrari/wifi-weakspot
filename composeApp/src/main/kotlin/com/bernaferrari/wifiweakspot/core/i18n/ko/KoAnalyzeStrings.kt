@@ -56,12 +56,7 @@ object KoAnalyzeStrings : AnalyzeStrings {
 
     override val connected = "연결됨"
 
-    override val scanReportHeading = "WiFi Weakspot 스캔 보고서"
 
-    override fun scanReportTime(time: String) = "시간: ${time}"
-    override fun scanReportTotal(count: Int) = "총 네트워크 수: ${count}"
-    override val scanReportNetworksHeading = "네트워크:"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
     override val channelLooksClear = "현재 채널은 혼잡하지 않음"
 

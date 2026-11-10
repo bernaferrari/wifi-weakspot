@@ -41,11 +41,6 @@ object PtBrAnalyzeStrings : AnalyzeStrings {
     override fun alsoYourRouter(quality: String) = "${quality} · Também seu roteador"
     override val connected = "Conectado"
 
-    override val scanReportHeading = "WiFi Weakspot Relatório de verificação"
-    override fun scanReportTime(time: String) = "Horário: ${time}"
-    override fun scanReportTotal(count: Int) = "Total de redes: ${count}"
-    override val scanReportNetworksHeading = "Redes:"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
     override val channelLooksClear = "Seu canal está pouco congestionado"
     override val noChannelImprovement = "Nenhum canal melhor encontrado"

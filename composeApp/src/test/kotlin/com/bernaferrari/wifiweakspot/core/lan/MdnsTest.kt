@@ -45,6 +45,22 @@ class MdnsTest {
         assertEquals(setOf("_airplay._tcp"), announcement.services)
     }
 
+    @Test fun repeatedAnnouncementsUseOneRecordPerService() {
+        val records = Mdns.Records()
+        val reply = Mdns.parse(response())
+        repeat(100) { records.addAll(reply) }
+        assertEquals(1, records.pointers.size)
+        assertEquals(setOf("_airplay._tcp"), records.announcements().single().services)
+    }
+
+    @Test fun aTruncatedReplyDoesNotPublishTheIncompleteAddress() {
+        val reply = response()
+        val records = Mdns.parse(reply.copyOf(reply.size - 1))
+        assertEquals(1, records.pointers.size)
+        assertEquals(0, records.addresses.size)
+        assertEquals(0, records.announcements().size)
+    }
+
     @Test fun queryAsksForEveryType() {
         val query = Mdns.query(listOf("_airplay._tcp", "_hap._tcp"))
         assertEquals(2, ((query[4].toInt() and 0xFF) shl 8) or (query[5].toInt() and 0xFF))

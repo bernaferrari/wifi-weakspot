@@ -13,7 +13,7 @@ import kotlinx.serialization.encodeToString
 internal object BackupZip {
     const val MAX_METADATA_BYTES = 8 * 1024 * 1024
     const val MAX_IMAGE_BYTES = 20 * 1024 * 1024
-    const val MAX_TOTAL_BYTES = 64 * 1024 * 1024
+    const val MAX_TOTAL_BYTES = 512 * 1024 * 1024
     private const val MANIFEST = "manifest.json"
     private val imageName = Regex("images/[0-9]+\\.bin")
 

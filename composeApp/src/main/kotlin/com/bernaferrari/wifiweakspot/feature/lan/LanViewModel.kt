@@ -6,6 +6,8 @@ import com.bernaferrari.wifiweakspot.core.database.dao.WifiWeakspotDao
 import com.bernaferrari.wifiweakspot.core.database.entities.LanDeviceEntity
 import com.bernaferrari.wifiweakspot.core.domain.NetworkStatusRepository
 import com.bernaferrari.wifiweakspot.core.lan.LanScanner
+import com.bernaferrari.wifiweakspot.core.lan.LanUnavailable
+import com.bernaferrari.wifiweakspot.core.lan.LanUnavailableReason
 import com.bernaferrari.wifiweakspot.core.lan.lanNetworkKey
 import com.bernaferrari.wifiweakspot.core.lan.sameLanConnection
 import com.bernaferrari.wifiweakspot.core.model.NetworkStatus
@@ -79,6 +81,14 @@ class LanViewModel(
         }
     }
 
+    private var opened = false
+
+    fun scanOnOpen() {
+        if (opened) return
+        opened = true
+        startScan()
+    }
+
     fun startScan() {
         if (scanJob?.isCompleted == false) return
         scanJob = viewModelScope.launch {
@@ -105,8 +115,7 @@ class LanViewModel(
                     )
                 }
                 val seenAt = nowMillis()
-                if (key != null) devices.forEach { device ->
-                    dao.insertLanDevice(
+                if (key != null) dao.saveLanDevices(devices.map { device ->
                         LanDeviceEntity(
                             ipAddress = device.ipAddress,
                             macAddress = device.macAddress,
@@ -121,12 +130,17 @@ class LanViewModel(
                             services = device.services.joinToString(",").ifEmpty { null },
                             networkKey = key
                         )
-                    )
-                }
+                })
                 _known.value = devices
                 _uiState.value = LanUiState.Success(devices)
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: LanUnavailable) {
+                val message = when (e.reason) {
+                    LanUnavailableReason.Vpn -> appStrings.domain.lanVpnUnavailable
+                    LanUnavailableReason.NoLocalConnection -> appStrings.domain.lanConnectFirst
+                }
+                _uiState.value = LanUiState.Error(message)
             } catch (e: Exception) {
                 _uiState.value = LanUiState.Error(if (e is LanConnectionChanged) appStrings.tools.connectionChangedLookAgain else appStrings.tools.scanFailed)
             }

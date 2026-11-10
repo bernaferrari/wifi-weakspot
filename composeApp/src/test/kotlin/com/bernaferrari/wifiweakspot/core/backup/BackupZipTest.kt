@@ -66,6 +66,19 @@ class BackupZipTest {
         }
     }
 
+    @Test fun exportsSeveralFloorPlansBeyondTheFormerArchiveLimit() {
+        val projects = (0..3).map { project.copy(imageEntry = "images/$it.bin") }
+        val images = projects.associate { item ->
+            item.imageEntry!! to temporary.newFile().apply {
+                java.io.RandomAccessFile(this, "rw").use { it.setLength(17L * 1024 * 1024) }
+            }
+        }
+        val output = ByteArrayOutputStream()
+        BackupZip.write(output, archive.copy(projects = projects), images)
+        val decoded = BackupZip.read(ByteArrayInputStream(output.toByteArray()), temporary.newFolder())
+        assertEquals(images.mapValues { it.value.length() }, decoded.images.mapValues { it.value.length() })
+    }
+
     @Test fun sizeLimitCountsExpandedBytesOfHighlyCompressedData() {
         val bytes = ByteArray(BackupZip.MAX_METADATA_BYTES + 1) { ' '.code.toByte() }
         assertThrows(IllegalArgumentException::class.java) {

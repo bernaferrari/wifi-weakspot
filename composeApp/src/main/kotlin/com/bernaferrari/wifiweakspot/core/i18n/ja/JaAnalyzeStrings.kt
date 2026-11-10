@@ -56,12 +56,7 @@ object JaAnalyzeStrings : AnalyzeStrings {
 
     override val connected = "接続中"
 
-    override val scanReportHeading = "WiFi Weakspot スキャンレポート"
 
-    override fun scanReportTime(time: String) = "時間: ${time}"
-    override fun scanReportTotal(count: Int) = "ネットワーク総数: ${count}"
-    override val scanReportNetworksHeading = "ネットワーク:"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
     override val channelLooksClear = "使用中のチャンネルは空いています"
 

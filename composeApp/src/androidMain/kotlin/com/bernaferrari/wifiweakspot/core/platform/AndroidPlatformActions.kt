@@ -32,9 +32,16 @@ class AndroidPlatformActions(private val context: Context) : PlatformActions {
     }
 
     override fun shareImage(image: ImageBitmap, title: String) {
-        // Cache is already exposed through the FileProvider; one file, replaced on each share.
-        val file = File(context.cacheDir, "shared-map.png")
-        file.outputStream().use { image.asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        val folder = File(context.cacheDir, "shared").apply { check(isDirectory || mkdirs()) }
+        val file = File.createTempFile("map-", ".png", folder)
+        try {
+            file.outputStream().use { output ->
+                check(image.asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, output))
+            }
+        } catch (failure: Exception) {
+            file.delete()
+            throw failure
+        }
         val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         val send = Intent(Intent.ACTION_SEND).setType("image/png").putExtra(Intent.EXTRA_STREAM, uri)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)

@@ -105,7 +105,6 @@ object ZhHansDomainStrings : DomainStrings {
     }
 
     override val exportFileChooserTitle = "导出文件"
-    override fun chartDescription(name: String) = "图表：${name}"
 
     override val lanVpnUnavailable = "此 VPN 连接不支持设备发现。请检查 VPN 是否允许访问局域网，或断开 VPN 后重试。"
 

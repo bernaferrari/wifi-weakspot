@@ -31,10 +31,11 @@ private const val MAX_OVERLAY_ALPHA = 0.62f
 internal fun coverageGridForMap(
     readings: List<PlanReading>,
     widthMeters: Float,
-    heightMeters: Float
+    heightMeters: Float,
+    checkActive: () -> Unit = {}
 ): CoverageGrid {
     val aspect = mapAspectRatio(widthMeters, heightMeters)
-    return coverageGrid(readings, aspect)
+    return coverageGrid(readings, aspect, checkActive = checkActive)
 }
 
 /**
@@ -44,7 +45,8 @@ internal fun coverageGridForMap(
 internal fun coverageGrid(
     readings: List<PlanReading>,
     aspect: Float,
-    columns: Int = 56
+    columns: Int = 56,
+    checkActive: () -> Unit = {}
 ): CoverageGrid {
     val safeAspect = aspect.takeIf { it.isFinite() && it > 0f } ?: 1f
     // Bound raster size separately from physical distances, including long narrow maps.
@@ -58,6 +60,7 @@ internal fun coverageGrid(
     val reach = FloatArray(columns * rows)
     if (readings.isEmpty()) return CoverageGrid(columns, rows, rssi, reach)
     for (j in 0 until rows) {
+        checkActive()
         val cy = (j + 0.5f) / rows
         for (i in 0 until columns) {
             val cx = (i + 0.5f) / columns
@@ -82,21 +85,24 @@ internal fun coverageGrid(
 }
 
 /** Paints the grid one pixel per cell; drawn scaled up with filtering it reads as a smooth field. */
-internal fun CoverageGrid.toBitmap(color: (Float) -> Color): ImageBitmap {
+internal fun CoverageGrid.toBitmap(color: (Float) -> Color, checkActive: () -> Unit): ImageBitmap {
     val bitmap = ImageBitmap(columns, rows)
     val canvas = Canvas(bitmap)
     val paint = Paint()
     // Reuse the perceptual color blend for cells within the same quarter dB.
     val blendedColors = mutableMapOf<Int, Color>()
-    for (j in 0 until rows) for (i in 0 until columns) {
-        val index = j * columns + i
-        val value = rssi[index]
-        if (!value.isFinite()) continue
-        val quarterDbm = (value * 4f).roundToInt()
-        val tint = blendedColors.getOrPut(quarterDbm) { color(quarterDbm / 4f) }
-        val alpha = MIN_OVERLAY_ALPHA + (MAX_OVERLAY_ALPHA - MIN_OVERLAY_ALPHA) * reach[index]
-        paint.color = tint.copy(alpha = alpha)
-        canvas.drawRect(i.toFloat(), j.toFloat(), i + 1f, j + 1f, paint)
+    for (j in 0 until rows) {
+        checkActive()
+        for (i in 0 until columns) {
+            val index = j * columns + i
+            val value = rssi[index]
+            if (!value.isFinite()) continue
+            val quarterDbm = (value * 4f).roundToInt()
+            val tint = blendedColors.getOrPut(quarterDbm) { color(quarterDbm / 4f) }
+            val alpha = MIN_OVERLAY_ALPHA + (MAX_OVERLAY_ALPHA - MIN_OVERLAY_ALPHA) * reach[index]
+            paint.color = tint.copy(alpha = alpha)
+            canvas.drawRect(i.toFloat(), j.toFloat(), i + 1f, j + 1f, paint)
+        }
     }
     return bitmap
 }

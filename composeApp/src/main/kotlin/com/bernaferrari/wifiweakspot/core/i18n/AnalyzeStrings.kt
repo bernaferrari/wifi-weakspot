@@ -103,20 +103,6 @@ interface AnalyzeStrings {
 
     // Shared scan report (plain text sent through the share sheet)
 
-    /** First line of the shared report. Keep the brand name. */
-    val scanReportHeading: String
-
-    /** [time] is a formatted date and time. */
-    fun scanReportTime(time: String): String
-
-    fun scanReportTotal(count: Int): String
-
-    /** Heading before the list of networks in the shared report. */
-    val scanReportNetworksHeading: String
-
-    /** One line per network, e.g. "• Home - -52dBm, Ch 6, WPA2". [security] is a protocol name. */
-    fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String): String
-
     // Channel advice and overlap ratings
 
     /** Advice chip: your current channel has little overlap. */

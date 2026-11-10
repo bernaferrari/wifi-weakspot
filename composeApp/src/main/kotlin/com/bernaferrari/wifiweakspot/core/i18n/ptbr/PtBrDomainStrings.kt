@@ -97,7 +97,6 @@ object PtBrDomainStrings : DomainStrings {
     }
 
     override val exportFileChooserTitle = "Exportar arquivo"
-    override fun chartDescription(name: String) = "Gráfico: ${name}"
 
     override val lanVpnUnavailable = "A descoberta de dispositivos não está disponível por meio desta conexão VPN. Verifique se a sua VPN permite acesso à rede local ou tente novamente quando estiver desconectada."
     override val lanConnectFirst = "Conecte-se a Wi-Fi ou Ethernet antes de digitalizar dispositivos locais."

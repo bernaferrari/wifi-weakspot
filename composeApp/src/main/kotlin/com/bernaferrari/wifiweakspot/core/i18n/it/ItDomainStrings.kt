@@ -97,7 +97,6 @@ object ItDomainStrings : DomainStrings {
     }
 
     override val exportFileChooserTitle = "Esporta file"
-    override fun chartDescription(name: String) = "Grafico: ${name}"
 
     override val lanVpnUnavailable = "Il rilevamento del dispositivo non è disponibile tramite questa connessione VPN. Controlla se la tua VPN consente l'accesso alla rete locale o riprova quando è disconnessa."
     override val lanConnectFirst = "Connettersi a Wi-Fi o Ethernet prima di scansionare i dispositivi locali."

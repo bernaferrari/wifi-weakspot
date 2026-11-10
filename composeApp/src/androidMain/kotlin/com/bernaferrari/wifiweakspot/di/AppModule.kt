@@ -11,7 +11,6 @@ import com.bernaferrari.wifiweakspot.core.lan.AndroidLanScanner
 import com.bernaferrari.wifiweakspot.core.lan.LanScanner
 import com.bernaferrari.wifiweakspot.core.permissions.AndroidPermissionGate
 import com.bernaferrari.wifiweakspot.core.permissions.PermissionGate
-import com.bernaferrari.wifiweakspot.core.platform.removeRetiredBackgroundAlerts
 import com.bernaferrari.wifiweakspot.core.tools.AndroidDnsClient
 import com.bernaferrari.wifiweakspot.core.tools.AndroidPingClient
 import com.bernaferrari.wifiweakspot.core.tools.AndroidPortScanner
@@ -75,7 +74,6 @@ fun initKoin(application: Application) {
         modules(sharedModule, appModule)
     }.koin
     kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO).launch {
-        removeRetiredBackgroundAlerts(application)
         // Resume the durable Room -> DataStore handoff after an interrupted restore.
         try {
             (koin.get<com.bernaferrari.wifiweakspot.core.backup.BackupService>() as

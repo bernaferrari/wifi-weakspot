@@ -41,11 +41,6 @@ object EsAnalyzeStrings : AnalyzeStrings {
     override fun alsoYourRouter(quality: String) = "${quality} · También tu enrutador"
     override val connected = "Conectado"
 
-    override val scanReportHeading = "WiFi Weakspot Informe de escaneo"
-    override fun scanReportTime(time: String) = "Hora: ${time}"
-    override fun scanReportTotal(count: Int) = "Redes totales: ${count}"
-    override val scanReportNetworksHeading = "Redes:"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
     override val channelLooksClear = "Tu canal está poco congestionado"
     override val noChannelImprovement = "No se encontró un canal mejor"

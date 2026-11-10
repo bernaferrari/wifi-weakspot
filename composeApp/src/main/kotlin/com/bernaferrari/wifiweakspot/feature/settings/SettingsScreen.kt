@@ -2,6 +2,7 @@
 
 package com.bernaferrari.wifiweakspot.feature.settings
 
+import com.bernaferrari.wifiweakspot.core.platform.LocalAppVersion
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bernaferrari.wifiweakspot.core.designsystem.exceptBottom
 import com.bernaferrari.wifiweakspot.core.i18n.strings
@@ -70,6 +71,7 @@ fun SettingsScreen(
     val networkStatusRepository: com.bernaferrari.wifiweakspot.core.domain.NetworkStatusRepository = koinInject()
     val networkStatus by remember(networkStatusRepository) { networkStatusRepository.getCurrentNetworkStatus() }.collectAsStateWithLifecycle(initialValue = null)
     val scope = rememberCoroutineScope()
+    val appVersion = LocalAppVersion.current
     val haptics = rememberWifiWeakspotHapticFeedback()
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -206,7 +208,7 @@ fun SettingsScreen(
                     SettingsRow(
                         icon = Icons.Default.Info,
                         title = strings.settings.aboutApp("WiFi\u00A0Weakspot"),
-                        subtitle = strings.settings.version("1.0.0"),
+                        subtitle = appVersion?.let { strings.settings.version(it) },
                         onClick = {
                             haptics.click()
                             onNavigateToAbout()

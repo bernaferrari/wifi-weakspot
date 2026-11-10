@@ -27,12 +27,14 @@ fun BackupSettings(viewModel: BackupViewModel = koinViewModel()) {
     if (!viewModel.supported) return
     val busy by viewModel.busy.collectAsState()
     val message by viewModel.message.collectAsState()
+    val chooseDestination by viewModel.chooseDestination.collectAsState()
     val picker = LocalBackupDocumentPicker.current(viewModel::exportTo, viewModel::restoreFrom)
+    LaunchedEffect(chooseDestination) { if (chooseDestination) viewModel.launchExportPicker(picker.export) }
     var confirmRestore by rememberSaveable { mutableStateOf(false) }
     val s = strings.settings
     SettingsSection(s.sectionBackup) {
         Text(s.backupScope, Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
-        SettingsRow(Icons.Default.SaveAlt, s.exportBackup, enabled = !busy, onClick = picker.export)
+        SettingsRow(Icons.Default.SaveAlt, s.exportBackup, enabled = !busy, onClick = viewModel::prepareExport)
         SettingsRow(Icons.Default.Restore, s.restoreBackup, enabled = !busy, onClick = { confirmRestore = true })
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp))
         message?.let { result ->

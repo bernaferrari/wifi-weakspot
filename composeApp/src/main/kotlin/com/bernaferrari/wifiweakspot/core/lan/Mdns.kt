@@ -22,6 +22,10 @@ object Mdns {
     private const val TypePtr = 12
     private const val TypeTxt = 16
     private const val TypeSrv = 33
+    internal const val MaxPacketBytes = 9_000
+    private const val MaxNameBytes = 255
+    private const val MaxTxtBytes = 1_300
+    private const val MaxRecordsPerKind = 512
 
     /** One query asking for every service type at once. [unicast] asks responders to reply directly. */
     fun query(types: List<String> = ServiceTypes, unicast: Boolean = false): ByteArray {
@@ -44,7 +48,7 @@ object Mdns {
     /** Records pulled from one response packet. Names are lower-cased for matching. */
     class Records {
         /** service type ("_airplay._tcp.local") to instance names. */
-        val pointers = mutableListOf<Pair<String, String>>()
+        val pointers = linkedSetOf<Pair<String, String>>()
         /** instance to target host. */
         val services = mutableMapOf<String, String>()
         /** instance to TXT key/values. */
@@ -53,79 +57,124 @@ object Mdns {
         val addresses = mutableMapOf<String, String>()
 
         fun addAll(other: Records) {
-            pointers += other.pointers
-            services += other.services
-            texts += other.texts
-            addresses += other.addresses
+            other.pointers.forEach { if (pointers.size < MaxRecordsPerKind) pointers.add(it) }
+            services.mergeBounded(other.services)
+            texts.mergeBounded(other.texts)
+            addresses.mergeBounded(other.addresses)
+        }
+
+        private fun <V> MutableMap<String, V>.mergeBounded(other: Map<String, V>) {
+            other.forEach { (key, value) ->
+                if (size < MaxRecordsPerKind || key in this) put(key, value)
+            }
         }
     }
 
     /** Parses answers and additional records; malformed packets yield whatever was read before the fault. */
     fun parse(packet: ByteArray): Records {
         val records = Records()
-        runCatching {
+        if (packet.size !in 12..MaxPacketBytes) return records
+        try {
             val reader = Reader(packet)
-            reader.pos = 4
+            reader.skip(2)
+            val flags = reader.u16()
+            if (flags and 0x8000 == 0) return records
             val questions = reader.u16()
             val total = reader.u16() + reader.u16() + reader.u16()
-            repeat(questions) { reader.name(); reader.pos += 4 }
+            if (questions * 5 + total * 11 > packet.size - reader.pos) return records
+            repeat(questions) { reader.name(); reader.skip(4) }
             repeat(total) {
-                val owner = reader.name()
+                val owner = reader.name().lowercase()
                 val type = reader.u16()
-                reader.pos += 2 + 4
+                reader.skip(6)
                 val length = reader.u16()
-                val end = reader.pos + length
+                val start = reader.pos
+                reader.skip(length)
+                val end = reader.pos
+                reader.pos = start
                 when (type) {
-                    TypePtr -> records.pointers += owner.lowercase() to reader.name()
-                    TypeSrv -> { reader.pos += 6; records.services[owner.lowercase()] = reader.name().lowercase() }
-                    TypeTxt -> records.texts[owner.lowercase()] = reader.txt(end)
+                    TypePtr -> {
+                        val instance = reader.name(end)
+                        if (reader.pos == end) records.pointers += owner to instance
+                    }
+                    TypeSrv -> if (length >= 7) {
+                        reader.skip(6)
+                        val target = reader.name(end)
+                        if (reader.pos == end) records.services[owner] = target.lowercase()
+                    }
+                    TypeTxt -> if (length <= MaxTxtBytes) records.texts[owner] = reader.txt(end)
                     TypeA -> if (length == 4) {
-                        records.addresses[owner.lowercase()] = (0 until 4).joinToString(".") { (packet[reader.pos + it].toInt() and 0xFF).toString() }
+                        records.addresses[owner] = (start until end).joinToString(".") {
+                            (packet[it].toInt() and 0xFF).toString()
+                        }
                     }
                 }
                 reader.pos = end
             }
+        } catch (_: InvalidRecord) {
+            // Keep records decoded before the first malformed one.
         }
         return records
     }
 
-    private class Reader(val data: ByteArray) {
-        var pos = 0
-        fun u8(at: Int = pos) = data[at].toInt() and 0xFF
-        fun u16(): Int = ((u8(pos) shl 8) or u8(pos + 1)).also { pos += 2 }
+    private class InvalidRecord : Exception()
 
-        /** Reads a possibly compressed name, keeping case so instance names stay readable. */
-        fun name(): String {
+    private class Reader(private val data: ByteArray) {
+        var pos = 0
+
+        private fun u8(at: Int, end: Int): Int {
+            if (at !in 0 until end) throw InvalidRecord()
+            return data[at].toInt() and 0xFF
+        }
+
+        fun skip(bytes: Int) {
+            if (bytes > data.size - pos) throw InvalidRecord()
+            pos += bytes
+        }
+
+        fun u16(): Int = ((u8(pos, data.size) shl 8) or u8(pos + 1, data.size)).also { pos += 2 }
+
+        /** Keep case for display and validate the bytes consumed in the containing record. */
+        fun name(end: Int = data.size): String {
             val labels = mutableListOf<String>()
             var at = pos
+            var limit = end
             var jumped = false
             var hops = 0
+            var expandedBytes = 1 // The terminating root label.
             while (true) {
-                val len = u8(at)
+                val len = u8(at, limit)
                 when {
-                    len == 0 -> { if (!jumped) pos = at + 1; break }
+                    len == 0 -> {
+                        if (!jumped) pos = at + 1
+                        return labels.joinToString(".")
+                    }
                     len and 0xC0 == 0xC0 -> {
-                        val target = ((len and 0x3F) shl 8) or u8(at + 1)
+                        val target = ((len and 0x3F) shl 8) or u8(at + 1, limit)
+                        if (target !in 12 until at || ++hops > 32) throw InvalidRecord()
                         if (!jumped) pos = at + 2
                         jumped = true
+                        limit = at
                         at = target
-                        if (++hops > 32) error("Name loop")
                     }
-                    else -> {
+                    len <= 63 -> {
+                        expandedBytes += len + 1
+                        if (expandedBytes > MaxNameBytes || len >= limit - at) throw InvalidRecord()
                         labels += data.decodeToString(at + 1, at + 1 + len)
                         at += 1 + len
                     }
+                    else -> throw InvalidRecord()
                 }
             }
-            return labels.joinToString(".")
         }
 
         fun txt(end: Int): Map<String, String> {
             val values = mutableMapOf<String, String>()
             while (pos < end) {
-                val len = u8(pos)
-                val entry = data.decodeToString(pos + 1, minOf(end, pos + 1 + len))
-                pos += 1 + len
+                val len = u8(pos++, end)
+                if (len > end - pos) throw InvalidRecord()
+                val entry = data.decodeToString(pos, pos + len)
+                pos += len
                 val key = entry.substringBefore('=').lowercase()
                 if (key.isNotEmpty()) values[key] = entry.substringAfter('=', "")
             }

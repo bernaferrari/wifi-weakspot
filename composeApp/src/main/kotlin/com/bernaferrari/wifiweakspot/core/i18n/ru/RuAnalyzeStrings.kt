@@ -41,11 +41,6 @@ object RuAnalyzeStrings : AnalyzeStrings {
     override fun alsoYourRouter(quality: String) = "${quality} · Также ваш роутер"
     override val connected = "Подключено"
 
-    override val scanReportHeading = "WiFi Weakspot Отчет о сканировании"
-    override fun scanReportTime(time: String) = "Время: ${time}"
-    override fun scanReportTotal(count: Int) = "Всего сетей: ${count}"
-    override val scanReportNetworksHeading = "Сети:"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
     override val channelLooksClear = "Ваш канал мало загружен"
     override val noChannelImprovement = "Более подходящий канал не найден"

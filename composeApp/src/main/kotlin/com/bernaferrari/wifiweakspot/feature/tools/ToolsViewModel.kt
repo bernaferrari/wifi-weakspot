@@ -31,6 +31,13 @@ class ToolsViewModel(
     val uiState: StateFlow<ToolsUiState> = _uiState.asStateFlow()
 
     private var activeJob: Job? = null
+    private var opened = false
+
+    fun open(initialTool: ToolType?, initialTarget: String) {
+        if (opened) return
+        opened = true
+        if (initialTool != null) startTool(initialTool, initialTarget)
+    }
 
     fun startTool(toolType: ToolType, target: String) {
         val normalized = target.trim()

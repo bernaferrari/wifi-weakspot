@@ -1,9 +1,17 @@
 package com.bernaferrari.wifiweakspot.feature.lan
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import com.bernaferrari.wifiweakspot.core.database.dao.WifiWeakspotDao
 import com.bernaferrari.wifiweakspot.core.database.entities.LanDeviceEntity
 import com.bernaferrari.wifiweakspot.core.domain.NetworkStatusRepository
+import com.bernaferrari.wifiweakspot.core.lan.AndroidLanScanner
 import com.bernaferrari.wifiweakspot.core.lan.LanScanner
+import com.bernaferrari.wifiweakspot.core.lan.LanUnavailable
+import com.bernaferrari.wifiweakspot.core.lan.LanUnavailableReason
+import com.bernaferrari.wifiweakspot.core.i18n.appStrings
 import com.bernaferrari.wifiweakspot.core.lan.deviceWebUrl
 import com.bernaferrari.wifiweakspot.core.lan.lanNetworkKey
 import com.bernaferrari.wifiweakspot.core.model.NetworkStatus
@@ -42,8 +50,8 @@ class LanNetworkIdentityTest {
             val dao = mockk<WifiWeakspotDao>(relaxed = true)
             every { dao.getAllLanDevices() } returns flowOf(listOf(savedHome))
             coEvery { dao.getLanDevice(ip, lanNetworkKey(office)!!) } returns null
-            val inserted = slot<LanDeviceEntity>()
-            coEvery { dao.insertLanDevice(capture(inserted)) } just Runs
+            val inserted = slot<List<LanDeviceEntity>>()
+            coEvery { dao.saveLanDevices(capture(inserted)) } just Runs
             val scanner = scanner()
             coEvery { scanner.scanSubnet(any()) } returns result()
             val vm = LanViewModel(scanner, dao, repository(MutableStateFlow(office)))
@@ -51,11 +59,11 @@ class LanNetworkIdentityTest {
             assertTrue(vm.known.value.isEmpty())
             vm.startScan()
             advanceUntilIdle()
-            assertNull(inserted.captured.customName)
-            assertFalse(inserted.captured.isTrusted)
-            assertNull(inserted.captured.hostname)
-            assertNull(inserted.captured.services)
-            assertEquals(lanNetworkKey(office), inserted.captured.networkKey)
+            assertNull(inserted.captured.single().customName)
+            assertFalse(inserted.captured.single().isTrusted)
+            assertNull(inserted.captured.single().hostname)
+            assertNull(inserted.captured.single().services)
+            assertEquals(lanNetworkKey(office), inserted.captured.single().networkKey)
             coVerify(exactly = 0) { dao.getLanDevice(ip, lanNetworkKey(home)!!) }
         } finally { Dispatchers.resetMain() }
     }
@@ -81,7 +89,61 @@ class LanNetworkIdentityTest {
             advanceUntilIdle()
             assertTrue(vm.known.value.isEmpty())
             assertEquals(LanUiState.Idle, vm.uiState.value)
-            coVerify(exactly = 0) { dao.insertLanDevice(any()) }
+            coVerify(exactly = 0) { dao.saveLanDevices(any()) }
+        } finally { Dispatchers.resetMain() }
+    }
+
+    @Test fun reenteringDevicesKeepsTheResultAndManualRefreshStillWorks() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val dao = mockk<WifiWeakspotDao>(relaxed = true)
+            every { dao.getAllLanDevices() } returns flowOf(emptyList())
+            val scanner = scanner()
+            coEvery { scanner.scanSubnet(any()) } returns result()
+            val vm = LanViewModel(scanner, dao, repository(MutableStateFlow(home)))
+            runCurrent()
+            vm.scanOnOpen()
+            advanceUntilIdle()
+            vm.scanOnOpen()
+            assertTrue(vm.uiState.value is LanUiState.Success)
+            coVerify(exactly = 1) { scanner.scanSubnet(any()) }
+            vm.startScan()
+            advanceUntilIdle()
+            coVerify(exactly = 2) { scanner.scanSubnet(any()) }
+        } finally { Dispatchers.resetMain() }
+    }
+
+    @Test fun androidRejectsVpnEvenWhenItReportsWifiTransport() = runTest {
+        val network = mockk<Network>()
+        val capabilities = mockk<NetworkCapabilities> {
+            every { hasTransport(NetworkCapabilities.TRANSPORT_VPN) } returns true
+            every { hasTransport(NetworkCapabilities.TRANSPORT_WIFI) } returns true
+        }
+        val connectivity = mockk<ConnectivityManager> {
+            every { activeNetwork } returns network
+            every { getNetworkCapabilities(network) } returns capabilities
+        }
+        val context = mockk<Context> {
+            every { getSystemService(ConnectivityManager::class.java) } returns connectivity
+        }
+        val failure = runCatching { AndroidLanScanner(context).scanSubnet() }.exceptionOrNull()
+        assertEquals(LanUnavailableReason.Vpn, (failure as? LanUnavailable)?.reason)
+        verify(exactly = 0) { connectivity.getLinkProperties(any()) }
+    }
+
+    @Test fun vpnReasonReachesDevicesWithoutSavingResults() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val dao = mockk<WifiWeakspotDao>(relaxed = true)
+            every { dao.getAllLanDevices() } returns flowOf(emptyList())
+            val scanner = scanner()
+            coEvery { scanner.scanSubnet(any()) } throws LanUnavailable(LanUnavailableReason.Vpn)
+            val vm = LanViewModel(scanner, dao, repository(MutableStateFlow(home)))
+            runCurrent()
+            vm.scanOnOpen()
+            advanceUntilIdle()
+            assertEquals(LanUiState.Error(appStrings.domain.lanVpnUnavailable), vm.uiState.value)
+            coVerify(exactly = 0) { dao.saveLanDevices(any()) }
         } finally { Dispatchers.resetMain() }
     }
 

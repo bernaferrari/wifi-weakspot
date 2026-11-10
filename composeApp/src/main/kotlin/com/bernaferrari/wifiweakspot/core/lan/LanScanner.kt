@@ -1,6 +1,5 @@
 package com.bernaferrari.wifiweakspot.core.lan
 
-import com.bernaferrari.wifiweakspot.core.model.lan.LanDevice
 import com.bernaferrari.wifiweakspot.core.model.lan.LanScanResult
 import kotlinx.coroutines.flow.Flow
 
@@ -13,11 +12,7 @@ interface LanScanner {
     fun cancel()
 }
 
-interface NameResolver {
-    suspend fun resolve(ipAddress: String): String?
-    suspend fun resolveAll(devices: List<LanDevice>): List<LanDevice>
-}
 
-interface VendorResolver {
-    fun getVendor(macAddress: String): String?
-}
+internal enum class LanUnavailableReason { Vpn, NoLocalConnection }
+
+internal class LanUnavailable(val reason: LanUnavailableReason) : Exception()

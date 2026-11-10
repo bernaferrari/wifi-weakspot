@@ -15,13 +15,6 @@ fun formatDate(timestamp: Long): String {
     return "${local.date} $hour:$minute"
 }
 
-/** Compact stamp for file names, such as 20261013_0942. */
-fun fileTimestamp(timestamp: Long = com.bernaferrari.wifiweakspot.core.util.nowMillis()): String {
-    val local = Instant.fromEpochMilliseconds(timestamp).toLocalDateTime(TimeZone.currentSystemDefault())
-    fun two(v: Int) = v.toString().padStart(2, '0')
-    return "${local.year}${two(local.month.ordinal + 1)}${two(local.day)}_${two(local.hour)}${two(local.minute)}"
-}
-
 /** "14:32" in local time. */
 fun timeOfDay(timestamp: Long): String {
     val local = Instant.fromEpochMilliseconds(timestamp).toLocalDateTime(TimeZone.currentSystemDefault())

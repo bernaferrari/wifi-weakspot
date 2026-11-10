@@ -74,7 +74,7 @@ fun LanScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val haptics = rememberWifiWeakspotHapticFeedback()
 
-    LaunchedEffect(Unit) { viewModel.startScan() }
+    LaunchedEffect(viewModel) { viewModel.scanOnOpen() }
 
     val isScanning = uiState is LanUiState.Scanning
     val devices = (uiState as? LanUiState.Success)?.devices ?: known

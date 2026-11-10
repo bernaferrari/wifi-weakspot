@@ -56,6 +56,21 @@ class ToolsViewModelTest {
             assertTrue(vm.uiState.value is ToolsUiState.PortScanResult)
         } finally { Dispatchers.resetMain() }
     }
+    @Test fun reopeningAnEntryKeepsItsCompletedCheck() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val scanner = mockk<PortScanner>()
+            coEvery { scanner.scanCommonPorts(any()) } returns PortScanResult("192.168.1.12", emptyList(), "TCP Connect", 10)
+            val dao = mockk<WifiWeakspotDao>(relaxed = true)
+            val vm = ToolsViewModel(mockk(), mockk(), scanner, dao, status())
+            vm.open(ToolType.PORT_SCAN, "192.168.1.12")
+            advanceUntilIdle()
+            vm.open(ToolType.PORT_SCAN, "192.168.1.12")
+            assertEquals(ToolsUiState.PortScanResult("192.168.1.12", emptyList()), vm.uiState.value)
+            coVerify(exactly = 1) { scanner.scanCommonPorts(any()) }
+        } finally { Dispatchers.resetMain() }
+    }
+
     @Test fun invalidUrlsDoNotStartNetworkDiagnostics() = runTest {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {

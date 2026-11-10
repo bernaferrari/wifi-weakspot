@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <files-path name="exports" path="exports/" />
-    <cache-path name="cache" path="." />
+    <cache-path name="shared" path="shared/" />
 </paths>

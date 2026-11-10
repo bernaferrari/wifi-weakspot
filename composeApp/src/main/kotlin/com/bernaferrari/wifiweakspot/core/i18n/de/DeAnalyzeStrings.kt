@@ -41,11 +41,6 @@ object DeAnalyzeStrings : AnalyzeStrings {
     override fun alsoYourRouter(quality: String) = "${quality} · Auch Ihr Router"
     override val connected = "Verbunden"
 
-    override val scanReportHeading = "WiFi Weakspot Scanbericht"
-    override fun scanReportTime(time: String) = "Zeit: ${time}"
-    override fun scanReportTotal(count: Int) = "Netzwerke insgesamt: ${count}"
-    override val scanReportNetworksHeading = "Netzwerke:"
-    override fun scanReportLine(ssid: String, rssi: Int, channel: Int, security: String) = "• ${ssid} - ${rssi} dBm, ${channelShort(channel)}, ${security}"
 
     override val channelLooksClear = "Ihr Kanal ist wenig belegt"
 

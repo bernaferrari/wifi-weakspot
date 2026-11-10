@@ -105,7 +105,6 @@ object JaDomainStrings : DomainStrings {
     }
 
     override val exportFileChooserTitle = "ファイルのエクスポート"
-    override fun chartDescription(name: String) = "チャート: ${name}"
 
     override val lanVpnUnavailable = "このVPN接続ではデバイスを検出できません。VPNがローカルネットワークへのアクセスを許可しているか確認するか、VPNを切断して再試行してください。"
 

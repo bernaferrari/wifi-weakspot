@@ -105,7 +105,6 @@ object KoDomainStrings : DomainStrings {
     }
 
     override val exportFileChooserTitle = "파일 내보내기"
-    override fun chartDescription(name: String) = "차트: ${name}"
 
     override val lanVpnUnavailable = "이 VPN 연결에서는 기기를 검색할 수 없습니다. VPN의 로컬 네트워크 접근 허용 여부를 확인하거나 VPN을 끈 뒤 다시 시도하세요."
 
