@@ -7,6 +7,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Everything the shared UI needs from the device. Android implements it with intents and
@@ -46,11 +48,18 @@ interface PlatformTheme {
     fun systemReducedMotion(): Boolean
 }
 
+/** A photo picked for the map with id [destinationId], already copied to the app-owned [path]. */
+data class FloorplanPick(val destinationId: Long, val path: String)
+
 /** Launchers that need the host screen (Android activity results). */
 class PermissionLaunchers(
     val scan: ((granted: Boolean) -> Unit) -> Unit = { it(true) },
-    /** Opens an image picker; the callback receives an app-owned path or null. */
-    val pickFloorplan: (destinationId: Long, (path: String?) -> Unit) -> Unit = { _, done -> done(null) }
+    /** Opens an image picker for the map with this id. The result arrives in [floorplanPick]. */
+    val pickFloorplan: (destinationId: Long) -> Unit = {},
+    /** The picked photo stays here until the map screen receives it. */
+    val floorplanPick: StateFlow<FloorplanPick?> = MutableStateFlow(null),
+    /** Call once the pick has been taken, so it is not applied twice. */
+    val consumeFloorplanPick: () -> Unit = {}
 )
 
 val LocalPermissionLaunchers = staticCompositionLocalOf { PermissionLaunchers() }

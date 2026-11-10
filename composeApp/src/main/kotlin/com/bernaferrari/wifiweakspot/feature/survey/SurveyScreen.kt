@@ -42,7 +42,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bernaferrari.wifiweakspot.core.database.entities.SurveyProjectEntity
 import com.bernaferrari.wifiweakspot.core.wifi.WifiNetwork
 import com.bernaferrari.wifiweakspot.core.designsystem.component.polygon
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -103,12 +105,17 @@ fun SurveyScreen(
     }
 
     fun importFloorplan(destinationProjectId: Long?) {
-        launchers.pickFloorplan(destinationProjectId ?: 0L) { path ->
-            when {
-                path == null -> Unit
-                viewModel.currentProject.value?.id == destinationProjectId -> viewModel.setFloorplan(path, ::releaseOwnedFloorplan)
-                else -> platform.deleteOwnedFile(path)
-            }
+        launchers.pickFloorplan(destinationProjectId ?: 0L)
+    }
+
+    // After recreation, the picker result can arrive before Room loads the current map.
+    LaunchedEffect(launchers, viewModel) {
+        launchers.floorplanPick.collect { pick ->
+            if (pick == null) return@collect
+            val current = withTimeoutOrNull(2_000) { viewModel.currentProject.first { it != null } }
+            if (current?.id == pick.destinationId) viewModel.setFloorplan(pick.path, ::releaseOwnedFloorplan)
+            else platform.deleteOwnedFile(pick.path)
+            launchers.consumeFloorplanPick()
         }
     }
 
