@@ -5,12 +5,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 
 /**
- * Unit tests for ScanThrottleManager implementation logic.
- * Tests the core throttle state machine without Android dependencies.
+ * Tests the scanQuotaState rules used by AndroidScanThrottleManager.
  */
 class ScanThrottleManagerTest {
 
-    // Test implementation without Android dependencies
+    // A clock and a list of scans; the rules themselves are the app's own scanQuotaState.
     private class TestScanThrottleManager(
         private val maxScans: Int = 4,
         private val windowMs: Long = 120_000L, // 2 minutes
@@ -18,40 +17,18 @@ class ScanThrottleManagerTest {
     ) {
         private val scanTimestamps = mutableListOf<Long>()
         private var currentTimeMs: Long = 0
-        
+
         fun setTime(timeMs: Long) {
             currentTimeMs = timeMs
         }
-        
+
         fun recordScan() {
             scanTimestamps.add(currentTimeMs)
-            pruneOldTimestamps()
         }
-        
-        fun getThrottleState(): ThrottleState {
-            if (isThrottlingDisabled()) {
-                return ThrottleState.Unlimited
-            }
-            
-            pruneOldTimestamps()
-            val remaining = maxScans - scanTimestamps.size
-            
-            return when {
-                remaining >= 3 -> ThrottleState.Ready(remaining, maxScans)
-                remaining in 1..2 -> ThrottleState.LowQuota(remaining, maxScans)
-                remaining <= 0 -> {
-                    val oldestScan = scanTimestamps.minOrNull() ?: return ThrottleState.Ready(maxScans, maxScans)
-                    val expiresAt = oldestScan + windowMs
-                    val secondsRemaining = ((expiresAt - currentTimeMs) / 1000).coerceAtLeast(0)
-                    ThrottleState.Exhausted(secondsRemaining, windowMs / 1000)
-                }
-                else -> ThrottleState.Unknown
-            }
-        }
-        
-        private fun pruneOldTimestamps() {
-            scanTimestamps.removeAll { currentTimeMs - it > windowMs }
-        }
+
+        fun getThrottleState(): ThrottleState =
+            if (isThrottlingDisabled()) ThrottleState.Unlimited
+            else scanQuotaState(scanTimestamps, currentTimeMs, maxScans, windowMs)
     }
 
     @Test
@@ -171,5 +148,60 @@ class ScanThrottleManagerTest {
         assertTrue("Expected LowQuota state, got $state", state is ThrottleState.LowQuota)
         state as ThrottleState.LowQuota
         assertEquals(1, state.scansRemaining)
+    }
+
+    @Test
+    fun lastSecond_shouldStillShowOneSecond() {
+        val manager = TestScanThrottleManager()
+        repeat(4) { manager.recordScan() }
+        manager.setTime(119_500)
+
+        assertEquals(1L, (manager.getThrottleState() as ThrottleState.Exhausted).secondsUntilNextScan)
+    }
+
+    @Test
+    fun exhausted_shouldNeverReportZeroSeconds() {
+        val manager = TestScanThrottleManager()
+        repeat(4) { manager.recordScan() }
+
+        for (time in 0L..119_999L step 250L) {
+            manager.setTime(time)
+            val state = manager.getThrottleState()
+            assertTrue(state is ThrottleState.Exhausted && state.secondsUntilNextScan >= 1L)
+        }
+    }
+
+    @Test
+    fun windowEnd_shouldFreeTheScanExactlyOnTime() {
+        val manager = TestScanThrottleManager()
+        for (time in listOf(0L, 1_000L, 2_000L, 3_000L)) {
+            manager.setTime(time)
+            manager.recordScan()
+        }
+        manager.setTime(120_000)
+
+        assertEquals(1, (manager.getThrottleState() as ThrottleState.LowQuota).scansRemaining)
+    }
+
+    @Test
+    fun futureTimestamps_shouldBeIgnored() {
+        val manager = TestScanThrottleManager()
+        manager.setTime(500_000)
+        repeat(4) { manager.recordScan() }
+        manager.setTime(1_000)
+
+        assertEquals(4, (manager.getThrottleState() as ThrottleState.Ready).scansRemaining)
+    }
+
+    @Test
+    fun moreScansThanTheQuota_shouldWaitForEnoughToExpire() {
+        val manager = TestScanThrottleManager()
+        for (time in 0L..40_000L step 10_000L) {
+            manager.setTime(time)
+            manager.recordScan()
+        }
+        manager.setTime(50_000)
+
+        assertEquals(80L, (manager.getThrottleState() as ThrottleState.Exhausted).secondsUntilNextScan)
     }
 }

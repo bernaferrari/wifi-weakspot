@@ -35,6 +35,7 @@ class AndroidScanThrottleManager(
     companion object {
         private const val MAX_SCANS = 4
         private const val WINDOW_MS = 2 * 60 * 1000L // 2 minutes
+        private const val COUNTDOWN_TICK_MS = 500L
         private const val WIFI_SCAN_THROTTLE_ENABLED = "wifi_scan_throttle_enabled"
         /** Held only by privileged system apps; those scans are never throttled. */
         private const val PREFS_NAME = "wifi_throttle_prefs"
@@ -70,8 +71,8 @@ class AndroidScanThrottleManager(
 
     override fun recordScan() {
         scope.launch {
-            val now = System.currentTimeMillis()
             mutex.withLock {
+                val now = System.currentTimeMillis()
                 scanTimestamps.add(now)
                 pruneOldTimestampsInternal(now)
                 persistTimestamps()
@@ -82,9 +83,8 @@ class AndroidScanThrottleManager(
 
     override fun refresh() {
         scope.launch {
-            val now = System.currentTimeMillis()
             mutex.withLock {
-                pruneOldTimestampsInternal(now)
+                pruneOldTimestampsInternal(System.currentTimeMillis())
             }
             updateState()
         }
@@ -92,88 +92,42 @@ class AndroidScanThrottleManager(
 
     private fun pruneOldTimestampsInternal(now: Long) {
         // Internal method - must be called while holding mutex
-        scanTimestamps.removeAll { now - it > WINDOW_MS }
-    }
-
-    private suspend fun getTimestampCount(): Int {
-        return mutex.withLock {
-            scanTimestamps.size
-        }
-    }
-
-    private suspend fun getOldestTimestamp(): Long? {
-        return mutex.withLock {
-            scanTimestamps.minOrNull()
-        }
+        scanTimestamps.removeAll { !scanStillCounts(it, now, WINDOW_MS) }
     }
 
     private suspend fun updateState() {
-        _setupStatus.value = readSetupStatus()
-        // Check if throttling is disabled first
-        if (checkThrottlingDisabled()) {
-            _throttleState.value = ThrottleState.Unlimited
-            countdownJob?.cancel()
-            return
-        }
-
-        val timestampCount = getTimestampCount()
-        val remaining = MAX_SCANS - timestampCount
-
-        when {
-            remaining >= 3 -> {
-                _throttleState.value = ThrottleState.Ready(remaining, MAX_SCANS)
+        mutex.withLock {
+            val setup = readSetupStatus()
+            _setupStatus.value = setup
+            val state = if (setup.isUnlimited) ThrottleState.Unlimited
+                else scanQuotaState(scanTimestamps, System.currentTimeMillis(), MAX_SCANS, WINDOW_MS)
+            _throttleState.value = state
+            if (state is ThrottleState.Exhausted) {
+                if (countdownJob == null) startCountdown()
+            } else {
                 countdownJob?.cancel()
-            }
-            remaining in 1..2 -> {
-                _throttleState.value = ThrottleState.LowQuota(remaining, MAX_SCANS)
-                countdownJob?.cancel()
-            }
-            remaining <= 0 -> {
-                // Calculate when the oldest scan will expire
-                val oldestScan = getOldestTimestamp()
-                if (oldestScan == null) {
-                    _throttleState.value = ThrottleState.Ready(MAX_SCANS, MAX_SCANS)
-                    return
-                }
-
-                val expiresAt = oldestScan + WINDOW_MS
-                val now = System.currentTimeMillis()
-                val secondsRemaining = ((expiresAt - now) / 1000).coerceAtLeast(0)
-
-                _throttleState.value = ThrottleState.Exhausted(
-                    secondsUntilNextScan = secondsRemaining,
-                    cooldownDurationSeconds = WINDOW_MS / 1000
-                )
-
-                // Start countdown
-                startCountdown(expiresAt)
+                countdownJob = null
             }
         }
     }
 
-    private fun startCountdown(expiresAt: Long) {
-        countdownJob?.cancel()
+    // Start under the mutex. The countdown clears its slot before releasing the lock on its last tick.
+    private fun startCountdown() {
         countdownJob = scope.launch {
             while (true) {
-                val now = System.currentTimeMillis()
-                val secondsRemaining = ((expiresAt - now) / 1000).coerceAtLeast(0)
-
-                if (secondsRemaining <= 0) {
-                    // Quota restored!
-                    mutex.withLock {
-                        pruneOldTimestampsInternal(System.currentTimeMillis())
+                delay(COUNTDOWN_TICK_MS)
+                val exhausted = mutex.withLock {
+                    val now = System.currentTimeMillis()
+                    pruneOldTimestampsInternal(now)
+                    val state = scanQuotaState(scanTimestamps, now, MAX_SCANS, WINDOW_MS)
+                    _throttleState.value = state
+                    if (state !is ThrottleState.Exhausted) {
                         persistTimestamps()
+                        countdownJob = null
                     }
-                    updateState()
-                    break
+                    state is ThrottleState.Exhausted
                 }
-
-                _throttleState.value = ThrottleState.Exhausted(
-                    secondsUntilNextScan = secondsRemaining,
-                    cooldownDurationSeconds = WINDOW_MS / 1000
-                )
-
-                delay(1000) // Update every second
+                if (!exhausted) break
             }
         }
     }
@@ -232,7 +186,7 @@ class AndroidScanThrottleManager(
             val now = System.currentTimeMillis()
             timestampString.split(",")
                 .mapNotNull { it.toLongOrNull() }
-                .filter { now - it <= WINDOW_MS } // Only restore valid timestamps
+                .filter { scanStillCounts(it, now, WINDOW_MS) }
                 .forEach { scanTimestamps.add(it) }
         }
     }
