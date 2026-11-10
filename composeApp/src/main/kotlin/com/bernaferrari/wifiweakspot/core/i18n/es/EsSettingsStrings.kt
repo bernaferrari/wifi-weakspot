@@ -31,18 +31,8 @@ object EsSettingsStrings : SettingsStrings {
 
     override val hapticsSubtitle = "Vibrar al tocar y al mostrar resultados"
 
-    override val sectionAlerts = "Alertas"
-    override val backgroundAlertsTitle = "Alertas de fondo"
-    override val backgroundAlertsSubtitle = "Cuando cambian las redes Wi-Fi cercanas"
 
-    override val notificationsDenied = "Permitir notificaciones para ver el estado de monitoreo y alertas."
-    override val checkEvery = "Intervalo de comprobación"
 
-    override fun intervalSeconds(seconds: Int) = "${seconds} seg"
-    override fun intervalMinutes(minutes: Int) = "${minutes} minutos"
-    override val newNetworkAlertsTitle = "Nuevas alertas de red"
-    override val signalChangeAlertsTitle = "Alertas de cambio de señal"
-    override val signalChangeAlertsSubtitle = "Cuando tu señal sube o baja mucho"
     override val sectionAbout = "Acerca de"
     override fun aboutApp(appName: String) = "Acerca de ${appName}"
     override fun version(version: String) = "Versión ${version}"

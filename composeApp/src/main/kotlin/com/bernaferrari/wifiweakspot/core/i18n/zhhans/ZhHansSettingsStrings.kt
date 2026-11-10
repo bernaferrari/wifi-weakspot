@@ -33,22 +33,12 @@ object ZhHansSettingsStrings : SettingsStrings {
 
     override val hapticsSubtitle = "点击和显示结果时振动"
 
-    override val sectionAlerts = "警报"
-    override val backgroundAlertsTitle = "后台提醒"
 
-    override val backgroundAlertsSubtitle = "附近 Wi-Fi 发生变化时"
 
-    override val notificationsDenied = "请允许通知，以查看监测状态和提醒。"
 
-    override val checkEvery = "检查间隔"
 
-    override fun intervalSeconds(seconds: Int) = "${seconds}秒"
-    override fun intervalMinutes(minutes: Int) = "${minutes}分钟\n上次"
-    override val newNetworkAlertsTitle = "发现新网络时提醒"
 
-    override val signalChangeAlertsTitle = "信号变化时提醒"
 
-    override val signalChangeAlertsSubtitle = "信号强度大幅变化时"
 
     override val sectionAbout = "关于"
 

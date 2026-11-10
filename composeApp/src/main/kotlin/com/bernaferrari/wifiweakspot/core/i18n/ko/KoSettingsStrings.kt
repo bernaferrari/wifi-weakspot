@@ -33,22 +33,12 @@ object KoSettingsStrings : SettingsStrings {
 
     override val hapticsSubtitle = "탭하거나 결과가 나올 때 진동"
 
-    override val sectionAlerts = "알림"
-    override val backgroundAlertsTitle = "백그라운드 알림"
 
-    override val backgroundAlertsSubtitle = "주변 Wi-Fi에 변화가 있을 때"
 
-    override val notificationsDenied = "모니터링 상태와 알림을 보려면 알림 권한을 허용하세요."
 
-    override val checkEvery = "확인 간격"
 
-    override fun intervalSeconds(seconds: Int) = "${seconds}초"
-    override fun intervalMinutes(minutes: Int) = "${minutes}분"
-    override val newNetworkAlertsTitle = "새 네트워크 알림"
 
-    override val signalChangeAlertsTitle = "신호 변화 알림"
 
-    override val signalChangeAlertsSubtitle = "신호 세기가 크게 변할 때"
 
     override val sectionAbout = "앱 정보"
 

@@ -31,18 +31,8 @@ object PtBrSettingsStrings : SettingsStrings {
 
     override val hapticsSubtitle = "Vibrar ao tocar e ao mostrar resultados"
 
-    override val sectionAlerts = "Alertas"
-    override val backgroundAlertsTitle = "Alertas em segundo plano"
-    override val backgroundAlertsSubtitle = "Quando as redes Wi-Fi próximas mudam"
 
-    override val notificationsDenied = "Permitir notificações para ver o status de monitoramento e alertas."
-    override val checkEvery = "Intervalo de verificação"
 
-    override fun intervalSeconds(seconds: Int) = "${seconds} seg"
-    override fun intervalMinutes(minutes: Int) = "${minutes} minutos"
-    override val newNetworkAlertsTitle = "Novos alertas de rede"
-    override val signalChangeAlertsTitle = "Alertas de mudança de sinal"
-    override val signalChangeAlertsSubtitle = "Quando seu sinal sobe ou cai muito"
     override val sectionAbout = "Sobre"
     override fun aboutApp(appName: String) = "Sobre ${appName}"
     override fun version(version: String) = "Versão ${version}"

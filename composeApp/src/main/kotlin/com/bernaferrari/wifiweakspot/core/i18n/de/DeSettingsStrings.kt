@@ -31,18 +31,8 @@ object DeSettingsStrings : SettingsStrings {
 
     override val hapticsSubtitle = "Vibration bei Berührungen und Ergebnissen"
 
-    override val sectionAlerts = "Warnungen"
-    override val backgroundAlertsTitle = "Hintergrundwarnungen"
-    override val backgroundAlertsSubtitle = "Bei Änderungen an WLANs in der Nähe"
 
-    override val notificationsDenied = "Erlauben Sie Benachrichtigungen, um den Überwachungsstatus und Warnungen anzuzeigen."
-    override val checkEvery = "Prüfintervall"
 
-    override fun intervalSeconds(seconds: Int) = "${seconds} Sek"
-    override fun intervalMinutes(minutes: Int) = "${minutes} Min"
-    override val newNetworkAlertsTitle = "Neue Netzwerkwarnungen"
-    override val signalChangeAlertsTitle = "Signaländerungswarnungen"
-    override val signalChangeAlertsSubtitle = "Wenn Ihr Signal stark ansteigt oder abfällt"
     override val sectionAbout = "Über die App"
 
     override fun aboutApp(appName: String) = "Über ${appName}"

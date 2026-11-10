@@ -30,18 +30,8 @@ object RuSettingsStrings : SettingsStrings {
     override val reduceMotionTitle = "Уменьшить анимацию"
 
     override val hapticsSubtitle = "Вибрация при нажатии и результатах"
-    override val sectionAlerts = "Оповещения"
-    override val backgroundAlertsTitle = "Фоновые оповещения"
-    override val backgroundAlertsSubtitle = "При изменениях в сетях Wi-Fi поблизости"
 
-    override val notificationsDenied = "Разрешить уведомления, чтобы видеть статус мониторинга и оповещения."
-    override val checkEvery = "Интервал проверки"
 
-    override fun intervalSeconds(seconds: Int) = "${seconds} сек."
-    override fun intervalMinutes(minutes: Int) = "${minutes} мин."
-    override val newNetworkAlertsTitle = "Новые сетевые оповещения"
-    override val signalChangeAlertsTitle = "Оповещения об изменении сигнала"
-    override val signalChangeAlertsSubtitle = "Когда ваш сигнал сильно возрастает или падает"
     override val sectionAbout = "О нас"
     override fun aboutApp(appName: String) = "Около ${appName}"
     override fun version(version: String) = "Версия ${version}"

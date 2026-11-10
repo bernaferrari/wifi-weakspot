@@ -54,36 +54,6 @@ interface SettingsStrings {
     /** Subtitle under "Haptic feedback". */
     val hapticsSubtitle: String
 
-    /** Section header for background monitoring notifications. Short. */
-    val sectionAlerts: String
-
-    /** Switch row title: monitor nearby Wi-Fi in the background and notify. */
-    val backgroundAlertsTitle: String
-
-    /** Subtitle under "Background alerts". */
-    val backgroundAlertsSubtitle: String
-
-    /** Toast shown when the user declines the notification permission while turning alerts on. */
-    val notificationsDenied: String
-
-    /** Title of the slider choosing how often background alerts check Wi-Fi. */
-    val checkEvery: String
-
-    /** Slider value: an interval in seconds, e.g. "30 sec". Very short. */
-    fun intervalSeconds(seconds: Int): String
-
-    /** Slider value: an interval in whole minutes, e.g. "5 min". Very short. */
-    fun intervalMinutes(minutes: Int): String
-
-    /** Switch row title: notify when a new network appears. */
-    val newNetworkAlertsTitle: String
-
-    /** Switch row title: notify when the connected signal changes a lot. */
-    val signalChangeAlertsTitle: String
-
-    /** Subtitle under "Signal change alerts". */
-    val signalChangeAlertsSubtitle: String
-
     /** Section header for app info. Short. */
     val sectionAbout: String
 

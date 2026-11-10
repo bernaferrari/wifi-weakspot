@@ -33,22 +33,12 @@ object JaSettingsStrings : SettingsStrings {
 
     override val hapticsSubtitle = "タップ時や結果の表示時に振動"
 
-    override val sectionAlerts = "アラート"
-    override val backgroundAlertsTitle = "バックグラウンド通知"
 
-    override val backgroundAlertsSubtitle = "近くのWi-Fiに変化があったとき"
 
-    override val notificationsDenied = "監視状況や通知を表示するには、通知を許可してください。"
 
-    override val checkEvery = "確認する間隔"
 
-    override fun intervalSeconds(seconds: Int) = "${seconds} 秒"
-    override fun intervalMinutes(minutes: Int) = "${minutes} 分"
-    override val newNetworkAlertsTitle = "新しいネットワークを通知"
 
-    override val signalChangeAlertsTitle = "信号の変化を通知"
 
-    override val signalChangeAlertsSubtitle = "信号が大きく強まったり弱まったりしたとき"
 
     override val sectionAbout = "このアプリについて"
 

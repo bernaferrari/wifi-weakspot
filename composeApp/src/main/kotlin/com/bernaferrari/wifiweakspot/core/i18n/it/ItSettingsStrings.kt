@@ -31,18 +31,8 @@ object ItSettingsStrings : SettingsStrings {
 
     override val hapticsSubtitle = "Vibrazione al tocco e ai risultati"
 
-    override val sectionAlerts = "Avvisi"
-    override val backgroundAlertsTitle = "Avvisi in background"
-    override val backgroundAlertsSubtitle = "Quando cambiano le reti Wi-Fi vicine"
 
-    override val notificationsDenied = "Consenti notifiche per vedere lo stato del monitoraggio e gli avvisi."
-    override val checkEvery = "Intervallo di controllo"
 
-    override fun intervalSeconds(seconds: Int) = "${seconds} sec"
-    override fun intervalMinutes(minutes: Int) = "${minutes} min"
-    override val newNetworkAlertsTitle = "Nuovi avvisi di rete"
-    override val signalChangeAlertsTitle = "Avvisi di cambio segnale"
-    override val signalChangeAlertsSubtitle = "Quando il segnale aumenta o diminuisce molto"
     override val sectionAbout = "Informazioni"
     override fun aboutApp(appName: String) = "Informazioni su ${appName}"
     override fun version(version: String) = "Versione ${version}"

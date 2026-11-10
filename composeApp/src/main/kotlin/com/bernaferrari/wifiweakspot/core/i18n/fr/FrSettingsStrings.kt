@@ -31,18 +31,8 @@ object FrSettingsStrings : SettingsStrings {
 
     override val hapticsSubtitle = "Vibrer au toucher et à l’affichage des résultats"
 
-    override val sectionAlerts = "Alertes"
-    override val backgroundAlertsTitle = "Alertes en arrière-plan"
-    override val backgroundAlertsSubtitle = "Quand les réseaux Wi-Fi à proximité changent"
 
-    override val notificationsDenied = "Autorisez les notifications à voir l’état de surveillance et les alertes."
-    override val checkEvery = "Intervalle de vérification"
 
-    override fun intervalSeconds(seconds: Int) = "${seconds} seconde"
-    override fun intervalMinutes(minutes: Int) = "${minutes} minute"
-    override val newNetworkAlertsTitle = "Nouvelles alertes réseau"
-    override val signalChangeAlertsTitle = "Alertes de changement de signal"
-    override val signalChangeAlertsSubtitle = "Lorsque votre signal monte ou descend beaucoup"
     override val sectionAbout = "À propos"
     override fun aboutApp(appName: String) = "À propos de ${appName}"
     override fun version(version: String) = "Version ${version}"
