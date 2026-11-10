@@ -137,7 +137,7 @@ fun SurveyCanvas(
         val coverage = remember(points, fieldWidthMeters, fieldHeightMeters, gradient) {
             if (points.isEmpty()) null
             else coverageGridForMap(points.map { PlanReading(it.x, it.y, it.rssi) }, fieldWidthMeters, fieldHeightMeters)
-                .toBitmap(gradient, opacity = 0.95f)
+                .toBitmap(gradient)
         }
         // A new reading eases in: the updated field fades in over the old one and the new dot grows,
         // instead of the whole map snapping to its next state.
@@ -227,7 +227,7 @@ fun SurveyCanvas(
             var y = 0f
             while (y <= height) { drawLine(gridColor, Offset(0f, y), Offset(width, y), 0.5.dp.toPx()); y += gridSize }
 
-            // The coverage field: interpolated between readings, fading out where nobody measured.
+            // The coverage tint is faint where the estimate is far from any reading.
             val dst = androidx.compose.ui.unit.IntSize(width.toInt(), height.toInt())
             val t = reveal.value
             previousField?.let { drawImage(it, dstSize = dst, alpha = 1f - t * t, filterQuality = androidx.compose.ui.graphics.FilterQuality.High) }

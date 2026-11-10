@@ -17,10 +17,15 @@ import kotlin.math.sqrt
 internal data class PlanReading(val x: Float, val y: Float, val rssi: Int)
 
 /**
- * The plan estimated cell by cell from nearby readings. [rssi] is NaN where nothing was measured;
- * [reach] is how much to trust a cell (1 next to a reading, fading to 0 away from all of them).
+ * Signal estimated cell by cell. [rssi] is NaN when there are no readings.
+ * [reach] fades with distance from the nearest reading.
  */
 internal class CoverageGrid(val columns: Int, val rows: Int, val rssi: FloatArray, val reach: FloatArray)
+
+// The tint falls halfway toward its minimum at 30% of the plan's shorter side.
+private const val HALF_REACH_DISTANCE = 0.30f
+private const val MIN_OVERLAY_ALPHA = 0.09f
+private const val MAX_OVERLAY_ALPHA = 0.62f
 
 /** A canonical field in physical map space. Rendering size must never change its predictions. */
 internal fun coverageGridForMap(
@@ -34,15 +39,12 @@ internal fun coverageGridForMap(
 
 /**
  * Inverse-distance weighting over the readings, measured in units of the plan's shorter side so a
- * wide plan doesn't stretch coverage sideways. Cells far from every reading fade out, so the map
- * never paints confident colour over rooms nobody walked into.
+ * wide plan doesn't stretch coverage sideways. Estimates far from readings use a faint tint.
  */
 internal fun coverageGrid(
     readings: List<PlanReading>,
     aspect: Float,
-    columns: Int = 56,
-    fullReach: Float = 0.18f,
-    noReach: Float = 0.42f
+    columns: Int = 56
 ): CoverageGrid {
     val safeAspect = aspect.takeIf { it.isFinite() && it > 0f } ?: 1f
     // Bound raster size separately from physical distances, including long narrow maps.
@@ -51,6 +53,7 @@ internal fun coverageGrid(
     val shorter = min(safeAspect, 1f)
     val sx = safeAspect / shorter
     val sy = 1f / shorter
+    val halfReachSquared = HALF_REACH_DISTANCE * HALF_REACH_DISTANCE
     val rssi = FloatArray(columns * rows) { Float.NaN }
     val reach = FloatArray(columns * rows)
     if (readings.isEmpty()) return CoverageGrid(columns, rows, rssi, reach)
@@ -72,22 +75,27 @@ internal fun coverageGrid(
             }
             val index = j * columns + i
             rssi[index] = weighted / total
-            reach[index] = 1f - smoothStep(fullReach, noReach, sqrt(nearest))
+            reach[index] = halfReachSquared / (halfReachSquared + nearest)
         }
     }
     return CoverageGrid(columns, rows, rssi, reach)
 }
 
 /** Paints the grid one pixel per cell; drawn scaled up with filtering it reads as a smooth field. */
-internal fun CoverageGrid.toBitmap(color: (Float) -> Color, opacity: Float = 0.7f): ImageBitmap {
+internal fun CoverageGrid.toBitmap(color: (Float) -> Color): ImageBitmap {
     val bitmap = ImageBitmap(columns, rows)
     val canvas = Canvas(bitmap)
     val paint = Paint()
+    // Reuse the perceptual color blend for cells within the same quarter dB.
+    val blendedColors = mutableMapOf<Int, Color>()
     for (j in 0 until rows) for (i in 0 until columns) {
         val index = j * columns + i
         val value = rssi[index]
-        if (value.isNaN() || reach[index] <= 0f) continue
-        paint.color = color(value).copy(alpha = opacity * reach[index])
+        if (!value.isFinite()) continue
+        val quarterDbm = (value * 4f).roundToInt()
+        val tint = blendedColors.getOrPut(quarterDbm) { color(quarterDbm / 4f) }
+        val alpha = MIN_OVERLAY_ALPHA + (MAX_OVERLAY_ALPHA - MIN_OVERLAY_ALPHA) * reach[index]
+        paint.color = tint.copy(alpha = alpha)
         canvas.drawRect(i.toFloat(), j.toFloat(), i + 1f, j + 1f, paint)
     }
     return bitmap
@@ -131,11 +139,6 @@ private fun hueLerp(from: Color, to: Color, t: Float): Color {
     if (delta < -180) delta += 360
     val hue = (a.hue + delta * t + 360) % 360
     return Hct.from(hue, a.chroma + (b.chroma - a.chroma) * t, a.tone + (b.tone - a.tone) * t).toColor()
-}
-
-private fun smoothStep(edge0: Float, edge1: Float, x: Float): Float {
-    val t = ((x - edge0) / (edge1 - edge0)).coerceIn(0f, 1f)
-    return t * t * (3f - 2f * t)
 }
 
 /**

@@ -57,11 +57,11 @@ class CoverageFieldTest {
         return rssi[j * columns + i] to reach[j * columns + i]
     }
 
-    @Test fun cellsNextToAReadingTakeItsValueAndFullReach() {
+    @Test fun cellsNextToAReadingTakeItsValueAndAlmostFullReach() {
         val grid = coverageGrid(listOf(PlanReading(0.5f, 0.5f, -60)), aspect = 1f)
         val (rssi, reach) = grid.at(0.5f, 0.5f)
         assertEquals(-60f, rssi, 0.01f)
-        assertEquals(1f, reach, 0.001f)
+        assertTrue(reach > 0.99f)
     }
 
     @Test fun betweenTwoReadingsTheValueBlends() {
@@ -70,9 +70,14 @@ class CoverageFieldTest {
         assertTrue(rssi in -70f..-60f)
     }
 
-    @Test fun farFromEveryReadingNothingIsClaimed() {
+    @Test fun theOverlayFadesFromTheReadingToTheFarCorner() {
         val grid = coverageGrid(listOf(PlanReading(0.05f, 0.05f, -50)), aspect = 1f)
-        assertEquals(0f, grid.at(0.95f, 0.95f).second, 0.001f)
+        val near = grid.at(0.15f, 0.05f).second
+        val middle = grid.at(0.35f, 0.05f).second
+        val far = grid.at(0.95f, 0.95f).second
+        assertTrue(near < grid.at(0.05f, 0.05f).second)
+        assertTrue(middle < near)
+        assertTrue(far > 0f && far < 0.1f)
     }
 
     @Test fun widePlansKeepReachRound() {
