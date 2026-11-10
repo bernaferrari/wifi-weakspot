@@ -13,7 +13,6 @@ enum class PermissionStatus {
 data class PermissionState(
     val wifiScan: PermissionStatus,
     val location: PermissionStatus,
-    val notifications: PermissionStatus,
     val nearbyDevices: PermissionStatus
 ) {
     /** Scan results are location sensitive; Nearby Devices is for connection APIs. */
@@ -26,6 +25,5 @@ interface PermissionGate {
     
     fun checkPermissions()
     suspend fun requestWifiScanPermission(): PermissionStatus
-    suspend fun requestNotificationPermission(): PermissionStatus
     fun openAppSettings()
 }

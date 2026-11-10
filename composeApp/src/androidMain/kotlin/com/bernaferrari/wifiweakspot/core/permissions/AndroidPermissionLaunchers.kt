@@ -1,7 +1,6 @@
 package com.bernaferrari.wifiweakspot.core.permissions
 
 import android.Manifest
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -36,7 +35,6 @@ fun rememberAndroidPermissionLaunchers(): PermissionLaunchers {
         if (!granted && System.currentTimeMillis() - startedAt[0] < NO_DIALOG_MS) gate.openAppSettings()
         pending[0]?.invoke(granted)
     }
-    val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { pending[1]?.invoke(it) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         val done = floorplanCallback[0] ?: return@rememberLauncherForActivityResult
         if (uri == null) { done(null); return@rememberLauncherForActivityResult }
@@ -71,16 +69,12 @@ fun rememberAndroidPermissionLaunchers(): PermissionLaunchers {
         }
     }
 
-    return remember(scan, notifications, picker) {
+    return remember(scan, picker) {
         PermissionLaunchers(
             scan = { onResult ->
                 pending[0] = onResult
                 startedAt[0] = System.currentTimeMillis()
                 scan.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-            },
-            notifications = { onResult ->
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) onResult(true)
-                else { pending[1] = onResult; notifications.launch(Manifest.permission.POST_NOTIFICATIONS) }
             },
             pickFloorplan = { target, onPicked ->
                 floorplanTarget[0] = target

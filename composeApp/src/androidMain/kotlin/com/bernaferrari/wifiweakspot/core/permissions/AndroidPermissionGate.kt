@@ -20,7 +20,6 @@ class AndroidPermissionGate(
         PermissionState(
             wifiScan = PermissionStatus.NOT_REQUESTED,
             location = PermissionStatus.NOT_REQUESTED,
-            notifications = PermissionStatus.NOT_REQUESTED,
             nearbyDevices = PermissionStatus.NOT_REQUESTED
         )
     )
@@ -39,16 +38,9 @@ class AndroidPermissionGate(
             PermissionStatus.GRANTED // Not needed below 33
         }
 
-        val notifications = if (Build.VERSION.SDK_INT >= 33) {
-            check(Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            PermissionStatus.GRANTED
-        }
-
         _state.value = PermissionState(
             wifiScan = wifi,
             location = wifi, // Tied for now
-            notifications = notifications,
             nearbyDevices = nearby
         )
     }
@@ -66,11 +58,6 @@ class AndroidPermissionGate(
         // For this non-UI class, we just re-check. The actual request must be initiated from UI.
         checkPermissions()
         return _state.value.wifiScan
-    }
-
-    override suspend fun requestNotificationPermission(): PermissionStatus {
-        checkPermissions()
-        return _state.value.notifications
     }
 
     override fun openAppSettings() {

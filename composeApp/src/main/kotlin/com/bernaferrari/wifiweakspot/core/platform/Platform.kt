@@ -22,8 +22,6 @@ interface PlatformActions {
     /** Brief, non-blocking notice such as "Command copied". */
     fun showMessage(text: String)
     fun copyToClipboard(label: String, text: String)
-    /** Android 13+ asks before an app may post notifications. */
-    fun needsNotificationPermission(): Boolean
     /** Decodes an image the app saved earlier (for example a floor plan). */
     suspend fun loadImage(path: String): ImageBitmap?
     /** Deletes a file the app owns, such as a replaced floor plan. */
@@ -51,7 +49,6 @@ interface PlatformTheme {
 /** Launchers that need the host screen (Android activity results). */
 class PermissionLaunchers(
     val scan: ((granted: Boolean) -> Unit) -> Unit = { it(true) },
-    val notifications: ((granted: Boolean) -> Unit) -> Unit = { it(true) },
     /** Opens an image picker; the callback receives an app-owned path or null. */
     val pickFloorplan: (destinationId: Long, (path: String?) -> Unit) -> Unit = { _, done -> done(null) }
 )

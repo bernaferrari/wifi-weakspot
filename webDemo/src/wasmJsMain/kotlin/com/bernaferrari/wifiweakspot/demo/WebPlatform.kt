@@ -17,7 +17,6 @@ class WebPlatformActions : PlatformActions {
     override fun share(text: String, title: String) = copyText(text)
     override fun showMessage(text: String) = logMessage(text)
     override fun copyToClipboard(label: String, text: String) = copyText(text)
-    override fun needsNotificationPermission() = false
     override suspend fun loadImage(path: String): ImageBitmap? = null
     override fun deleteOwnedFile(path: String) = Unit
     override fun openUrl(url: String) = openTab(url)

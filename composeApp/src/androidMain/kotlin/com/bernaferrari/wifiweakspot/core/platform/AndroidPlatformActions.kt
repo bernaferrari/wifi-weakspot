@@ -4,15 +4,12 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.core.content.ContextCompat
 import java.io.File
 
 class AndroidPlatformActions(private val context: Context) : PlatformActions {
@@ -51,10 +48,6 @@ class AndroidPlatformActions(private val context: Context) : PlatformActions {
     override fun copyToClipboard(label: String, text: String) {
         (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText(label, text))
     }
-
-    override fun needsNotificationPermission(): Boolean =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
 
     override suspend fun loadImage(path: String): ImageBitmap? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching {
         // Floor plans are often phone photos; decode near screen size, not at full resolution.

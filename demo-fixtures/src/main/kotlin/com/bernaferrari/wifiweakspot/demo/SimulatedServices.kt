@@ -148,11 +148,10 @@ class SimulatedPermissionGate : PermissionGate {
 
     override fun checkPermissions() = Unit
     override suspend fun requestWifiScanPermission(): PermissionStatus { grant(); return PermissionStatus.GRANTED }
-    override suspend fun requestNotificationPermission() = PermissionStatus.GRANTED
     override fun openAppSettings() = Unit
 
     private fun stateFor(location: PermissionStatus) =
-        PermissionState(location, location, PermissionStatus.GRANTED, PermissionStatus.GRANTED)
+        PermissionState(location, location, PermissionStatus.GRANTED)
 }
 
 class SimulatedRadios : RadioMonitor {

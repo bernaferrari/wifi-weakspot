@@ -9,7 +9,6 @@ class PermissionStateTest {
         val state = PermissionState(
             wifiScan = PermissionStatus.GRANTED,
             location = PermissionStatus.GRANTED,
-            notifications = PermissionStatus.DENIED,
             nearbyDevices = PermissionStatus.DENIED
         )
         assertTrue(state.canScanWifi)
@@ -19,7 +18,6 @@ class PermissionStateTest {
         val state = PermissionState(
             wifiScan = PermissionStatus.DENIED,
             location = PermissionStatus.DENIED,
-            notifications = PermissionStatus.GRANTED,
             nearbyDevices = PermissionStatus.GRANTED
         )
         assertFalse(state.canScanWifi)

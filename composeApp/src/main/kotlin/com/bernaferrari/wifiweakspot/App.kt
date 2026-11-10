@@ -205,8 +205,7 @@ fun MainAppContent(
                     Readable {
                         SettingsScreen(
                             onNavigateToScanSetup = { open(com.bernaferrari.wifiweakspot.navigation.ScanSetupDestination) },
-                            onNavigateToAbout = { open(com.bernaferrari.wifiweakspot.navigation.AboutDestination) },
-                            onRequestScanPermission = onRequestScanPermission
+                            onNavigateToAbout = { open(com.bernaferrari.wifiweakspot.navigation.AboutDestination) }
                         )
                     }
                 }

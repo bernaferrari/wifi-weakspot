@@ -56,7 +56,6 @@ fun SettingsScreen(
     onNavigateToScanSetup: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onBack: (() -> Unit)? = null,
-    onRequestScanPermission: () -> Unit = {},
     settingsRepository: SettingsRepository = koinInject()
 ) {
     // The app theme stays composed between tabs and already owns the loaded preferences.
