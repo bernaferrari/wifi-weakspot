@@ -33,11 +33,11 @@ kotlin {
                 implementation(libs.compose.material3)
                 implementation(libs.materialKolor.material3)
                 implementation(libs.kotlinx.serialization.core)
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.13.0")
                 implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
                 implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
                 implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
-                implementation("org.jetbrains.androidx.navigation3:navigation3-ui:1.1.2")
+                implementation("org.jetbrains.androidx.navigation3:navigation3-ui:1.2.0")
                 implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3:2.11.0")
                 implementation(libs.koin.core)
                 implementation("io.insert-koin:koin-compose:${libs.versions.koin.get()}")
@@ -47,5 +47,13 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
             }
         }
+    }
+}
+
+dependencies {
+    // Material 3 resolves newer Compose UI than the Compose plugin bundles by default.
+    val skikoRuntime = variantOf(libs.skiko.wasm.js) { classifier("skiko-runtime") }
+    configurations.matching { it.name == "COMPOSE_SKIKO_JS_WASM_RUNTIME" }.configureEach {
+        dependencies.addLater(skikoRuntime)
     }
 }
