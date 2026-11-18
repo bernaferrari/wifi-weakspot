@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -33,6 +34,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -129,7 +132,8 @@ fun ChannelGraph(
      * channel; [onExplore] gets that channel and every network using it, strongest first.
      */
     onExplore: ((channel: Int, networks: List<WifiNetwork>) -> Unit)? = null,
-    initialChannel: Int? = null
+    initialChannel: Int? = null,
+    animateEntrance: Boolean = true,
 ) {
     val textMeasurer = rememberTextMeasurer()
     val explore = onExplore != null
@@ -162,11 +166,16 @@ fun ChannelGraph(
     val peakStyle = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
 
     // Hills rise once whenever the band or the set of networks changes; no idle looping.
-    val grow = remember { Animatable(0f) }
+    val grow = remember { Animatable(if (animateEntrance) 0f else 1f) }
     val growSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
+    var firstGrowth by remember { mutableStateOf(true) }
     LaunchedEffect(selectedBand, networks.size) {
-        grow.snapTo(0f)
-        grow.animateTo(1f, growSpec)
+        val shouldGrow = animateEntrance || !firstGrowth
+        firstGrowth = false
+        if (shouldGrow) {
+            grow.snapTo(0f)
+            grow.animateTo(1f, growSpec)
+        }
     }
 
     val sharedCatalog = strings
@@ -193,6 +202,13 @@ fun ChannelGraph(
         return true
     }
     fun moveRadio(direction: Int): Boolean = selectRadio(if (selectedIndex < 0) 0 else selectedIndex + direction)
+    var hoverPosition by remember(selectedBand, explore) { mutableStateOf<Offset?>(null) }
+    fun nextRadio(at: Offset, plot: Rect): WifiNetwork? {
+        val hits = networksAt(at, latestRadios, selectedBand, plot)
+        if (hits.isEmpty()) return null
+        val current = hits.indexOfFirst { it.bssid == latestFocus?.bssid }
+        return hits[(current + 1) % hits.size]
+    }
     Canvas(
         modifier
             .semantics {
@@ -256,14 +272,24 @@ fun ChannelGraph(
                     } while (event.changes.any { it.pressed })
                 }
             } else Modifier)
+            .then(if (!explore && onNetworkSelected != null) Modifier.pointerInput(selectedBand) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val mouse = event.changes.firstOrNull { it.type == PointerType.Mouse } ?: continue
+                        when (event.type) {
+                            PointerEventType.Enter, PointerEventType.Move -> hoverPosition = mouse.position
+                            PointerEventType.Exit -> hoverPosition = null
+                        }
+                    }
+                }
+            } else Modifier)
             .pointerInput(selectedBand, explore, insets) {
                 if (explore) return@pointerInput
                 // Tapping the same spot again steps through overlapping hills, strongest first.
                 detectTapGestures { tap ->
                     val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, insets)
-                    val here = networksAt(tap, latestRadios, selectedBand, plot)
-                    val current = here.indexOfFirst { it.bssid == latestFocus?.bssid }
-                    selectLatest?.invoke(if (here.isEmpty()) null else here[(current + 1) % here.size])
+                    selectLatest?.invoke(nextRadio(tap, plot))
                 }
             }
             .pointerInput(selectedBand, explore, insets) {
@@ -292,14 +318,21 @@ fun ChannelGraph(
 
 
 
+        val hovered = hoverPosition?.let { nextRadio(it, plot) }
         val dimOthers = focused != null
         // Weakest first so strong networks sit on top.
         // Background networks first, as thin quiet outlines; featured ones on top, weakest first.
-        radios.sortedWith(compareBy<WifiNetwork> { palette.isFeatured(it.bssid) || it.bssid == focused?.bssid }.thenBy { it.rssi })
+        radios.sortedWith(
+            compareBy<WifiNetwork> { it.bssid == hovered?.bssid }
+                .thenBy { palette.isFeatured(it.bssid) || it.bssid == focused?.bssid }
+                .thenBy { it.rssi }
+        )
             .forEach { network ->
-                val featured = palette.isFeatured(network.bssid) || network.bssid == focused?.bssid
-                val emphasized = network.bssid == focused?.bssid || palette.isYou(network.bssid)
+                val isHovered = network.bssid == hovered?.bssid
+                val featured = isHovered || palette.isFeatured(network.bssid) || network.bssid == focused?.bssid
+                val emphasized = isHovered || network.bssid == focused?.bssid || palette.isYou(network.bssid)
                 val alpha = when {
+                    isHovered -> 1f
                     dimOthers && network.bssid != focused?.bssid -> 0.2f
                     !featured -> 0.45f
                     else -> 1f
@@ -326,18 +359,22 @@ fun ChannelGraph(
         val placed = mutableListOf<Rect>()
         var unfocusedLabels = 0
         val labelOrder = radios.sortedWith(
-            compareByDescending<WifiNetwork> { it.bssid == focused?.bssid }
+            compareByDescending<WifiNetwork> { it.bssid == hovered?.bssid }
+                .thenByDescending { it.bssid == focused?.bssid }
                 .thenByDescending { connectedBssid != null && it.bssid.equals(connectedBssid, true) }
                 .thenByDescending { it.rssi }
         )
         labelOrder.forEach { network ->
             val isYou = palette.isYou(network.bssid)
-            if (dimOthers && network.bssid != focused?.bssid && !isYou) return@forEach
-            if (!palette.isFeatured(network.bssid) && network.bssid != focused?.bssid) return@forEach
-            if (!dimOthers && !isYou && unfocusedLabels >= UnfocusedLabels) return@forEach
+            val isHovered = network.bssid == hovered?.bssid
+            if (!isHovered) {
+                if (dimOthers && network.bssid != focused?.bssid && !isYou) return@forEach
+                if (!palette.isFeatured(network.bssid) && network.bssid != focused?.bssid) return@forEach
+                if (!dimOthers && !isYou && unfocusedLabels >= UnfocusedLabels) return@forEach
+            }
             val extra = extraNames[network.bssid] ?: 0
             val name = s.chartNetworkLabel(network.ssid.ifEmpty { sharedCatalog.common.hiddenNetworkShort }.let { if (it.length > 16) it.take(15) + "…" else it }, isYou, extra)
-            val layout = textMeasurer.measure(name, peakStyle.copy(color = palette.color(network.bssid)), maxLines = 1, overflow = TextOverflow.Ellipsis,
+            val layout = textMeasurer.measure(name, peakStyle.copy(color = if (isHovered) scheme.inverseOnSurface else palette.color(network.bssid)), maxLines = 1, overflow = TextOverflow.Ellipsis,
                 constraints = Constraints(maxWidth = (plot.width - 16.dp.toPx()).toInt().coerceAtLeast(1)))
             val segment = occupiedFrequencySegments(network).first()
             val x = plot.left + mapFreqToNormX(segment.centerMhz.toFloat(), selectedBand) * plot.width
@@ -357,7 +394,7 @@ fun ChannelGraph(
             placed += rect
             if (!dimOthers && !isYou) unfocusedLabels++
             drawRoundRect(
-                scheme.surfaceContainerLow.copy(alpha = 0.85f),
+                if (isHovered) scheme.inverseSurface else scheme.surfaceContainerLow.copy(alpha = 0.85f),
                 topLeft = rect.topLeft - Offset(4.dp.toPx(), 1.dp.toPx()),
                 size = Size(rect.width + 8.dp.toPx(), rect.height + 2.dp.toPx()),
                 cornerRadius = CornerRadius(6.dp.toPx())

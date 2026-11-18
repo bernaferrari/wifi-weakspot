@@ -10,6 +10,12 @@ import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material.icons.rounded.LockOpen
 import com.bernaferrari.wifiweakspot.core.wifi.isSiblingOf
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.foundation.background
@@ -81,11 +87,13 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -329,6 +337,9 @@ private fun NetworksContent(
         var showHistory by rememberSaveable { mutableStateOf(false) }
         var showHelp by remember { mutableStateOf(false) }
         var showExplorer by rememberSaveable { mutableStateOf(false) }
+        var openedExplorer by remember { mutableStateOf(showExplorer) }
+        val expansionHost = LocalChartExpansionHost.current
+        val chartKey = remember { Any() }
         var selected by remember { mutableStateOf<WifiNetwork?>(null) }
         // Tapping the highlighted network again clears it; null always clears.
         val toggle: (WifiNetwork?) -> Unit = { pick ->
@@ -407,34 +418,48 @@ private fun NetworksContent(
                         IconButton(onClick = { haptics.click(); showHelp = true }) {
                             Icon(Icons.Outlined.Info, strings.analyze.howToReadThisChart)
                         }
-                        IconButton(onClick = { haptics.click(); showExplorer = true }) { Icon(Icons.Rounded.Fullscreen, if (showHistory) strings.analyze.expandSignalHistory else strings.analyze.expandChannels) }
+                        IconButton(onClick = {
+                            haptics.click()
+                            openedExplorer = true
+                            showExplorer = true
+                        }) { Icon(Icons.Rounded.Fullscreen, if (showHistory) strings.analyze.expandSignalHistory else strings.analyze.expandChannels) }
                     }
                     Box(Modifier.fillMaxWidth().then(if (wide) Modifier.weight(1f) else Modifier.height(340.dp))) {
-                        if (inBand.isEmpty()) {
-                            Text(
-                                strings.analyze.noBandNetworksNearby(band.label),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.align(Alignment.Center)
-                            )
-                        } else if (showHistory) {
-                            SignalHistoryGraph(
-                                history = history.filterKeys { bssid -> inBand.any { it.bssid == bssid } },
-                                networks = inBand,
-                                selectedNetwork = selected,
-                                connectedBssid = connected.bssid.takeIf { connected.isConnected },
-                                onNetworkSelected = { selected = it },
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        } else {
-                            ChannelGraph(
-                                networks = inBand,
-                                selectedBand = band,
-                                selectedNetwork = selected,
-                                connectedBssid = connected.bssid.takeIf { connected.isConnected },
-                                onNetworkSelected = toggle,
-                                modifier = Modifier.fillMaxSize()
-                            )
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = !showExplorer,
+                            modifier = Modifier.fillMaxSize(),
+                            enter = EnterTransition.None,
+                            exit = if (reduceMotion) ExitTransition.None else fadeOut(tween(140, delayMillis = 80)),
+                        ) {
+                            Box(Modifier.fillMaxSize().then(chartSharedBounds(chartKey, expanded = false))) {
+                                if (inBand.isEmpty()) {
+                                    Text(
+                                        strings.analyze.noBandNetworksNearby(band.label),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.align(Alignment.Center)
+                                    )
+                                } else if (showHistory) {
+                                    SignalHistoryGraph(
+                                        history = history.filterKeys { bssid -> inBand.any { it.bssid == bssid } },
+                                        networks = inBand,
+                                        selectedNetwork = selected,
+                                        connectedBssid = connected.bssid.takeIf { connected.isConnected },
+                                        onNetworkSelected = { selected = it },
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                } else {
+                                    ChannelGraph(
+                                        networks = inBand,
+                                        selectedBand = band,
+                                        animateEntrance = !openedExplorer,
+                                        selectedNetwork = selected,
+                                        connectedBssid = connected.bssid.takeIf { connected.isConnected },
+                                        onNetworkSelected = toggle,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -513,16 +538,37 @@ private fun NetworksContent(
         }
 
         if (showHelp) ChartGuideSheet { showHelp = false }
-        if (showExplorer) ChartExplorer(
-            allNetworks = networks,
-            band = band,
-            onBandChange = onBandChange,
-            connectedBssid = connected.bssid.takeIf { connected.isConnected },
-            connectedFrequency = connected.frequency.takeIf { connected.isConnected },
-            history = history,
-            showHistory = showHistory,
-            onDismiss = { showExplorer = false }
-        )
+        val expandedChart by rememberUpdatedState<@Composable () -> Unit>({
+            AnimatedVisibility(
+                visible = showExplorer,
+                modifier = Modifier.fillMaxSize(),
+                enter = if (reduceMotion) EnterTransition.None else fadeIn(tween(180)),
+                exit = if (reduceMotion) ExitTransition.None else fadeOut(tween(150)),
+            ) {
+                ChartExplorer(
+                    networks = inBand,
+                    band = band,
+                    onBandChange = onBandChange,
+                    connectedBssid = connected.bssid.takeIf { connected.isConnected },
+                    connectedFrequency = connected.frequency.takeIf { connected.isConnected },
+                    history = history,
+                    showHistory = showHistory,
+                    selectedNetwork = selected,
+                    chartBounds = chartSharedBounds(chartKey, expanded = true),
+                    onDismiss = { showExplorer = false },
+                )
+            }
+        })
+        if (expansionHost == null) {
+            expandedChart()
+        } else {
+            DisposableEffect(expansionHost) {
+                val overlay = ChartExpansion({ showExplorer }) { expandedChart() }
+                expansionHost.explorer = overlay
+                onDispose { if (expansionHost.explorer === overlay) expansionHost.explorer = null }
+            }
+        }
+
         detail?.let { network ->
             val scope = rememberCoroutineScope()
             val platform: com.bernaferrari.wifiweakspot.core.platform.PlatformActions = org.koin.compose.koinInject()

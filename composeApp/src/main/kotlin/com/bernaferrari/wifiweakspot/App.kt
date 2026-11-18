@@ -37,6 +37,7 @@ import com.bernaferrari.wifiweakspot.core.designsystem.rememberWifiWeakspotHapti
 import com.bernaferrari.wifiweakspot.core.permissions.PermissionGate
 import com.bernaferrari.wifiweakspot.core.permissions.PermissionStatus
 import com.bernaferrari.wifiweakspot.feature.analyze.AnalyzeScreen
+import com.bernaferrari.wifiweakspot.feature.analyze.ChartExpansionLayout
 import com.bernaferrari.wifiweakspot.feature.history.HistoryScreen
 import com.bernaferrari.wifiweakspot.feature.lan.LanScreen
 import com.bernaferrari.wifiweakspot.feature.lan.LanDeviceDetailScreen
@@ -149,8 +150,10 @@ fun MainAppContent(
     onOpenSettings: () -> Unit = {}
 ) {
     val navigation = rememberNavigationState()
-    WifiWeakspotNavigationSuite(navigation) { wide ->
-        AppDestinations(navigation, wide, canScanWifi, onRequestScanPermission, onOpenSettings)
+    ChartExpansionLayout {
+        WifiWeakspotNavigationSuite(navigation) { wide ->
+            AppDestinations(navigation, wide, canScanWifi, onRequestScanPermission, onOpenSettings)
+        }
     }
 }
 

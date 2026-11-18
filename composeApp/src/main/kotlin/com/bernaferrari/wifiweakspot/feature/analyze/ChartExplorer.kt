@@ -14,10 +14,15 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.bernaferrari.wifiweakspot.core.designsystem.component.WifiBadge
 import com.bernaferrari.wifiweakspot.core.wifi.WifiNetwork
 import com.bernaferrari.wifiweakspot.core.wifi.frequencyToChannel
@@ -28,84 +33,99 @@ import com.bernaferrari.wifiweakspot.core.wifi.frequencyToChannel
  */
 @Composable
 internal fun ChartExplorer(
-    allNetworks: List<WifiNetwork>,
+    networks: List<WifiNetwork>,
     band: FrequencyBand,
     onBandChange: (FrequencyBand) -> Unit,
     connectedBssid: String?,
     connectedFrequency: Int?,
     history: SignalTimeline = emptyMap(),
-    showHistory: Boolean = false,
+    showHistory: Boolean,
+    selectedNetwork: WifiNetwork?,
+    chartBounds: Modifier,
     onDismiss: () -> Unit
 ) {
     var here by remember { mutableStateOf<Pair<Int, List<WifiNetwork>>?>(null) }
     var showHelp by remember { mutableStateOf(false) }
     var detail by remember { mutableStateOf<WifiNetwork?>(null) }
     val scheme = MaterialTheme.colorScheme
-    val networks = remember(allNetworks, band) { allNetworks.filter { band.contains(it.frequency) } }
     // Start where it matters: your own channel, or the strongest network when you're on another band.
-    val connectedChannel = connectedFrequency?.takeIf { band.contains(it) }?.let(::frequencyToChannel)
+    val connectedChannel = selectedNetwork?.frequency?.takeIf(band::contains)?.let(::frequencyToChannel)
+        ?: connectedFrequency?.takeIf(band::contains)?.let(::frequencyToChannel)
         ?: networks.maxByOrNull { it.rssi }?.let { frequencyToChannel(it.frequency) }
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(Modifier.fillMaxSize(), color = scheme.surface) {
-            Column(Modifier.fillMaxSize().safeDrawingPadding()) {
-                TopAppBar(
-                    // The band is the title: switch without leaving, and the Networks screen follows.
-                    title = { CompactBandSelector(band) { here = null; onBandChange(it) } },
-                    navigationIcon = { IconButton(onClick = onDismiss) { Icon(Icons.Rounded.Close, strings.common.close) } },
-                    actions = { IconButton(onClick = { showHelp = true }) { Icon(Icons.Outlined.Info, strings.analyze.howToReadThisChart) } }
-                )
-                BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
-                    // Landscape: chart on the left, the channel's networks beside it.
-                    val sideBySide = maxWidth > maxHeight
-                    if (showHistory) {
-                        SignalHistoryGraph(history, networks, connectedBssid = connectedBssid, modifier = Modifier.fillMaxSize().padding(12.dp), allowVerticalScrubbing = true)
-                        return@BoxWithConstraints
-                    }
-                    val chart = @Composable { modifier: Modifier ->
-                        ChannelGraph(
-                            networks = networks,
-                            selectedBand = band,
-                            connectedBssid = connectedBssid,
-                            modifier = modifier,
-                            onExplore = { channel, list -> here = channel to list },
-                            initialChannel = connectedChannel
-                        )
-                    }
-                    if (sideBySide) Row(Modifier.fillMaxSize().padding(horizontal = 12.dp)) {
-                        chart(Modifier.weight(1.6f).fillMaxHeight().padding(bottom = 12.dp))
-                        ChannelNetworks(here, Modifier.weight(1f).fillMaxHeight(), onOpen = { detail = it })
-                    } else {
-                        // Portrait: the chart keeps the whole screen; the channel's networks live in a
-                        // sheet that peeks with its count and pulls up for the list.
-                        val peek = 132.dp
-                        val sheetMax = maxHeight * 0.6f
-                        BottomSheetScaffold(
-                            scaffoldState = rememberBottomSheetScaffoldState(rememberStandardBottomSheetState(initialValue = SheetValue.PartiallyExpanded)),
-                            sheetPeekHeight = peek,
-                            containerColor = scheme.surface,
-                            sheetContainerColor = scheme.surfaceContainerLow,
-                            sheetContent = { ChannelNetworks(here, Modifier.fillMaxWidth().height(sheetMax), onOpen = { detail = it }) }
-                        ) {
-                            chart(Modifier.fillMaxSize().padding(start = 12.dp, end = 12.dp, bottom = peek))
-                        }
+    com.bernaferrari.wifiweakspot.core.platform.LocalBackHandler.current(true, onDismiss)
+    val closeFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { closeFocus.requestFocus() }
+    Surface(
+        Modifier.fillMaxSize().onPreviewKeyEvent { event ->
+            if (event.key == Key.Escape && event.type == KeyEventType.KeyDown) {
+                onDismiss()
+                true
+            } else false
+        },
+        color = scheme.surface,
+    ) {
+        Column(Modifier.fillMaxSize().safeDrawingPadding()) {
+            TopAppBar(
+                // The band is the title: switch without leaving, and the Networks screen follows.
+                title = { CompactBandSelector(band) { here = null; onBandChange(it) } },
+                navigationIcon = { IconButton(onClick = onDismiss, modifier = Modifier.focusRequester(closeFocus)) { Icon(Icons.Rounded.Close, strings.common.close) } },
+                actions = { IconButton(onClick = { showHelp = true }) { Icon(Icons.Outlined.Info, strings.analyze.howToReadThisChart) } }
+            )
+            BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+                // Landscape: chart on the left, the channel's networks beside it.
+                val sideBySide = maxWidth > maxHeight
+                if (showHistory) {
+                    SignalHistoryGraph(
+                        history, networks, selectedNetwork = selectedNetwork, connectedBssid = connectedBssid,
+                        modifier = Modifier.fillMaxSize().padding(12.dp).then(chartBounds), allowVerticalScrubbing = true
+                    )
+                    return@BoxWithConstraints
+                }
+                val chart = @Composable { modifier: Modifier ->
+                    ChannelGraph(
+                        networks = networks,
+                        selectedBand = band,
+                        connectedBssid = connectedBssid,
+                        modifier = modifier.then(chartBounds),
+                        animateEntrance = false,
+                        onExplore = { channel, list -> here = channel to list },
+                        initialChannel = connectedChannel
+                    )
+                }
+                if (sideBySide) Row(Modifier.fillMaxSize().padding(horizontal = 12.dp)) {
+                    chart(Modifier.weight(1.6f).fillMaxHeight().padding(bottom = 12.dp))
+                    ChannelNetworks(here, Modifier.weight(1f).fillMaxHeight(), onOpen = { detail = it })
+                } else {
+                    // Portrait: the chart keeps the whole screen; the channel's networks live in a
+                    // sheet that peeks with its count and pulls up for the list.
+                    val peek = 132.dp
+                    val sheetMax = maxHeight * 0.6f
+                    BottomSheetScaffold(
+                        scaffoldState = rememberBottomSheetScaffoldState(rememberStandardBottomSheetState(initialValue = SheetValue.PartiallyExpanded)),
+                        sheetPeekHeight = peek,
+                        containerColor = scheme.surface,
+                        sheetContainerColor = scheme.surfaceContainerLow,
+                        sheetContent = { ChannelNetworks(here, Modifier.fillMaxWidth().height(sheetMax), onOpen = { detail = it }) }
+                    ) {
+                        chart(Modifier.fillMaxSize().padding(start = 12.dp, end = 12.dp, bottom = peek))
                     }
                 }
             }
         }
-        if (showHelp) ChartGuideSheet { showHelp = false }
-        // Same details as tapping a network in the list on the Networks screen.
-        detail?.let { network ->
-            val settings: com.bernaferrari.wifiweakspot.core.datastore.SettingsRepository = org.koin.compose.koinInject()
-            val favorites by settings.favoriteBssids.collectAsState(initial = emptySet())
-            val scope = rememberCoroutineScope()
-            ModalBottomSheet(onDismissRequest = { detail = null }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-                WifiDetailScreen(
-                    network = network,
-                    onBack = { detail = null },
-                    isFavorite = network.bssid in favorites,
-                    onToggleFavorite = { scope.launch { settings.toggleFavorite(network.bssid) } }
-                )
-            }
+    }
+    if (showHelp) ChartGuideSheet { showHelp = false }
+    // Same details as tapping a network in the list on the Networks screen.
+    detail?.let { network ->
+        val settings: com.bernaferrari.wifiweakspot.core.datastore.SettingsRepository = org.koin.compose.koinInject()
+        val favorites by settings.favoriteBssids.collectAsState(initial = emptySet())
+        val scope = rememberCoroutineScope()
+        ModalBottomSheet(onDismissRequest = { detail = null }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+            WifiDetailScreen(
+                network = network,
+                onBack = { detail = null },
+                isFavorite = network.bssid in favorites,
+                onToggleFavorite = { scope.launch { settings.toggleFavorite(network.bssid) } }
+            )
         }
     }
 }
