@@ -66,3 +66,12 @@ fun <T : Any> fadeThrough(reduceMotion: Boolean): AnimatedContentTransitionScope
         initialContentExit = fadeOut(tween(90, easing = EmphasizedAccelerate))
     )
 }
+
+/** The rail stays fixed while its content changes in place. */
+fun <T : Any> wideFade(reduceMotion: Boolean): AnimatedContentTransitionScope<Scene<T>>.() -> ContentTransform = {
+    if (reduceMotion) NoMotion
+    else ContentTransform(
+        targetContentEnter = fadeIn(tween(150)),
+        initialContentExit = fadeOut(tween(150))
+    )
+}

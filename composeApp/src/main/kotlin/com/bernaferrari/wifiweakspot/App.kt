@@ -3,9 +3,11 @@
 package com.bernaferrari.wifiweakspot
 
 import com.bernaferrari.wifiweakspot.core.i18n.strings
-import com.bernaferrari.wifiweakspot.navigation.open
-import com.bernaferrari.wifiweakspot.navigation.pop
-import com.bernaferrari.wifiweakspot.navigation.selectTab
+import com.bernaferrari.wifiweakspot.navigation.rememberNavigationState
+import com.bernaferrari.wifiweakspot.navigation.NavigationState
+import com.bernaferrari.wifiweakspot.navigation.WifiWeakspotNavigationSuite
+import com.bernaferrari.wifiweakspot.navigation.fadeThrough
+import com.bernaferrari.wifiweakspot.navigation.wideFade
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.verticalScroll
@@ -137,9 +139,7 @@ fun PermissionRequiredScreen(
 }
 
 /**
- * Navigation 3, the same model as ChangeDetection: tabs replace the root of the back stack and fade
- * through; everything else is a full screen pushed over them with a parallax slide and predictive
- * back. The navigation bar lives outside the transitions, so it never slides with a screen.
+ * Each tab keeps its own Navigation 3 back stack. The bar and rail stay outside screen transitions.
  */
 @Composable
 fun MainAppContent(
@@ -148,114 +148,114 @@ fun MainAppContent(
     onRequestScanPermission: () -> Unit = {},
     onOpenSettings: () -> Unit = {}
 ) {
-    val backStack = androidx.navigation3.runtime.rememberNavBackStack(
-        com.bernaferrari.wifiweakspot.navigation.wifiWeakspotNavConfiguration,
-        com.bernaferrari.wifiweakspot.navigation.HomeDestination
-    )
+    val navigation = rememberNavigationState()
+    WifiWeakspotNavigationSuite(navigation) { wide ->
+        AppDestinations(navigation, wide, canScanWifi, onRequestScanPermission, onOpenSettings)
+    }
+}
+
+@Composable
+private fun AppDestinations(
+    navigation: NavigationState,
+    wide: Boolean,
+    canScanWifi: Boolean,
+    onRequestScanPermission: () -> Unit,
+    onOpenSettings: () -> Unit,
+) {
     val reduceMotion = com.bernaferrari.wifiweakspot.core.designsystem.LocalReduceMotion.current
-    val push = com.bernaferrari.wifiweakspot.navigation.rememberPushTransitionMetadata(reduceMotion)
-    // Tabs are swapped, not stacked, so their models live at app scope: Networks keeps its signal
-    // history and Walk its session when you hop between tabs.
+    val push = if (wide) emptyMap() else com.bernaferrari.wifiweakspot.navigation.rememberPushTransitionMetadata(reduceMotion)
+    // Keep the signal history and Walk session running across tabs.
     val overviewViewModel: com.bernaferrari.wifiweakspot.feature.overview.OverviewViewModel = org.koin.compose.viewmodel.koinViewModel()
     val analyzeViewModel: com.bernaferrari.wifiweakspot.feature.analyze.AnalyzeViewModel = org.koin.compose.viewmodel.koinViewModel()
     val walkViewModel: com.bernaferrari.wifiweakspot.feature.walk.WalkViewModel = org.koin.compose.viewmodel.koinViewModel()
-    val open: (androidx.navigation3.runtime.NavKey) -> Unit = { backStack.open(it) }
-
-    // Back from any other tab returns Home first, like other Material apps; only Home leaves.
-    com.bernaferrari.wifiweakspot.core.platform.LocalBackHandler.current(
-        backStack.size == 1 && backStack.first() != com.bernaferrari.wifiweakspot.navigation.HomeDestination
-    ) { backStack[0] = com.bernaferrari.wifiweakspot.navigation.HomeDestination }
+    val open = navigation::open
 
     // Pushed screens are single-column; keep them readable on tablets and desktop windows.
     @Composable
     fun Readable(content: @Composable () -> Unit) = com.bernaferrari.wifiweakspot.core.designsystem.ReadableWidth { content() }
 
-    com.bernaferrari.wifiweakspot.navigation.WifiWeakspotNavigationSuite(backStack) {
-        androidx.navigation3.ui.NavDisplay(
-            backStack = backStack,
-            onBack = { backStack.pop() },
-            transitionSpec = com.bernaferrari.wifiweakspot.navigation.fadeThrough(reduceMotion),
-            popTransitionSpec = com.bernaferrari.wifiweakspot.navigation.fadeThrough(reduceMotion),
-            entryDecorators = listOf(
-                androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator(),
-                androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator()
-            ),
-            entryProvider = androidx.navigation3.runtime.entryProvider {
-                entry<com.bernaferrari.wifiweakspot.navigation.HomeDestination> {
-                    OverviewScreen(
-                        viewModel = overviewViewModel,
-                        onNavigateToRooms = { backStack.selectTab(com.bernaferrari.wifiweakspot.navigation.WalkDestination) },
-                        onNavigateToWifi = { backStack.selectTab(com.bernaferrari.wifiweakspot.navigation.NetworksDestination) },
-                        onNavigateToLan = { open(com.bernaferrari.wifiweakspot.navigation.DevicesDestination) },
-                        onNavigateToSpeedTest = { open(com.bernaferrari.wifiweakspot.navigation.SpeedTestDestination) },
-                        onNavigateToHistory = { open(com.bernaferrari.wifiweakspot.navigation.HistoryDestination) },
-                        onNavigateToDiagnose = { open(com.bernaferrari.wifiweakspot.navigation.ToolsDestination()) },
-                        onNavigateToScanSetup = { open(com.bernaferrari.wifiweakspot.navigation.ScanSetupDestination) },
-                        onRequestScanPermission = onRequestScanPermission
-                    )
-                }
-                entry<com.bernaferrari.wifiweakspot.navigation.NetworksDestination> {
-                    AnalyzeScreen(viewModel = analyzeViewModel, onNavigateToPowerTools = { open(com.bernaferrari.wifiweakspot.navigation.ScanSetupDestination) })
-                }
-                entry<com.bernaferrari.wifiweakspot.navigation.WalkDestination> {
-                    Readable { WalkScreen(viewModel = walkViewModel, onOpenFloorPlan = { open(com.bernaferrari.wifiweakspot.navigation.FloorPlanDestination) }) }
-                }
-                entry<com.bernaferrari.wifiweakspot.navigation.SettingsDestination> {
-                    Readable {
-                        SettingsScreen(
-                            onNavigateToScanSetup = { open(com.bernaferrari.wifiweakspot.navigation.ScanSetupDestination) },
-                            onNavigateToAbout = { open(com.bernaferrari.wifiweakspot.navigation.AboutDestination) }
-                        )
-                    }
-                }
-                entry<com.bernaferrari.wifiweakspot.navigation.DevicesDestination>(metadata = push) { key ->
-                    Readable { LanScreen(onDeviceClick = { ip -> open(com.bernaferrari.wifiweakspot.navigation.DeviceDestination(ip)) }, onBack = { backStack.pop(key) }) }
-                }
-                entry<com.bernaferrari.wifiweakspot.navigation.DeviceDestination>(metadata = push) { key ->
-                    Readable {
-                        LanDeviceDetailScreen(
-                            ip = key.ip,
-                            onBack = { backStack.pop(key) },
-                            onPing = { target -> open(com.bernaferrari.wifiweakspot.navigation.ToolsDestination(target, ToolType.PING.name)) },
-                            onPortScan = { target -> open(com.bernaferrari.wifiweakspot.navigation.ToolsDestination(target, ToolType.PORT_SCAN.name)) }
-                        )
-                    }
-                }
-                entry<com.bernaferrari.wifiweakspot.navigation.ToolsDestination>(metadata = push) { key ->
-                    Readable {
-                        ToolsScreen(
-                            initialTarget = key.target,
-                            initialTool = ToolType.entries.firstOrNull { it.name == key.tool },
-                            onBack = { backStack.pop(key) }
-                        )
-                    }
-                }
-                entry<com.bernaferrari.wifiweakspot.navigation.SpeedTestDestination>(metadata = push) { key ->
-                    Readable { LinkTestScreen(
-                        onBack = { backStack.pop(key) },
-                        onOpenInternetTest = { open(com.bernaferrari.wifiweakspot.navigation.InternetSpeedDestination) },
-                        onOpenHistory = { open(com.bernaferrari.wifiweakspot.navigation.HistoryDestination) }
-                    ) }
-                }
-                entry<com.bernaferrari.wifiweakspot.navigation.InternetSpeedDestination>(metadata = push) { key ->
-                    Readable { InternetSpeedScreen(onBack = { backStack.pop(key) }) }
-                }
-                entry<com.bernaferrari.wifiweakspot.navigation.HistoryDestination>(metadata = push) { key ->
-                    Readable { HistoryScreen(onBack = { backStack.pop(key) }) }
-                }
-                entry<com.bernaferrari.wifiweakspot.navigation.FloorPlanDestination>(metadata = push) { key ->
-                    Readable {
-                        if (canScanWifi) SurveyScreen(onBack = { backStack.pop(key) })
-                        else PermissionRequiredScreen(onRequestScanPermission, onOpenSettings) { backStack.pop(key) }
-                    }
-                }
-                entry<com.bernaferrari.wifiweakspot.navigation.AboutDestination>(metadata = push) { key ->
-                    Readable { com.bernaferrari.wifiweakspot.feature.settings.AboutScreen(onBack = { backStack.pop(key) }) }
-                }
-                entry<com.bernaferrari.wifiweakspot.navigation.ScanSetupDestination>(metadata = push) { key ->
-                    Readable { ScanSetupScreen(onBack = { backStack.pop(key) }) }
-                }
+    val entryProvider = androidx.navigation3.runtime.entryProvider<androidx.navigation3.runtime.NavKey> {
+        entry<com.bernaferrari.wifiweakspot.navigation.HomeDestination> {
+            OverviewScreen(
+                viewModel = overviewViewModel,
+                onNavigateToRooms = { navigation.selectTab(com.bernaferrari.wifiweakspot.navigation.WalkDestination) },
+                onNavigateToWifi = { navigation.selectTab(com.bernaferrari.wifiweakspot.navigation.NetworksDestination) },
+                onNavigateToLan = { open(com.bernaferrari.wifiweakspot.navigation.DevicesDestination) },
+                onNavigateToSpeedTest = { open(com.bernaferrari.wifiweakspot.navigation.SpeedTestDestination) },
+                onNavigateToHistory = { open(com.bernaferrari.wifiweakspot.navigation.HistoryDestination) },
+                onNavigateToDiagnose = { open(com.bernaferrari.wifiweakspot.navigation.ToolsDestination()) },
+                onNavigateToScanSetup = { open(com.bernaferrari.wifiweakspot.navigation.ScanSetupDestination) },
+                onRequestScanPermission = onRequestScanPermission
+            )
+        }
+        entry<com.bernaferrari.wifiweakspot.navigation.NetworksDestination> {
+            AnalyzeScreen(viewModel = analyzeViewModel, onNavigateToPowerTools = { open(com.bernaferrari.wifiweakspot.navigation.ScanSetupDestination) })
+        }
+        entry<com.bernaferrari.wifiweakspot.navigation.WalkDestination> {
+            Readable { WalkScreen(viewModel = walkViewModel, onOpenFloorPlan = { open(com.bernaferrari.wifiweakspot.navigation.FloorPlanDestination) }) }
+        }
+        entry<com.bernaferrari.wifiweakspot.navigation.SettingsDestination> {
+            Readable {
+                SettingsScreen(
+                    onNavigateToScanSetup = { open(com.bernaferrari.wifiweakspot.navigation.ScanSetupDestination) },
+                    onNavigateToAbout = { open(com.bernaferrari.wifiweakspot.navigation.AboutDestination) }
+                )
             }
-        )
+        }
+        entry<com.bernaferrari.wifiweakspot.navigation.DevicesDestination>(metadata = push) { key ->
+            Readable { LanScreen(onDeviceClick = { ip -> open(com.bernaferrari.wifiweakspot.navigation.DeviceDestination(ip)) }, onBack = { navigation.pop(key) }) }
+        }
+        entry<com.bernaferrari.wifiweakspot.navigation.DeviceDestination>(metadata = push) { key ->
+            Readable {
+                LanDeviceDetailScreen(
+                    ip = key.ip,
+                    onBack = { navigation.pop(key) },
+                    onPing = { target -> open(com.bernaferrari.wifiweakspot.navigation.ToolsDestination(target, ToolType.PING.name)) },
+                    onPortScan = { target -> open(com.bernaferrari.wifiweakspot.navigation.ToolsDestination(target, ToolType.PORT_SCAN.name)) }
+                )
+            }
+        }
+        entry<com.bernaferrari.wifiweakspot.navigation.ToolsDestination>(metadata = push) { key ->
+            Readable {
+                ToolsScreen(
+                    initialTarget = key.target,
+                    initialTool = ToolType.entries.firstOrNull { it.name == key.tool },
+                    onBack = { navigation.pop(key) }
+                )
+            }
+        }
+        entry<com.bernaferrari.wifiweakspot.navigation.SpeedTestDestination>(metadata = push) { key ->
+            Readable { LinkTestScreen(
+                onBack = { navigation.pop(key) },
+                onOpenInternetTest = { open(com.bernaferrari.wifiweakspot.navigation.InternetSpeedDestination) },
+                onOpenHistory = { open(com.bernaferrari.wifiweakspot.navigation.HistoryDestination) }
+            ) }
+        }
+        entry<com.bernaferrari.wifiweakspot.navigation.InternetSpeedDestination>(metadata = push) { key ->
+            Readable { InternetSpeedScreen(onBack = { navigation.pop(key) }) }
+        }
+        entry<com.bernaferrari.wifiweakspot.navigation.HistoryDestination>(metadata = push) { key ->
+            Readable { HistoryScreen(onBack = { navigation.pop(key) }) }
+        }
+        entry<com.bernaferrari.wifiweakspot.navigation.FloorPlanDestination>(metadata = push) { key ->
+            Readable {
+                if (canScanWifi) SurveyScreen(onBack = { navigation.pop(key) })
+                else PermissionRequiredScreen(onRequestScanPermission, onOpenSettings) { navigation.pop(key) }
+            }
+        }
+        entry<com.bernaferrari.wifiweakspot.navigation.AboutDestination>(metadata = push) { key ->
+            Readable { com.bernaferrari.wifiweakspot.feature.settings.AboutScreen(onBack = { navigation.pop(key) }) }
+        }
+        entry<com.bernaferrari.wifiweakspot.navigation.ScanSetupDestination>(metadata = push) { key ->
+            Readable { ScanSetupScreen(onBack = { navigation.pop(key) }) }
+        }
     }
+    val transition = if (wide) wideFade<androidx.navigation3.runtime.NavKey>(reduceMotion) else fadeThrough(reduceMotion)
+    androidx.navigation3.ui.NavDisplay(
+        entries = navigation.entries(entryProvider),
+        onBack = { navigation.pop() },
+        transitionSpec = transition,
+        popTransitionSpec = transition,
+        predictivePopTransitionSpec = { transition() },
+    )
 }

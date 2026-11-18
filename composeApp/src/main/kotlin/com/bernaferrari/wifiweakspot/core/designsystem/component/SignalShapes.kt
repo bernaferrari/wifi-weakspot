@@ -58,6 +58,31 @@ fun SignalQuality.polygon(): RoundedPolygon = when (this) {
     SignalQuality.DeadZone -> MaterialShapes.Ghostish
 }
 
+// Use the percentage scale's zero point for the ghost. The other anchors are the
+// verdict floors. Each neighboring pair shares an endpoint, so crossing a floor
+// or changing direction mid-animation keeps the outline continuous.
+private val signalShapeAnchors = SignalQuality.entries.asReversed().map { quality ->
+    if (quality == SignalQuality.DeadZone) -90 else quality.minRssi
+}
+
+private val signalShapeMorphs by lazy {
+    SignalQuality.entries.asReversed().zipWithNext { weaker, stronger ->
+        Morph(weaker.polygon(), stronger.polygon())
+    }
+}
+
+internal fun clampSignalShapeRssi(rssi: Float): Float =
+    rssi.coerceIn(signalShapeAnchors.first().toFloat(), signalShapeAnchors.last().toFloat())
+
+internal fun signalShapeAt(rssi: Float): Shape {
+    val dbm = clampSignalShapeRssi(rssi)
+    val lower = signalShapeAnchors.indexOfFirst { dbm <= it } - 1
+    val segment = lower.coerceAtLeast(0)
+    val start = signalShapeAnchors[segment]
+    val end = signalShapeAnchors[segment + 1]
+    return MorphShape(signalShapeMorphs[segment], (dbm - start) / (end - start))
+}
+
 internal class MorphShape(private val morph: Morph, private val progress: Float) : Shape {
     private val path = Path()
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {

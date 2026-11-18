@@ -3,21 +3,22 @@
 package com.bernaferrari.wifiweakspot.core.designsystem.component
 
 import com.bernaferrari.wifiweakspot.core.i18n.strings
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bernaferrari.wifiweakspot.core.designsystem.LocalReduceMotion
 import com.bernaferrari.wifiweakspot.core.designsystem.signalColors
 import com.bernaferrari.wifiweakspot.core.designsystem.signalBadgeColors
 import com.bernaferrari.wifiweakspot.core.wifi.SignalQuality
@@ -27,13 +28,22 @@ import com.bernaferrari.wifiweakspot.core.wifi.SignalDisplay
 @Composable
 fun WifiBadge(rssi: Int, modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 48.dp) {
     val quality = SignalQuality.of(rssi)
+    val targetRssi = clampSignalShapeRssi(rssi.toFloat())
+    val outlineRssi = if (LocalReduceMotion.current) {
+        androidx.compose.runtime.rememberUpdatedState(targetRssi)
+    } else {
+        animateFloatAsState(targetRssi, MaterialTheme.motionScheme.fastEffectsSpec(), label = "signalOutline")
+    }
     val display = com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay.current
     val colors = if (display == SignalDisplay.Percentage) signalBadgeColors(quality) else signalColors(quality)
     val badgeDescription = strings.common.signalBadgeDescription(quality.label, display.reading(rssi))
     androidx.compose.foundation.layout.Box(
         modifier
             .size(size)
-            .clip(quality.polygon().toShape())
+            .graphicsLayer {
+                shape = signalShapeAt(outlineRssi.value)
+                clip = true
+            }
             .background(colors.container)
             .clearAndSetSemantics { contentDescription = badgeDescription },
         contentAlignment = Alignment.Center

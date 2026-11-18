@@ -40,13 +40,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavKey
 import com.bernaferrari.wifiweakspot.core.designsystem.WindowWidth
 import com.bernaferrari.wifiweakspot.core.designsystem.rememberWifiWeakspotHapticFeedback
 
-private class TabItem(val destination: NavKey, val label: (CommonStrings) -> String, val icon: ImageVector, val selectedIcon: ImageVector)
+private class TabItem(val destination: TopLevelDestination, val label: (CommonStrings) -> String, val icon: ImageVector, val selectedIcon: ImageVector)
 
 private val Tabs = listOf(
     TabItem(HomeDestination, { it.tabHome }, Icons.Outlined.Home, Icons.Filled.Home),
@@ -61,20 +60,20 @@ private val Tabs = listOf(
  * keep their state and pushes animate instead of being rebuilt.
  */
 @Composable
-fun WifiWeakspotNavigationSuite(backStack: NavBackStack<NavKey>, content: @Composable () -> Unit) {
+internal fun WifiWeakspotNavigationSuite(navigation: NavigationState, content: @Composable (wide: Boolean) -> Unit) {
     val haptics = rememberWifiWeakspotHapticFeedback()
-    val current = backStack.lastOrNull { it.isRootTab() } ?: HomeDestination
+    val current = navigation.selectedTab
     // Tools opened from a tab stay inside it, so the bar stays; only immersive screens hide it.
-    val showBar = backStack.lastOrNull().let { it !is FloorPlanDestination && it !is ScanSetupDestination }
-    val select: (NavKey) -> Unit = { tab ->
+    val showBar = navigation.currentDestination.let { it !is FloorPlanDestination && it !is ScanSetupDestination }
+    val select: (TopLevelDestination) -> Unit = { tab ->
         // Tapping the current tab from one of its screens goes back to the tab's start.
-        if (tab != current || backStack.lastOrNull() != current) {
+        if (tab != current || navigation.currentDestination != current) {
             haptics.click()
-            backStack.selectTab(tab)
+            navigation.selectTab(tab)
         }
     }
     val latest by rememberUpdatedState(content)
-    val movable = remember { movableContentOf { latest() } }
+    val movable = remember { movableContentOf { wide: Boolean -> latest(wide) } }
 
     // Fade-through clears both screens briefly; the backdrop must stay opaque in either layout.
     BoxWithConstraints(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
@@ -102,7 +101,7 @@ fun WifiWeakspotNavigationSuite(backStack: NavBackStack<NavKey>, content: @Compo
                 }
             ) { padding ->
                 // The bar already covers the gesture area; screens mustn't pad for it again.
-                Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) { movable() }
+                Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) { movable(false) }
             }
         } else {
             Row(Modifier.fillMaxSize()) {
@@ -120,7 +119,7 @@ fun WifiWeakspotNavigationSuite(backStack: NavBackStack<NavKey>, content: @Compo
                         }
                     }
                 }
-                Box(Modifier.weight(1f).fillMaxHeight()) { movable() }
+                Box(Modifier.weight(1f).fillMaxHeight().clipToBounds()) { movable(true) }
             }
         }
     }
