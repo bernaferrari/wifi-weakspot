@@ -61,11 +61,15 @@ enum class SignalQuality(val minRssi: Int) {
          * is steeper toward the weak end, where each dB changes the experience most, and reaches
          * 0% at -90 dBm, where Wi-Fi stops being usable. -50 dBm and stronger is 100%.
          */
-        fun percentage(rssi: Int): Int {
-            val dbm = rssi.coerceIn(-90, -50)
-            val (low, high) = scale.zipWithNext().first { (a, b) -> dbm in a.first..b.first }
-            val t = (dbm - low.first).toFloat() / (high.first - low.first)
-            return (low.second + t * (high.second - low.second)).roundToInt()
+        fun percentage(rssi: Int): Int = percentage(rssi.toFloat()).roundToInt()
+
+        internal fun percentage(rssi: Float): Float {
+            val dbm = rssi.coerceIn(-90f, -50f)
+            val upper = scale.indexOfFirst { dbm <= it.first }.coerceAtLeast(1)
+            val (lowDbm, lowPercent) = scale[upper - 1]
+            val (highDbm, highPercent) = scale[upper]
+            val fraction = (dbm - lowDbm) / (highDbm - lowDbm)
+            return lowPercent + fraction * (highPercent - lowPercent)
         }
 
         /** (dBm, percentage) anchors, weakest first; the verdict floors map to round numbers. */

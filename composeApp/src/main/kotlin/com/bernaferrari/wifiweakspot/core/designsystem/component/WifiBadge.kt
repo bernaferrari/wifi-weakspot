@@ -3,13 +3,15 @@
 package com.bernaferrari.wifiweakspot.core.designsystem.component
 
 import com.bernaferrari.wifiweakspot.core.i18n.strings
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -28,11 +30,15 @@ import com.bernaferrari.wifiweakspot.core.wifi.SignalDisplay
 @Composable
 fun WifiBadge(rssi: Int, modifier: Modifier = Modifier, size: androidx.compose.ui.unit.Dp = 48.dp) {
     val quality = SignalQuality.of(rssi)
-    val targetRssi = clampSignalShapeRssi(rssi.toFloat())
-    val outlineRssi = if (LocalReduceMotion.current) {
+    val targetRssi = rssi.coerceIn(-90, -50).toFloat()
+    val animatedRssi = if (LocalReduceMotion.current) {
         androidx.compose.runtime.rememberUpdatedState(targetRssi)
     } else {
-        animateFloatAsState(targetRssi, MaterialTheme.motionScheme.fastEffectsSpec(), label = "signalOutline")
+        animateFloatAsState(
+            targetValue = targetRssi,
+            animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+            label = "signalBadge"
+        )
     }
     val display = com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay.current
     val colors = if (display == SignalDisplay.Percentage) signalBadgeColors(quality) else signalColors(quality)
@@ -41,7 +47,7 @@ fun WifiBadge(rssi: Int, modifier: Modifier = Modifier, size: androidx.compose.u
         modifier
             .size(size)
             .graphicsLayer {
-                shape = signalShapeAt(outlineRssi.value)
+                shape = signalShapeAt(animatedRssi.value)
                 clip = true
             }
             .background(colors.container)
@@ -49,7 +55,7 @@ fun WifiBadge(rssi: Int, modifier: Modifier = Modifier, size: androidx.compose.u
         contentAlignment = Alignment.Center
     ) {
         if (display == SignalDisplay.Percentage) {
-            PercentageFill(SignalQuality.percentage(rssi), colors, size)
+            PercentageFill(SignalQuality.percentage(rssi), animatedRssi, colors, size)
         } else if (display == SignalDisplay.Dbm) {
             val unitSize = (size.value * 0.13f).coerceIn(8f, 18f).sp
             androidx.compose.foundation.layout.Column(
@@ -83,20 +89,17 @@ fun WifiBadge(rssi: Int, modifier: Modifier = Modifier, size: androidx.compose.u
     }
 }
 
-/** Number and fill share the same percentage; one label in the verdict's ink reads on both tones. */
+/** The fill follows the same animated reading as the outline. The label shows the latest sample. */
 @Composable
 private fun androidx.compose.foundation.layout.BoxScope.PercentageFill(
     percentage: Int,
+    animatedRssi: State<Float>,
     colors: com.bernaferrari.wifiweakspot.core.designsystem.SignalColors,
     badgeSize: androidx.compose.ui.unit.Dp
 ) {
-    val level by androidx.compose.animation.core.animateFloatAsState(
-        percentage / 100f,
-        MaterialTheme.motionScheme.fastEffectsSpec(),
-        label = "signalPercentageFill"
-    )
     androidx.compose.foundation.Canvas(Modifier.matchParentSize()) {
-        val top = size.height * (1f - level.coerceIn(0f, 1f))
+        val level = SignalQuality.percentage(animatedRssi.value) / 100f
+        val top = size.height * (1f - level)
         drawRect(colors.accent, topLeft = androidx.compose.ui.geometry.Offset(0f, top), size = androidx.compose.ui.geometry.Size(size.width, size.height - top))
     }
     androidx.compose.foundation.layout.Box(Modifier.matchParentSize(), contentAlignment = Alignment.Center) {

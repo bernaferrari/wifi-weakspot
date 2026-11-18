@@ -71,7 +71,7 @@ private val signalShapeMorphs by lazy {
     }
 }
 
-internal fun clampSignalShapeRssi(rssi: Float): Float =
+private fun clampSignalShapeRssi(rssi: Float): Float =
     rssi.coerceIn(signalShapeAnchors.first().toFloat(), signalShapeAnchors.last().toFloat())
 
 internal fun signalShapeAt(rssi: Float): Shape {
