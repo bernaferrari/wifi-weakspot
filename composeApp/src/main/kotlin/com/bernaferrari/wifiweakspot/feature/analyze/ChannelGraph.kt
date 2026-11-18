@@ -203,6 +203,7 @@ fun ChannelGraph(
     }
     fun moveRadio(direction: Int): Boolean = selectRadio(if (selectedIndex < 0) 0 else selectedIndex + direction)
     var hoverPosition by remember(selectedBand, explore) { mutableStateOf<Offset?>(null) }
+    val labelTargets = remember(selectedBand) { mutableListOf<Pair<Rect, String>>() }
     fun nextRadio(at: Offset, plot: Rect): WifiNetwork? {
         val hits = networksAt(at, latestRadios, selectedBand, plot)
         if (hits.isEmpty()) return null
@@ -289,7 +290,10 @@ fun ChannelGraph(
                 // Tapping the same spot again steps through overlapping hills, strongest first.
                 detectTapGestures { tap ->
                     val plot = plotRect(size.width.toFloat(), size.height.toFloat(), this, selectedBand, insets)
-                    selectLatest?.invoke(nextRadio(tap, plot))
+                    val label = labelTargets.lastOrNull { (bounds, _) -> bounds.contains(tap) }
+                    val target = if (label == null) nextRadio(tap, plot)
+                    else latestRadios.firstOrNull { it.bssid == label.second }
+                    selectLatest?.invoke(target)
                 }
             }
             .pointerInput(selectedBand, explore, insets) {
@@ -318,8 +322,60 @@ fun ChannelGraph(
 
 
 
-        val hovered = hoverPosition?.let { nextRadio(it, plot) }
         val dimOthers = focused != null
+        val placed = mutableListOf<Rect>()
+        val labels = mutableListOf<Triple<WifiNetwork, Rect, androidx.compose.ui.text.TextLayoutResult>>()
+        fun placeLabel(network: WifiNetwork): Triple<WifiNetwork, Rect, androidx.compose.ui.text.TextLayoutResult>? {
+            val isYou = palette.isYou(network.bssid)
+            val extra = extraNames[network.bssid] ?: 0
+            val name = s.chartNetworkLabel(network.ssid.ifEmpty { sharedCatalog.common.hiddenNetworkShort }.let { if (it.length > 16) it.take(15) + "…" else it }, isYou, extra)
+            val layout = textMeasurer.measure(name, peakStyle, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                constraints = Constraints(maxWidth = (plot.width - 16.dp.toPx()).toInt().coerceAtLeast(1)))
+            val segment = occupiedFrequencySegments(network).first()
+            val x = plot.left + mapFreqToNormX(segment.centerMhz.toFloat(), selectedBand) * plot.width
+            val peakY = plot.bottom - plot.height * dbmToFraction(network.rssi.toFloat()) * grow.value
+            var rect = chartLabelRect(
+                Offset(x, peakY),
+                Size(layout.size.width.toFloat(), layout.size.height.toFloat()),
+                Rect(plot.left + 4.dp.toPx(), 4.dp.toPx(), plot.right - 4.dp.toPx(), plot.bottom),
+                4.dp.toPx()
+            )
+            // Nudge up once if the spot is taken; otherwise the list below still names it.
+            if (placed.any { it.overlaps(rect) }) {
+                rect = listOf(rect.translate(0f, -rect.height - 2.dp.toPx()), rect.translate(0f, rect.height + 6.dp.toPx()))
+                    .firstOrNull { candidate -> candidate.top >= 4.dp.toPx() && candidate.bottom <= plot.bottom && placed.none { it.overlaps(candidate) } }
+                    ?: return null
+            }
+            placed += rect
+            return Triple(network, rect, layout)
+        }
+
+        // Keep label positions stable when the pointer enters one.
+        var unfocusedLabels = 0
+        val labelOrder = radios.sortedWith(
+            compareByDescending<WifiNetwork> { it.bssid == focused?.bssid }
+                .thenByDescending { palette.isYou(it.bssid) }
+                .thenByDescending { it.rssi }
+        )
+        labelOrder.forEach { network ->
+            val isYou = palette.isYou(network.bssid)
+            if (dimOthers && network.bssid != focused?.bssid && !isYou) return@forEach
+            if (!palette.isFeatured(network.bssid) && network.bssid != focused?.bssid) return@forEach
+            if (!dimOthers && !isYou && unfocusedLabels >= UnfocusedLabels) return@forEach
+            val label = placeLabel(network) ?: return@forEach
+            labels += label
+            if (!dimOthers && !isYou) unfocusedLabels++
+        }
+        fun labelBounds(rect: Rect) = Rect(rect.left - 4.dp.toPx(), rect.top - 1.dp.toPx(), rect.right + 4.dp.toPx(), rect.bottom + 1.dp.toPx())
+        val hovered = hoverPosition?.let { position ->
+            labels.lastOrNull { (_, rect) -> labelBounds(rect).contains(position) }?.first ?: nextRadio(position, plot)
+        }
+        if (hovered != null && labels.none { (network) -> network.bssid == hovered.bssid }) {
+            placeLabel(hovered)?.let { labels += it }
+        }
+        labelTargets.clear()
+        labels.forEach { (network, rect) -> labelTargets += labelBounds(rect) to network.bssid }
+
         // Weakest first so strong networks sit on top.
         // Background networks first, as thin quiet outlines; featured ones on top, weakest first.
         radios.sortedWith(
@@ -354,52 +410,16 @@ fun ChannelGraph(
             drawText(tag, topLeft = Offset(left + 8.dp.toPx(), plot.top - h / 2 + 3.dp.toPx()))
         }
 
-        // Labels: selected and connected first, then strongest, skipping any that would collide.
-        // Unfocused, only a few strongest are named; the list's color dots identify the rest.
-        val placed = mutableListOf<Rect>()
-        var unfocusedLabels = 0
-        val labelOrder = radios.sortedWith(
-            compareByDescending<WifiNetwork> { it.bssid == hovered?.bssid }
-                .thenByDescending { it.bssid == focused?.bssid }
-                .thenByDescending { connectedBssid != null && it.bssid.equals(connectedBssid, true) }
-                .thenByDescending { it.rssi }
-        )
-        labelOrder.forEach { network ->
-            val isYou = palette.isYou(network.bssid)
+        labels.forEach { (network, rect, layout) ->
             val isHovered = network.bssid == hovered?.bssid
-            if (!isHovered) {
-                if (dimOthers && network.bssid != focused?.bssid && !isYou) return@forEach
-                if (!palette.isFeatured(network.bssid) && network.bssid != focused?.bssid) return@forEach
-                if (!dimOthers && !isYou && unfocusedLabels >= UnfocusedLabels) return@forEach
-            }
-            val extra = extraNames[network.bssid] ?: 0
-            val name = s.chartNetworkLabel(network.ssid.ifEmpty { sharedCatalog.common.hiddenNetworkShort }.let { if (it.length > 16) it.take(15) + "…" else it }, isYou, extra)
-            val layout = textMeasurer.measure(name, peakStyle.copy(color = if (isHovered) scheme.inverseOnSurface else palette.color(network.bssid)), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                constraints = Constraints(maxWidth = (plot.width - 16.dp.toPx()).toInt().coerceAtLeast(1)))
-            val segment = occupiedFrequencySegments(network).first()
-            val x = plot.left + mapFreqToNormX(segment.centerMhz.toFloat(), selectedBand) * plot.width
-            val peakY = plot.bottom - plot.height * dbmToFraction(network.rssi.toFloat()) * grow.value
-            var rect = chartLabelRect(
-                Offset(x, peakY),
-                Size(layout.size.width.toFloat(), layout.size.height.toFloat()),
-                Rect(plot.left + 4.dp.toPx(), 4.dp.toPx(), plot.right - 4.dp.toPx(), plot.bottom),
-                4.dp.toPx()
-            )
-            // Nudge up once if the spot is taken; otherwise the list below still names it.
-            if (placed.any { it.overlaps(rect) }) {
-                rect = listOf(rect.translate(0f, -rect.height - 2.dp.toPx()), rect.translate(0f, rect.height + 6.dp.toPx()))
-                    .firstOrNull { candidate -> candidate.top >= 4.dp.toPx() && candidate.bottom <= plot.bottom && placed.none { it.overlaps(candidate) } }
-                    ?: return@forEach
-            }
-            placed += rect
-            if (!dimOthers && !isYou) unfocusedLabels++
+            val bounds = labelBounds(rect)
             drawRoundRect(
                 if (isHovered) scheme.inverseSurface else scheme.surfaceContainerLow.copy(alpha = 0.85f),
-                topLeft = rect.topLeft - Offset(4.dp.toPx(), 1.dp.toPx()),
-                size = Size(rect.width + 8.dp.toPx(), rect.height + 2.dp.toPx()),
+                topLeft = bounds.topLeft,
+                size = bounds.size,
                 cornerRadius = CornerRadius(6.dp.toPx())
             )
-            drawText(layout, topLeft = rect.topLeft)
+            drawText(layout, color = if (isHovered) scheme.inverseOnSurface else palette.color(network.bssid), topLeft = rect.topLeft)
         }
     }
 }
