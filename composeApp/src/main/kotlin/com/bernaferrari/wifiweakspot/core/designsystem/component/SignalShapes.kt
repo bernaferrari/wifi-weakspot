@@ -71,24 +71,26 @@ private val signalShapeMorphs by lazy {
     }
 }
 
-private fun clampSignalShapeRssi(rssi: Float): Float =
-    rssi.coerceIn(signalShapeAnchors.first().toFloat(), signalShapeAnchors.last().toFloat())
-
-internal fun signalShapeAt(rssi: Float): Shape {
-    val dbm = clampSignalShapeRssi(rssi)
+internal fun signalShape(rssi: () -> Float): Shape = MorphShape { path ->
+    val dbm = rssi().coerceIn(signalShapeAnchors.first().toFloat(), signalShapeAnchors.last().toFloat())
     val lower = signalShapeAnchors.indexOfFirst { dbm <= it } - 1
     val segment = lower.coerceAtLeast(0)
     val start = signalShapeAnchors[segment]
     val end = signalShapeAnchors[segment + 1]
-    return MorphShape(signalShapeMorphs[segment], (dbm - start) / (end - start))
+    signalShapeMorphs[segment].toPath((dbm - start) / (end - start), path)
 }
 
-internal class MorphShape(private val morph: Morph, private val progress: Float) : Shape {
+private class MorphShape(private val updatePath: (Path) -> Unit) : Shape {
+    constructor(morph: Morph, progress: () -> Float) : this({ path -> morph.toPath(progress(), path) })
+
     private val path = Path()
+    private val matrix = Matrix()
+
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        path.rewind()
-        morph.toPath(progress, path)
-        path.transform(Matrix().apply { scale(size.width, size.height) })
+        updatePath(path)
+        matrix.reset()
+        matrix.scale(size.width, size.height)
+        path.transform(matrix)
         return Outline.Generic(path)
     }
 }
@@ -120,7 +122,7 @@ fun SignalMorphBlob(
         progress.snapTo(0f)
         progress.animateTo(1f, morphSpec)
     }
-    val morph = remember(from, to) { Morph(from, to) }
+    val blobShape = remember(from, to, progress) { MorphShape(Morph(from, to)) { progress.value } }
     val rotation by rememberInfiniteTransition(label = "blobSpin").animateAccessibleFloat(
         initialValue = 0f,
         targetValue = 360f,
@@ -132,7 +134,7 @@ fun SignalMorphBlob(
             Modifier
                 .size(size)
                 .graphicsLayer { rotationZ = if (spinning) rotation else 0f }
-                .clip(MorphShape(morph, progress.value))
+                .clip(blobShape)
                 .background(color)
         )
         content()

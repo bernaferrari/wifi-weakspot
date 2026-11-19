@@ -12,9 +12,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -40,16 +41,14 @@ fun WifiBadge(rssi: Int, modifier: Modifier = Modifier, size: androidx.compose.u
             label = "signalBadge"
         )
     }
+    val shape = remember(animatedRssi) { signalShape { animatedRssi.value } }
     val display = com.bernaferrari.wifiweakspot.core.designsystem.LocalSignalDisplay.current
     val colors = if (display == SignalDisplay.Percentage) signalBadgeColors(quality) else signalColors(quality)
     val badgeDescription = strings.common.signalBadgeDescription(quality.label, display.reading(rssi))
     androidx.compose.foundation.layout.Box(
         modifier
             .size(size)
-            .graphicsLayer {
-                shape = signalShapeAt(animatedRssi.value)
-                clip = true
-            }
+            .clip(shape)
             .background(colors.container)
             .clearAndSetSemantics { contentDescription = badgeDescription },
         contentAlignment = Alignment.Center
